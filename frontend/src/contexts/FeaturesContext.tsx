@@ -118,26 +118,33 @@ export function FeaturesProvider({ children }: { children: ReactNode }) {
       } catch (error: any) {
         // Si l'endpoint n'existe pas encore ou erreur réseau, utiliser des valeurs par défaut
         // Ne pas logger les erreurs ERR_BLOCKED_BY_CLIENT (bloqueur de pub) comme des erreurs critiques
-        const isBlockedError = error.code === 'ERR_BLOCKED_BY_CLIENT' || error.message?.includes('ERR_BLOCKED_BY_CLIENT')
-        const isNetworkError = error.code === 'ERR_NETWORK'
+        // Détecter les erreurs bloquées par le client (bloqueur de pub)
+        const isBlockedError = error.code === 'ERR_BLOCKED_BY_CLIENT' || 
+                              error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||
+                              error.message?.includes('blocked by client') ||
+                              error.message?.includes('net::ERR_BLOCKED_BY_CLIENT') ||
+                              (error.response?.status === 0 && error.message?.includes('Failed to fetch')) ||
+                              (error.request && error.request.status === 0)
+        const isNetworkError = error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED'
         
-        // Logger une seule fois pour les erreurs bloquées
-        if (isBlockedError && !hasLoggedBlockedError) {
-          console.warn('⚠️ Requête bloquée par un bloqueur de publicité. Les fonctionnalités utilisent des valeurs par défaut.')
-          console.warn('💡 Solution: Désactivez temporairement votre bloqueur de publicité pour localhost:9495')
-          hasLoggedBlockedError = true
-        } else if (!isBlockedError && !isNetworkError) {
-          // Logger les autres erreurs une seule fois
-          if (!hasLoggedBlockedError) {
-            console.error('Error loading features:', error)
-            hasLoggedBlockedError = true
+        // Ne RIEN logger pour les erreurs bloquées - c'est géré silencieusement
+        // Les bloqueurs de pub sont courants et ne doivent pas polluer la console
+        if (!isBlockedError) {
+          if (isNetworkError) {
+            // Erreurs réseau normales (backend non démarré, etc.) - logger une seule fois
+            if (!hasLoggedBlockedError) {
+              console.warn('⚠️ Impossible de charger les fonctionnalités (backend non accessible). Utilisation des valeurs par défaut.')
+              hasLoggedBlockedError = true
+            }
+          } else {
+            // Autres erreurs (404, 500, etc.) - logger une seule fois
+            if (!hasLoggedBlockedError) {
+              console.warn('Features endpoint not available, using defaults')
+              hasLoggedBlockedError = true
+            }
           }
         }
-        
-        // Ne pas logger le warning si c'est une erreur bloquée
-        if (!isBlockedError) {
-          console.warn('Features endpoint not available, using defaults')
-        }
+        // Pour les erreurs bloquées, on ne fait rien - pas de log du tout
         setFeatures({
           can_use_premium_blocks: false,
           can_use_custom_domain: false,

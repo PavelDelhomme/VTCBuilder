@@ -151,6 +151,21 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
   const [editingPassword, setEditingPassword] = useState<number | null>(null)
   const [passwordData, setPasswordData] = useState<{ [key: number]: { new_password: string; confirm_password: string } }>({})
   const [passwordSaving, setPasswordSaving] = useState<{ [key: number]: boolean }>({})
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [saving, setSaving] = useState(false)
+  
+  const [formData, setFormData] = useState({
+    email: '',
+    username: '',
+    first_name: '',
+    last_name: '',
+    phone: '',
+    role: 'operator' as 'tenant-admin' | 'driver' | 'operator',
+    status: 'active' as 'active' | 'inactive' | 'suspended' | 'pending',
+    password: '',
+    confirm_password: '',
+  })
 
   useEffect(() => {
     loadUsers()
@@ -260,6 +275,157 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
     }
   }
 
+  const handleOpenCreateModal = () => {
+    setFormData({
+      email: '',
+      username: '',
+      first_name: '',
+      last_name: '',
+      phone: '',
+      role: 'operator',
+      status: 'active',
+      password: '',
+      confirm_password: '',
+    })
+    setEditingUser(null)
+    setShowCreateModal(true)
+  }
+
+  const handleOpenEditModal = (user: User) => {
+    setFormData({
+      email: user.email || '',
+      username: user.username || '',
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      phone: user.phone || '',
+      role: (user.role as 'tenant-admin' | 'driver' | 'operator') || 'operator',
+      status: (user.status as 'active' | 'inactive' | 'suspended' | 'pending') || 'active',
+      password: '',
+      confirm_password: '',
+    })
+    setEditingUser(user)
+    setShowCreateModal(true)
+  }
+
+  const handleCloseModal = () => {
+    setShowCreateModal(false)
+    setEditingUser(null)
+    setFormData({
+      email: '',
+      username: '',
+      first_name: '',
+      last_name: '',
+      phone: '',
+      role: 'operator',
+      status: 'active',
+      password: '',
+      confirm_password: '',
+    })
+  }
+
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+
+    try {
+      // Validation
+      if (!formData.email.trim()) {
+        toast.error('L\'email est requis')
+        setSaving(false)
+        return
+      }
+
+      if (editingUser) {
+        // Mise à jour
+        const updateData: any = {
+          email: formData.email.trim(),
+          username: formData.username.trim() || formData.email.split('@')[0],
+          first_name: formData.first_name.trim() || null,
+          last_name: formData.last_name.trim() || null,
+          phone: formData.phone.trim() || null,
+          role: formData.role,
+          status: formData.status,
+          tenant: tenantId,
+        }
+
+        // Ajouter le mot de passe seulement s'il est fourni
+        if (formData.password && formData.password.length >= 8) {
+          if (formData.password !== formData.confirm_password) {
+            toast.error('Les mots de passe ne correspondent pas')
+            setSaving(false)
+            return
+          }
+          updateData.password = formData.password
+        }
+
+        await userService.update(editingUser.id, updateData)
+        toast.success('Utilisateur mis à jour avec succès !')
+      } else {
+        // Création
+        if (!formData.password || formData.password.length < 8) {
+          toast.error('Le mot de passe doit contenir au moins 8 caractères')
+          setSaving(false)
+          return
+        }
+
+        if (formData.password !== formData.confirm_password) {
+          toast.error('Les mots de passe ne correspondent pas')
+          setSaving(false)
+          return
+        }
+
+        const createData: any = {
+          email: formData.email.trim(),
+          username: formData.username.trim() || formData.email.split('@')[0],
+          first_name: formData.first_name.trim() || null,
+          last_name: formData.last_name.trim() || null,
+          phone: formData.phone.trim() || null,
+          role: formData.role,
+          status: formData.status,
+          password: formData.password,
+          tenant: tenantId,
+        }
+
+        await userService.create(createData)
+        toast.success('Utilisateur créé avec succès !')
+      }
+
+      handleCloseModal()
+      loadUsers()
+    } catch (error: any) {
+      console.error('Erreur sauvegarde utilisateur:', error)
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message ||
+                          (error.response?.data?.quota ? `Quota dépassé: ${error.response.data.quota.current}/${error.response.data.quota.max}` : null) ||
+                          'Erreur lors de la sauvegarde de l\'utilisateur'
+      toast.error(errorMessage)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleUpdateUserStatus = async (userId: number, newStatus: 'active' | 'inactive' | 'suspended' | 'pending') => {
+    try {
+      await userService.update(userId, { status: newStatus } as any)
+      toast.success(`Statut mis à jour: ${newStatus}`)
+      loadUsers()
+    } catch (error: any) {
+      console.error('Erreur mise à jour statut:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour du statut')
+    }
+  }
+
+  const handleUpdateUserRole = async (userId: number, newRole: 'tenant-admin' | 'driver' | 'operator') => {
+    try {
+      await userService.update(userId, { role: newRole } as any)
+      toast.success(`Rôle mis à jour: ${newRole}`)
+      loadUsers()
+    } catch (error: any) {
+      console.error('Erreur mise à jour rôle:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour du rôle')
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     const badges: { [key: string]: string } = {
       active: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
@@ -307,7 +473,7 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
             {users.length} utilisateur{users.length > 1 ? 's' : ''} au total
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <input
             type="text"
             placeholder="Rechercher un utilisateur..."
@@ -315,6 +481,15 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
             onChange={(e) => setSearch(e.target.value)}
             className="px-4 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
+          <button
+            onClick={handleOpenCreateModal}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 whitespace-nowrap"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nouvel utilisateur
+          </button>
         </div>
       </div>
 
@@ -359,14 +534,28 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
                 <div className="text-sm text-gray-900 dark:text-gray-100 font-mono">{user.email}</div>
               </td>
               <td className="px-4 py-4 whitespace-nowrap">
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadge(user.role)}`}>
-                  {user.role === 'tenant-admin' ? 'Admin Tenant' : user.role}
-                </span>
+                <select
+                  value={user.role}
+                  onChange={(e) => handleUpdateUserRole(user.id, e.target.value as 'tenant-admin' | 'driver' | 'operator')}
+                  className={`px-2 py-1 text-xs font-semibold rounded-full border-0 ${getRoleBadge(user.role)} cursor-pointer focus:ring-2 focus:ring-blue-500`}
+                  disabled={user.role === 'super-admin'}
+                >
+                  <option value="tenant-admin">Admin Tenant</option>
+                  <option value="driver">Driver</option>
+                  <option value="operator">Operator</option>
+                </select>
               </td>
               <td className="px-4 py-4 whitespace-nowrap">
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(user.status)}`}>
-                  {user.status === 'active' ? 'Actif' : user.status === 'pending' ? 'En attente' : user.status}
-                </span>
+                <select
+                  value={user.status}
+                  onChange={(e) => handleUpdateUserStatus(user.id, e.target.value as 'active' | 'inactive' | 'suspended' | 'pending')}
+                  className={`px-2 py-1 text-xs font-semibold rounded-full border-0 ${getStatusBadge(user.status)} cursor-pointer focus:ring-2 focus:ring-blue-500`}
+                >
+                  <option value="active">Actif</option>
+                  <option value="inactive">Inactif</option>
+                  <option value="suspended">Suspendu</option>
+                  <option value="pending">En attente</option>
+                </select>
               </td>
               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : '-'}
@@ -424,7 +613,16 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex items-center justify-end gap-2 flex-wrap">
+                    <button
+                      onClick={() => handleOpenEditModal(user)}
+                      className="text-indigo-600 hover:text-indigo-900"
+                      title="Modifier l'utilisateur"
+                    >
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
                     <button
                       onClick={() => handleEditPassword(user.id)}
                       className="text-green-600 hover:text-green-900"
@@ -439,7 +637,7 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
                     >
                       🔑 Reset Email
                     </button>
-                    {user.role !== 'tenant-admin' && (
+                    {user.role !== 'tenant-admin' && user.role !== 'super-admin' && (
                       <button
                         onClick={() => handleDeleteUser(user.id, user.email)}
                         className="text-red-600 hover:text-red-900"
@@ -454,6 +652,187 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
             </tr>
           ))}
         </ResponsiveTable>
+      )}
+
+      {/* Modal de création/édition d'utilisateur */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  {editingUser ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'}
+                </h3>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveUser} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-4 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Nom d'utilisateur
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      className="w-full px-4 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Généré automatiquement si vide"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Prénom
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.first_name}
+                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                      className="w-full px-4 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Nom
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.last_name}
+                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                      className="w-full px-4 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Téléphone
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full px-4 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Rôle *
+                    </label>
+                    <select
+                      required
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value as 'tenant-admin' | 'driver' | 'operator' })}
+                      className="w-full px-4 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="operator">Operator</option>
+                      <option value="driver">Driver</option>
+                      <option value="tenant-admin">Tenant Admin</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Statut *
+                    </label>
+                    <select
+                      required
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' | 'suspended' | 'pending' })}
+                      className="w-full px-4 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="active">Actif</option>
+                      <option value="inactive">Inactif</option>
+                      <option value="suspended">Suspendu</option>
+                      <option value="pending">En attente</option>
+                    </select>
+                  </div>
+
+                  {!editingUser && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Mot de passe *
+                        </label>
+                        <input
+                          type="password"
+                          required={!editingUser}
+                          value={formData.password}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          className="w-full px-4 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          minLength={8}
+                          placeholder="Minimum 8 caractères"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Confirmer le mot de passe {!editingUser && '*'}
+                        </label>
+                        <input
+                          type="password"
+                          required={!editingUser}
+                          value={formData.confirm_password}
+                          onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
+                          className="w-full px-4 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          minLength={8}
+                          placeholder="Minimum 8 caractères"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {editingUser && (
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        💡 Pour modifier le mot de passe, utilisez le bouton "Modifier MDP" dans la liste des utilisateurs.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? 'Enregistrement...' : editingUser ? 'Mettre à jour' : 'Créer l\'utilisateur'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -263,28 +263,36 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
                       <span className="ml-3">{item.name}</span>
                     </div>
                     <svg
-                      className={`h-4 w-4 transition-transform ${projectsExpanded ? 'rotate-90' : ''}`}
+                      className={`h-4 w-4 transition-transform duration-200 ${projectsExpanded ? 'rotate-90' : ''}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
+                    {projects.length > 0 && (
+                      <span className="ml-2 px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400">
+                        {projects.length}
+                      </span>
+                    )}
                   </button>
                   
                   {/* Accordion Content */}
                   {projectsExpanded && (
-                    <div className="bg-gray-50 dark:bg-gray-900/50">
+                    <div className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-800/30 border-t border-gray-200 dark:border-gray-700 shadow-inner">
                       {/* Filter by Tenant */}
                       {uniqueTenants.length > 0 && (
-                        <div className="px-6 py-2 border-b border-gray-200 dark:border-gray-700">
+                        <div className="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50">
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
+                            Filtrer par tenant
+                          </label>
                           <select
                             value={selectedTenantFilter || ''}
                             onChange={(e) => setSelectedTenantFilter(e.target.value ? parseInt(e.target.value) : null)}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-full px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300"
+                            className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all"
                           >
-                            <option value="">Tous les tenants</option>
+                            <option value="">🌐 Tous les tenants</option>
                             {uniqueTenants.map(([id, tenant]) => (
                               <option key={id} value={id}>
                                 {tenant?.name || `Tenant ${id}`}
@@ -297,39 +305,62 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
                       {/* System Projects (Admin) */}
                       {systemProjects.length > 0 && (
                         <>
-                          <div className="px-6 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Projet Admin
+                          <div className="px-6 py-3 bg-blue-50/50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+                            <div className="flex items-center gap-2">
+                              <svg className="h-4 w-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                              </svg>
+                              <span className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
+                                Projet Système
+                              </span>
+                            </div>
                           </div>
-                          {systemProjects.map((project) => {
-                            const isProjectActive = pathname === `/admin/projects/${project.id}` || 
-                              (pathname.startsWith('/admin/pages-public') && project.is_system_project)
-                            return (
-                              <button
-                                key={project.id}
-                                onClick={() => {
-                                  router.push(`/admin/projects/${project.id}`)
-                                  handleClose()
-                                }}
-                                className={`w-full flex items-center px-10 py-2 text-xs font-medium transition-colors ${
-                                  isProjectActive
-                                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400'
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                }`}
-                              >
-                                <span className="truncate">{project.name}</span>
-                                {project.pages_count !== undefined && (
-                                  <span className="ml-auto text-gray-400 dark:text-gray-500">
-                                    ({project.pages_count})
-                                  </span>
-                                )}
-                              </button>
-                            )
-                          })}
+                          <div className="py-1">
+                            {systemProjects.map((project) => {
+                              const isProjectActive = pathname === `/admin/projects/${project.id}` || 
+                                (pathname.startsWith('/admin/pages-public') && project.is_system_project)
+                              return (
+                                <button
+                                  key={project.id}
+                                  onClick={() => {
+                                    router.push(`/admin/projects/${project.id}`)
+                                    handleClose()
+                                  }}
+                                  className={`w-full flex items-center justify-between px-8 py-2.5 text-sm font-medium transition-all duration-200 group ${
+                                    isProjectActive
+                                      ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400'
+                                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70 hover:pl-9 border-l-4 border-transparent'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                    <svg className={`h-4 w-4 flex-shrink-0 ${isProjectActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                    </svg>
+                                    <span className="truncate">{project.name}</span>
+                                  </div>
+                                  {project.pages_count !== undefined && project.pages_count > 0 && (
+                                    <span className={`ml-2 px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 ${
+                                      isProjectActive
+                                        ? 'bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200'
+                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                    }`}>
+                                      {project.pages_count}
+                                    </span>
+                                  )}
+                                </button>
+                              )
+                            })}
+                          </div>
                           {/* Separator */}
                           {filteredTenantProjects.length > 0 && (
-                            <div className="px-6 py-2 border-t border-gray-200 dark:border-gray-700">
-                              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                Projets Tenants
+                            <div className="px-6 py-3 bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent">
+                              <div className="flex items-center gap-2">
+                                <svg className="h-4 w-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                <span className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                                  Projets Tenants
+                                </span>
                               </div>
                             </div>
                           )}
@@ -338,55 +369,86 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
 
                       {/* Tenant Projects */}
                       {loadingProjects ? (
-                        <div className="px-10 py-4 text-xs text-gray-500 dark:text-gray-400">
-                          Chargement...
+                        <div className="px-8 py-6 flex items-center justify-center">
+                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Chargement des projets...</span>
+                          </div>
                         </div>
                       ) : filteredTenantProjects.length > 0 ? (
-                        filteredTenantProjects.map((project) => {
-                          const isProjectActive = pathname === `/admin/projects/${project.id}`
-                          return (
-                            <button
-                              key={project.id}
-                              onClick={() => {
-                                router.push(`/admin/projects/${project.id}`)
-                                handleClose()
-                              }}
-                              className={`w-full flex items-center px-10 py-2 text-xs font-medium transition-colors ${
-                                isProjectActive
-                                  ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400'
-                                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                              }`}
-                            >
-                              <span className="truncate">{project.name}</span>
-                              {project.tenant && (
-                                <span className="ml-2 text-gray-400 dark:text-gray-500 text-xs">
-                                  ({project.tenant.name})
-                                </span>
-                              )}
-                              {project.pages_count !== undefined && (
-                                <span className="ml-auto text-gray-400 dark:text-gray-500">
-                                  ({project.pages_count})
-                                </span>
-                              )}
-                            </button>
-                          )
-                        })
+                        <div className="py-1">
+                          {filteredTenantProjects.map((project) => {
+                            const isProjectActive = pathname === `/admin/projects/${project.id}`
+                            return (
+                              <button
+                                key={project.id}
+                                onClick={() => {
+                                  router.push(`/admin/projects/${project.id}`)
+                                  handleClose()
+                                }}
+                                className={`w-full flex items-center justify-between px-8 py-2.5 text-sm font-medium transition-all duration-200 group ${
+                                  isProjectActive
+                                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400'
+                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70 hover:pl-9 border-l-4 border-transparent'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                  <svg className={`h-4 w-4 flex-shrink-0 ${isProjectActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                  </svg>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="truncate">{project.name}</div>
+                                    {project.tenant && (
+                                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                        {project.tenant.name}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                {project.pages_count !== undefined && project.pages_count > 0 && (
+                                  <span className={`ml-2 px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 ${
+                                    isProjectActive
+                                      ? 'bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200'
+                                      : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                  }`}>
+                                    {project.pages_count}
+                                  </span>
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
                       ) : (
-                        <div className="px-10 py-4 text-xs text-gray-500 dark:text-gray-400">
-                          Aucun projet
+                        <div className="px-8 py-6 text-center">
+                          <svg className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                          </svg>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Aucun projet</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Créez votre premier projet</p>
                         </div>
                       )}
 
                       {/* View All Projects Link */}
-                      <div className="px-6 py-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50">
                         <button
                           onClick={() => {
                             router.push('/admin/projects')
                             handleClose()
                           }}
-                          className="w-full text-left px-4 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200 group"
                         >
-                          Voir tous les projets →
+                          <span className="flex items-center gap-2">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                            Voir tous les projets
+                          </span>
+                          <svg className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
                         </button>
                       </div>
                     </div>

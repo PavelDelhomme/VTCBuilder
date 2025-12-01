@@ -232,7 +232,17 @@ export default function UsersPage() {
                   </tr>
                 ) : (
                   filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 dark:bg-gray-900">
+                    <tr 
+                      key={user.id} 
+                      className="hover:bg-gray-50 dark:bg-gray-900 cursor-pointer"
+                      onClick={(e) => {
+                        // Ne pas naviguer si on clique sur un bouton d'action
+                        if ((e.target as HTMLElement).closest('button')) {
+                          return
+                        }
+                        router.push(`/admin/users/${user.id}`)
+                      }}
+                    >
                       <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div>
@@ -260,7 +270,10 @@ export default function UsersPage() {
                       <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2 flex-wrap gap-2">
                           <button
-                            onClick={() => router.push(`/admin/users/${user.id}`)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/admin/users/${user.id}`)
+                            }}
                             className="text-indigo-600 hover:text-indigo-900"
                             title="Modifier l'utilisateur"
                           >
@@ -270,7 +283,10 @@ export default function UsersPage() {
                           </button>
                           {user.role !== 'super-admin' && (
                             <button
-                              onClick={() => handleImpersonate(user.id, user.email)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleImpersonate(user.id, user.email)
+                              }}
                               className="text-purple-600 hover:text-purple-900"
                               title="Impersonner cet utilisateur"
                             >
@@ -280,7 +296,10 @@ export default function UsersPage() {
                             </button>
                           )}
                           <button
-                            onClick={() => handlePasswordReset(user.id, user.email)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handlePasswordReset(user.id, user.email)
+                            }}
                             className="text-blue-600 hover:text-blue-900"
                             title="Réinitialiser le mot de passe"
                           >
@@ -291,7 +310,10 @@ export default function UsersPage() {
                           {user.status === 'active' ? (
                             <>
                               <button
-                                onClick={() => handleDeactivate(user.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeactivate(user.id)
+                                }}
                                 className="text-yellow-600 hover:text-yellow-900"
                                 title="Désactiver"
                               >
@@ -300,7 +322,10 @@ export default function UsersPage() {
                                 </svg>
                               </button>
                               <button
-                                onClick={() => handleSuspend(user.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleSuspend(user.id)
+                                }}
                                 className="text-red-600 hover:text-red-900"
                                 title="Suspendre"
                               >
@@ -311,7 +336,10 @@ export default function UsersPage() {
                             </>
                           ) : (
                             <button
-                              onClick={() => handleActivate(user.id)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleActivate(user.id)
+                              }}
                               className="text-green-600 hover:text-green-900"
                               title="Activer"
                             >
@@ -322,7 +350,10 @@ export default function UsersPage() {
                           )}
                           {user.role !== 'super-admin' && (
                             <button
-                              onClick={() => handleDelete(user.id, user.email, user.name, user.role)}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDelete(user.id, user.email, user.name, user.role)
+                              }}
                               className="text-red-600 hover:text-red-900"
                               title="Supprimer définitivement"
                             >

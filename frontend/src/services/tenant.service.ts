@@ -77,6 +77,24 @@ class TenantService {
         });
         return response.data;
       }
+
+      async getDomains(id: number) {
+        const response = await api.get(`/tenants/${id}/domains/`);
+        return response.data;
+      }
+
+      async addDomain(id: number, domain: string, isPrimary: boolean = false) {
+        const response = await api.post(`/tenants/${id}/domains/`, {
+          domain,
+          is_primary: isPrimary,
+        });
+        return response.data;
+      }
+
+      async deleteDomain(id: number, domainId: number) {
+        const response = await api.delete(`/tenants/${id}/domains/${domainId}/`);
+        return response.data;
+      }
     }
 
     export default new TenantService();

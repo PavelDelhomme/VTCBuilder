@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
-import { ThemeProvider } from '@/contexts/ThemeContext'
-import { FeaturesProvider } from '@/contexts/FeaturesContext'
+import Providers from '@/components/Providers'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -29,11 +28,9 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
-        <ThemeProvider>
-          <FeaturesProvider>
-            {children}
-          </FeaturesProvider>
-        </ThemeProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   )

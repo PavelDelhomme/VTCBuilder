@@ -136,24 +136,51 @@ export default function AdminTemplatesPage() {
     })
   }
 
-  const handleEdit = (template: Template) => {
-    setEditingTemplate(template)
-    setFormData({
-      name: template.name,
-      slug: template.slug,
-      description: template.description || '',
-      category: template.category,
-      is_premium: template.is_premium,
-      price: parseFloat(template.price?.toString() || '0'),
-      is_active: template.is_active,
-      preview_image: null, // L'image sera chargée depuis l'URL si disponible
-      html_content: template.html_content || '',
-      css_content: template.css_content || '',
-      variables: (template as any).variables || {},
-    })
-    setShowForm(true)
-    setActiveTab('info')
-    detectVariables()
+  const handleEdit = async (template: Template) => {
+    try {
+      // Charger les détails complets du template pour avoir html_content, css_content, variables
+      const fullTemplate = await templateService.getById(template.id)
+      
+      setEditingTemplate(fullTemplate)
+      setFormData({
+        name: fullTemplate.name,
+        slug: fullTemplate.slug,
+        description: fullTemplate.description || '',
+        category: fullTemplate.category,
+        is_premium: fullTemplate.is_premium,
+        price: parseFloat(fullTemplate.price?.toString() || '0'),
+        is_active: fullTemplate.is_active,
+        preview_image: null, // L'image sera chargée depuis l'URL si disponible
+        html_content: fullTemplate.html_content || '',
+        css_content: fullTemplate.css_content || '',
+        variables: fullTemplate.variables || {},
+      })
+      setShowForm(true)
+      setActiveTab('info')
+      // Détecter les variables après avoir chargé le contenu
+      setTimeout(() => detectVariables(), 100)
+    } catch (error: any) {
+      console.error('Erreur chargement détails template:', error)
+      toast.error('Erreur lors du chargement des détails du template')
+      // Fallback: utiliser les données de la liste si le chargement échoue
+      setEditingTemplate(template)
+      setFormData({
+        name: template.name,
+        slug: template.slug,
+        description: template.description || '',
+        category: template.category,
+        is_premium: template.is_premium,
+        price: parseFloat(template.price?.toString() || '0'),
+        is_active: template.is_active,
+        preview_image: null,
+        html_content: template.html_content || '',
+        css_content: template.css_content || '',
+        variables: (template as any).variables || {},
+      })
+      setShowForm(true)
+      setActiveTab('info')
+      detectVariables()
+    }
   }
 
   const handleDelete = async (id: number, name: string) => {

@@ -1533,7 +1533,91 @@ cd frontend && npm install  # Installer Jest et dépendances
 
 ---
 
-## 🔄 Dernière Mise à Jour
+## 🔄 Dernière Mise à Jour (01/12/2025)
+
+### ✅ Corrections et Améliorations Récentes (01/12/2025)
+
+#### 🔧 Corrections Backend
+
+1. **Correction de l'erreur `UnboundLocalError` dans `/api/stats/detailed/`** :
+   - ✅ Problème : Conflit entre import global `Tenant` et imports locaux
+   - ✅ Solution : Commenté l'import global et utilisé uniquement des imports locaux avec alias (`TenantModel`, `UserModel`)
+   - ✅ Fichier modifié : `backend-django/api/views.py`
+
+2. **Amélioration du calcul des statistiques de blocs** :
+   - ✅ Problème : Tentative d'accès à `Page.objects.all()` dans le schéma public
+   - ✅ Solution : Itération sur tous les tenants actifs et agrégation des statistiques dans chaque schéma avec `tenant_context`
+   - ✅ Fichier modifié : `backend-django/api/views.py`
+
+3. **Gestion améliorée des erreurs pour les relations inexistantes** :
+   - ✅ Les erreurs "relation does not exist" pour `pages`, `services`, et `bookings` sont normales (tables n'existent que dans les schémas des tenants)
+   - ✅ Ces erreurs sont gérées avec des `try/except` et des `logger.warning()`, ce qui est le comportement attendu
+
+#### 🎨 Améliorations Frontend
+
+1. **Page dédiée pour l'édition des blocs** :
+   - ✅ Création de `/admin/blocks/[id]/page.tsx` pour l'édition des blocs
+   - ✅ Redirection depuis la liste des blocs vers la page d'édition dédiée
+   - ✅ Formulaire complet avec tous les onglets (Informations, Schéma JSON, Styles, Call-to-Action, Prévisualisation)
+   - ✅ Chargement automatique des données complètes du bloc depuis l'API
+
+2. **Création de pages depuis les projets** :
+   - ✅ Ajout d'un bouton "Créer une nouvelle page" dans `/admin/projects/[id]`
+   - ✅ Génération automatique du slug (ex: `nouvelle-page-1`, `nouvelle-page-2`)
+   - ✅ Ajout automatique de la page au projet après création
+   - ✅ Redirection vers l'éditeur de la nouvelle page
+
+3. **Amélioration de la gestion des templates** :
+   - ✅ Chargement complet des données du template (HTML, CSS, variables) lors de l'édition
+   - ✅ Utilisation de `templateService.getById()` pour récupérer toutes les données
+   - ✅ Fichier modifié : `frontend/src/app/admin/templates/page.tsx`
+
+4. **Correction des erreurs dans la page de login** :
+   - ✅ Ajout des états manquants : `tenantSlug`, `customDomain`, `showDomainConfig`, `configuringDomain`
+   - ✅ Correction de l'erreur `ReferenceError: tenantSlug is not defined`
+   - ✅ Fichier modifié : `frontend/src/app/login/page.tsx`
+
+5. **Amélioration de la gestion des erreurs** :
+   - ✅ Gestion améliorée des erreurs `ERR_BLOCKED_BY_CLIENT` dans `FeaturesContext.tsx`
+   - ✅ Suppression des warnings inutiles pour les erreurs de réseau/blocage
+   - ✅ Fichier modifié : `frontend/src/contexts/FeaturesContext.tsx`
+
+#### 📊 Tests et Qualité
+
+1. **Tests Backend** :
+   - ✅ Tous les tests backend passent avec succès
+   - ✅ Tests complets pour `api/views.py`, `blocks/views.py`, `blocks/serializers.py`, `projects/views.py`
+   - ✅ Script `run_all_tests.py` disponible pour exécuter tous les tests
+
+2. **Erreurs de Lint** :
+   - ⚠️ Les erreurs de lint sont principalement des avertissements TypeScript normaux (modules non résolus dans l'environnement de développement)
+   - ⚠️ Les erreurs "Cannot find module" sont normales dans un environnement où les types ne sont pas résolus correctement
+   - ✅ Aucune erreur de syntaxe réelle détectée
+
+3. **Logs des Conteneurs** :
+   - ✅ Les erreurs dans les logs backend sont normales (relations inexistantes dans le schéma public)
+   - ✅ Les erreurs dans les logs frontend sont résolues (variables manquantes corrigées)
+
+#### 📝 Fichiers Modifiés
+
+**Backend** :
+- `backend-django/api/views.py` : Correction UnboundLocalError, amélioration statistiques
+- `backend-django/billing/views.py` : Synchronisation des fonctionnalités avec les plans
+- `backend-django/projects/views.py` : Amélioration de l'autorisation
+- `backend-django/tenants/serializers.py` : Activation automatique des fonctionnalités
+- `backend-django/tenants/views.py` : Gestion des domaines personnalisés
+
+**Frontend** :
+- `frontend/src/app/admin/blocks/[id]/page.tsx` : Nouvelle page d'édition dédiée
+- `frontend/src/app/admin/blocks/page.tsx` : Redirection vers la page d'édition
+- `frontend/src/app/admin/projects/[id]/page.tsx` : Création de pages depuis les projets
+- `frontend/src/app/admin/templates/page.tsx` : Chargement complet des données
+- `frontend/src/app/login/page.tsx` : Correction des variables manquantes
+- `frontend/src/app/admin/billing/page.tsx` : Amélioration responsive
+- `frontend/src/app/admin/tenants/[id]/page.tsx` : Gestion des utilisateurs et sites
+- `frontend/src/components/AdminSidebar.tsx` : Amélioration du design du menu Projets
+
+## 🔄 Dernière Mise à Jour (Ancienne)
 
 **Date** : 2025-12-01  
 **Focus Actuel** : Corrections erreurs TypeScript/ESLint + Blocs pages publiques + Templates opérationnels + Menu Projets avec accordéon

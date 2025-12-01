@@ -82,21 +82,24 @@ api.interceptors.response.use(
     const isSilentEndpoint = silentEndpoints.some(endpoint => url.includes(endpoint))
     
     // Gérer les erreurs bloquées par le client (bloqueur de pub)
-    if (error.code === 'ERR_BLOCKED_BY_CLIENT' || error.message?.includes('ERR_BLOCKED_BY_CLIENT')) {
-      // Pour les endpoints silencieux, ne rien logger (géré dans FeaturesContext)
-      // Pour les autres, logger une seule fois
-      if (!isSilentEndpoint) {
-        // Utiliser un flag pour éviter les logs répétés
-        if (!window.__hasLoggedBlockedError) {
-          console.warn(`⚠️ Requête bloquée (probablement par un bloqueur de publicité): ${url}`);
-          console.warn('💡 Solution: Désactivez temporairement votre bloqueur de publicité pour localhost:9495');
-          window.__hasLoggedBlockedError = true;
-        }
+    const isBlockedError = error.code === 'ERR_BLOCKED_BY_CLIENT' || 
+                          error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||
+                          error.message?.includes('blocked by client');
+    
+    if (isBlockedError) {
+      // Pour les endpoints silencieux, ne rien logger (géré dans FeaturesContext/authService)
+      // Pour les autres endpoints critiques, logger une seule fois de manière discrète
+      if (!isSilentEndpoint && !window.__hasLoggedBlockedError) {
+        // Logger de manière discrète pour les endpoints critiques
+        console.warn(`⚠️ Requête bloquée (bloqueur de publicité): ${url}`);
+        console.warn('💡 Solution: Désactivez temporairement votre bloqueur de publicité pour localhost:9495');
+        window.__hasLoggedBlockedError = true;
       }
-    } else if (error.code === 'ERR_NETWORK') {
-      // Erreurs réseau normales
+      // Pour les endpoints silencieux, ne rien logger du tout
+    } else if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
+      // Erreurs réseau normales (backend non démarré, etc.)
       if (!isSilentEndpoint && !window.__hasLoggedNetworkError) {
-        console.warn(`⚠️ Erreur réseau: ${url}`);
+        console.warn(`⚠️ Erreur réseau: ${url} (backend non accessible?)`);
         window.__hasLoggedNetworkError = true;
       }
     }

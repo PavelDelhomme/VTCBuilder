@@ -9,7 +9,8 @@ from django.db import connection
 from django.db.models import Count, Sum, Q
 from django.utils import timezone
 from datetime import timedelta
-from tenants.models import Tenant, User
+# Tenant and User models are imported locally in methods to avoid UnboundLocalError
+# from tenants.models import Tenant, User  # Commented out to prevent shadowing issues
 from api.utils import add_cors_headers
 import logging
 
@@ -43,14 +44,15 @@ class DashboardView(APIView):
             if user.is_super_admin():
                 # Super admin sees all stats (exclude soft-deleted tenants)
                 try:
+                    from tenants.models import Tenant as TenantModel, User as UserModel
                     now = timezone.now()
-                    trial_tenants = Tenant.objects.filter(status='trial', deleted_at__isnull=True)
+                    trial_tenants = TenantModel.objects.filter(status='trial', deleted_at__isnull=True)
                     
                     stats.update({
-                        'total_tenants': Tenant.objects.filter(deleted_at__isnull=True).count(),
-                        'active_tenants': Tenant.objects.filter(status='active', deleted_at__isnull=True).count(),
+                        'total_tenants': TenantModel.objects.filter(deleted_at__isnull=True).count(),
+                        'active_tenants': TenantModel.objects.filter(status='active', deleted_at__isnull=True).count(),
                         'trial_tenants': trial_tenants.count(),
-                        'total_users': User.objects.count(),
+                        'total_users': UserModel.objects.count(),
                     })
                     
                     # Count trials expiring soon (within 7 days) with details
@@ -176,42 +178,47 @@ class DetailedStatsView(APIView):
                 add_cors_headers(error_response, request)
                 return error_response
             
+            # Import models with aliases to avoid any potential shadowing issues
+            # Use explicit imports to prevent UnboundLocalError
+            from tenants.models import Tenant as TenantModel, User as UserModel
+            # Ensure we never use the global Tenant/User directly, only TenantModel/UserModel
+            
             # Get detailed stats - structure correspondant à ce que le frontend attend
             stats = {
                 'overview': {
-                    'total_tenants': Tenant.objects.filter(deleted_at__isnull=True).count(),
-                    'active_tenants': Tenant.objects.filter(status='active', deleted_at__isnull=True).count(),
-                    'suspended_tenants': Tenant.objects.filter(status='suspended', deleted_at__isnull=True).count(),
-                    'trial_tenants': Tenant.objects.filter(status='trial', deleted_at__isnull=True).count(),
-                    'cancelled_tenants': Tenant.objects.filter(status='cancelled', deleted_at__isnull=True).count(),
-                    'total_users': User.objects.count(),
-                    'active_users': User.objects.filter(status='active').count(),
-                    'suspended_users': User.objects.filter(status='suspended').count(),
-                    'inactive_users': User.objects.filter(status='inactive').count(),
+                    'total_tenants': TenantModel.objects.filter(deleted_at__isnull=True).count(),
+                    'active_tenants': TenantModel.objects.filter(status='active', deleted_at__isnull=True).count(),
+                    'suspended_tenants': TenantModel.objects.filter(status='suspended', deleted_at__isnull=True).count(),
+                    'trial_tenants': TenantModel.objects.filter(status='trial', deleted_at__isnull=True).count(),
+                    'cancelled_tenants': TenantModel.objects.filter(status='cancelled', deleted_at__isnull=True).count(),
+                    'total_users': UserModel.objects.count(),
+                    'active_users': UserModel.objects.filter(status='active').count(),
+                    'suspended_users': UserModel.objects.filter(status='suspended').count(),
+                    'inactive_users': UserModel.objects.filter(status='inactive').count(),
                 },
                 'activity': {
-                    'tenants_today': Tenant.objects.filter(
+                    'tenants_today': TenantModel.objects.filter(
                         created_at__date=timezone.now().date(),
                         deleted_at__isnull=True
                     ).count(),
-                    'users_today': User.objects.filter(
+                    'users_today': UserModel.objects.filter(
                         created_at__date=timezone.now().date()
                     ).count(),
-                    'tenants_this_week': Tenant.objects.filter(
+                    'tenants_this_week': TenantModel.objects.filter(
                         created_at__gte=timezone.now() - timedelta(days=7),
                         deleted_at__isnull=True
                     ).count(),
-                    'users_this_week': User.objects.filter(
+                    'users_this_week': UserModel.objects.filter(
                         created_at__gte=timezone.now() - timedelta(days=7)
                     ).count(),
-                    'tenants_this_month': Tenant.objects.filter(
+                    'tenants_this_month': TenantModel.objects.filter(
                         created_at__gte=timezone.now() - timedelta(days=30),
                         deleted_at__isnull=True
                     ).count(),
-                    'users_this_month': User.objects.filter(
+                    'users_this_month': UserModel.objects.filter(
                         created_at__gte=timezone.now() - timedelta(days=30)
                     ).count(),
-                    'recently_suspended_users': User.objects.filter(
+                    'recently_suspended_users': UserModel.objects.filter(
                         status='suspended',
                         updated_at__gte=timezone.now() - timedelta(days=7)
                     ).count(),
@@ -301,22 +308,30 @@ class DetailedStatsView(APIView):
                     'by_month': [],
                 }
             
-            # Add blocks usage statistics
+            # Add blocks usage statistics - aggregate across all tenant schemas
             try:
                 from pages.models import Page
                 from collections import Counter
+                from django_tenants.utils import tenant_context
                 import json
                 
-                # Get all pages and count block types used
-                all_pages = Page.objects.all()
                 block_counter = Counter()
                 
-                for page in all_pages:
-                    if page.blocks and isinstance(page.blocks, list):
-                        for block in page.blocks:
-                            if isinstance(block, dict) and 'type' in block:
-                                block_type = block.get('type', 'unknown')
-                                block_counter[block_type] += 1
+                # Iterate through all active tenants and aggregate block usage
+                active_tenants = TenantModel.objects.filter(deleted_at__isnull=True)
+                for tenant in active_tenants:
+                    try:
+                        with tenant_context(tenant):
+                            all_pages = Page.objects.all()
+                            for page in all_pages:
+                                if page.blocks and isinstance(page.blocks, list):
+                                    for block in page.blocks:
+                                        if isinstance(block, dict) and 'type' in block:
+                                            block_type = block.get('type', 'unknown')
+                                            block_counter[block_type] += 1
+                    except Exception as e:
+                        logger.warning(f"Error calculating blocks usage for tenant {tenant.id}: {e}")
+                        continue
                 
                 # Get top 10 most used blocks
                 stats['blocks_usage'] = [
@@ -331,11 +346,11 @@ class DetailedStatsView(APIView):
             try:
                 from media.models import Template
                 from django_tenants.utils import tenant_context
-                # Tenant is already imported at the top of the file
                 
                 # Get templates from reference tenant or any tenant
                 templates_usage = []
-                reference_tenant = Tenant.objects.filter(deleted_at__isnull=True).first()
+                # Use TenantModel (imported at the start of get() method)
+                reference_tenant = TenantModel.objects.filter(deleted_at__isnull=True).first()
                 if reference_tenant:
                     with tenant_context(reference_tenant):
                         templates = Template.objects.filter(is_active=True).order_by('-usage_count')[:10]
@@ -354,55 +369,109 @@ class DetailedStatsView(APIView):
                 logger.warning(f"Error calculating templates usage: {e}")
                 stats['templates_usage'] = []
             
-            # Add pages statistics
+            # Add pages statistics - aggregate across all tenant schemas
             try:
                 from pages.models import Page
+                from django_tenants.utils import tenant_context
                 
                 pages_stats = {
-                    'total': Page.objects.count(),
-                    'published': Page.objects.filter(status='published').count(),
-                    'draft': Page.objects.filter(status='draft').count(),
-                    'scheduled': Page.objects.filter(status='scheduled').count(),
-                    'homepages': Page.objects.filter(is_homepage=True).count(),
-                    'created_today': Page.objects.filter(created_at__date=timezone.now().date()).count(),
-                    'created_this_week': Page.objects.filter(created_at__gte=timezone.now() - timedelta(days=7)).count(),
-                    'created_this_month': Page.objects.filter(created_at__gte=timezone.now() - timedelta(days=30)).count(),
+                    'total': 0,
+                    'published': 0,
+                    'draft': 0,
+                    'scheduled': 0,
+                    'homepages': 0,
+                    'created_today': 0,
+                    'created_this_week': 0,
+                    'created_this_month': 0,
                 }
+                
+                # Iterate through all active tenants and aggregate stats
+                active_tenants = TenantModel.objects.filter(deleted_at__isnull=True)
+                for tenant in active_tenants:
+                    try:
+                        with tenant_context(tenant):
+                            pages_stats['total'] += Page.objects.count()
+                            pages_stats['published'] += Page.objects.filter(status='published').count()
+                            pages_stats['draft'] += Page.objects.filter(status='draft').count()
+                            pages_stats['scheduled'] += Page.objects.filter(status='scheduled').count()
+                            pages_stats['homepages'] += Page.objects.filter(is_homepage=True).count()
+                            pages_stats['created_today'] += Page.objects.filter(created_at__date=timezone.now().date()).count()
+                            pages_stats['created_this_week'] += Page.objects.filter(created_at__gte=timezone.now() - timedelta(days=7)).count()
+                            pages_stats['created_this_month'] += Page.objects.filter(created_at__gte=timezone.now() - timedelta(days=30)).count()
+                    except Exception as e:
+                        logger.warning(f"Error calculating pages stats for tenant {tenant.id}: {e}")
+                        continue
+                
                 stats['pages_stats'] = pages_stats
             except Exception as e:
                 logger.warning(f"Error calculating pages stats: {e}")
                 stats['pages_stats'] = {}
             
-            # Add services statistics
+            # Add services statistics - aggregate across all tenant schemas
             try:
                 from services.models import Service
+                from django_tenants.utils import tenant_context
                 
                 services_stats = {
-                    'total': Service.objects.count(),
-                    'active': Service.objects.filter(is_active=True).count(),
-                    'created_today': Service.objects.filter(created_at__date=timezone.now().date()).count(),
-                    'created_this_week': Service.objects.filter(created_at__gte=timezone.now() - timedelta(days=7)).count(),
-                    'created_this_month': Service.objects.filter(created_at__gte=timezone.now() - timedelta(days=30)).count(),
+                    'total': 0,
+                    'active': 0,
+                    'created_today': 0,
+                    'created_this_week': 0,
+                    'created_this_month': 0,
                 }
+                
+                # Iterate through all active tenants and aggregate stats
+                active_tenants = TenantModel.objects.filter(deleted_at__isnull=True)
+                for tenant in active_tenants:
+                    try:
+                        with tenant_context(tenant):
+                            services_stats['total'] += Service.objects.count()
+                            services_stats['active'] += Service.objects.filter(is_active=True).count()
+                            services_stats['created_today'] += Service.objects.filter(created_at__date=timezone.now().date()).count()
+                            services_stats['created_this_week'] += Service.objects.filter(created_at__gte=timezone.now() - timedelta(days=7)).count()
+                            services_stats['created_this_month'] += Service.objects.filter(created_at__gte=timezone.now() - timedelta(days=30)).count()
+                    except Exception as e:
+                        logger.warning(f"Error calculating services stats for tenant {tenant.id}: {e}")
+                        continue
+                
                 stats['services_stats'] = services_stats
             except Exception as e:
                 logger.warning(f"Error calculating services stats: {e}")
                 stats['services_stats'] = {}
             
-            # Add bookings statistics
+            # Add bookings statistics - aggregate across all tenant schemas
             try:
                 from bookings.models import Booking
+                from django_tenants.utils import tenant_context
                 
                 bookings_stats = {
-                    'total': Booking.objects.count(),
-                    'pending': Booking.objects.filter(status='pending').count(),
-                    'confirmed': Booking.objects.filter(status='confirmed').count(),
-                    'completed': Booking.objects.filter(status='completed').count(),
-                    'cancelled': Booking.objects.filter(status='cancelled').count(),
-                    'today': Booking.objects.filter(pickup_datetime__date=timezone.now().date()).count(),
-                    'this_week': Booking.objects.filter(pickup_datetime__gte=timezone.now() - timedelta(days=7)).count(),
-                    'this_month': Booking.objects.filter(pickup_datetime__gte=timezone.now() - timedelta(days=30)).count(),
+                    'total': 0,
+                    'pending': 0,
+                    'confirmed': 0,
+                    'completed': 0,
+                    'cancelled': 0,
+                    'today': 0,
+                    'this_week': 0,
+                    'this_month': 0,
                 }
+                
+                # Iterate through all active tenants and aggregate stats
+                active_tenants = TenantModel.objects.filter(deleted_at__isnull=True)
+                for tenant in active_tenants:
+                    try:
+                        with tenant_context(tenant):
+                            bookings_stats['total'] += Booking.objects.count()
+                            bookings_stats['pending'] += Booking.objects.filter(status='pending').count()
+                            bookings_stats['confirmed'] += Booking.objects.filter(status='confirmed').count()
+                            bookings_stats['completed'] += Booking.objects.filter(status='completed').count()
+                            bookings_stats['cancelled'] += Booking.objects.filter(status='cancelled').count()
+                            bookings_stats['today'] += Booking.objects.filter(pickup_datetime__date=timezone.now().date()).count()
+                            bookings_stats['this_week'] += Booking.objects.filter(pickup_datetime__gte=timezone.now() - timedelta(days=7)).count()
+                            bookings_stats['this_month'] += Booking.objects.filter(pickup_datetime__gte=timezone.now() - timedelta(days=30)).count()
+                    except Exception as e:
+                        logger.warning(f"Error calculating bookings stats for tenant {tenant.id}: {e}")
+                        continue
+                
                 stats['bookings_stats'] = bookings_stats
             except Exception as e:
                 logger.warning(f"Error calculating bookings stats: {e}")
@@ -410,7 +479,7 @@ class DetailedStatsView(APIView):
             
             # Add users by role
             try:
-                users_by_role = User.objects.values('role').annotate(count=Count('id')).order_by('-count')
+                users_by_role = UserModel.objects.values('role').annotate(count=Count('id')).order_by('-count')
                 stats['users_by_role'] = [
                     {'role': item['role'] or 'unknown', 'count': item['count']}
                     for item in users_by_role
@@ -421,7 +490,7 @@ class DetailedStatsView(APIView):
             
             # Add users by status
             try:
-                users_by_status = User.objects.values('status').annotate(count=Count('id')).order_by('-count')
+                users_by_status = UserModel.objects.values('status').annotate(count=Count('id')).order_by('-count')
                 stats['users_by_status'] = [
                     {'status': item['status'] or 'unknown', 'count': item['count']}
                     for item in users_by_status
@@ -444,7 +513,7 @@ class DetailedStatsView(APIView):
             
             # Add tenants by status
             try:
-                tenants_by_status = Tenant.objects.filter(deleted_at__isnull=True).values('status').annotate(count=Count('id')).order_by('-count')
+                tenants_by_status = TenantModel.objects.filter(deleted_at__isnull=True).values('status').annotate(count=Count('id')).order_by('-count')
                 stats['tenants_by_status'] = [
                     {'status': item['status'] or 'unknown', 'count': item['count']}
                     for item in tenants_by_status
@@ -455,25 +524,41 @@ class DetailedStatsView(APIView):
             
             # Add recent tenants
             try:
-                recent_tenants = Tenant.objects.filter(deleted_at__isnull=True).order_by('-created_at')[:10]
-                stats['recent_tenants'] = [
-                    {
-                        'id': t.id,
-                        'name': t.name,
-                        'email': t.email,
-                        'status': t.status,
-                        'plan': getattr(t.subscription, 'plan', None) and t.subscription.plan.name or 'no_plan',
-                        'created_at': t.created_at.isoformat(),
-                    }
-                    for t in recent_tenants
-                ]
+                recent_tenants = TenantModel.objects.filter(deleted_at__isnull=True).order_by('-created_at')[:10]
+                stats['recent_tenants'] = []
+                for t in recent_tenants:
+                    try:
+                        plan_name = 'no_plan'
+                        # Safely get plan name
+                        if hasattr(t, 'subscription') and t.subscription:
+                            if hasattr(t.subscription, 'plan') and t.subscription.plan:
+                                plan_name = t.subscription.plan.name
+                        stats['recent_tenants'].append({
+                            'id': t.id,
+                            'name': t.name,
+                            'email': t.email,
+                            'status': t.status,
+                            'plan': plan_name,
+                            'created_at': t.created_at.isoformat(),
+                        })
+                    except Exception as e:
+                        logger.warning(f"Error processing tenant {t.id}: {e}")
+                        # Add tenant without plan info
+                        stats['recent_tenants'].append({
+                            'id': t.id,
+                            'name': t.name,
+                            'email': t.email,
+                            'status': t.status,
+                            'plan': 'no_plan',
+                            'created_at': t.created_at.isoformat(),
+                        })
             except Exception as e:
                 logger.warning(f"Error getting recent tenants: {e}")
                 stats['recent_tenants'] = []
             
             # Add recent users
             try:
-                recent_users = User.objects.select_related('tenant').order_by('-created_at')[:10]
+                recent_users = UserModel.objects.select_related('tenant').order_by('-created_at')[:10]
                 stats['recent_users'] = [
                     {
                         'id': u.id,

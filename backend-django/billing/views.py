@@ -535,6 +535,16 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
                 current_period_end=current_period_end,
             )
             
+            # Activer automatiquement les fonctionnalités selon le plan
+            try:
+                from tenants.utils import enable_features_for_tenant
+                enable_features_for_tenant(tenant, plan)
+            except Exception as e:
+                # Ne pas bloquer la création de l'abonnement si l'activation des features échoue
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Erreur activation fonctionnalités pour tenant {tenant.slug}: {e}")
+            
             headers = self.get_success_headers(serializer.data)
             response = Response(
                 SubscriptionSerializer(subscription).data,
@@ -700,19 +710,27 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         
         try:
             new_plan = PricingPlan.objects.get(id=plan_id)
+            subscription.plan = new_plan
+            subscription.save(update_fields=['plan'])
+            
+            # Synchroniser les fonctionnalités avec le nouveau plan
+            try:
+                from tenants.utils import sync_tenant_features
+                sync_tenant_features(subscription.tenant)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Erreur synchronisation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
+            
+            return Response({
+                'status': 'Subscription plan updated',
+                'subscription': SubscriptionSerializer(subscription).data
+            })
         except PricingPlan.DoesNotExist:
             return Response(
                 {'error': 'Plan not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
-        subscription.plan = new_plan
-        subscription.save(update_fields=['plan'])
-        
-        return Response({
-            'status': 'Subscription plan updated',
-            'subscription': SubscriptionSerializer(subscription).data
-        })
 
     @action(detail=True, methods=['post'])
     def update_status(self, request, pk=None):
@@ -737,6 +755,23 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             subscription.cancelled_at = timezone.now()
         elif new_status == 'active':
             subscription.cancelled_at = None
+            # Activer les fonctionnalités lors de l'activation
+            try:
+                from tenants.utils import enable_features_for_tenant
+                enable_features_for_tenant(subscription.tenant, subscription.plan)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Erreur activation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
+        elif new_status == 'trial':
+            # Activer les fonctionnalités lors du passage en trial
+            try:
+                from tenants.utils import enable_features_for_tenant
+                enable_features_for_tenant(subscription.tenant, subscription.plan)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Erreur activation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
         
         subscription.save(update_fields=['status', 'cancelled_at'])
         

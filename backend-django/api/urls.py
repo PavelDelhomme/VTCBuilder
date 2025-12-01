@@ -65,8 +65,6 @@ router.register(r'invoices', InvoiceViewSet, basename='invoice')
 router.register(r'payments', PaymentViewSet, basename='payment')
 router.register(r'payment-methods', PaymentMethodViewSet, basename='payment-method')
 router.register(r'invoice-templates', InvoiceTemplateViewSet, basename='invoice-template')
-if PROJECTS_AVAILABLE and ProjectViewSet:
-    router.register(r'projects', ProjectViewSet, basename='project')
 # System settings is handled as a singleton with a direct view function above
 
 urlpatterns = [

@@ -138,6 +138,22 @@ class TenantSerializer(serializers.ModelSerializer):
         else:
             invitation_token = existing_token.token
         
+        # Activer les fonctionnalités selon le plan du tenant (si abonnement existe)
+        try:
+            from .utils import enable_features_for_tenant
+            from billing.models import Subscription
+            subscription = Subscription.objects.filter(
+                tenant=tenant,
+                status__in=['active', 'trial']
+            ).first()
+            if subscription:
+                enable_features_for_tenant(tenant, subscription.plan)
+        except Exception as e:
+            # Ne pas bloquer la création du tenant si l'activation des features échoue
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Erreur activation fonctionnalités pour tenant {tenant.slug}: {e}")
+        
         # Generate setup URL
         frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:9494')
         setup_url = f"{frontend_url}/setup?token={invitation_token}&email={admin_email}"

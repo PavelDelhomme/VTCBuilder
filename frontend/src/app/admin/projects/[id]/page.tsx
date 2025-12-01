@@ -181,6 +181,57 @@ export default function ProjectDetailPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Pages du Projet</h2>
+            <button
+              onClick={async () => {
+                try {
+                  // Récupérer les pages existantes pour trouver le prochain numéro
+                  const currentSettings = await api.get('/system-settings/')
+                  const publicPages = currentSettings.data.public_pages || {}
+                  
+                  // Trouver le prochain numéro disponible
+                  let pageNumber = 1
+                  let newSlug = `nouvelle-page-${pageNumber}`
+                  while (publicPages[newSlug]) {
+                    pageNumber++
+                    newSlug = `nouvelle-page-${pageNumber}`
+                  }
+                  
+                  // Créer la nouvelle page avec un nom automatique
+                  const newPageTitle = `Nouvelle page ${pageNumber}`
+                  publicPages[newSlug] = {
+                    title: newPageTitle,
+                    blocks: [],
+                    meta_title: '',
+                    meta_description: '',
+                    is_active: true,
+                    order: Object.keys(publicPages).length + 1,
+                  }
+                  
+                  // Sauvegarder la nouvelle page
+                  await api.patch('/system-settings/', { public_pages: publicPages })
+                  
+                  // Ajouter automatiquement la page au projet
+                  await projectService.addPage(projectId, newSlug, 'public')
+                  
+                  toast.success(`Page "${newPageTitle}" créée et ajoutée au projet !`)
+                  
+                  // Recharger le projet pour afficher la nouvelle page
+                  loadProject()
+                  
+                  // Naviguer vers l'éditeur de la nouvelle page
+                  router.push(`/admin/pages-public/${newSlug}/edit`)
+                } catch (error: any) {
+                  console.error('Erreur création nouvelle page:', error)
+                  toast.error(error.response?.data?.error || 'Erreur lors de la création de la nouvelle page')
+                }
+              }}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Créer une nouvelle page
+            </button>
           </div>
           
           {project.pages && project.pages.length > 0 ? (

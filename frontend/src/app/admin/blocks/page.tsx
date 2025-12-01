@@ -142,23 +142,8 @@ export default function AdminBlocksPage() {
   }
 
   const handleEdit = (block: BlockType) => {
-    setEditingBlock(block)
-    setFormData({
-      name: block.name,
-      label: block.label,
-      icon: block.icon || '📦',
-      category: block.category,
-      description: block.description || '',
-      schema: JSON.stringify(block.schema || {}, null, 2),
-      default_styles: JSON.stringify(block.default_styles || {}, null, 2),
-      call_to_action: JSON.stringify(block.call_to_action || {}, null, 2),
-      available_plans: block.available_plans || [],
-      is_active: block.is_active,
-      order: block.order,
-    })
-    setPreviewData(block.schema || {})
-    setShowForm(true)
-    setActiveTab('info')
+    // Rediriger vers la page d'édition dédiée
+    router.push(`/admin/blocks/${block.id}`)
   }
 
   const handleDelete = async (id: number, name: string) => {

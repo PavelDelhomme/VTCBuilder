@@ -21,11 +21,8 @@ class CallToActionSerializer(serializers.ModelSerializer):
 
 class BlockTypeSerializer(serializers.ModelSerializer):
     """Serializer for BlockType"""
-    # Use read_only for available_plans to avoid queryset requirement at class definition
-    available_plans = serializers.PrimaryKeyRelatedField(
-        many=True,
-        read_only=True  # Read-only to avoid queryset requirement
-    )
+    # Use SerializerMethodField for available_plans to avoid queryset requirement at class definition
+    available_plans = serializers.SerializerMethodField()
     plan_names = serializers.SerializerMethodField()
     # Separate field for writing
     available_plan_ids = serializers.ListField(
@@ -80,6 +77,10 @@ class BlockTypeSerializer(serializers.ModelSerializer):
         if cta_ids is not None:
             instance.call_to_actions.set(CallToAction.objects.filter(id__in=cta_ids))
         return instance
+    
+    def get_available_plans(self, obj):
+        """Return list of plan IDs for this block"""
+        return [plan.id for plan in obj.available_plans.all()]
     
     def get_plan_names(self, obj):
         """Return list of plan names for this block"""

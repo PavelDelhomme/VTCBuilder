@@ -204,6 +204,15 @@ class CallToActionViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger.error("CallToAction model is not available")
                 return CallToAction.objects.none() if CallToAction else []
             
+            # Auto-create default CTAs if none exist
+            if CallToAction.objects.count() == 0:
+                try:
+                    from django.core.management import call_command
+                    call_command('create_default_ctas', verbosity=0)
+                    logger.info("Default CTAs created automatically")
+                except Exception as e:
+                    logger.warning(f"Could not create default CTAs: {e}")
+            
             user = self.request.user
             
             # Super admin sees all CTAs (including inactive)

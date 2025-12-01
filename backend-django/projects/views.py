@@ -23,8 +23,17 @@ class ProjectViewSet(viewsets.ModelViewSet):
         """Filter projects based on user"""
         user = self.request.user
         
+        # Vérifier que l'utilisateur est authentifié
+        if not user or not user.is_authenticated:
+            return Project.objects.none()
+        
         # Super admin sees all projects
-        if user.is_superuser:
+        # Vérifier d'abord is_super_admin (méthode personnalisée)
+        if hasattr(user, 'is_super_admin') and callable(user.is_super_admin) and user.is_super_admin():
+            return Project.objects.all()
+        
+        # Vérifier aussi is_superuser (attribut Django standard)
+        if hasattr(user, 'is_superuser') and user.is_superuser:
             return Project.objects.all()
         
         # Tenant admin sees only their tenant's projects

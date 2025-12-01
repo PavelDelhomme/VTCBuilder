@@ -13,6 +13,8 @@ export default function PublicHeader({ showThemeToggle = false }: PublicHeaderPr
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  
+  // Utiliser useTheme - le provider doit être monté dans le layout
   const { resolvedTheme, toggleTheme } = useTheme()
 
   useEffect(() => {

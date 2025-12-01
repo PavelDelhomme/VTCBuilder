@@ -339,6 +339,124 @@ class TenantViewSet(viewsets.ModelViewSet):
             'created_at': admin_user.created_at.isoformat() if admin_user.created_at else None,
         })
 
+    @action(detail=True, methods=['post', 'get'])
+    def domains(self, request, pk=None):
+        """
+        Manage domains for a tenant
+        GET: List all domains for the tenant
+        POST: Add a new domain to the tenant
+        """
+        from tenants.models import Domain
+        
+        tenant = self.get_object()
+        
+        # Vérifier les permissions
+        user = request.user
+        if not user.is_super_admin() and (not user.tenant or user.tenant.id != tenant.id):
+            response = Response(
+                {'error': 'You do not have permission to manage domains for this tenant'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        if request.method == 'GET':
+            # Lister tous les domaines du tenant
+            domains = Domain.objects.filter(tenant=tenant)
+            serializer = DomainSerializer(domains, many=True)
+            response = Response(serializer.data)
+            add_cors_headers(response, request)
+            return response
+        
+        elif request.method == 'POST':
+            # Ajouter un nouveau domaine
+            domain_name = request.data.get('domain')
+            is_primary = request.data.get('is_primary', False)
+            
+            if not domain_name:
+                response = Response(
+                    {'error': 'Domain name is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                add_cors_headers(response, request)
+                return response
+            
+            # Vérifier si le domaine existe déjà pour un autre tenant
+            existing_domain = Domain.objects.filter(domain=domain_name).exclude(tenant=tenant).first()
+            if existing_domain:
+                response = Response(
+                    {'error': f'Domain {domain_name} is already used by another tenant'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                add_cors_headers(response, request)
+                return response
+            
+            # Si on définit ce domaine comme primaire, désactiver les autres
+            if is_primary:
+                Domain.objects.filter(tenant=tenant, is_primary=True).update(is_primary=False)
+            
+            # Créer le domaine
+            domain = Domain.objects.create(
+                tenant=tenant,
+                domain=domain_name,
+                is_primary=is_primary
+            )
+            
+            serializer = DomainSerializer(domain)
+            response = Response(serializer.data, status=status.HTTP_201_CREATED)
+            add_cors_headers(response, request)
+            return response
+    
+    @action(detail=True, methods=['delete'], url_path='domains/(?P<domain_id>[^/.]+)')
+    def delete_domain(self, request, pk=None, domain_id=None):
+        """
+        Delete a domain from a tenant
+        """
+        from tenants.models import Domain
+        
+        tenant = self.get_object()
+        
+        # Vérifier les permissions
+        user = request.user
+        if not user.is_super_admin() and (not user.tenant or user.tenant.id != tenant.id):
+            response = Response(
+                {'error': 'You do not have permission to delete domains for this tenant'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        try:
+            domain = Domain.objects.get(id=domain_id, tenant=tenant)
+            
+            # Ne pas permettre la suppression du domaine primaire s'il n'y en a qu'un
+            if domain.is_primary:
+                other_domains = Domain.objects.filter(tenant=tenant).exclude(id=domain_id)
+                if not other_domains.exists():
+                    response = Response(
+                        {'error': 'Cannot delete the only domain of a tenant'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                    add_cors_headers(response, request)
+                    return response
+                # Si on supprime le domaine primaire, définir le premier autre comme primaire
+                first_other = other_domains.first()
+                if first_other:
+                    first_other.is_primary = True
+                    first_other.save()
+            
+            domain.delete()
+            response = Response({'message': 'Domain deleted successfully'})
+            add_cors_headers(response, request)
+            return response
+        except Domain.DoesNotExist:
+            response = Response(
+                {'error': 'Domain not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            add_cors_headers(response, request)
+            return response
+    
     @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):
         """

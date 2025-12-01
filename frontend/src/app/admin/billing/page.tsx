@@ -134,7 +134,7 @@ function SubscriptionRow({
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-        <div className="flex justify-end items-center space-x-2">
+        <div className="flex flex-wrap justify-end items-center gap-2">
           <button
             onClick={() => router.push(`/admin/billing/subscriptions/${subscription.id}`)}
             className="text-blue-600 hover:text-blue-900"
@@ -178,7 +178,7 @@ function SubscriptionRow({
                 className="fixed inset-0 z-10"
                 onClick={() => setShowMenu(false)}
               />
-              <div className="absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-20 max-h-96 overflow-y-auto">
+              <div className="absolute right-0 mt-2 w-56 sm:w-64 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-20 max-h-96 overflow-y-auto">
                 <div className="py-1" role="menu">
                   {subscription.status === 'cancelled' && (
                     <button
@@ -412,8 +412,9 @@ export default function BillingPage() {
       title="Facturation"
       subtitle="Gestion complète de la facturation et des paiements"
     >
+      <div className="w-full max-w-full overflow-x-hidden">
       {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
+      <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
         {/* Mobile: Menu déroulant */}
         <div className="lg:hidden mb-4">
           <select
@@ -539,30 +540,30 @@ export default function BillingPage() {
       {activeTab === 'overview' && stats && (
         <div className="space-y-6">
           {/* Cartes Statistiques Principales */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Revenus Totaux */}
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-4 sm:p-6 text-white">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm opacity-90">Revenus Totaux</p>
-                <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <p className="text-xs sm:text-sm opacity-90">Revenus Totaux</p>
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 opacity-80 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <p className="text-3xl font-bold">{stats.total_revenue?.toFixed(2) || '0.00'}€</p>
+              <p className="text-2xl sm:text-3xl font-bold break-words">{stats.total_revenue?.toFixed(2) || '0.00'}€</p>
               {stats.yearly_revenue && stats.yearly_revenue > 0 && (
-                <p className="text-sm opacity-80 mt-1">Année en cours: {stats.yearly_revenue.toFixed(2)}€</p>
+                <p className="text-xs sm:text-sm opacity-80 mt-1 break-words">Année en cours: {stats.yearly_revenue.toFixed(2)}€</p>
               )}
             </div>
 
             {/* Revenus Mensuels */}
-            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+            <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-4 sm:p-6 text-white">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm opacity-90">Revenus Ce Mois</p>
-                <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <p className="text-xs sm:text-sm opacity-90">Revenus Ce Mois</p>
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 opacity-80 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <p className="text-3xl font-bold">{stats.monthly_revenue?.toFixed(2) || '0.00'}€</p>
+              <p className="text-2xl sm:text-3xl font-bold break-words">{stats.monthly_revenue?.toFixed(2) || '0.00'}€</p>
               {stats.last_month_revenue && stats.last_month_revenue > 0 && (
                 <p className="text-sm opacity-80 mt-1">
                   Mois dernier: {stats.last_month_revenue.toFixed(2)}€
@@ -576,43 +577,43 @@ export default function BillingPage() {
             </div>
 
             {/* MRR (Monthly Recurring Revenue) */}
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-4 sm:p-6 text-white">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm opacity-90">Revenus Récurrents</p>
-                <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <p className="text-xs sm:text-sm opacity-90">Revenus Récurrents</p>
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 opacity-80 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
-              <p className="text-3xl font-bold">{stats.monthly_recurring_revenue?.toFixed(2) || '0.00'}€</p>
-              <p className="text-sm opacity-80 mt-1">MRR mensuel</p>
+              <p className="text-2xl sm:text-3xl font-bold break-words">{stats.monthly_recurring_revenue?.toFixed(2) || '0.00'}€</p>
+              <p className="text-xs sm:text-sm opacity-80 mt-1">MRR mensuel</p>
             </div>
 
             {/* Abonnements Actifs */}
-            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-lg p-6 text-white">
+            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-lg p-4 sm:p-6 text-white">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm opacity-90">Abonnements Actifs</p>
-                <svg className="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <p className="text-xs sm:text-sm opacity-90">Abonnements Actifs</p>
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 opacity-80 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <p className="text-3xl font-bold">{stats.active_subscriptions || 0}</p>
+              <p className="text-2xl sm:text-3xl font-bold">{stats.active_subscriptions || 0}</p>
               {stats.total_subscriptions && (
-                <p className="text-sm opacity-80 mt-1">Sur {stats.total_subscriptions} au total</p>
+                <p className="text-xs sm:text-sm opacity-80 mt-1">Sur {stats.total_subscriptions} au total</p>
               )}
             </div>
           </div>
 
           {/* Deuxième rangée de statistiques */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Factures */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Factures</p>
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Factures</p>
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_invoices || 0}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_invoices || 0}</p>
               <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 <span className="text-green-600">✓ Payées: {stats.paid_invoices || 0}</span>
                 {' • '}
@@ -628,7 +629,7 @@ export default function BillingPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_payments || 0}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_payments || 0}</p>
               <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 <span className="text-green-600">✓ Réussis: {stats.succeeded_payments || 0}</span>
                 {' • '}
@@ -637,14 +638,14 @@ export default function BillingPage() {
             </div>
 
             {/* Tenants */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Tenants</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Tenants</p>
                 <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_tenants || 0}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total_tenants || 0}</p>
               <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 <span className="text-blue-600">✓ Avec abonnement: {stats.tenants_with_subscription || 0}</span>
                 {' • '}
@@ -653,14 +654,14 @@ export default function BillingPage() {
             </div>
 
             {/* Montant Impayé */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 border-red-500">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6 border-l-4 border-red-500">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-600 dark:text-gray-400">Montant Impayé</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Montant Impayé</p>
                 <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <p className="text-2xl font-bold text-red-600">{stats.unpaid_amount?.toFixed(2) || '0.00'}€</p>
+              <p className="text-xl sm:text-2xl font-bold text-red-600">{stats.unpaid_amount?.toFixed(2) || '0.00'}€</p>
               {stats.overdue_amount && stats.overdue_amount > 0 && (
                 <p className="text-xs text-red-600 mt-1">Dont en retard: {stats.overdue_amount.toFixed(2)}€</p>
               )}
@@ -669,21 +670,22 @@ export default function BillingPage() {
 
           {/* Graphique des Revenus Mensuels */}
           {stats.monthly_revenues_chart && stats.monthly_revenues_chart.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Revenus des 12 Derniers Mois</h3>
-              <div className="flex items-end justify-between space-x-2 h-64">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Revenus des 12 Derniers Mois</h3>
+              <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                <div className="flex items-end justify-between space-x-1 sm:space-x-2 h-48 sm:h-64" style={{ minWidth: 'max-content' }}>
                 {stats.monthly_revenues_chart.map((month: any, index: number) => {
                   const maxRevenue = Math.max(...stats.monthly_revenues_chart.map((m: any) => m.revenue || 0))
                   const height = maxRevenue > 0 ? (month.revenue / maxRevenue) * 100 : 0
                   return (
-                    <div key={index} className="flex-1 flex flex-col items-center">
+                    <div key={index} className="flex-1 flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
                       <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-t relative" style={{ height: `${Math.max(height, 5)}%` }}>
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t"></div>
                       </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center transform -rotate-45 origin-top-left whitespace-nowrap">
+                      <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mt-2 text-center transform -rotate-45 origin-top-left whitespace-nowrap">
                         {month.label?.split(' ')[0] || month.month}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">{month.revenue.toFixed(0)}€</p>
+                      <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-500 mt-1">{month.revenue.toFixed(0)}€</p>
                     </div>
                   )
                 })}
@@ -693,8 +695,8 @@ export default function BillingPage() {
 
           {/* Plans Tarifaires les Plus Utilisés */}
           {stats.popular_plans && stats.popular_plans.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Plans Tarifaires les Plus Utilisés</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Plans Tarifaires les Plus Utilisés</h3>
               <div className="space-y-4">
                 {stats.popular_plans.map((plan: any, index: number) => {
                   const percentage = stats.total_subscriptions > 0 
@@ -757,10 +759,10 @@ export default function BillingPage() {
           )}
 
           {/* Répartition des Statuts d'Abonnements */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Statuts des Abonnements */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Répartition des Abonnements</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Répartition des Abonnements</h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center space-x-2">
@@ -855,21 +857,22 @@ export default function BillingPage() {
 
       {/* Subscriptions Tab */}
       {activeTab === 'subscriptions' && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Abonnements</h2>
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">Abonnements</h2>
             <button
               onClick={() => setShowCreateSubscriptionModal(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm sm:text-base whitespace-nowrap"
             >
               + Créer un abonnement
             </button>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <ResponsiveTable
-              headers={['Tenant', 'Plan', 'Statut', 'Début', 'Fin', 'Montant', 'Actions']}
-              emptyMessage="Aucun abonnement"
-            >
+            <div className="overflow-x-auto">
+              <ResponsiveTable
+                headers={['Tenant', 'Plan', 'Statut', 'Cycle', 'Période', 'Montant', 'Actions']}
+                emptyMessage="Aucun abonnement"
+              >
               {subscriptions.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
@@ -945,22 +948,22 @@ export default function BillingPage() {
             <>
               {/* Stats Cards */}
               {unpaidItems.stats && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="bg-red-50 border border-red-200 rounded-lg shadow p-6">
-                    <p className="text-sm text-red-700 mb-2">Abonnements en Retard</p>
-                    <p className="text-3xl font-bold text-red-900">{unpaidItems.stats.past_due_count || 0}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                  <div className="bg-red-50 border border-red-200 rounded-lg shadow p-4 sm:p-6">
+                    <p className="text-xs sm:text-sm text-red-700 mb-2">Abonnements en Retard</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-red-900 break-words">{unpaidItems.stats.past_due_count || 0}</p>
                   </div>
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg shadow p-6">
-                    <p className="text-sm text-yellow-700 mb-2">Factures Impayées</p>
-                    <p className="text-3xl font-bold text-yellow-900">{unpaidItems.stats.unpaid_invoices_count || 0}</p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg shadow p-4 sm:p-6">
+                    <p className="text-xs sm:text-sm text-yellow-700 mb-2">Factures Impayées</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-yellow-900 break-words">{unpaidItems.stats.unpaid_invoices_count || 0}</p>
                   </div>
-                  <div className="bg-orange-50 border border-orange-200 rounded-lg shadow p-6">
-                    <p className="text-sm text-orange-700 mb-2">Factures en Retard</p>
-                    <p className="text-3xl font-bold text-orange-900">{unpaidItems.stats.overdue_invoices_count || 0}</p>
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg shadow p-4 sm:p-6">
+                    <p className="text-xs sm:text-sm text-orange-700 mb-2">Factures en Retard</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-orange-900 break-words">{unpaidItems.stats.overdue_invoices_count || 0}</p>
                   </div>
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg shadow p-6">
-                    <p className="text-sm text-purple-700 mb-2">Montant Total Impayé</p>
-                    <p className="text-3xl font-bold text-purple-900">{unpaidItems.stats.total_unpaid_amount?.toFixed(2) || '0.00'}€</p>
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg shadow p-4 sm:p-6">
+                    <p className="text-xs sm:text-sm text-purple-700 mb-2">Montant Total Impayé</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-purple-900 break-words">{unpaidItems.stats.total_unpaid_amount?.toFixed(2) || '0.00'}€</p>
                   </div>
                 </div>
               )}
@@ -968,8 +971,8 @@ export default function BillingPage() {
               {/* Past Due Subscriptions */}
               {unpaidItems.past_due_subscriptions && unpaidItems.past_due_subscriptions.length > 0 && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Abonnements en Retard de Paiement</h2>
+                  <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Abonnements en Retard de Paiement</h2>
                   </div>
                   <ResponsiveTable
                     headers={['Tenant', 'Plan', 'Statut', 'Montant Impayé', 'Actions']}
@@ -977,30 +980,30 @@ export default function BillingPage() {
                   >
                     {unpaidItems.past_due_subscriptions.map((sub: Subscription) => (
                       <tr key={sub.id} className="hover:bg-gray-50 dark:bg-gray-900">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                          <div>
-                            <div>{sub.tenant?.name || '-'}</div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">{sub.tenant?.email || '-'}</div>
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <div className="min-w-0">
+                            <div className="truncate">{sub.tenant?.name || '-'}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{sub.tenant?.email || '-'}</div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {sub.plan?.name || '-'}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400">
+                          <span className="truncate block">{sub.plan?.name || '-'}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(sub.status)}`}>
                             En retard
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-red-600">
-                          {sub.unpaid_amount?.toFixed(2) || '0.00'}€
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm font-semibold text-red-600">
+                          <div className="break-words">{sub.unpaid_amount?.toFixed(2) || '0.00'}€</div>
                           {sub.unpaid_invoices_count && sub.unpaid_invoices_count > 0 && (
                             <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
                               ({sub.unpaid_invoices_count} facture{sub.unpaid_invoices_count > 1 ? 's' : ''})
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                          <div className="flex justify-end space-x-2">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-right text-sm">
+                          <div className="flex flex-wrap justify-end gap-1 sm:gap-2">
                             <button
                               onClick={() => router.push(`/admin/billing/subscriptions/${sub.id}`)}
                               className="text-blue-600 hover:text-blue-900"
@@ -1054,31 +1057,31 @@ export default function BillingPage() {
                       
                       return (
                         <tr key={invoice.id} className="hover:bg-red-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {invoice.invoice_number}
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                            <span className="truncate block">{invoice.invoice_number}</span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            <div>
-                              <div>{invoice.tenant?.name || '-'}</div>
-                              <div className="text-xs text-gray-400">{invoice.tenant?.email || '-'}</div>
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400">
+                            <div className="min-w-0">
+                              <div className="truncate">{invoice.tenant?.name || '-'}</div>
+                              <div className="text-xs text-gray-400 truncate">{invoice.tenant?.email || '-'}</div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {invoice.subscription?.plan?.name || '-'}
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400">
+                            <span className="truncate block">{invoice.subscription?.plan?.name || '-'}</span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-gray-100">
-                            {invoice.total} {invoice.currency}
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            <span className="break-words">{invoice.total} {invoice.currency}</span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {dueDate.toLocaleDateString('fr-FR')}
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400">
+                            {dueDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4">
                             <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
                               {daysOverdue} jour{daysOverdue > 1 ? 's' : ''}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                            <div className="flex justify-end space-x-2">
+                          <td className="px-3 sm:px-6 py-3 sm:py-4 text-right text-sm">
+                            <div className="flex flex-wrap justify-end gap-1 sm:gap-2">
                               <button
                                 onClick={async () => {
                                   try {
@@ -1126,8 +1129,8 @@ export default function BillingPage() {
               {/* All Unpaid Invoices */}
               {unpaidItems.unpaid_invoices && unpaidItems.unpaid_invoices.length > 0 && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Toutes les Factures Impayées</h2>
+                  <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Toutes les Factures Impayées</h2>
                   </div>
                   <ResponsiveTable
                     headers={['N° Facture', 'Tenant', 'Plan', 'Montant', 'Date', 'Échéance', 'Actions']}
@@ -1135,26 +1138,26 @@ export default function BillingPage() {
                   >
                     {unpaidItems.unpaid_invoices.map((invoice: Invoice) => (
                       <tr key={invoice.id} className="hover:bg-gray-50 dark:bg-gray-900">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
                           {invoice.invoice_number}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {invoice.tenant?.name || '-'}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400">
+                          <span className="truncate block">{invoice.tenant?.name || '-'}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {invoice.subscription?.plan?.name || '-'}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400">
+                          <span className="truncate block">{invoice.subscription?.plan?.name || '-'}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          {invoice.total} {invoice.currency}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          <span className="break-words">{invoice.total} {invoice.currency}</span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(invoice.issue_date).toLocaleDateString('fr-FR')}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(invoice.issue_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(invoice.due_date).toLocaleDateString('fr-FR')}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(invoice.due_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                          <div className="flex justify-end space-x-2">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 text-right text-sm">
+                          <div className="flex flex-wrap justify-end gap-1 sm:gap-2">
                             <button
                               onClick={async () => {
                                 try {
@@ -1211,6 +1214,7 @@ export default function BillingPage() {
           }}
         />
       )}
+      </div>
     </AdminLayout>
   )
 }
