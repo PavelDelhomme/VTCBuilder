@@ -6,6 +6,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { CSS } from '@dnd-kit/utilities'
 import { Block } from './BlockEditor'
 import blocksService, { BlockType } from '@/services/blocks.service'
+import { renderBlockFromTemplate } from '@/lib/block-renderer'
 
 interface BlockPreviewProps {
   blocks: Block[]
@@ -260,6 +261,77 @@ function FAQSectionPreview({ title, items, wrapperStyles }: { title?: string; it
 }
 
 function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; blockType?: BlockType; blockTypes?: BlockType[] }) {
+  // Try to render using template from database first
+  if (blockType?.render_template && Object.keys(blockType.render_template).length > 0) {
+    try {
+      const rendered = renderBlockFromTemplate(block, blockType, blockTypes)
+      if (rendered) {
+        // Apply wrapper styles
+        const wrapperStyles: React.CSSProperties = {
+          position: block.position?.type || block.styles?.position || 'static',
+          top: block.position?.top || block.styles?.top,
+          right: block.position?.right || block.styles?.right,
+          bottom: block.position?.bottom || block.styles?.bottom,
+          left: block.position?.left || block.styles?.left,
+          zIndex: block.styles?.z_index || block.styles?.zIndex,
+          overflow: block.styles?.overflow || 'visible',
+          marginTop: block.styles?.margin_vertical || block.styles?.margin_top || block.styles?.marginTop,
+          marginBottom: block.styles?.margin_vertical || block.styles?.margin_bottom || block.styles?.marginBottom,
+          marginLeft: block.styles?.margin_horizontal || block.styles?.margin_left || block.styles?.marginLeft,
+          marginRight: block.styles?.margin_horizontal || block.styles?.margin_right || block.styles?.marginRight,
+          paddingTop: block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical,
+          paddingBottom: block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom,
+          paddingLeft: block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft,
+          paddingRight: block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight,
+          background: block.styles?.background && block.styles?.background.includes('gradient')
+            ? block.styles?.background
+            : block.styles?.background_color || block.styles?.backgroundColor || undefined,
+          color: block.styles?.color,
+          width: block.width,
+          height: block.height,
+          minWidth: block.minWidth,
+          minHeight: block.minHeight,
+          maxWidth: block.maxWidth,
+          maxHeight: block.maxHeight,
+        }
+        
+        // Get layout and container classes
+        const layoutCols = block.layout || 12
+        const layoutWidth = 
+          layoutCols === 12 ? 'w-full' :
+          layoutCols === 11 ? 'w-11/12' :
+          layoutCols === 10 ? 'w-5/6' :
+          layoutCols === 9 ? 'w-3/4' :
+          layoutCols === 8 ? 'w-2/3' :
+          layoutCols === 7 ? 'w-7/12' :
+          layoutCols === 6 ? 'w-1/2' :
+          layoutCols === 5 ? 'w-5/12' :
+          layoutCols === 4 ? 'w-1/3' :
+          layoutCols === 3 ? 'w-1/4' :
+          layoutCols === 2 ? 'w-1/6' :
+          layoutCols === 1 ? 'w-[8.333333%]' : 'w-full'
+        
+        const containerClass = block.container === 'container-fluid' ? 'w-full' :
+          block.container === 'none' ? '' : 'max-w-7xl mx-auto'
+        
+        return (
+          <div 
+            className={`${containerClass} mb-6`} 
+            style={wrapperStyles}
+          >
+            <div className={layoutWidth}>
+              {rendered}
+            </div>
+          </div>
+        )
+      }
+    } catch (error) {
+      console.error('Error rendering block from template:', error)
+      // Fall through to default rendering
+    }
+  }
+  
+  // Fallback to original switch-based rendering
   // Styles du wrapper (container) - position, margin, padding du container
   const wrapperStyles: React.CSSProperties = {
     // Position

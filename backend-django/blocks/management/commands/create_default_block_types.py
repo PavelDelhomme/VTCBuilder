@@ -3,6 +3,7 @@ Management command to create default block types
 """
 from django.core.management.base import BaseCommand
 from blocks.models import BlockType
+from blocks.render_templates import get_default_render_template
 
 
 class Command(BaseCommand):
@@ -597,6 +598,9 @@ class Command(BaseCommand):
         updated_count = 0
         
         for block_data in default_blocks:
+            # Get default render template for this block type
+            render_template = get_default_render_template(block_data['name'])
+            
             block_type, created = BlockType.objects.get_or_create(
                 name=block_data['name'],
                 defaults={
@@ -608,6 +612,7 @@ class Command(BaseCommand):
                     'is_active': True,
                     'schema': {},
                     'default_styles': {},
+                    'render_template': render_template,
                 }
             )
             
@@ -623,6 +628,11 @@ class Command(BaseCommand):
                     if key != 'name' and getattr(block_type, key) != value:
                         setattr(block_type, key, value)
                         updated = True
+                
+                # Mettre à jour le render_template si nécessaire
+                if not block_type.render_template:
+                    block_type.render_template = render_template
+                    updated = True
                 
                 if updated:
                     block_type.save()

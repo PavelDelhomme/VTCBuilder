@@ -27,6 +27,14 @@ class BlockType(models.Model):
     # Styles par défaut
     default_styles = models.JSONField(default=dict, blank=True, help_text="Styles par défaut du bloc")
     
+    # Template de rendu (configuration JSON pour le rendu React)
+    # Structure: { component: 'div', props: {...}, children: [...] }
+    render_template = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Template de rendu React en JSON (structure, props, children)"
+    )
+    
     # Call-to-action configuration (pour les boutons, liens, etc.)
     call_to_action = models.JSONField(
         default=dict, 

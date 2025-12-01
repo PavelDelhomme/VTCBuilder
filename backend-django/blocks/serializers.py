@@ -26,7 +26,8 @@ class BlockTypeSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'label', 'icon', 'category',
             'description', 'schema', 'default_styles',
-            'call_to_action', 'available_plans', 'available_plan_ids', 'plan_names',
+            'render_template', 'call_to_action', 
+            'available_plans', 'available_plan_ids', 'plan_names',
             'is_active', 'order',
             'created_at', 'updated_at'
         ]

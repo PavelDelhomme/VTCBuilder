@@ -12,6 +12,7 @@ export interface BlockType {
   description?: string;
   schema: Record<string, any>;
   default_styles: Record<string, any>;
+  render_template?: Record<string, any>; // Template de rendu JSON pour le bloc
   call_to_action?: Record<string, any>;
   available_plans?: number[];
   plan_names?: string[];
