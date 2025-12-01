@@ -3,8 +3,18 @@ Pytest configuration and fixtures for django-tenants
 """
 import pytest
 from django.core.management import call_command
+from django.db import connection
 from django_tenants.utils import schema_context, tenant_context
 from tenants.models import Tenant, Domain
+
+
+def setup_tenant_schema(tenant):
+    """Helper function to create and migrate tenant schema"""
+    try:
+        tenant.save()  # Trigger schema creation if auto_create_schema is True
+        call_command('migrate_schemas', schema_name=tenant.schema_name, verbosity=0, interactive=False)
+    except Exception:
+        pass
 
 
 @pytest.fixture(scope='function')
@@ -28,16 +38,8 @@ def tenant_with_schema():
         is_primary=True
     )
     
-    # Migrate schema for tenant-specific apps
-    # Note: This assumes migrations have been run at least once
-    # In CI/CD, you'd run migrations before tests
-    try:
-        from django_tenants.management.commands import migrate_schemas
-        call_command('migrate_schemas', schema_name=tenant.schema_name, verbosity=0, interactive=False)
-    except Exception:
-        # If migrate_schemas fails, we'll create tables manually in tenant_context
-        # This is a fallback for tests that don't need full migrations
-        pass
+    # Setup tenant schema using helper function
+    setup_tenant_schema(tenant)
     
     yield tenant
     

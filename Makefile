@@ -122,18 +122,18 @@ rebuild: ## Tout reconstruire et redémarrer
 	@echo "$(GREEN)✅ Reconstruction terminée !$(NC)"
 
 status: ## Afficher le statut des services VTCBuilder
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)📊 Statut des conteneurs VTCBuilder :$(NC)"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)📊 Statut des conteneurs VTCBuilder :$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
 	@docker ps --filter "name=vtcbuilder" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null || true
-	@echo ""
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)📈 Résumé :$(NC)"
+	@printf "\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)📈 Résumé :$(NC)\n"
 	@RUNNING=$$(docker ps --filter "name=vtcbuilder" --format "{{.Names}}" | wc -l); \
 	 STOPPED=$$(docker ps -a --filter "name=vtcbuilder" --filter "status=exited" --format "{{.Names}}" | wc -l); \
-	 echo "  $(GREEN)●$(NC) En cours d'exécution : $$RUNNING"; \
-	 if [ $$STOPPED -gt 0 ]; then echo "  $(RED)●$(NC) Arrêtés : $$STOPPED"; fi
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	 printf "  $(GREEN)●$(NC) En cours d'exécution : $$RUNNING\n"; \
+	 if [ $$STOPPED -gt 0 ]; then printf "  $(RED)●$(NC) Arrêtés : $$STOPPED\n"; fi
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
 
 ##@ Backend Django (backend-django/)
 

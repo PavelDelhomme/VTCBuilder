@@ -4,9 +4,19 @@ Unit tests for Tenant and User models
 import pytest
 from django.utils import timezone
 from django.utils.text import slugify
+from django.core.management import call_command
 from datetime import timedelta
 from django_tenants.utils import schema_context, tenant_context
 from tenants.models import Tenant, User, PasswordResetToken, InvitationToken, Domain
+
+
+def setup_tenant_schema(tenant):
+    """Helper function to create and migrate tenant schema"""
+    try:
+        tenant.save()  # Trigger schema creation if auto_create_schema is True
+        call_command('migrate_schemas', schema_name=tenant.schema_name, verbosity=0, interactive=False)
+    except Exception:
+        pass
 
 
 @pytest.mark.django_db
@@ -26,6 +36,8 @@ class TestTenantModel:
         # Create domain for tenant
         Domain.objects.create(tenant=tenant, domain='test-tenant.localhost', is_primary=True)
         
+        setup_tenant_schema(tenant)
+        
         assert tenant.name == 'Test Tenant'
         assert tenant.email == 'test@tenant.com'
         assert tenant.slug == 'test-tenant'
@@ -44,6 +56,8 @@ class TestTenantModel:
         # Create domain for tenant
         Domain.objects.create(tenant=tenant, domain=f'{slug}.localhost', is_primary=True)
         
+        setup_tenant_schema(tenant)
+        
         assert tenant.slug == 'my-test-company'
 
     def test_tenant_is_active(self):
@@ -55,6 +69,11 @@ class TestTenantModel:
             status='active'
         )
         Domain.objects.create(tenant=active_tenant, domain='active-tenant.localhost', is_primary=True)
+        try:
+            active_tenant.save()
+            call_command('migrate_schemas', schema_name=active_tenant.schema_name, verbosity=0, interactive=False)
+        except Exception:
+            pass
         assert active_tenant.is_active() is True
 
         inactive_tenant = Tenant.objects.create(
@@ -64,6 +83,7 @@ class TestTenantModel:
             status='suspended'
         )
         Domain.objects.create(tenant=inactive_tenant, domain='inactive-tenant.localhost', is_primary=True)
+        setup_tenant_schema(inactive_tenant)
         assert inactive_tenant.is_active() is False
 
     def test_tenant_is_trial(self):
@@ -76,6 +96,7 @@ class TestTenantModel:
             trial_ends_at=timezone.now() + timedelta(days=7)
         )
         Domain.objects.create(tenant=trial_tenant, domain='trial-tenant.localhost', is_primary=True)
+        setup_tenant_schema(trial_tenant)
         assert trial_tenant.is_trial() is True
 
         active_tenant = Tenant.objects.create(
@@ -85,6 +106,11 @@ class TestTenantModel:
             status='active'
         )
         Domain.objects.create(tenant=active_tenant, domain='active-tenant-2.localhost', is_primary=True)
+        try:
+            active_tenant.save()
+            call_command('migrate_schemas', schema_name=active_tenant.schema_name, verbosity=0, interactive=False)
+        except Exception:
+            pass
         assert active_tenant.is_trial() is False
 
     def test_tenant_soft_delete(self):
@@ -95,6 +121,7 @@ class TestTenantModel:
             slug='to-delete'
         )
         Domain.objects.create(tenant=tenant, domain='to-delete.localhost', is_primary=True)
+        setup_tenant_schema(tenant)
         tenant_id = tenant.id
 
         tenant.soft_delete()  # Use soft_delete method instead of delete()
@@ -121,6 +148,7 @@ class TestUserModel:
             slug='test-tenant'
         )
         Domain.objects.create(tenant=tenant, domain='test-tenant.localhost', is_primary=True)
+        setup_tenant_schema(tenant)
 
         # Create user in tenant context
         with tenant_context(tenant):
@@ -141,6 +169,7 @@ class TestUserModel:
         """Test is_active property"""
         tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
         Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        setup_tenant_schema(tenant)
         
         with tenant_context(tenant):
             active_user = User.objects.create_user(
@@ -165,6 +194,7 @@ class TestUserModel:
         """Test is_super_admin method"""
         tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
         Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        setup_tenant_schema(tenant)
         
         # Super admin doesn't need tenant context
         super_admin = User.objects.create_user(
@@ -197,6 +227,7 @@ class TestPasswordResetToken:
         """Test creating a password reset token"""
         tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
         Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        setup_tenant_schema(tenant)
         
         with tenant_context(tenant):
             user = User.objects.create_user(
@@ -225,6 +256,7 @@ class TestPasswordResetToken:
         """Test token expiration"""
         tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
         Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        setup_tenant_schema(tenant)
         
         with tenant_context(tenant):
             user = User.objects.create_user(
@@ -260,6 +292,7 @@ class TestInvitationToken:
         """Test creating an invitation token"""
         tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
         Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        setup_tenant_schema(tenant)
         
         # Create user first (InvitationToken requires a user)
         with tenant_context(tenant):
@@ -293,6 +326,7 @@ class TestInvitationToken:
         """Test marking token as used"""
         tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
         Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        setup_tenant_schema(tenant)
         
         # Create user first
         with tenant_context(tenant):

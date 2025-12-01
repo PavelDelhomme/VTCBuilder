@@ -5,7 +5,8 @@ import pytest
 from decimal import Decimal
 from django.utils import timezone
 from datetime import timedelta
-from django_tenants.utils import tenant_context
+from django.core.management import call_command
+from django_tenants.utils import tenant_context, schema_context
 from bookings.models import Booking
 from tenants.models import Tenant, Domain
 from services.models import Service
@@ -18,7 +19,7 @@ class TestBooking:
 
     @pytest.fixture
     def tenant(self):
-        """Create a test tenant"""
+        """Create a test tenant with schema"""
         tenant = Tenant.objects.create(
             name='Test Tenant',
             email='test@tenant.com',
@@ -26,6 +27,15 @@ class TestBooking:
         )
         # Create domain for tenant
         Domain.objects.create(tenant=tenant, domain='test-tenant.localhost', is_primary=True)
+        
+        # Ensure schema is created and migrated
+        from django.core.management import call_command
+        try:
+            tenant.save()
+            call_command('migrate_schemas', schema_name=tenant.schema_name, verbosity=0, interactive=False)
+        except Exception:
+            pass
+        
         return tenant
 
     @pytest.fixture

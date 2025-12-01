@@ -3,7 +3,8 @@ Unit tests for Service model
 """
 import pytest
 from django.utils.text import slugify
-from django_tenants.utils import tenant_context
+from django.core.management import call_command
+from django_tenants.utils import tenant_context, schema_context
 from services.models import Service
 from tenants.models import Tenant, Domain
 
@@ -15,7 +16,7 @@ class TestService:
 
     @pytest.fixture
     def tenant(self):
-        """Create a test tenant"""
+        """Create a test tenant with schema"""
         tenant = Tenant.objects.create(
             name='Test Tenant',
             email='test@tenant.com',
@@ -23,6 +24,15 @@ class TestService:
         )
         # Create domain for tenant
         Domain.objects.create(tenant=tenant, domain='test-tenant.localhost', is_primary=True)
+        
+        # Ensure schema is created and migrated
+        from django.core.management import call_command
+        try:
+            tenant.save()
+            call_command('migrate_schemas', schema_name=tenant.schema_name, verbosity=0, interactive=False)
+        except Exception:
+            pass
+        
         return tenant
 
     def test_create_service(self, tenant):
