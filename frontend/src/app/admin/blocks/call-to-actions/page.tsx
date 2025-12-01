@@ -196,12 +196,12 @@ export default function AdminCallToActionsPage() {
             resetForm()
             setShowForm(true)
           }}
-          className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center text-sm"
+          className="w-full sm:w-auto bg-blue-600 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 text-sm sm:text-base font-medium transition-colors shadow-sm hover:shadow-md"
         >
-          <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Nouveau Call-to-Action
+          <span className="whitespace-nowrap">Nouveau Call-to-Action</span>
         </button>
       }
     >
@@ -212,7 +212,7 @@ export default function AdminCallToActionsPage() {
             {editingCta ? 'Modifier le Call-to-Action' : 'Créer un Nouveau Call-to-Action'}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Nom (unique) *
@@ -254,7 +254,7 @@ export default function AdminCallToActionsPage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Type *
@@ -311,7 +311,7 @@ export default function AdminCallToActionsPage() {
                 value={formData.styles}
                 onChange={(e) => setFormData({ ...formData, styles: e.target.value })}
                 rows={8}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-xs sm:text-sm"
                 placeholder='{"background": "#3B82F6", "color": "#FFFFFF", "borderRadius": "8px", "padding": "12px 24px"}'
               />
             </div>
@@ -324,18 +324,18 @@ export default function AdminCallToActionsPage() {
                 value={formData.config}
                 onChange={(e) => setFormData({ ...formData, config: e.target.value })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-xs sm:text-sm"
                 placeholder='{"target": "_blank", "rel": "noopener"}'
               />
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
               <label className="flex items-center">
                 <input
                   type="checkbox"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="mr-2"
+                  className="mr-2 h-4 w-4"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Actif</span>
               </label>
@@ -344,23 +344,23 @@ export default function AdminCallToActionsPage() {
                   type="checkbox"
                   checked={formData.is_global}
                   onChange={(e) => setFormData({ ...formData, is_global: e.target.checked })}
-                  className="mr-2"
+                  className="mr-2 h-4 w-4"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Global (disponible pour tous)</span>
               </label>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <button
                 type="submit"
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
                 {editingCta ? 'Mettre à jour' : 'Créer'}
               </button>
               <button
                 type="button"
                 onClick={resetForm}
-                className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                className="w-full sm:w-auto bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 Annuler
               </button>
@@ -370,58 +370,64 @@ export default function AdminCallToActionsPage() {
       )}
 
       {/* List */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden w-full max-w-full">
         <div className="p-4 sm:p-6">
-          <h3 className="text-lg font-semibold mb-4">Call-to-Actions ({ctas.length})</h3>
+          <h3 className="text-base sm:text-lg font-semibold mb-4">Call-to-Actions ({ctas.length})</h3>
           {ctas.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               Aucun call-to-action créé. Créez-en un pour commencer.
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {ctas.map((cta) => (
                 <div
                   key={cta.id}
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-semibold text-gray-900 dark:text-gray-100">{cta.label}</h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeBadge(cta.type)}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base truncate flex-1 min-w-0">{cta.label}</h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getTypeBadge(cta.type)}`}>
                           {getTypeLabel(cta.type)}
                         </span>
                         {!cta.is_active && (
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 whitespace-nowrap">
                             Inactif
                           </span>
                         )}
                         {cta.is_global && (
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 whitespace-nowrap">
                             Global
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 break-words">
                         <span className="font-mono text-xs">{cta.name}</span>
                         {cta.description && ` - ${cta.description}`}
                       </p>
-                      <div className="text-xs text-gray-500 dark:text-gray-500">
-                        Texte: "{cta.default_text}" → {cta.default_url}
+                      <div className="text-xs text-gray-500 dark:text-gray-500 break-words">
+                        Texte: &quot;{cta.default_text}&quot; → <span className="font-mono">{cta.default_url}</span>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 sm:flex-shrink-0">
                       <button
                         onClick={() => handleEdit(cta)}
-                        className="px-3 py-1.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded hover:bg-blue-200 dark:hover:bg-blue-800 text-sm"
+                        className="flex-1 sm:flex-none px-3 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 text-sm font-medium transition-colors flex items-center justify-center gap-2"
                       >
-                        Modifier
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        <span className="hidden sm:inline">Modifier</span>
                       </button>
                       <button
                         onClick={() => handleDelete(cta.id)}
-                        className="px-3 py-1.5 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded hover:bg-red-200 dark:hover:bg-red-800 text-sm"
+                        className="flex-1 sm:flex-none px-3 py-2 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 text-sm font-medium transition-colors flex items-center justify-center gap-2"
                       >
-                        Supprimer
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span className="hidden sm:inline">Supprimer</span>
                       </button>
                     </div>
                   </div>
