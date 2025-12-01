@@ -99,6 +99,12 @@ class ProjectPage(models.Model):
     # Order within project
     order = models.IntegerField(default=0)
     
+    # Active status
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Page active dans le projet (affichée sur le site)"
+    )
+    
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

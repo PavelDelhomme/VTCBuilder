@@ -210,4 +210,38 @@ class ProjectViewSet(viewsets.ModelViewSet):
             )
             add_cors_headers(response, request)
             return response
+    
+    @action(detail=True, methods=['patch'], url_path='pages/(?P<page_id>[^/.]+)')
+    def update_page(self, request, pk=None, page_id=None):
+        """Update a page in the project (e.g., toggle is_active)"""
+        try:
+            project = self.get_object()
+            page = ProjectPage.objects.get(id=page_id, project=project)
+            
+            # Update page fields
+            if 'is_active' in request.data:
+                page.is_active = request.data['is_active']
+            if 'order' in request.data:
+                page.order = request.data['order']
+            
+            page.save()
+            
+            serializer = ProjectPageSerializer(page)
+            response = Response(serializer.data)
+            add_cors_headers(response, request)
+            return response
+        except ProjectPage.DoesNotExist:
+            response = Response(
+                {'error': 'Page not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            add_cors_headers(response, request)
+            return response
+        except Exception as e:
+            response = Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            add_cors_headers(response, request)
+            return response
 

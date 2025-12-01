@@ -8,6 +8,8 @@ import projectService, { Project, ProjectPage } from '@/services/project.service
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
 import PageLoader from '@/components/PageLoader'
+import BlockPreview from '@/components/editor/BlockPreview'
+import blocksService from '@/services/blocks.service'
 
 export default function ProjectDetailPage() {
   const router = useRouter()
@@ -17,6 +19,9 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true)
   const [publicPages, setPublicPages] = useState<any[]>([])
   const [tenantPages, setTenantPages] = useState<any[]>([])
+  const [previewPage, setPreviewPage] = useState<{ slug: string; blocks: any[]; title: string } | null>(null)
+  const [blockTypes, setBlockTypes] = useState<any[]>([])
+  const [loadingPreview, setLoadingPreview] = useState(false)
 
   useEffect(() => {
     if (!authService.isSuperAdmin()) {
@@ -26,8 +31,18 @@ export default function ProjectDetailPage() {
     if (projectId) {
       loadProject()
       loadAvailablePages()
+      loadBlockTypes()
     }
   }, [router, projectId])
+
+  const loadBlockTypes = async () => {
+    try {
+      const types = await blocksService.getBlockTypes()
+      setBlockTypes(Array.isArray(types) ? types : [])
+    } catch (error) {
+      console.error('Erreur chargement types de blocs:', error)
+    }
+  }
 
   const loadProject = async () => {
     try {
@@ -101,6 +116,67 @@ export default function ProjectDetailPage() {
     } catch (error: any) {
       console.error('Erreur retrait page:', error)
       toast.error('Erreur lors du retrait de la page')
+    }
+  }
+
+  const handleToggleActive = async (page: ProjectPage) => {
+    try {
+      await projectService.updatePage(projectId, page.id, { is_active: !page.is_active })
+      toast.success(`Page ${!page.is_active ? 'activée' : 'désactivée'} !`)
+      loadProject()
+    } catch (error: any) {
+      console.error('Erreur mise à jour page:', error)
+      toast.error('Erreur lors de la mise à jour')
+    }
+  }
+
+  const handlePreview = async (page: ProjectPage) => {
+    try {
+      setLoadingPreview(true)
+      
+      // Charger les données de la page
+      if (page.page_type === 'public') {
+        const settingsResponse = await api.get('/system-settings/')
+        const settings = settingsResponse.data
+        
+        let pageData: any = null
+        let pageTitle = page.page_slug
+        
+        // Vérifier si c'est la homepage
+        if (page.page_slug === 'home') {
+          pageData = {
+            title: 'Page d\'accueil',
+            blocks: settings.public_homepage_blocks || [],
+          }
+        } else {
+          // Chercher dans public_pages
+          const publicPages = settings.public_pages || {}
+          if (publicPages[page.page_slug]) {
+            pageData = {
+              title: publicPages[page.page_slug].title || page.page_slug,
+              blocks: publicPages[page.page_slug].blocks || [],
+            }
+          }
+        }
+        
+        if (pageData) {
+          setPreviewPage({
+            slug: page.page_slug,
+            blocks: pageData.blocks,
+            title: pageData.title,
+          })
+        } else {
+          toast.error('Page non trouvée')
+        }
+      } else {
+        // TODO: Load tenant page
+        toast.error('Prévisualisation des pages tenant non encore implémentée')
+      }
+    } catch (error: any) {
+      console.error('Erreur chargement prévisualisation:', error)
+      toast.error('Erreur lors du chargement de la prévisualisation')
+    } finally {
+      setLoadingPreview(false)
     }
   }
 
@@ -239,15 +315,46 @@ export default function ProjectDetailPage() {
               {project.pages.map((page: ProjectPage) => (
                 <div
                   key={page.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg"
+                  className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  <div>
-                    <span className="font-medium text-gray-900 dark:text-gray-100">{page.page_slug}</span>
-                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                      ({page.page_type === 'public' ? 'Publique' : 'Tenant'})
-                    </span>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={page.is_active !== false}
+                        onChange={() => handleToggleActive(page)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                    </label>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-gray-900 dark:text-gray-100 break-words">{page.page_slug}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          page.is_active !== false
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                        }`}>
+                          {page.is_active !== false ? 'Actif' : 'Inactif'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                          {page.page_type === 'public' ? 'Publique' : 'Tenant'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => handlePreview(page)}
+                      className="px-3 py-1.5 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200 rounded hover:bg-purple-200 dark:hover:bg-purple-800 text-sm font-medium transition-colors flex items-center gap-1.5"
+                      title="Prévisualiser"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      <span className="hidden sm:inline">Voir</span>
+                    </button>
                     <button
                       onClick={() => {
                         if (page.page_type === 'public') {
@@ -256,15 +363,23 @@ export default function ProjectDetailPage() {
                           // TODO: Navigate to tenant page editor
                         }
                       }}
-                      className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                      className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                      title="Éditer"
                     >
-                      Éditer
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      <span className="hidden sm:inline">Éditer</span>
                     </button>
                     <button
                       onClick={() => handleRemovePage(page.id)}
-                      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                      className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                      title="Retirer"
                     >
-                      Retirer
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      <span className="hidden sm:inline">Retirer</span>
                     </button>
                   </div>
                 </div>
@@ -311,6 +426,75 @@ export default function ProjectDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {previewPage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Prévisualisation : {previewPage.title}
+              </h2>
+              <button
+                onClick={() => setPreviewPage(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
+              {loadingPreview ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Chargement de la prévisualisation...</span>
+                  </div>
+                </div>
+              ) : previewPage.blocks && previewPage.blocks.length > 0 ? (
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                  <BlockPreview blocks={previewPage.blocks} blockTypes={blockTypes} />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <svg className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p className="text-gray-500 dark:text-gray-400 font-medium">Cette page ne contient pas encore de blocs</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Ajoutez des blocs en éditant la page</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 flex-shrink-0">
+              <button
+                onClick={() => {
+                  if (previewPage) {
+                    const page = project?.pages?.find((p: ProjectPage) => p.page_slug === previewPage.slug)
+                    if (page && page.page_type === 'public') {
+                      router.push(`/admin/pages-public/${previewPage.slug}/edit`)
+                    }
+                  }
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Éditer la page
+              </button>
+              <button
+                onClick={() => setPreviewPage(null)}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   )
 }

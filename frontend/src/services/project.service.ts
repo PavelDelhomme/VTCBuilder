@@ -30,6 +30,7 @@ export interface ProjectPage {
   page_slug: string
   page_type: 'public' | 'tenant'
   order: number
+  is_active: boolean
   created_at: string
   updated_at: string
 }
@@ -94,7 +95,17 @@ const projectService = {
       data: { page_id: pageId },
     })
   },
+
+  /**
+   * Update a project page (e.g., toggle is_active)
+   */
+  async updatePage(projectId: number, pageId: number, data: Partial<ProjectPage>): Promise<ProjectPage> {
+    const response = await api.patch(`/projects/${projectId}/pages/${pageId}/`, data)
+    return response.data
+  },
 }
+
+export default projectService
 
 export default projectService
 
