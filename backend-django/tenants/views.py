@@ -106,6 +106,102 @@ class TenantViewSet(viewsets.ModelViewSet):
             add_cors_headers(response, request)
             return response
 
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def check_or_create(self, request):
+        """
+        Vérifier si un tenant existe pour un slug/domain donné, sinon le créer automatiquement.
+        Endpoint public pour permettre la création automatique de tenants depuis le frontend.
+        """
+        from django.utils.text import slugify
+        from tenants.models import Domain
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        slug = request.data.get('slug')
+        domain = request.data.get('domain')
+        
+        if not slug:
+            response = Response(
+                {'error': 'slug is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        # Normaliser le slug
+        tenant_slug = slugify(slug)
+        
+        # Vérifier si le tenant existe déjà
+        tenant = Tenant.objects.filter(slug=tenant_slug).first()
+        
+        if tenant:
+            # Vérifier si le domaine existe
+            domain_obj = Domain.objects.filter(tenant=tenant, domain=domain).first()
+            if not domain_obj:
+                # Créer le domaine s'il n'existe pas
+                Domain.objects.get_or_create(
+                    tenant=tenant,
+                    domain=domain,
+                    defaults={'is_primary': False}
+                )
+            
+            serializer = TenantSerializer(tenant)
+            response = Response({
+                'exists': True,
+                'created': False,
+                'tenant': serializer.data
+            })
+            add_cors_headers(response, request)
+            return response
+        
+        # Créer le tenant automatiquement
+        try:
+            # Générer un email par défaut
+            default_email = f"admin@{tenant_slug}.vtcbuilder.local"
+            
+            # Créer le tenant
+            tenant = Tenant.objects.create(
+                name=slug.replace('-', ' ').title(),  # "test-enterprise" -> "Test Enterprise"
+                slug=tenant_slug,
+                email=default_email,
+                plan='starter',
+                status='trial',
+                trial_ends_at=timezone.now() + timedelta(days=14)
+            )
+            
+            # Créer le domaine
+            Domain.objects.create(
+                tenant=tenant,
+                domain=domain or f"{tenant_slug}.localhost",
+                is_primary=True
+            )
+            
+            # Migrer le schéma du tenant
+            try:
+                from django.core.management import call_command
+                call_command('migrate_schemas', schema_name=tenant.schema_name, verbosity=0, interactive=False)
+            except Exception as e:
+                logger.warning(f"Erreur migration schéma pour tenant {tenant_slug}: {e}")
+            
+            serializer = TenantSerializer(tenant)
+            response = Response({
+                'exists': False,
+                'created': True,
+                'tenant': serializer.data,
+                'message': f'Tenant {tenant_slug} créé automatiquement'
+            }, status=status.HTTP_201_CREATED)
+            add_cors_headers(response, request)
+            return response
+            
+        except Exception as e:
+            logger.error(f"Erreur création automatique tenant {tenant_slug}: {e}", exc_info=True)
+            response = Response(
+                {'error': f'Erreur création tenant: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            add_cors_headers(response, request)
+            return response
+
     @action(detail=False, methods=['get'])
     def features(self, request):
         """
