@@ -28,6 +28,8 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
   const [projects, setProjects] = useState<Project[]>([])
   const [loadingProjects, setLoadingProjects] = useState(false)
   const [selectedTenantFilter, setSelectedTenantFilter] = useState<number | null>(null)
+  const [contentExpanded, setContentExpanded] = useState(false)
+  const [clientsExpanded, setClientsExpanded] = useState(false)
   const { resolvedTheme, toggleTheme } = useTheme()
 
   useEffect(() => {
@@ -70,24 +72,6 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
       ),
     },
     {
-      name: 'Tenants',
-      href: '/admin/tenants',
-      icon: (
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-    },
-    {
-      name: 'Utilisateurs',
-      href: '/admin/users',
-      icon: (
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      ),
-    },
-    {
       name: 'Statistiques',
       href: '/admin/stats',
       icon: (
@@ -106,31 +90,24 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
       ),
     },
     {
-      name: 'Templates',
-      href: '/admin/templates',
-      icon: (
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-        </svg>
-      ),
-    },
-    {
-      name: 'Blocs',
-      href: '/admin/blocks',
+      name: 'Gestion',
+      href: '#',
       icon: (
         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
         </svg>
       ),
+      isAccordion: true,
     },
     {
-      name: 'Call-to-Actions',
-      href: '/admin/blocks/call-to-actions',
+      name: 'Clients',
+      href: '#',
       icon: (
         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
+      isAccordion: true,
     },
     {
       name: 'Projets',
@@ -226,6 +203,187 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
           {menuItems.map((item) => {
             const active = isActive(item.href)
             
+            // Handle accordion for "Gestion" (Templates, Blocs, Call-to-Actions)
+            if (item.isAccordion && item.name === 'Gestion') {
+              const isGestionActive = pathname.startsWith('/admin/templates') || 
+                                      pathname.startsWith('/admin/blocks')
+              
+              const gestionItems = [
+                {
+                  name: 'Templates',
+                  href: '/admin/templates',
+                  icon: (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: 'Blocs',
+                  href: '/admin/blocks',
+                  icon: (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: 'Call-to-Actions',
+                  href: '/admin/blocks/call-to-actions',
+                  icon: (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  ),
+                },
+              ]
+
+              return (
+                <div key={item.href}>
+                  <button
+                    onClick={() => setContentExpanded(!contentExpanded)}
+                    className={`w-full flex items-center justify-between px-6 py-3 text-sm font-medium transition-colors ${
+                      isGestionActive
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-r-4 border-blue-700 dark:border-blue-400'
+                        : 'text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <span className={isGestionActive ? 'text-blue-700 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}>
+                        {item.icon}
+                      </span>
+                      <span className="ml-3">{item.name}</span>
+                    </div>
+                    <svg
+                      className={`h-4 w-4 transition-transform duration-200 ${contentExpanded ? 'rotate-90' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  
+                  {contentExpanded && (
+                    <div className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-800/30 border-t border-gray-200 dark:border-gray-700 shadow-inner">
+                      <div className="py-1">
+                        {gestionItems.map((gestionItem) => {
+                          const isGestionItemActive = pathname.startsWith(gestionItem.href)
+                          return (
+                            <button
+                              key={gestionItem.href}
+                              onClick={() => {
+                                router.push(gestionItem.href)
+                                if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                                  handleClose()
+                                }
+                              }}
+                              className={`w-full flex items-center gap-2.5 px-8 py-2.5 text-sm font-medium transition-all duration-200 group ${
+                                isGestionItemActive
+                                  ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400'
+                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70 hover:pl-9 border-l-4 border-transparent'
+                              }`}
+                            >
+                              <span className={isGestionItemActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400'}>
+                                {gestionItem.icon}
+                              </span>
+                              <span>{gestionItem.name}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
+            // Handle accordion for "Clients" (Tenants, Utilisateurs)
+            if (item.isAccordion && item.name === 'Clients') {
+              const isClientsActive = pathname.startsWith('/admin/tenants') || 
+                                      pathname.startsWith('/admin/users')
+              
+              const clientsItems = [
+                {
+                  name: 'Tenants',
+                  href: '/admin/tenants',
+                  icon: (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  ),
+                },
+                {
+                  name: 'Utilisateurs',
+                  href: '/admin/users',
+                  icon: (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  ),
+                },
+              ]
+
+              return (
+                <div key={item.href}>
+                  <button
+                    onClick={() => setClientsExpanded(!clientsExpanded)}
+                    className={`w-full flex items-center justify-between px-6 py-3 text-sm font-medium transition-colors ${
+                      isClientsActive
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-r-4 border-blue-700 dark:border-blue-400'
+                        : 'text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <span className={isClientsActive ? 'text-blue-700 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}>
+                        {item.icon}
+                      </span>
+                      <span className="ml-3">{item.name}</span>
+                    </div>
+                    <svg
+                      className={`h-4 w-4 transition-transform duration-200 ${clientsExpanded ? 'rotate-90' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  
+                  {clientsExpanded && (
+                    <div className="bg-gradient-to-b from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-800/30 border-t border-gray-200 dark:border-gray-700 shadow-inner">
+                      <div className="py-1">
+                        {clientsItems.map((clientItem) => {
+                          const isClientItemActive = pathname.startsWith(clientItem.href)
+                          return (
+                            <button
+                              key={clientItem.href}
+                              onClick={() => {
+                                router.push(clientItem.href)
+                                if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                                  handleClose()
+                                }
+                              }}
+                              className={`w-full flex items-center gap-2.5 px-8 py-2.5 text-sm font-medium transition-all duration-200 group ${
+                                isClientItemActive
+                                  ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400'
+                                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70 hover:pl-9 border-l-4 border-transparent'
+                              }`}
+                            >
+                              <span className={isClientItemActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400'}>
+                                {clientItem.icon}
+                              </span>
+                              <span>{clientItem.name}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            }
+
             // Handle accordion for Projects
             if (item.isAccordion && item.name === 'Projets') {
               const isProjectsActive = pathname.startsWith('/admin/projects') || pathname.startsWith('/admin/pages-public')
