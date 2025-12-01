@@ -220,13 +220,35 @@ export default function UsersPage() {
             />
           </div>
 
-          <ResponsiveTable
-            headers={['Utilisateur', 'Rôle', 'Tenant', 'Status', 'Créé le', 'Actions']}
-            emptyMessage={search ? 'Aucun utilisateur trouvé' : 'Aucun utilisateur pour le moment'}
-          >
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden w-full max-w-full">
+            <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
+                  <tr>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[200px] sticky left-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">
+                      Utilisateur
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[100px]">
+                      Rôle
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[150px] hidden md:table-cell">
+                      Tenant
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[100px]">
+                      Status
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[110px] hidden lg:table-cell">
+                      Créé le
+                    </th>
+                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[160px] sticky right-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 sm:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan={6} className="px-3 sm:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                       {search ? 'Aucun utilisateur trouvé' : 'Aucun utilisateur pour le moment'}
                     </td>
                   </tr>
@@ -234,7 +256,7 @@ export default function UsersPage() {
                   filteredUsers.map((user) => (
                     <tr 
                       key={user.id} 
-                      className="hover:bg-gray-50 dark:bg-gray-900 cursor-pointer"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
                       onClick={(e) => {
                         // Ne pas naviguer si on clique sur un bouton d'action
                         if ((e.target as HTMLElement).closest('button')) {
@@ -243,32 +265,32 @@ export default function UsersPage() {
                         router.push(`/admin/users/${user.id}`)
                       }}
                     >
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 sm:px-6 py-4 sticky left-0 bg-white dark:bg-gray-800 z-10 min-w-[200px] shadow-[2px_0_4px_rgba(0,0,0,0.1)]">
                         <div className="flex items-center">
                           <div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name || user.email}</div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">{user.name || user.email}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400 break-words">{user.email}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap min-w-[100px]">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadge(user.role)}`}>
                           {user.role}
                         </span>
                       </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {user.tenant_name || user.tenant?.name || '-'}
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400 min-w-[150px] hidden md:table-cell">
+                        <div className="break-words">{user.tenant_name || user.tenant?.name || '-'}</div>
                       </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap min-w-[100px]">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(user.status)}`}>
                           {user.status}
                         </span>
                       </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell min-w-[110px]">
                         {new Date(user.created_at).toLocaleDateString('fr-FR')}
                       </td>
-                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-1 sm:space-x-2 flex-wrap gap-1 sm:gap-2">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white dark:bg-gray-800 z-10 min-w-[160px] shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">
+                        <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()

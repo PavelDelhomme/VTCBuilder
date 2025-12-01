@@ -172,9 +172,9 @@ export default function DataTable<T extends { id: number | string }>({
     else if (column.hidden === 'xl') classes.push('hidden xl:table-cell')
 
     if (column.sticky === 'left') {
-      classes.push('sticky left-0 bg-white dark:bg-gray-800 z-10')
+      classes.push('sticky left-0 bg-white dark:bg-gray-800 z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]')
     } else if (column.sticky === 'right') {
-      classes.push('sticky right-0 bg-white dark:bg-gray-800 z-10')
+      classes.push('sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]')
     }
 
     if (column.minWidth) {
@@ -197,9 +197,9 @@ export default function DataTable<T extends { id: number | string }>({
     else if (column.hidden === 'xl') classes.push('hidden xl:table-cell')
 
     if (column.sticky === 'left') {
-      classes.push('sticky left-0 bg-gray-50 dark:bg-gray-900 z-20')
+      classes.push('sticky left-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[2px_0_4px_rgba(0,0,0,0.1)]')
     } else if (column.sticky === 'right') {
-      classes.push('sticky right-0 bg-gray-50 dark:bg-gray-900 z-20')
+      classes.push('sticky right-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]')
     }
 
     if (column.sortable && sortable) {
@@ -274,7 +274,7 @@ export default function DataTable<T extends { id: number | string }>({
 
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden w-full max-w-full">
-        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+        <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
@@ -300,7 +300,7 @@ export default function DataTable<T extends { id: number | string }>({
                   </th>
                 ))}
                 {actions && (
-                  <th className={`px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider ${actionsSticky ? 'sticky right-0 bg-gray-50 dark:bg-gray-900 z-20' : ''}`}>
+                  <th className={`px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[140px] ${actionsSticky ? 'sticky right-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]' : ''}`}>
                     Actions
                   </th>
                 )}
@@ -334,7 +334,7 @@ export default function DataTable<T extends { id: number | string }>({
                       </td>
                     ))}
                     {actions && (
-                      <td className={`px-3 sm:px-6 py-4 text-right text-sm font-medium ${actionsSticky ? 'sticky right-0 bg-white dark:bg-gray-800 z-10' : ''}`}>
+                      <td className={`px-3 sm:px-6 py-4 text-right text-sm font-medium min-w-[140px] ${actionsSticky ? 'sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]' : ''}`}>
                         <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap" onClick={(e) => e.stopPropagation()}>
                           {actions(item)}
                         </div>

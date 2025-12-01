@@ -229,13 +229,13 @@ export default function TenantsPage() {
           </div>
 
           {/* Tenants List */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden w-full max-w-full">
+            <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
                     <th 
-                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[200px] sticky left-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[2px_0_4px_rgba(0,0,0,0.1)]"
                       onClick={() => handleSort('name')}
                     >
                       <div className="flex items-center">
@@ -244,7 +244,7 @@ export default function TenantsPage() {
                       </div>
                     </th>
                     <th 
-                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hidden sm:table-cell"
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[120px] hidden sm:table-cell"
                       onClick={() => handleSort('plan')}
                     >
                       <div className="flex items-center">
@@ -253,7 +253,7 @@ export default function TenantsPage() {
                       </div>
                     </th>
                     <th 
-                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[100px]"
                       onClick={() => handleSort('status')}
                     >
                       <div className="flex items-center">
@@ -262,7 +262,7 @@ export default function TenantsPage() {
                       </div>
                     </th>
                     <th 
-                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hidden md:table-cell"
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[180px] hidden md:table-cell"
                       onClick={() => handleSort('email')}
                     >
                       <div className="flex items-center">
@@ -271,7 +271,7 @@ export default function TenantsPage() {
                       </div>
                     </th>
                     <th 
-                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors hidden lg:table-cell"
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[110px] hidden lg:table-cell"
                       onClick={() => handleSort('created_at')}
                     >
                       <div className="flex items-center">
@@ -279,12 +279,12 @@ export default function TenantsPage() {
                         <SortIcon field="created_at" />
                       </div>
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky right-0 bg-gray-50 dark:bg-gray-900 z-10">
+                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[160px] sticky right-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">
                       Actions
                     </th>
                   </tr>
                 </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredAndSortedTenants.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
@@ -305,14 +305,14 @@ export default function TenantsPage() {
                         router.push(`/admin/tenants/${tenant.id}`)
                       }}
                     >
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 sm:px-6 py-4 sticky left-0 bg-white dark:bg-gray-800 z-10 min-w-[200px] shadow-[2px_0_4px_rgba(0,0,0,0.1)]">
                         <div className="flex items-center">
                           <div>
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[150px] sm:max-w-none">{tenant.name}</div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">{tenant.name}</div>
                             {tenant.slug && (
-                              <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate max-w-[150px] sm:max-w-none">/{tenant.slug}</div>
+                              <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 break-words">/{tenant.slug}</div>
                             )}
-                            <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden mt-1 truncate max-w-[150px]">{tenant.email}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden mt-1 break-words">{tenant.email}</div>
                             <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden mt-1">
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPlanBadge(tenant.plan)}`}>
                                 {tenant.plan}
@@ -321,14 +321,14 @@ export default function TenantsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell min-w-[120px]">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getPlanBadge(tenant.plan)}`}>
                           {tenant.plan}
                         </span>
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 sm:px-6 py-4 min-w-[100px]">
                         <div className="flex flex-col">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(tenant.status)}`}>
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap ${getStatusBadge(tenant.status)}`}>
                             {tenant.status === 'trial' ? 'En Trial' : tenant.status}
                           </span>
                           {tenant.status === 'trial' && tenant.trial_ends_at && (
@@ -338,14 +338,14 @@ export default function TenantsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
-                        <div className="truncate max-w-[200px]">{tenant.email}</div>
+                      <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell min-w-[180px]">
+                        <div className="break-words">{tenant.email}</div>
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell min-w-[110px]">
                         {new Date(tenant.created_at).toLocaleDateString('fr-FR')}
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white dark:bg-gray-800 z-10">
-                        <div className="flex justify-end space-x-1 sm:space-x-2 flex-wrap gap-1 sm:gap-2">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white dark:bg-gray-800 z-10 min-w-[160px] shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">
+                        <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()

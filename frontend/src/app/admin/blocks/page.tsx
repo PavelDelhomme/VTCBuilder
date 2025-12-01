@@ -690,12 +690,13 @@ export default function AdminBlocksPage() {
             key: 'name',
             label: 'Nom',
             render: (block) => (
-              <code className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded break-all max-w-[150px] block truncate" title={block.name}>
+              <code className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded break-words" title={block.name}>
                 {block.name}
               </code>
             ),
             sortable: true,
-            minWidth: '120px',
+            minWidth: '180px',
+            sticky: 'left',
           },
           {
             key: 'label',
