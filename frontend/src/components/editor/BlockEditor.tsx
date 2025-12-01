@@ -5385,11 +5385,22 @@ function BlockStylePanel({
   blockTypes?: BlockType[]
 }) {
   const updateStyle = (key: string, value: any) => {
+    const newStyles = { ...block.styles }
+    
+    // Si on met à jour background_color, supprimer background si c'est un gradient
+    if (key === 'background_color' || key === 'backgroundColor') {
+      if (newStyles.background && newStyles.background.includes('gradient')) {
+        delete newStyles.background
+      }
+      // Mettre à jour les deux propriétés pour compatibilité
+      newStyles.background_color = value
+      newStyles.backgroundColor = value
+    } else {
+      newStyles[key] = value
+    }
+    
     onUpdate({
-      styles: {
-        ...block.styles,
-        [key]: value,
-      },
+      styles: newStyles,
     })
   }
 
