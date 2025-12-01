@@ -1,6 +1,4 @@
-# Dependencies
-node_modules/
-vendor/
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -22,77 +20,69 @@ wheels/
 .installed.cfg
 *.egg
 
-# Environment
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+/static
+
+# Environment variables
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.backup
+.env.production
+.env.development
+backend-django/.env
+frontend/.env.local
+frontend/.env.production
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-*.sublime-project
-*.sublime-workspace
-
-# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
-# Django
-*.log
-local_settings.py
-db.sqlite3
-media/
-staticfiles/
-
-# Frontend
-.next/
-out/
-.cache/
-.parcel-cache/
-
-# Docker
-docker/volumes/
-docker-compose.override.yml
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+frontend/.next/
+frontend/out/
+frontend/.next-env.d.ts
 
 # Testing
-coverage/
 .coverage
+htmlcov/
 .pytest_cache/
 .tox/
-htmlcov/
-nosetests.xml
-coverage.xml
-*.cover
 .hypothesis/
 
-# Documentation
-docs/_build/
+# Docker
+*.pid
+*.seed
+*.pid.lock
+
+# Logs
+logs/
+*.log
 
 # Temporary files
 *.tmp
 *.temp
-*.bak
-*.backup
+.cache/
 
-# Laravel (legacy)
-storage/*.key
-storage/app/*
-storage/framework/cache/*
-storage/framework/sessions/*
-storage/framework/testing/*
-storage/framework/views/*
-storage/logs/*
-bootstrap/cache/*
-.phpunit.result.cache
+# OS
+Thumbs.db
+.DS_Store
+
+# Project specific
+public-site/templates/*/preview.html
+*.backup
+*.bak
 

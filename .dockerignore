@@ -3,62 +3,76 @@
 .gitignore
 .gitattributes
 
-# CI/CD
-.github
-.gitlab-ci.yml
-
 # Documentation
 *.md
 docs/
+README.md
+STATUS.md
+SYSTEM_OVERVIEW.md
+PLAN_IMPLEMENTATION.md
+BLOCKS_ROADMAP.md
 
-# IDE
-.vscode
-.idea
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+*.env
+
+# IDEs
+.vscode/
+.idea/
 *.swp
 *.swo
 *~
+.DS_Store
 
-# Logs
-*.log
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
+.pnpm-debug.log*
+frontend/.next/
+frontend/out/
 
-# Dependencies (will be installed in container)
-node_modules/
-vendor/
-
-# Environment
-.env
-.env.*
-
-# Build outputs
-dist/
-build/
-.next/
-out/
-
-# Cache
-.cache/
-.parcel-cache/
-
-# Storage
-storage/*.key
-storage/app/*
-storage/framework/cache/*
-storage/framework/sessions/*
-storage/framework/testing/*
-storage/framework/views/*
-storage/logs/*
-
-# Testing
-coverage/
-.phpunit.result.cache
-
-# OS
-.DS_Store
-Thumbs.db
+# Logs
+logs/
+*.log
 
 # Docker
-docker-compose.override.yml
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+*.backup
+*.bak
+
+# Test files
+tests/
+*.test.js
+*.test.ts
+*.test.tsx
+*.spec.js
+*.spec.ts
+*.spec.tsx
+
+# Scripts (keep only essential)
+scripts/
 
