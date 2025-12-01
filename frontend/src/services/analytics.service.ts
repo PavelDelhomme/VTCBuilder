@@ -18,8 +18,31 @@ export interface UsageStats {
 
 class AnalyticsService {
   async getUsageStats(): Promise<UsageStats> {
-    const response = await api.get('/analytics/usage-stats/')
-    return response.data
+    try {
+      const response = await api.get('/analytics/usage-stats/')
+      return response.data
+    } catch (error: any) {
+      // Si l'endpoint n'existe pas encore, retourner des valeurs par défaut
+      if (error.response?.status === 404) {
+        console.warn('Analytics endpoint not available, using defaults')
+        return {
+          most_used_actions: [],
+          actions_by_resource: [],
+          feature_usage_stats: [],
+          actions_timeline: [],
+          most_clicked_ctas: [],
+          most_viewed_pages: [],
+          summary: {
+            total_actions: 0,
+            actions_today: 0,
+            actions_this_week: 0,
+            actions_this_month: 0,
+            actions_last_30_days: 0,
+          }
+        }
+      }
+      throw error
+    }
   }
 
   async trackAction(actionData: {
