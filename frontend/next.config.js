@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path')
+
 const nextConfig = {
   reactStrictMode: true,
   env: {
@@ -6,6 +8,14 @@ const nextConfig = {
   },
   images: {
     domains: ['localhost'],
+  },
+  // Configuration pour résoudre les imports @/
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, './src'),
+    }
+    return config
   },
 }
 
