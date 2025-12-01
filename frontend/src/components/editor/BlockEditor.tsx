@@ -52,6 +52,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const [sidebarOpen, setSidebarOpen] = useState(true) // Ouvrir par défaut sur desktop
   const [propertiesTab, setPropertiesTab] = useState<'content' | 'layout' | 'style'>('layout') // Layout en premier
   const [categoryFilter, setCategoryFilter] = useState<string>('all') // Filtre par catégorie
+  const [searchQuery, setSearchQuery] = useState<string>('') // Recherche par nom
   
   // Synchroniser avec la sélection externe (optimisé pour éviter les conflits)
   useEffect(() => {
