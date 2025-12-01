@@ -135,98 +135,119 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden w-full max-w-full">
-        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-          <ResponsiveTable
-            headers={['Nom', 'Description', 'Par défaut', 'Actif', 'Créé le', 'Actions']}
-            emptyMessage="Aucun template"
-          >
-          {templates.length === 0 ? (
-            <tr>
-              <td colSpan={6} className="px-3 sm:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                Aucun template de facture. Créez-en un pour commencer.
-              </td>
-            </tr>
-          ) : (
-            templates.map((template) => (
-              <tr key={template.id} className="hover:bg-gray-50 dark:bg-gray-900">
-                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 min-w-[120px]">
-                  <div className="truncate max-w-[150px] sm:max-w-none">{template.name}</div>
-                </td>
-                <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
-                  <div className="truncate max-w-[200px]">{template.description || '-'}</div>
-                </td>
-                <td className="px-3 sm:px-6 py-4 whitespace-nowrap min-w-[100px]">
-                  {template.is_default ? (
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                      Oui
-                    </span>
-                  ) : (
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                      Non
-                    </span>
-                  )}
-                </td>
-                <td className="px-3 sm:px-6 py-4 whitespace-nowrap min-w-[80px]">
-                  {template.is_active ? (
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                      Actif
-                    </span>
-                  ) : (
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                      Inactif
-                    </span>
-                  )}
-                </td>
-                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell min-w-[100px]">
-                  {new Date(template.created_at).toLocaleDateString('fr-FR')}
-                </td>
-                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm sticky right-0 bg-white dark:bg-gray-800 z-10 min-w-[140px]">
-                  <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap">
-                    <button
-                      onClick={() => handlePreview(template)}
-                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 p-1 sm:p-0"
-                      title="Prévisualiser"
-                    >
-                      <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => setEditingTemplate(template)}
-                      className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 p-1 sm:p-0"
-                      title="Modifier"
-                    >
-                      <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    {!template.is_default && (
-                      <button
-                        onClick={() => handleSetDefault(template.id)}
-                        className="text-green-600 hover:text-green-900 dark:text-green-400 p-1 sm:p-0"
-                        title="Définir comme défaut"
-                      >
-                        <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDelete(template.id)}
-                      className="text-red-600 hover:text-red-900 dark:text-red-400 p-1 sm:p-0"
-                      title="Supprimer"
-                    >
-                      <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900">
+              <tr>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[180px] sticky left-0 bg-gray-50 dark:bg-gray-900 z-10">
+                  Nom
+                </th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[200px] hidden md:table-cell">
+                  Description
+                </th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[110px]">
+                  Par défaut
+                </th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[90px]">
+                  Actif
+                </th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[110px] hidden lg:table-cell">
+                  Créé le
+                </th>
+                <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[160px] sticky right-0 bg-gray-50 dark:bg-gray-900 z-10">
+                  Actions
+                </th>
               </tr>
-            ))
-          )}
-        </ResponsiveTable>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {templates.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-3 sm:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    Aucun template de facture. Créez-en un pour commencer.
+                  </td>
+                </tr>
+              ) : (
+                templates.map((template) => (
+                  <tr key={template.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-gray-800 z-10 min-w-[180px]">
+                      <div className="break-words max-w-[200px] sm:max-w-none">{template.name}</div>
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell min-w-[200px]">
+                      <div className="break-words max-w-[250px]">{template.description || '-'}</div>
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap min-w-[110px]">
+                      {template.is_default ? (
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          Oui
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                          Non
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap min-w-[90px]">
+                      {template.is_active ? (
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          Actif
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                          Inactif
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell min-w-[110px]">
+                      {new Date(template.created_at).toLocaleDateString('fr-FR')}
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm sticky right-0 bg-white dark:bg-gray-800 z-10 min-w-[160px]">
+                      <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap">
+                        <button
+                          onClick={() => handlePreview(template)}
+                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 p-1 sm:p-0"
+                          title="Prévisualiser"
+                        >
+                          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setEditingTemplate(template)}
+                          className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 p-1 sm:p-0"
+                          title="Modifier"
+                        >
+                          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        {!template.is_default && (
+                          <button
+                            onClick={() => handleSetDefault(template.id)}
+                            className="text-green-600 hover:text-green-900 dark:text-green-400 p-1 sm:p-0"
+                            title="Définir comme défaut"
+                          >
+                            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDelete(template.id)}
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 p-1 sm:p-0"
+                          title="Supprimer"
+                        >
+                          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
