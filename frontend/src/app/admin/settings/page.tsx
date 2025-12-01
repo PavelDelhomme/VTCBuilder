@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const [testingStripe, setTestingStripe] = useState(false)
   const [stripeTestResult, setStripeTestResult] = useState<{status: string; message: string; account?: any} | null>(null)
   const [settings, setSettings] = useState<SystemSettings | null>(null)
-  const [activeTab, setActiveTab] = useState<'general' | 'email' | 'security' | 'billing' | 'storage' | 'notifications' | 'maintenance' | 'payment'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'email' | 'security' | 'billing' | 'notifications' | 'maintenance' | 'payment'>('general')
 
   useEffect(() => {
     if (!authService.isSuperAdmin()) {
@@ -141,7 +141,6 @@ export default function SettingsPage() {
                 { id: 'email', label: 'Email', icon: '📧' },
                 { id: 'security', label: 'Sécurité', icon: '🔒' },
                 { id: 'billing', label: 'Facturation', icon: '💳' },
-                { id: 'storage', label: 'Stockage', icon: '📦' },
                 { id: 'notifications', label: 'Notifications', icon: '🔔' },
                 { id: 'maintenance', label: 'Maintenance', icon: '🔧' },
                 { id: 'payment', label: 'Paiement', icon: '💳' },
@@ -160,7 +159,6 @@ export default function SettingsPage() {
               { id: 'email', label: 'Email', icon: '📧' },
               { id: 'security', label: 'Sécurité', icon: '🔒' },
               { id: 'billing', label: 'Facturation', icon: '💳' },
-              { id: 'storage', label: 'Stockage', icon: '📦' },
               { id: 'notifications', label: 'Notifications', icon: '🔔' },
               { id: 'maintenance', label: 'Maintenance', icon: '🔧' },
               { id: 'payment', label: 'Paiement', icon: '💳' },
@@ -438,28 +436,6 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Storage Tab */}
-        {activeTab === 'storage' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Paramètres de Stockage</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Taille maximale de fichier (MB)
-                </label>
-                <input
-                  type="number"
-                  value={settings.max_file_size_mb}
-                  onChange={(e) => updateSetting('max_file_size_mb', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  min={1}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Notifications Tab */}
         {activeTab === 'notifications' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-6">
@@ -514,66 +490,223 @@ export default function SettingsPage() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Mode Maintenance</h2>
             
-            <div className="space-y-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={settings.maintenance_mode}
-                  onChange={(e) => updateSetting('maintenance_mode', e.target.checked)}
-                  className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded"
-                />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Activer le mode maintenance</span>
-              </label>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Message de maintenance
-                </label>
-                <textarea
-                  value={settings.maintenance_message}
-                  onChange={(e) => updateSetting('maintenance_message', e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Le site est en maintenance. Veuillez revenir plus tard."
-                />
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <div className="flex items-start">
+                <svg className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <p className="font-medium mb-1">Mode Maintenance</p>
+                  <p className="text-yellow-700 dark:text-yellow-300">
+                    Le mode maintenance permet de bloquer l'accès au site pendant les mises à jour ou la maintenance.
+                  </p>
+                </div>
               </div>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={settings.maintenance_mode || false}
+                    onChange={(e) => updateSetting('maintenance_mode', e.target.checked)}
+                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Activer le mode maintenance</span>
+                </label>
+              </div>
+
+              {settings.maintenance_mode && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Type de maintenance
+                    </label>
+                    <select
+                      value={settings.maintenance_mode_type || 'public_only'}
+                      onChange={(e) => updateSetting('maintenance_mode_type', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="public_only">Site public seulement (VTCBuilder)</option>
+                      <option value="platform_except_admin">Plateforme entière sauf admin (super administrateurs)</option>
+                    </select>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {settings.maintenance_mode_type === 'public_only' 
+                        ? 'Seul le site public VTCBuilder sera en maintenance. Les tenants et l\'admin restent accessibles.'
+                        : 'Toute la plateforme sera en maintenance, sauf l\'interface d\'administration pour les super administrateurs.'}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Message de maintenance
+                    </label>
+                    <textarea
+                      value={settings.maintenance_message || ''}
+                      onChange={(e) => updateSetting('maintenance_message', e.target.value)}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Le site est en maintenance. Veuillez revenir plus tard."
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
 
         {/* Trial Settings */}
         {activeTab === 'general' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Paramètres d'Essai</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="flex items-center mb-4">
-                  <input
-                    type="checkbox"
-                    checked={settings.enable_trial}
-                    onChange={(e) => updateSetting('enable_trial', e.target.checked)}
-                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded"
-                  />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Activer la période d'essai</span>
-                </label>
-              </div>
+          <>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Paramètres d'Essai</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="flex items-center mb-4">
+                    <input
+                      type="checkbox"
+                      checked={settings.enable_trial}
+                      onChange={(e) => updateSetting('enable_trial', e.target.checked)}
+                      className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Activer la période d'essai</span>
+                  </label>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Durée de l'essai (jours)
-                </label>
-                <input
-                  type="number"
-                  value={settings.default_trial_days}
-                  onChange={(e) => updateSetting('default_trial_days', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  min={0}
-                  disabled={!settings.enable_trial}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Durée de l'essai (jours)
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.default_trial_days}
+                    onChange={(e) => updateSetting('default_trial_days', parseInt(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    min={0}
+                    disabled={!settings.enable_trial}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+
+            {/* Additional Useful Settings */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Paramètres Avancés</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Nombre maximum de tenants par compte
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.extra_settings?.max_tenants_per_account || ''}
+                    onChange={(e) => {
+                      const extraSettings = { ...(settings.extra_settings || {}), max_tenants_per_account: e.target.value ? parseInt(e.target.value) : null }
+                      updateSetting('extra_settings', extraSettings)
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Illimité si vide"
+                    min={1}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Laisser vide pour illimité</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Limite de pages par tenant
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.extra_settings?.max_pages_per_tenant || ''}
+                    onChange={(e) => {
+                      const extraSettings = { ...(settings.extra_settings || {}), max_pages_per_tenant: e.target.value ? parseInt(e.target.value) : null }
+                      updateSetting('extra_settings', extraSettings)
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Illimité si vide"
+                    min={1}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Laisser vide pour illimité</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Limite de stockage par tenant (MB)
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.extra_settings?.max_storage_per_tenant_mb || ''}
+                    onChange={(e) => {
+                      const extraSettings = { ...(settings.extra_settings || {}), max_storage_per_tenant_mb: e.target.value ? parseInt(e.target.value) : null }
+                      updateSetting('extra_settings', extraSettings)
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Illimité si vide"
+                    min={1}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Laisser vide pour illimité</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Délai d'expiration des sessions inactives (minutes)
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.session_timeout_minutes || 1440}
+                    onChange={(e) => updateSetting('session_timeout_minutes', parseInt(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    min={1}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Par défaut: 1440 minutes (24h)</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={settings.extra_settings?.allow_tenant_registration !== false}
+                    onChange={(e) => {
+                      const extraSettings = { ...(settings.extra_settings || {}), allow_tenant_registration: e.target.checked }
+                      updateSetting('extra_settings', extraSettings)
+                    }}
+                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Autoriser l'inscription de nouveaux tenants</span>
+                </label>
+
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={settings.extra_settings?.enable_analytics !== false}
+                    onChange={(e) => {
+                      const extraSettings = { ...(settings.extra_settings || {}), enable_analytics: e.target.checked }
+                      updateSetting('extra_settings', extraSettings)
+                    }}
+                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Activer le suivi analytique</span>
+                </label>
+
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={settings.extra_settings?.enable_api_access || false}
+                    onChange={(e) => {
+                      const extraSettings = { ...(settings.extra_settings || {}), enable_api_access: e.target.checked }
+                      updateSetting('extra_settings', extraSettings)
+                    }}
+                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded"
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Activer l'accès API pour les tenants</span>
+                </label>
+              </div>
+            </div>
+          </>
         )}
 
         {/* Payment/Stripe Tab */}

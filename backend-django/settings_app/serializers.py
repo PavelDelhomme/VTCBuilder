@@ -43,6 +43,7 @@ class SystemSettingsSerializer(serializers.ModelSerializer):
             'notify_on_payment_failed',
             'notify_on_subscription_expiring',
             'maintenance_mode',
+            'maintenance_mode_type',
             'maintenance_message',
             'public_homepage_blocks',
             'public_homepage_status',

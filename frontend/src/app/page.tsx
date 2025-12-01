@@ -126,12 +126,24 @@ export default function HomePage() {
   }
 
   // Check maintenance mode before showing landing page
-  // Allow admins to bypass maintenance mode
   const isAdmin = authService.isSuperAdmin()
-  const isMaintenanceMode = systemSettings?.maintenance_mode && !isAdmin
+  const maintenanceMode = systemSettings?.maintenance_mode
+  const maintenanceType = systemSettings?.maintenance_mode_type || 'public_only'
+  
+  // Determine if maintenance should be shown
+  let shouldShowMaintenance = false
+  if (maintenanceMode) {
+    if (maintenanceType === 'public_only') {
+      // Only show maintenance on public site, not for tenants or admin
+      shouldShowMaintenance = !isTenantDomain && !isAdmin
+    } else if (maintenanceType === 'platform_except_admin') {
+      // Show maintenance everywhere except for super admin
+      shouldShowMaintenance = !isAdmin
+    }
+  }
 
-  // Show maintenance page if maintenance mode is enabled (and user is not admin)
-  if (!isTenantDomain && isMaintenanceMode) {
+  // Show maintenance page if needed
+  if (shouldShowMaintenance) {
     return (
       <MaintenancePage
         message={systemSettings?.maintenance_message || 'Le site est actuellement en maintenance. Nous serons de retour très bientôt !'}

@@ -31,6 +31,7 @@ export interface SystemSettings {
   notify_on_payment_failed: boolean;
   notify_on_subscription_expiring: boolean;
   maintenance_mode: boolean;
+  maintenance_mode_type?: 'public_only' | 'platform_except_admin';
   maintenance_message: string;
   public_homepage_blocks?: any[];
   public_homepage_status?: 'draft' | 'published';
@@ -86,6 +87,7 @@ class SettingsService {
           notify_on_payment_failed: true,
           notify_on_subscription_expiring: true,
           maintenance_mode: false,
+          maintenance_mode_type: 'public_only',
           maintenance_message: 'Le site est en maintenance.',
           extra_settings: {},
           created_at: new Date().toISOString(),

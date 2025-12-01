@@ -72,6 +72,15 @@ class SystemSettings(models.Model):
     
     # Maintenance Mode
     maintenance_mode = models.BooleanField(default=False)
+    maintenance_mode_type = models.CharField(
+        max_length=25,
+        choices=[
+            ('public_only', 'Site public seulement (VTCBuilder)'),
+            ('platform_except_admin', 'Plateforme entière sauf admin'),
+        ],
+        default='public_only',
+        help_text="Type de mode maintenance"
+    )
     maintenance_message = models.TextField(blank=True, default='Le site est en maintenance.')
     
     # Public Homepage Content (stored as blocks like WordPress)
