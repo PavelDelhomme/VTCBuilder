@@ -141,7 +141,13 @@ export default function StatsPage() {
       const [statsResponse, billingStatsResponse, usageStatsResponse] = await Promise.allSettled([
         api.get('/stats/detailed/'),
         billingService.getBillingStats().catch(() => null), // Ne pas bloquer si billing stats échoue
-        analyticsService.getUsageStats().catch(() => null) // Ne pas bloquer si usage stats échoue
+        analyticsService.getUsageStats().catch((err) => {
+          // Ne pas logger d'erreur si c'est juste un 404 (endpoint pas encore disponible)
+          if (err?.response?.status !== 404) {
+            console.warn('Erreur chargement usage stats:', err)
+          }
+          return null
+        }) // Ne pas bloquer si usage stats échoue
       ])
       
       const response = statsResponse.status === 'fulfilled' ? statsResponse.value : null
