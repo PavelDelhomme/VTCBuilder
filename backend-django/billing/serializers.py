@@ -170,7 +170,7 @@ class InvoiceTemplateSerializer(serializers.ModelSerializer):
         model = InvoiceTemplate
         fields = [
             'id', 'name', 'description',
-            'html_template', 'css_styles',
+            'html_template', 'css_styles', 'js_script',
             'is_default', 'is_active',
             'created_at', 'updated_at'
         ]

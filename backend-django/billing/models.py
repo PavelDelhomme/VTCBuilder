@@ -284,6 +284,7 @@ class InvoiceTemplate(models.Model):
     # Template content
     html_template = models.TextField(help_text="Template HTML avec variables {{ variable_name }}")
     css_styles = models.TextField(blank=True, help_text="Styles CSS pour le template")
+    js_script = models.TextField(blank=True, help_text="Code JavaScript optionnel pour le template")
     
     # Configuration
     is_default = models.BooleanField(default=False, help_text="Template par défaut pour les nouvelles factures")
@@ -341,6 +342,10 @@ class InvoiceTemplate(models.Model):
         # Add CSS styles
         if self.css_styles:
             html = f'<style>{self.css_styles}</style>\n{html}'
+        
+        # Add JavaScript
+        if self.js_script:
+            html = f'{html}\n<script>{self.js_script}</script>'
         
         return html
 

@@ -12,6 +12,7 @@ interface InvoiceTemplate {
   description?: string
   html_template: string
   css_styles?: string
+  js_script?: string
   is_default: boolean
   is_active: boolean
   created_at: string
@@ -72,6 +73,17 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
       onUpdate()
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour')
+    }
+  }
+
+  const handleEdit = async (template: InvoiceTemplate) => {
+    try {
+      // Récupérer le template complet depuis l'API pour avoir toutes les données
+      const fullTemplate = await billingService.getInvoiceTemplate(template.id)
+      setEditingTemplate(fullTemplate)
+    } catch (error: any) {
+      toast.error('Erreur lors du chargement du template')
+      console.error(error)
     }
   }
 
@@ -212,11 +224,11 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                         </button>
-                        <button
-                          onClick={() => setEditingTemplate(template)}
-                          className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 p-1 sm:p-0"
-                          title="Modifier"
-                        >
+                    <button
+                      onClick={() => handleEdit(template)}
+                      className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 p-1 sm:p-0"
+                      title="Modifier"
+                    >
                           <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
@@ -315,6 +327,41 @@ function InvoiceTemplateModal({
   onClose: () => void
   onSave: (data: Partial<InvoiceTemplate>) => void
 }) {
+  const [showPreview, setShowPreview] = useState(false)
+  const [previewHtml, setPreviewHtml] = useState('')
+
+  // Générer la prévisualisation en temps réel
+  const generatePreview = useCallback((html: string, css: string, js: string) => {
+    // Remplacer les variables par des exemples
+    let preview = html
+      .replace(/\{\{ invoice_number \}\}/g, 'INV-2024-001')
+      .replace(/\{\{ tenant_name \}\}/g, 'Exemple Tenant')
+      .replace(/\{\{ tenant_email \}\}/g, 'exemple@tenant.com')
+      .replace(/\{\{ issue_date \}\}/g, '01/01/2024')
+      .replace(/\{\{ due_date \}\}/g, '31/01/2024')
+      .replace(/\{\{ paid_at \}\}/g, '')
+      .replace(/\{\{ subtotal \}\}/g, '100.00')
+      .replace(/\{\{ tax \}\}/g, '20.00')
+      .replace(/\{\{ total \}\}/g, '120.00')
+      .replace(/\{\{ currency \}\}/g, 'EUR')
+      .replace(/\{\{ status \}\}/g, 'Payé')
+      .replace(/\{\{ plan_name \}\}/g, 'Plan Business')
+      .replace(/\{\{ subscription_id \}\}/g, '123')
+      .replace(/\{% if paid_at %\}.*?\{\% endif %\}/gs, '') // Supprimer les conditions Django
+
+    // Ajouter le CSS
+    if (css) {
+      preview = `<style>${css}</style>\n${preview}`
+    }
+
+    // Ajouter le JavaScript
+    if (js) {
+      preview = `${preview}\n<script>${js}</script>`
+    }
+
+    return preview
+  }, [])
+
   const [formData, setFormData] = useState({
     name: template?.name || '',
     description: template?.description || '',
@@ -418,9 +465,35 @@ function InvoiceTemplateModal({
 </body>
 </html>`,
     css_styles: template?.css_styles || '',
+    js_script: template?.js_script || '',
     is_default: template?.is_default || false,
     is_active: template?.is_active !== undefined ? template.is_active : true,
   })
+
+  // Mettre à jour la prévisualisation quand le template change
+  useEffect(() => {
+    if (template) {
+      setFormData({
+        name: template.name || '',
+        description: template.description || '',
+        html_template: template.html_template || '',
+        css_styles: template.css_styles || '',
+        js_script: template.js_script || '',
+        is_default: template.is_default || false,
+        is_active: template.is_active !== undefined ? template.is_active : true,
+      })
+    }
+  }, [template])
+
+  // Mettre à jour la prévisualisation en temps réel
+  useEffect(() => {
+    const preview = generatePreview(
+      formData.html_template,
+      formData.css_styles || '',
+      formData.js_script || ''
+    )
+    setPreviewHtml(preview)
+  }, [formData.html_template, formData.css_styles, formData.js_script, generatePreview])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -434,17 +507,43 @@ function InvoiceTemplateModal({
           <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
             {template ? 'Modifier le template' : 'Créer un template'}
           </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPreview(!showPreview)}
+              className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              title="Aperçu en temps réel"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              {showPreview ? 'Masquer' : 'Aperçu'}
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
+          {showPreview && (
+            <div className="border-b border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900 flex-shrink-0">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Aperçu en temps réel</h4>
+              <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden" style={{ height: '300px' }}>
+                <iframe
+                  srcDoc={previewHtml}
+                  className="w-full h-full"
+                  title="Preview"
+                />
+              </div>
+            </div>
+          )}
+          <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -499,6 +598,22 @@ function InvoiceTemplateModal({
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                JavaScript (optionnel)
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                Code JavaScript qui sera exécuté après le chargement du template (calculs, animations, etc.)
+              </p>
+              <textarea
+                value={formData.js_script}
+                onChange={(e) => setFormData({ ...formData, js_script: e.target.value })}
+                className="w-full px-3 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm"
+                rows={10}
+                placeholder="// Exemple: calculs automatiques, animations, etc."
+              />
+            </div>
+
             <div className="flex items-center space-x-6">
               <label className="flex items-center">
                 <input
@@ -520,8 +635,9 @@ function InvoiceTemplateModal({
               </label>
             </div>
           </div>
+          </div>
 
-          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
             <button
               type="button"
               onClick={onClose}
