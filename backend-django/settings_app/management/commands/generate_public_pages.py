@@ -11,6 +11,13 @@ import json
 class Command(BaseCommand):
     help = 'Generate public pages (home, docs, contact, faq, legal) in the editor for the system project'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--force',
+            action='store_true',
+            help='Forcer la génération même si des pages existent déjà',
+        )
+
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS('🚀 Génération des pages publiques dans l\'éditeur...'))
         
@@ -23,6 +30,15 @@ class Command(BaseCommand):
                     'site_description': 'Le WordPress des Chauffeurs VTC',
                 }
             )
+            
+            # Vérifier si des pages existent déjà
+            if not options.get('force', False):
+                if (settings.public_homepage_blocks and len(settings.public_homepage_blocks) > 0) or \
+                   (settings.public_pages and len(settings.public_pages) > 0):
+                    self.stdout.write(self.style.WARNING('⚠️  Des pages publiques existent déjà dans l\'éditeur.'))
+                    self.stdout.write(self.style.WARNING('   Utilisez --force pour les remplacer.'))
+                    self.stdout.write(self.style.WARNING('   Ou utilisez make restore-public-pages pour restaurer les pages originales.'))
+                    return
             
             # Define pages with their blocks
             pages_data = {
