@@ -32,6 +32,7 @@ from billing.views import (
 )
 from settings_app.views import system_settings_view, system_settings_test_email_view, system_settings_test_stripe_view
 from billing.webhooks import stripe_webhook
+from projects.views import ProjectViewSet
 from .views import DashboardView, DetailedStatsView, block_usage_tracking_view
 
 # Router for viewsets
@@ -54,6 +55,7 @@ router.register(r'invoices', InvoiceViewSet, basename='invoice')
 router.register(r'payments', PaymentViewSet, basename='payment')
 router.register(r'payment-methods', PaymentMethodViewSet, basename='payment-method')
 router.register(r'invoice-templates', InvoiceTemplateViewSet, basename='invoice-template')
+router.register(r'projects', ProjectViewSet, basename='project')
 # System settings is handled as a singleton with a direct view function above
 
 urlpatterns = [

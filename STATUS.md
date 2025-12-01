@@ -433,10 +433,22 @@ python manage.py init_features
    - ✅ Workflow GitHub Actions simplifié (notifications sans email externe)
    - ✅ **RÉSOLU** : Toutes les erreurs "Module not found" corrigées, frontend fonctionne correctement
 
-3. **📄 Gestion Pages Publiques** (EN COURS)
-   - ⏳ Ajouter possibilité ajouter/supprimer des pages publiques dans `/admin/pages-public`
+3. **📄 Système de Projets/Sites** (✅ COMPLÉTÉ - 2025-01-XX)
+   - ✅ Modèle `Project` créé pour grouper les pages (backend)
+   - ✅ Modèle `ProjectPage` pour lier pages aux projets
+   - ✅ API endpoints CRUD pour projets (`/api/projects/`)
+   - ✅ Interface admin `/admin/projects` pour gérer les projets
+   - ✅ Service frontend `project.service.ts` créé
+   - ✅ Page détail projet avec gestion des pages
+   - ✅ Support projets système (pages publiques) et projets tenant
+   - ⏳ **À FAIRE** : Migration à exécuter (`python manage.py makemigrations projects && python manage.py migrate`)
+   - ⏳ **À FAIRE** : Créer projet système par défaut pour pages publiques
+   - ⏳ **À FAIRE** : Permettre gestion projets depuis interface tenant
+
+4. **📄 Gestion Pages Publiques** (EN COURS)
+   - ✅ Génération automatique nom nouvelle page (Nouvelle page 1, 2, etc.)
+   - ⏳ Réorganiser pages publiques sous système de projets
    - ⏳ Permettre titrer les pages publiques
-   - ⏳ Vérifier que seule la homepage est listée actuellement
    - ⏳ Implémenter l'API pour activer/désactiver une page (TODO ligne 155 dans `frontend/src/app/admin/pages-public/page.tsx`)
 
 4. **📊 Statistiques d'Utilisation des Blocs** (PLANIFIÉ)
@@ -1279,6 +1291,26 @@ Voir [docs/project/COUTS_PROJET.md](./docs/project/COUTS_PROJET.md) pour plus de
   - Page d'accueil, À propos, Contact, Services, Blog, etc.
   - Templates réutilisables et personnalisables
 
+#### 📄 Système de Projets/Sites (✅ COMPLÉTÉ - 2025-01-XX)
+
+**✅ Implémenté** :
+- ✅ **Modèle Project** - Modèle pour grouper les pages en projets/sites (comme WordPress multisite)
+- ✅ **Modèle ProjectPage** - Lien entre projets et pages (publiques ou tenant)
+- ✅ **API CRUD complète** - Endpoints `/api/projects/` avec actions `add_page` et `remove_page`
+- ✅ **Interface admin** - Page `/admin/projects` pour gérer les projets
+- ✅ **Page détail projet** - `/admin/projects/[id]` pour gérer les pages d'un projet
+- ✅ **Service frontend** - `project.service.ts` pour toutes les opérations
+- ✅ **Support projets système** - Projets pour pages publiques VTCBuilder
+- ✅ **Support projets tenant** - Projets pour pages tenant
+- ✅ **Génération automatique nom** - "Nouvelle page 1", "Nouvelle page 2", etc. (plus de prompt)
+
+**⏳ À Faire** :
+- [ ] **Exécuter migrations** - `python manage.py makemigrations projects && python manage.py migrate`
+- [ ] **Créer projet système par défaut** - Projet pour pages publiques VTCBuilder
+- [ ] **Intégrer pages publiques** - Déplacer pages publiques sous système de projets
+- [ ] **Interface tenant** - Permettre aux tenants de gérer leurs projets
+- [ ] **Migration données existantes** - Créer projet système et lier pages existantes
+
 #### 📄 Gestion Complète des Pages Publiques
 
 **✅ Déjà Implémenté** :
@@ -1287,6 +1319,7 @@ Voir [docs/project/COUTS_PROJET.md](./docs/project/COUTS_PROJET.md) pour plus de
 - ✅ **Publication/Dépublication** - Statuts `draft`, `published`, `scheduled` + actions `publish()`/`unpublish()`
 - ✅ **Ajout/Suppression pages** - Création (`/dashboard/pages/new`) et suppression (`handleDelete`) fonctionnelles
 - ✅ **Modèle Page complet** - Champs SEO (meta_title, meta_description, featured_image), statuts, homepage
+- ✅ **Génération automatique nom** - Plus de prompt, création automatique "Nouvelle page 1", "Nouvelle page 2", etc.
 
 **⏳ À Améliorer/Créer** :
 - [ ] **Médiathèque améliorée** - 
@@ -1294,10 +1327,10 @@ Voir [docs/project/COUTS_PROJET.md](./docs/project/COUTS_PROJET.md) pour plus de
   - Filtres par type (images, vidéos, documents)
   - Recherche dans la médiathèque
   - Insertion directe depuis l'éditeur (clic sur image dans médiathèque → insertion dans bloc)
-- [ ] **Interface pages publiques admin** - 
-  - Améliorer `/admin/pages-public` pour ajouter/supprimer facilement
-  - Bouton "Nouvelle page" visible et fonctionnel
-  - Gestion des pages publiques du site VTCBuilder (pas seulement tenant)
+- [ ] **Intégration système projets** - 
+  - Déplacer pages publiques sous système de projets
+  - Créer projet système par défaut
+  - Grouper pages par projet dans l'interface
 - [ ] **Publication programmée** - 
   - Interface pour programmer la publication (date/heure)
   - Système de tâches pour publier automatiquement à la date programmée
@@ -1573,6 +1606,86 @@ cd frontend && npm install  # Installer Jest et dépendances
 - ⏳ **Tests backend - Migrations schémas** - 68 tests échouent encore (tables non créées dans schémas tenants)
 
 **Modifications Récentes** :
+
+### ✅ Système de Projets/Sites (2025-01-XX)
+
+#### Backend - Modèles et API
+1. ✅ **Modèle Project créé**
+   - Modèle pour grouper les pages en projets/sites (comme WordPress multisite)
+   - Support projets système (pages publiques) et projets tenant
+   - Champs : name, slug, description, tenant, is_system_project, status, domain, metadata
+   - Migration créée : `projects/migrations/0001_initial.py`
+
+2. ✅ **Modèle ProjectPage créé**
+   - Lien entre projets et pages (publiques ou tenant)
+   - Champs : project, page_slug, page_type, order
+   - Permet de grouper plusieurs pages dans un projet
+
+3. ✅ **API CRUD complète**
+   - ViewSet `ProjectViewSet` avec toutes les opérations CRUD
+   - Actions personnalisées : `add_page`, `remove_page`
+   - Filtrage automatique selon utilisateur (super admin vs tenant admin)
+   - CORS headers garantis sur toutes les réponses
+   - Endpoints : `/api/projects/`, `/api/projects/{id}/`, `/api/projects/{id}/add_page/`, `/api/projects/{id}/remove_page/`
+
+4. ✅ **Commande management**
+   - `create_default_system_project` : Crée le projet système par défaut pour pages publiques
+   - Usage : `python manage.py create_default_system_project`
+
+#### Frontend - Interface Admin
+5. ✅ **Service frontend créé**
+   - `project.service.ts` : Service complet pour gérer les projets
+   - Méthodes : getAll, getById, create, update, delete, addPage, removePage
+
+6. ✅ **Page liste projets** (`/admin/projects`)
+   - Affichage de tous les projets (système et tenant)
+   - Cartes avec informations (nom, statut, nombre de pages, tenant)
+   - Bouton "Nouveau Projet"
+   - Actions : Ouvrir, Supprimer
+
+7. ✅ **Page détail projet** (`/admin/projects/[id]`)
+   - Informations du projet (nom, statut, édition inline)
+   - Liste des pages du projet avec actions (Éditer, Retirer)
+   - Liste des pages disponibles à ajouter (publiques et tenant)
+   - Bouton "Ajouter" pour chaque page disponible
+
+8. ✅ **Sidebar admin mise à jour**
+   - Nouveau menu "Projets" ajouté avant "Pages Publiques"
+   - Icône dossier pour représenter les projets
+
+#### Améliorations Pages Publiques
+9. ✅ **Génération automatique nom nouvelle page**
+   - Suppression du prompt pour nommer la page
+   - Génération automatique : "Nouvelle page 1", "Nouvelle page 2", etc.
+   - Slug automatique : "nouvelle-page-1", "nouvelle-page-2", etc.
+   - Détection du prochain numéro disponible
+   - Création et sauvegarde automatiques
+
+#### Documentation
+10. ✅ **STATUS.md mis à jour**
+    - Section "Système de Projets/Sites" ajoutée
+    - Tâches restantes documentées
+    - Progression globale mise à jour
+
+**Actions Requises** :
+1. ⚠️ **Exécuter les migrations** :
+   ```bash
+   docker exec vtcbuilder-backend python manage.py migrate projects
+   ```
+
+2. ⚠️ **Créer le projet système par défaut** :
+   ```bash
+   docker exec vtcbuilder-backend python manage.py create_default_system_project
+   ```
+
+3. ⏳ **Intégrer pages publiques existantes** :
+   - Créer projet système par défaut
+   - Lier pages publiques existantes au projet système
+   - Mettre à jour interface pour afficher projets > pages
+
+4. ⏳ **Interface tenant** :
+   - Permettre aux tenants de créer/gérer leurs projets
+   - Afficher projets tenant dans leur dashboard
 
 ### ✅ Corrections Récentes (2025-12-01)
 
