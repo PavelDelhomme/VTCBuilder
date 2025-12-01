@@ -233,7 +233,7 @@ class FeatureUsageViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['GET', 'OPTIONS'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])  # Allow OPTIONS for CORS preflight, check auth in function
 def usage_stats(request):
     """Get comprehensive usage statistics"""
     # Handle OPTIONS request for CORS

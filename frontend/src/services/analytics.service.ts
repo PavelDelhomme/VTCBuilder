@@ -41,6 +41,7 @@ class AnalyticsService {
       // Si l'endpoint n'existe pas encore ou erreur réseau, retourner des valeurs par défaut
       if (error.response?.status === 404 || error.code === 'ERR_NETWORK' || error.message?.includes('ERR_BLOCKED_BY_CLIENT')) {
         // Ne pas logger pour les erreurs attendues (ad blockers, etc.)
+        // Supprimer le message "Analytics endpoint not available, using defaults" qui pollue la console
         return {
           most_used_actions: [],
           actions_by_resource: [],
