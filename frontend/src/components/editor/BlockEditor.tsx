@@ -979,6 +979,8 @@ const SortableBlock = React.memo(function SortableBlock({
   onDelete: () => void
   onDuplicate: () => void
 }) {
+  // État pour le menu contextuel
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const {
     attributes,
     listeners,
@@ -1081,17 +1083,40 @@ const SortableBlock = React.memo(function SortableBlock({
     return 'w-4 h-4 sm:w-5 sm:h-5'
   }
 
+  // Gérer le clic droit pour afficher le menu contextuel
+  const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setContextMenu({ x: e.clientX, y: e.clientY })
+  }
+
+  // Fermer le menu contextuel
+  const closeContextMenu = () => {
+    setContextMenu(null)
+  }
+
+  // Fermer le menu si on clique ailleurs
+  useEffect(() => {
+    if (contextMenu) {
+      const handleClickOutside = () => closeContextMenu()
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [contextMenu])
+
   return (
-    <div
-      ref={(node) => {
-        setNodeRef(node)
-        if (node && blockRef) {
-          (blockRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-        }
-      }}
-      style={style}
-      className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] ${isResizing ? 'select-none' : ''}`}
-    >
+    <>
+      <div
+        ref={(node) => {
+          setNodeRef(node)
+          if (node && blockRef) {
+            (blockRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+          }
+        }}
+        style={style}
+        className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] ${isResizing ? 'select-none' : ''} group`}
+        onContextMenu={handleContextMenu}
+      >
       {/* Resize Handles - Only visible when selected */}
       {isSelected && (
         <>
@@ -1140,30 +1165,11 @@ const SortableBlock = React.memo(function SortableBlock({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0 z-10 relative">
-          <button
-            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-              e.stopPropagation()
-              e.preventDefault()
-              // Log pour diagnostic
-              console.log('[SortableBlock] Bouton paramètres cliqué pour bloc:', block.id, 'à', Date.now())
-              // Appel immédiat, pas de délai
-              onSelect()
-              console.log('[SortableBlock] onSelect() appelé')
-            }}
-            className={`${getButtonSize()} rounded-lg transition-all relative z-10 ${
-              isSelected 
-                ? 'bg-blue-500 text-white shadow-md' 
-                : 'text-gray-500 dark:text-gray-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400'
-            }`}
-            title="Sélectionner pour configurer"
-            type="button"
-          >
-            <svg className={getButtonIconSize()} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </button>
+        {/* Indicateur clic droit - visible au survol */}
+        <div className="flex items-center gap-1 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded">
+            Clic droit pour paramètres
+          </div>
         </div>
       </div>
 
@@ -1209,7 +1215,62 @@ const SortableBlock = React.memo(function SortableBlock({
           </div>
         )}
       </div>
+
+      {/* Menu contextuel */}
+      {contextMenu && (
+        <div
+          className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl py-1 min-w-[180px]"
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onSelect()
+              closeContextMenu()
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Paramètres
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDuplicate()
+              closeContextMenu()
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            Dupliquer
+          </button>
+          <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete()
+              closeContextMenu()
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Supprimer
+          </button>
+        </div>
+      )}
     </div>
+    </>
   )
 })
 
