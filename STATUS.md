@@ -1536,12 +1536,29 @@ cd frontend && npm install  # Installer Jest et dépendances
 ## 🔄 Dernière Mise à Jour
 
 **Date** : 2025-12-01  
-**Focus Actuel** : Corrections erreurs + Système de trial + Améliorations éditeur + Templates opérationnels + Menu Projets avec accordéon
+**Focus Actuel** : Corrections erreurs TypeScript/ESLint + Blocs pages publiques + Templates opérationnels + Menu Projets avec accordéon
 
 ### ✅ Corrections Récentes (2025-12-01)
 
+#### Correction Erreurs TypeScript et ESLint
+1. ✅ **Toutes les erreurs de syntaxe TypeScript et ESLint corrigées**
+   - Correction erreurs JSX dans `BlockEditor.tsx` :
+     - IIFE mal fermée : ajout de `})()` pour fermer la fonction immédiatement invoquée
+     - Code dupliqué : suppression de la section "Configuration Layout" dupliquée
+     - Parenthèse en trop : correction de la structure autour de la ligne 6705
+   - Correction erreurs de type TypeScript :
+     - `BlockLayoutPanel` et `BlockStylePanel` : correction de `onUpdate` pour passer `(updates) => updateBlock(selectedBlock, updates)`
+   - Correction erreurs d'imports et de modules :
+     - `DashboardLayout` : remplacé par `TenantLayout` dans `dashboard/projects/page.tsx` et `dashboard/projects/[id]/page.tsx`
+     - `AdminLayout` : remplacé par `TenantLayout` dans `dashboard/projects/[id]/page.tsx`
+     - `tenant-features.ts` : création du fichier manquant avec la fonction `isFeatureEnabled`
+   - Correction erreurs de compatibilité TypeScript :
+     - `matchAll()` : remplacé par une boucle `while` pour compatibilité avec les versions TypeScript sans `downlevelIteration`
+     - `LoginCredentials` : correction du type dans `login/page.tsx` pour correspondre à l'interface attendue
+   - **Résultat** : 0 erreur TypeScript, 0 erreur ESLint, tous les fichiers compilent correctement
+
 #### Blocs pour Pages Publiques (Register, Login, Contact, Docs, FAQ)
-1. ✅ **9 nouveaux blocs créés pour reproduire les pages publiques**
+2. ✅ **9 nouveaux blocs créés pour reproduire les pages publiques**
    - `billing-cycle-toggle` : Toggle mensuel/annuel pour plans tarifaires
    - `pricing-card` : Carte de plan tarifaire avec features et prix
    - `pricing-cards-grid` : Grille de cartes de plans tarifaires
@@ -1555,7 +1572,7 @@ cd frontend && npm install  # Installer Jest et dépendances
    - Tous les blocs sont maintenant disponibles dans l'éditeur pour créer les pages publiques
 
 #### Menu Projets avec Accordéon dans AdminSidebar
-1. ✅ **Remplacement "Pages Publiques" par menu "Projets" avec accordéon**
+3. ✅ **Remplacement "Pages Publiques" par menu "Projets" avec accordéon**
    - Menu déroulant avec flèche pour afficher les projets
    - Chargement automatique des projets au premier déploiement
    - Séparation visuelle entre projet admin (système) et projets tenants
@@ -1567,7 +1584,7 @@ cd frontend && npm install  # Installer Jest et dépendances
    - Compatible dark mode
 
 #### Templates par Défaut avec HTML, CSS et Variables
-2. ✅ **Commande `create_default_templates` créée**
+4. ✅ **Commande `create_default_templates` créée**
    - Création de 3 templates complets avec HTML, CSS et variables
    - Template VTC Minimaliste : design épuré avec 12 variables
    - Template VTC Moderne : design contemporain
@@ -1579,7 +1596,7 @@ cd frontend && npm install  # Installer Jest et dépendances
    - Gestion correcte des champs requis (structure, price, usage_count, timestamps)
 
 #### Correction Erreur 500 - DetailedStatsView
-3. ✅ **Erreur UnboundLocalError corrigée**
+5. ✅ **Erreur UnboundLocalError corrigée**
    - Suppression import local redondant de `Tenant` dans `DetailedStatsView`
    - L'import global en haut du fichier est maintenant utilisé correctement
    - Résout l'erreur 500 sur `/api/stats/detailed/`

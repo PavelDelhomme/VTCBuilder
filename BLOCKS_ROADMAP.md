@@ -84,6 +84,7 @@
 - ✅ Form Newsletter (Newsletter) - Implémenté
 - ✅ Form Search (Recherche) - Implémenté
 - ✅ Form Inscription (Inscription) - Implémenté
+- ✅ Form Login (Formulaire de connexion) - Implémenté (form-login)
 - ✅ Booking Form (Formulaire de réservation) - Implémenté
 - ⬜ Form Multi-step (Formulaire multi-étapes) - Premium - À implémenter (priorité moyenne)
 - ⬜ Form Conditional (Formulaire conditionnel) - Premium - À implémenter (priorité moyenne)
@@ -100,6 +101,7 @@
 - ✅ Accordion (Accordéon) - Implémenté
 - ✅ Carousel (Carrousel) - Implémenté
 - ✅ Modal (Modal/Popup) - Implémenté
+- ✅ FAQ Filters (Filtres par catégorie FAQ) - Implémenté (faq-filters)
 - ⬜ Popup (Popup) - À implémenter (priorité basse, similaire à Modal)
 - ⬜ Sidebar (Barre latérale)
 - ⬜ Drawer (Tiroir)
@@ -130,6 +132,9 @@
 - ⬜ Shopping Cart (Panier) - À implémenter (priorité haute)
 - ⬜ Checkout (Paiement) - À implémenter (priorité haute)
 - ✅ Price Table (Tableau de prix) - Implémenté (pricing block)
+- ✅ Pricing Card (Carte de plan tarifaire) - Implémenté (pricing-card)
+- ✅ Pricing Cards Grid (Grille de cartes tarifaires) - Implémenté (pricing-cards-grid)
+- ✅ Billing Cycle Toggle (Toggle mensuel/annuel) - Implémenté (billing-cycle-toggle)
 - ⬜ Product Comparison (Comparaison produits) - À implémenter (priorité moyenne)
 - ⬜ Wishlist (Liste de souhaits) - À implémenter (priorité moyenne)
 - ⬜ Reviews (Avis clients) - À implémenter (priorité moyenne)
@@ -252,6 +257,10 @@
 
 ## 🔧 Blocs Utilitaires (Gratuits)
 - ✅ Search Bar (Barre de recherche) - Implémenté
+- ✅ Docs Grid (Grille de documentation) - Implémenté (docs-grid)
+- ✅ Quick Start Section (Section démarrage rapide) - Implémenté (quick-start-section)
+- ✅ Support Hours (Horaires de support) - Implémenté (support-hours)
+- ✅ Trial Info (Info essai gratuit) - Implémenté (trial-info)
 - ⬜ Language Switcher (Sélecteur langue)
 - ⬜ Currency Switcher (Sélecteur devise)
 - ⬜ Theme Switcher (Sélecteur thème)
@@ -344,7 +353,7 @@
 - ⬜ Media Kit (Kit média)
 - ⬜ Contact Info (Info contact)
 - ⬜ Office Hours (Heures bureau)
-- ⬜ Support Hours (Heures support)
+- ✅ Support Hours (Heures support) - Implémenté (support-hours)
 
 ## 🎨 Blocs Animations (Premium ⭐)
 - ⬜ Fade In (Fondu entrant)
@@ -811,7 +820,7 @@
 
 ## 📝 Notes d'Implémentation
 
-### ✅ Blocs Déjà Implémentés (78 blocs)
+### ✅ Blocs Déjà Implémentés (87 blocs)
 **Blocs de Contenu:** heading, text, paragraph, line, button, link, list, quote, code, alert, divider, spacer, breadcrumb, pagination, tags
 
 **Blocs de Mise en Page:** columns, rows, section, container
@@ -820,17 +829,17 @@
 
 **Blocs de Données:** table, chart, stats, progress-bar, progress-circle, timeline, calendar, countdown
 
-**Blocs de Formulaire:** form, form-newsletter, form-search, form-inscription, booking-form
+**Blocs de Formulaire:** form, form-newsletter, form-search, form-inscription, form-login, booking-form
 
-**Blocs Interactifs:** tabs, accordion, carousel, modal
+**Blocs Interactifs:** tabs, accordion, carousel, modal, faq-filters
 
-**Blocs E-commerce:** pricing, rating
+**Blocs E-commerce:** pricing, pricing-card, pricing-cards-grid, billing-cycle-toggle, rating
 
 **Blocs de Design:** hero, banner, cta-section, feature-card, icon-box, card, testimonials, logo-grid, team-member, features-grid, contact-form, faq-section
 
 **Blocs VTC:** booking-form, pricing-table-vtc, service-zones, vehicle-gallery, contact-buttons, map, badges
 
-**Blocs Utilitaires:** search-bar
+**Blocs Utilitaires:** search-bar, docs-grid, quick-start-section, support-hours, trial-info
 
 **Blocs Footer:** footer
 
@@ -862,8 +871,8 @@
 
 ### 📊 Statistiques d'Implémentation
 - **Total blocs dans roadmap:** ~200+
-- **Blocs implémentés:** 78
-- **Taux d'implémentation:** ~39%
+- **Blocs implémentés:** 87 (+9 nouveaux blocs pour pages publiques)
+- **Taux d'implémentation:** ~43.5%
 - **Blocs essentiels implémentés:** ✅ (heading, text, image, button, form, etc.)
 - **Blocs premium implémentés:** ✅ (chart, calendar, modal, etc.)
 - **Blocs VTC implémentés:** ✅ (tous les blocs VTC de base)
