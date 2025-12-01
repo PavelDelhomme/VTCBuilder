@@ -21,7 +21,7 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminSidebarProps = {}) {
   const router = useRouter()
   const pathname = usePathname()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(true) // Sidebar ouvert par défaut
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
   const [projectsExpanded, setProjectsExpanded] = useState(false)
@@ -183,10 +183,10 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
 
   return (
     <>
-      {/* Overlay - visible quand sidebar est ouverte sur mobile ou desktop */}
+      {/* Overlay - visible seulement sur mobile quand sidebar est ouverte */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:bg-opacity-30"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={handleClose}
         />
       )}
@@ -196,7 +196,7 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col ${
           sidebarOpen 
             ? 'translate-x-0' 
-            : '-translate-x-full'
+            : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">

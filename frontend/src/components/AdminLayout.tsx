@@ -14,11 +14,11 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children, title, subtitle, headerActions }: AdminLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true) // Sidebar ouvert par défaut sur desktop
   const { resolvedTheme, toggleTheme } = useTheme()
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="h-screen bg-gray-100 dark:bg-gray-900 flex flex-col overflow-hidden">
       {/* Impersonation Banner */}
       <ImpersonationBanner />
       
@@ -29,14 +29,14 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
         onMenuClick={() => setSidebarOpen(true)}
       />
 
-      <div className="flex">
+      <div className="flex relative flex-1 min-h-0 overflow-hidden">
         {/* Sidebar - Toujours présent mais caché/surpimposé selon la taille d'écran */}
         <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        {/* Main Content */}
-        <div className="flex-1 w-full min-w-0 transition-all duration-300 lg:ml-64">
+        {/* Main Content - S'adapte à l'espace disponible, toujours avec marge pour le sidebar sur desktop */}
+        <div className="flex-1 w-full min-w-0 transition-all duration-300 lg:ml-64 flex flex-col overflow-hidden">
           {/* Desktop Header avec hamburger pour ouvrir/fermer */}
-          <header className="hidden lg:block bg-white dark:bg-gray-800 shadow dark:shadow-gray-900/50">
+          <header className="hidden lg:block bg-white dark:bg-gray-800 shadow dark:shadow-gray-900/50 flex-shrink-0">
             <div className="w-full py-4 px-4 sm:px-6 lg:px-8">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                 <div className="flex items-center space-x-4 min-w-0 flex-1">
@@ -79,9 +79,9 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
             </div>
           </header>
 
-          {/* Content */}
-          <main className="w-full max-w-full overflow-x-hidden py-4 lg:py-6 px-3 sm:px-4 lg:px-6 xl:px-8">
-            <div className="w-full max-w-full overflow-x-hidden">
+          {/* Content - Utilise tout l'espace disponible avec scroll */}
+          <main className="flex-1 w-full min-w-0 overflow-y-auto overflow-x-hidden py-4 lg:py-6 px-3 sm:px-4 lg:px-6 xl:px-8">
+            <div className="w-full min-w-0">
               {children}
             </div>
           </main>
