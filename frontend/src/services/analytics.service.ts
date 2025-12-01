@@ -35,13 +35,11 @@ export interface UsageStats {
 class AnalyticsService {
   async getUsageStats(): Promise<UsageStats> {
     try {
-      const response = await api.get('/analytics/usage-stats/')
-      return response.data
-    } catch (error: any) {
-      // Si l'endpoint n'existe pas encore ou erreur réseau, retourner des valeurs par défaut
-      if (error.response?.status === 404 || error.code === 'ERR_NETWORK' || error.message?.includes('ERR_BLOCKED_BY_CLIENT')) {
-        // Ne pas logger pour les erreurs attendues (ad blockers, etc.)
-        // Supprimer le message "Analytics endpoint not available, using defaults" qui pollue la console
+      const response = await api.get('/analytics/usage-stats/', {
+        validateStatus: (status) => status < 500, // Ne pas throw pour 404/403
+      })
+      if (response.status === 404 || response.status === 403) {
+        // Endpoint non disponible ou non autorisé, retourner valeurs par défaut silencieusement
         return {
           most_used_actions: [],
           actions_by_resource: [],
@@ -59,9 +57,44 @@ class AnalyticsService {
           }
         }
       }
-      // Logger uniquement les autres erreurs
-      console.error('Erreur lors de la récupération des statistiques:', error)
-      throw error
+      return response.data
+    } catch (error: any) {
+      // Si erreur réseau ou autre, retourner valeurs par défaut sans logger
+      if (error.code === 'ERR_NETWORK' || error.message?.includes('ERR_BLOCKED_BY_CLIENT')) {
+        return {
+          most_used_actions: [],
+          actions_by_resource: [],
+          feature_usage_stats: [],
+          actions_timeline: [],
+          most_clicked_ctas: [],
+          buttons_by_user: [],
+          most_viewed_pages: [],
+          summary: {
+            total_actions: 0,
+            actions_today: 0,
+            actions_this_week: 0,
+            actions_this_month: 0,
+            actions_last_30_days: 0,
+          }
+        }
+      }
+      // Pour les autres erreurs, retourner aussi des valeurs par défaut
+      return {
+        most_used_actions: [],
+        actions_by_resource: [],
+        feature_usage_stats: [],
+        actions_timeline: [],
+        most_clicked_ctas: [],
+        buttons_by_user: [],
+        most_viewed_pages: [],
+        summary: {
+          total_actions: 0,
+          actions_today: 0,
+          actions_this_week: 0,
+          actions_this_month: 0,
+          actions_last_30_days: 0,
+        }
+      }
     }
   }
 
