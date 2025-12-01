@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('media', '0002_add_html_css_to_template'),
+        ('media', '0001_initial'),
     ]
 
     operations = [

@@ -9,7 +9,7 @@ class BlockTypeSerializer(serializers.ModelSerializer):
     """Serializer for BlockType"""
     available_plans = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=None,  # Will be set in __init__
+        read_only=False,
         required=False,
         allow_empty=True
     )
@@ -28,9 +28,13 @@ class BlockTypeSerializer(serializers.ModelSerializer):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Set queryset for available_plans
-        from billing.models import PricingPlan
-        self.fields['available_plans'].queryset = PricingPlan.objects.all()
+        # Set queryset for available_plans dynamically to avoid import issues
+        try:
+            from billing.models import PricingPlan
+            self.fields['available_plans'].queryset = PricingPlan.objects.all()
+        except Exception:
+            # If PricingPlan is not available yet, use read_only
+            self.fields['available_plans'].read_only = True
     
     def get_plan_names(self, obj):
         """Return list of plan names for this block"""
