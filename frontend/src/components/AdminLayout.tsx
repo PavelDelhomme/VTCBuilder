@@ -13,22 +13,74 @@ interface AdminLayoutProps {
   headerActions?: React.ReactNode
 }
 
-export default function AdminLayout({ children, title, subtitle, headerActions }: AdminLayoutProps) {
-  // Sidebar fermé par défaut sur mobile, ouvert sur desktop
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { resolvedTheme, toggleTheme } = useTheme()
+const SIDEBAR_STATE_KEY = 'vtcbuilder_admin_sidebar_open'
 
-  // Détecter la taille d'écran et ajuster l'état initial du sidebar
+export default function AdminLayout({ children, title, subtitle, headerActions }: AdminLayoutProps) {
+  const { resolvedTheme, toggleTheme } = useTheme()
+  
+  // Fonction pour charger l'état sauvegardé depuis localStorage
+  const loadSidebarState = (): boolean => {
+    try {
+      if (typeof window === 'undefined') return false
+      
+      const saved = localStorage.getItem(SIDEBAR_STATE_KEY)
+      if (saved !== null) {
+        return saved === 'true'
+      }
+    } catch (error) {
+      // En cas d'erreur (localStorage bloqué, etc.), logger et retourner false
+      console.error('Erreur lors du chargement de l\'état du sidebar:', error)
+    }
+    return false
+  }
+
+  // Fonction pour sauvegarder l'état dans localStorage
+  const saveSidebarState = (isOpen: boolean) => {
+    try {
+      if (typeof window === 'undefined') return
+      localStorage.setItem(SIDEBAR_STATE_KEY, String(isOpen))
+    } catch (error) {
+      // En cas d'erreur (localStorage bloqué, quota dépassé, etc.), logger seulement
+      console.error('Erreur lors de la sauvegarde de l\'état du sidebar:', error)
+    }
+  }
+
+  // Initialiser l'état : restaurer depuis localStorage ou utiliser la valeur par défaut selon la taille d'écran
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === 'undefined') return false
+    
+    const savedState = loadSidebarState()
+    const isDesktop = window.innerWidth >= 1024
+    
+    // Sur desktop, utiliser l'état sauvegardé ou true par défaut
+    // Sur mobile, toujours false (même si sauvegardé comme ouvert)
+    return isDesktop ? (savedState !== null ? savedState : true) : false
+  })
+
+  // Sauvegarder l'état à chaque changement (uniquement sur desktop)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    
+    // Ne sauvegarder que si on est sur desktop
+    if (window.innerWidth >= 1024) {
+      saveSidebarState(sidebarOpen)
+    }
+  }, [sidebarOpen])
+
+  // Détecter la taille d'écran et ajuster l'état du sidebar
   useEffect(() => {
     // Vérifier que window est disponible (client-side uniquement)
     if (typeof window === 'undefined') return
 
     const checkScreenSize = () => {
-      // Sur desktop (lg: 1024px+), ouvrir le sidebar par défaut
-      if (window.innerWidth >= 1024) {
-        setSidebarOpen(true)
+      const isDesktop = window.innerWidth >= 1024
+      
+      if (isDesktop) {
+        // Sur desktop, restaurer l'état sauvegardé ou laisser ouvert
+        const savedState = loadSidebarState()
+        setSidebarOpen(savedState !== null ? savedState : true)
       } else {
-        // Sur mobile, fermer le sidebar
+        // Sur mobile, toujours fermer (même si sauvegardé comme ouvert)
         setSidebarOpen(false)
       }
     }
