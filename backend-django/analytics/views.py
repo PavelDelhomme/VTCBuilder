@@ -232,10 +232,16 @@ class FeatureUsageViewSet(viewsets.ModelViewSet):
         return response
 
 
-@api_view(['GET'])
+@api_view(['GET', 'OPTIONS'])
 @permission_classes([IsAuthenticated])
 def usage_stats(request):
     """Get comprehensive usage statistics"""
+    # Handle OPTIONS request for CORS
+    if request.method == 'OPTIONS':
+        response = Response()
+        add_cors_headers(response, request)
+        return response
+    
     try:
         user = request.user
         
