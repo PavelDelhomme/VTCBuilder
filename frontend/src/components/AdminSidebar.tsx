@@ -196,7 +196,7 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col ${
           sidebarOpen 
             ? 'translate-x-0' 
-            : '-translate-x-full lg:translate-x-0'
+            : '-translate-x-full'
         }`}
       >
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">

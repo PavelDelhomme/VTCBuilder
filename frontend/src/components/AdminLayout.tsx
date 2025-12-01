@@ -33,8 +33,10 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
         {/* Sidebar - Toujours présent mais caché/surpimposé selon la taille d'écran */}
         <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        {/* Main Content - S'adapte à l'espace disponible, toujours avec marge pour le sidebar sur desktop */}
-        <div className="flex-1 w-full min-w-0 transition-all duration-300 lg:ml-64 flex flex-col overflow-hidden">
+        {/* Main Content - S'adapte à l'espace disponible, marge conditionnelle selon l'état du sidebar */}
+        <div className={`flex-1 w-full min-w-0 transition-all duration-300 flex flex-col overflow-hidden ${
+          sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'
+        }`}>
           {/* Desktop Header avec hamburger pour ouvrir/fermer */}
           <header className="hidden lg:block bg-white dark:bg-gray-800 shadow dark:shadow-gray-900/50 flex-shrink-0">
             <div className="w-full py-4 px-4 sm:px-6 lg:px-8">
