@@ -22,9 +22,9 @@ class AnalyticsService {
       const response = await api.get('/analytics/usage-stats/')
       return response.data
     } catch (error: any) {
-      // Si l'endpoint n'existe pas encore, retourner des valeurs par défaut
-      if (error.response?.status === 404) {
-        console.warn('Analytics endpoint not available, using defaults')
+      // Si l'endpoint n'existe pas encore ou erreur réseau, retourner des valeurs par défaut
+      if (error.response?.status === 404 || error.code === 'ERR_NETWORK' || error.message?.includes('ERR_BLOCKED_BY_CLIENT')) {
+        // Ne pas logger pour les erreurs attendues (ad blockers, etc.)
         return {
           most_used_actions: [],
           actions_by_resource: [],
@@ -41,6 +41,8 @@ class AnalyticsService {
           }
         }
       }
+      // Logger uniquement les autres erreurs
+      console.error('Erreur lors de la récupération des statistiques:', error)
       throw error
     }
   }

@@ -10,7 +10,9 @@ router.register(r'actions', UserActionViewSet, basename='user-action')
 router.register(r'feature-usage', FeatureUsageViewSet, basename='feature-usage')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    # Specific routes must come BEFORE the router to avoid conflicts
     path('usage-stats/', usage_stats, name='usage-stats'),
+    path('usage-stats', usage_stats, name='usage-stats-no-slash'),
+    path('', include(router.urls)),
 ]
 
