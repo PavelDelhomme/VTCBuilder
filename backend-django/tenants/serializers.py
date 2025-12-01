@@ -188,6 +188,31 @@ L'équipe VTCBuilder
             import logging
             logging.getLogger(__name__).error(f"Failed to send invitation email: {e}")
         
+        # Create default project for the tenant
+        try:
+            from projects.models import Project
+            from django.utils.text import slugify
+            
+            project_slug = f"{tenant.slug}-site"
+            project_name = f"{tenant.name} - Site Principal"
+            
+            # Check if project already exists
+            if not Project.objects.filter(slug=project_slug, tenant=tenant).exists():
+                Project.objects.create(
+                    name=project_name,
+                    slug=project_slug,
+                    description=f"Projet principal pour {tenant.name}",
+                    tenant=tenant,
+                    is_system_project=False,
+                    status='active'
+                )
+                import logging
+                logging.getLogger(__name__).info(f"Default project created for tenant {tenant.name}")
+        except Exception as e:
+            # Project creation failure shouldn't prevent tenant creation
+            import logging
+            logging.getLogger(__name__).warning(f"Failed to create default project for tenant {tenant.name}: {e}")
+        
         return tenant
 
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import DashboardLayout from '@/components/DashboardLayout'
 import projectService, { Project } from '@/services/project.service'
 import toast from 'react-hot-toast'
 import PageLoader from '@/components/PageLoader'
@@ -15,6 +15,7 @@ export default function ProjectsManagement() {
 
   useEffect(() => {
     // Allow both super admin and tenant admin to access projects
+    // No need to check permissions - API will filter projects based on user
     loadProjects()
   }, [router])
 
@@ -40,7 +41,7 @@ export default function ProjectsManagement() {
         status: 'active',
       })
       toast.success('Projet créé avec succès !')
-      router.push(`/admin/projects/${project.id}`)
+      router.push(`/dashboard/projects/${project.id}`)
     } catch (error: any) {
       console.error('Erreur création projet:', error)
       toast.error('Erreur lors de la création du projet')
@@ -63,28 +64,26 @@ export default function ProjectsManagement() {
 
   if (loading) {
     return (
-      <AdminLayout title="Projets" subtitle="Gestion des projets et sites">
+      <DashboardLayout title="Projets" subtitle="Gestion des projets et sites">
         <PageLoader text="Chargement des projets..." />
-      </AdminLayout>
+      </DashboardLayout>
     )
   }
 
   return (
-    <AdminLayout
+    <DashboardLayout
       title="Projets"
       subtitle="Gérez vos projets et sites web - Groupez vos pages par projet"
       headerActions={
-        authService.isSuperAdmin() && (
-          <button
-            onClick={handleCreateProject}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Nouveau Projet
-          </button>
-        )
+        <button
+          onClick={handleCreateProject}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Nouveau Projet
+        </button>
       }
     >
       <div className="space-y-6">
@@ -161,7 +160,7 @@ export default function ProjectsManagement() {
 
                 <div className="flex gap-2">
                   <button
-                    onClick={() => router.push(`/admin/projects/${project.id}`)}
+                    onClick={() => router.push(`/dashboard/projects/${project.id}`)}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
                   >
                     📁 Ouvrir
@@ -195,7 +194,7 @@ export default function ProjectsManagement() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </DashboardLayout>
   )
 }
 

@@ -33,7 +33,12 @@ from billing.views import (
 )
 from settings_app.views import system_settings_view, system_settings_test_email_view, system_settings_test_stripe_view
 from billing.webhooks import stripe_webhook
-from projects.views import ProjectViewSet
+try:
+    from projects.views import ProjectViewSet
+    PROJECTS_AVAILABLE = True
+except (ImportError, RuntimeError) as e:
+    PROJECTS_AVAILABLE = False
+    ProjectViewSet = None
 from .views import DashboardView, DetailedStatsView, block_usage_tracking_view
 
 # Router for viewsets
@@ -52,13 +57,16 @@ if BLOCKS_AVAILABLE and BlockTypeViewSet:
     router.register(r'blocks/templates', BlockTemplateViewSet, basename='block-template')
 if BLOCKS_AVAILABLE and CallToActionViewSet:
     router.register(r'blocks/call-to-actions', CallToActionViewSet, basename='call-to-action')
+if PROJECTS_AVAILABLE and ProjectViewSet:
+    router.register(r'projects', ProjectViewSet, basename='project')
 router.register(r'pricing-plans', PricingPlanViewSet, basename='pricing-plan')
 router.register(r'subscriptions', SubscriptionViewSet, basename='subscription')
 router.register(r'invoices', InvoiceViewSet, basename='invoice')
 router.register(r'payments', PaymentViewSet, basename='payment')
 router.register(r'payment-methods', PaymentMethodViewSet, basename='payment-method')
 router.register(r'invoice-templates', InvoiceTemplateViewSet, basename='invoice-template')
-router.register(r'projects', ProjectViewSet, basename='project')
+if PROJECTS_AVAILABLE and ProjectViewSet:
+    router.register(r'projects', ProjectViewSet, basename='project')
 # System settings is handled as a singleton with a direct view function above
 
 urlpatterns = [
