@@ -14,6 +14,20 @@ YELLOW = \033[0;33m
 RED = \033[0;31m
 NC = \033[0m # No Color
 
+##@ Pages Publiques
+
+generate-public-pages: ## Générer les pages publiques dans l'éditeur pour les tenants
+	@printf "$(GREEN)🚀 Génération des pages publiques dans l'éditeur...$(NC)\n"
+	@docker compose exec -T $(BACKEND_CONTAINER) python manage.py generate_public_pages || \
+	 docker compose exec -T $(BACKEND_CONTAINER) python manage.py generate_public_pages --schema=public || \
+	 (printf "$(YELLOW)⚠️  Impossible d'exécuter la commande dans le conteneur.$(NC)\n" && \
+	  printf "$(BLUE)Exécutez manuellement :$(NC)\n" && \
+	  printf "  cd backend-django && python manage.py generate_public_pages\n")
+
+restore-public-pages: ## Restaurer les pages publiques depuis le backup
+	@printf "$(GREEN)🔄 Restauration des pages publiques depuis le backup...$(NC)\n"
+	@bash scripts/restore_public_pages.sh
+
 ##@ Aide
 
 help: ## Afficher l'aide
