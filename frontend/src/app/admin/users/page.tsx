@@ -268,16 +268,16 @@ export default function UsersPage() {
                         {new Date(user.created_at).toLocaleDateString('fr-FR')}
                       </td>
                       <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2 flex-wrap gap-2">
+                        <div className="flex justify-end space-x-1 sm:space-x-2 flex-wrap gap-1 sm:gap-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
                               router.push(`/admin/users/${user.id}`)
                             }}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            className="text-indigo-600 hover:text-indigo-900 p-1 sm:p-0"
                             title="Modifier l'utilisateur"
                           >
-                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </button>
@@ -287,10 +287,10 @@ export default function UsersPage() {
                                 e.stopPropagation()
                                 handleImpersonate(user.id, user.email)
                               }}
-                              className="text-purple-600 hover:text-purple-900"
+                              className="text-purple-600 hover:text-purple-900 p-1 sm:p-0"
                               title="Impersonner cet utilisateur"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
                             </button>
@@ -300,10 +300,10 @@ export default function UsersPage() {
                               e.stopPropagation()
                               handlePasswordReset(user.id, user.email)
                             }}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900 p-1 sm:p-0"
                             title="Réinitialiser le mot de passe"
                           >
-                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                             </svg>
                           </button>
@@ -314,10 +314,10 @@ export default function UsersPage() {
                                   e.stopPropagation()
                                   handleDeactivate(user.id)
                                 }}
-                                className="text-yellow-600 hover:text-yellow-900"
+                                className="text-yellow-600 hover:text-yellow-900 p-1 sm:p-0"
                                 title="Désactiver"
                               >
-                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                               </button>
@@ -326,10 +326,10 @@ export default function UsersPage() {
                                   e.stopPropagation()
                                   handleSuspend(user.id)
                                 }}
-                                className="text-red-600 hover:text-red-900"
+                                className="text-red-600 hover:text-red-900 p-1 sm:p-0"
                                 title="Suspendre"
                               >
-                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                                 </svg>
                               </button>
@@ -340,10 +340,10 @@ export default function UsersPage() {
                                 e.stopPropagation()
                                 handleActivate(user.id)
                               }}
-                              className="text-green-600 hover:text-green-900"
+                              className="text-green-600 hover:text-green-900 p-1 sm:p-0"
                               title="Activer"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
                               </svg>
                             </button>
@@ -354,10 +354,10 @@ export default function UsersPage() {
                                 e.stopPropagation()
                                 handleDelete(user.id, user.email, user.name, user.role)
                               }}
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-600 hover:text-red-900 p-1 sm:p-0"
                               title="Supprimer définitivement"
                             >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
                             </button>

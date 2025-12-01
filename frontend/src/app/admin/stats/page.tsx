@@ -363,7 +363,7 @@ export default function StatsPage() {
         {billingStats && (
           <>
             {/* Première rangée - Cartes principales avec gradients */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
               {/* Revenus Totaux */}
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
                 <div className="flex items-center justify-between mb-2">
@@ -427,7 +427,7 @@ export default function StatsPage() {
             </div>
 
             {/* Deuxième rangée - Cartes secondaires */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
               {/* Total Factures */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <div className="flex items-center justify-between mb-2">
@@ -774,7 +774,7 @@ export default function StatsPage() {
 
         {/* Overview Cards */}
         {stats.overview && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -855,7 +855,7 @@ export default function StatsPage() {
         )}
 
         {/* Cartes supplémentaires pour les statuts */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           {(stats.overview?.suspended_tenants || 0) > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-lg shadow p-6">
               <div className="flex items-center justify-between">
