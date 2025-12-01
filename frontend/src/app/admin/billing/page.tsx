@@ -924,12 +924,14 @@ export default function BillingPage() {
 
       {/* Plans Tab */}
       {activeTab === 'plans' && (
-        <PricingPlansTab
-          pricingPlans={pricingPlans}
-          onUpdate={loadBillingData}
-          billingService={billingService}
-          getStatusBadge={getStatusBadge}
-        />
+        <div className="w-full max-w-full overflow-x-hidden">
+          <PricingPlansTab
+            pricingPlans={pricingPlans}
+            onUpdate={loadBillingData}
+            billingService={billingService}
+            getStatusBadge={getStatusBadge}
+          />
+        </div>
       )}
 
       {/* Payment Methods Tab */}
@@ -1349,20 +1351,23 @@ function PricingPlansTab({
   const sortedPlans = [...pricingPlans].sort((a, b) => (a.order || 0) - (b.order || 0))
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Gestion des Plans Tarifaires</h2>
+    <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">Gestion des Plans Tarifaires</h2>
         <button
           onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 text-sm sm:text-base w-full sm:w-auto flex items-center justify-center gap-2"
         >
-          + Nouveau Plan
+          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Nouveau Plan
         </button>
       </div>
 
       {(showCreate || editing) && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold mb-4">
             {editing ? 'Modifier le Plan Tarifaire' : 'Nouveau Plan Tarifaire'}
           </h3>
           <PricingPlanForm
@@ -1381,54 +1386,55 @@ function PricingPlansTab({
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <ResponsiveTable
-          headers={['Ordre', 'Nom', 'Prix', 'Statut', 'Caractéristiques', 'Actions']}
-          emptyMessage="Aucun plan tarifaire"
-        >
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden w-full max-w-full">
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <ResponsiveTable
+            headers={['Ordre', 'Nom', 'Prix', 'Statut', 'Caractéristiques', 'Actions']}
+            emptyMessage="Aucun plan tarifaire"
+          >
           {sortedPlans.length === 0 ? (
             <tr>
-              <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+              <td colSpan={6} className="px-3 sm:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                 Aucun plan tarifaire configuré
               </td>
             </tr>
           ) : (
             sortedPlans.map((plan, index) => (
-              <tr key={plan.id} className="hover:bg-gray-50 dark:bg-gray-900">
-                <td className="px-6 py-4 whitespace-nowrap">
+              <tr key={plan.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap min-w-[60px]">
                   <div className="flex flex-col items-center gap-1">
                     <button
                       onClick={() => handleMoveUp(plan.id)}
                       disabled={index === 0}
-                      className="text-gray-400 hover:text-gray-600 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="text-gray-400 hover:text-gray-600 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed p-1"
                       title="Monter"
                     >
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                       </svg>
                     </button>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{plan.order ?? index}</span>
+                    <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">{plan.order ?? index}</span>
                     <button
                       onClick={() => handleMoveDown(plan.id)}
                       disabled={index === sortedPlans.length - 1}
-                      className="text-gray-400 hover:text-gray-600 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="text-gray-400 hover:text-gray-600 dark:text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed p-1"
                       title="Descendre"
                     >
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap min-w-[150px]">
                   <div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{plan.name}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[200px] sm:max-w-none">{plan.name}</div>
                     {plan.description && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">{plan.description}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px] sm:max-w-xs hidden sm:block">{plan.description}</div>
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 min-w-[100px]">
                   <div>
                     <span className="font-bold">{plan.price_monthly}€</span>
                     <span className="text-gray-500 dark:text-gray-400">/mois</span>
@@ -1439,21 +1445,21 @@ function PricingPlansTab({
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap min-w-[100px]">
                   <div className="flex flex-col gap-1">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      plan.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+                      plan.is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                     }`}>
                       {plan.is_active ? 'Actif' : 'Inactif'}
                     </span>
                     {plan.is_featured && (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 whitespace-nowrap">
                         Populaire
                       </span>
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell min-w-[150px]">
                   <div className="space-y-1">
                     <div>{plan.max_sites} site{plan.max_sites > 1 ? 's' : ''}</div>
                     <div>{plan.max_users} utilisateur{plan.max_users > 1 ? 's' : ''}</div>
@@ -1463,21 +1469,25 @@ function PricingPlansTab({
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end gap-2">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white dark:bg-gray-800 z-10 min-w-[100px]">
+                  <div className="flex items-center justify-end gap-1 sm:gap-2 flex-nowrap">
                     <button
                       onClick={() => handleEdit(plan)}
-                      className="text-indigo-600 hover:text-indigo-900"
+                      className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 p-1 sm:p-0"
                       title="Modifier"
                     >
-                      ✏️
+                      <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
                     </button>
                     <button
                       onClick={() => handleDelete(plan.id, plan.name)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-900 dark:text-red-400 p-1 sm:p-0"
                       title="Supprimer"
                     >
-                      🗑️
+                      <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                     </button>
                   </div>
                 </td>
@@ -1485,62 +1495,70 @@ function PricingPlansTab({
             ))
           )}
         </ResponsiveTable>
+        </div>
       </div>
 
       {/* Preview des plans */}
       {sortedPlans.filter(p => p.is_active).length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Aperçu de l&apos;affichage sur le site public</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold mb-4">Aperçu de l&apos;affichage sur le site public</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {sortedPlans.filter(p => p.is_active).map((plan) => (
               <div
                 key={plan.id}
-                className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 relative border-2 ${
-                  plan.is_featured ? 'border-blue-500 scale-105' : 'border-gray-200'
+                className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 relative border-2 ${
+                  plan.is_featured ? 'border-blue-500 sm:scale-105' : 'border-gray-200 dark:border-gray-700'
                 }`}
               >
                 {plan.is_featured && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-bold">
+                  <div className="absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-blue-500 text-white px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-bold">
                       POPULAIRE
                     </span>
                   </div>
                 )}
                 
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{plan.name}</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">{plan.description}</p>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{plan.name}</h3>
+                {plan.description && (
+                  <p className="text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 text-xs sm:text-sm line-clamp-2">{plan.description}</p>
+                )}
                 
-                <div className="mb-6">
-                  <span className="text-4xl font-extrabold text-gray-900 dark:text-gray-100">
+                <div className="mb-4 sm:mb-6">
+                  <span className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-gray-100">
                     {plan.price_monthly}€
                   </span>
-                  <span className="text-gray-600 dark:text-gray-400">/mois</span>
+                  <span className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">/mois</span>
                   {plan.price_yearly && (
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                       ou {plan.price_yearly}€/an
                     </div>
                   )}
                 </div>
 
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                   <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700 dark:text-gray-300">{plan.max_sites} site{plan.max_sites > 1 ? 's' : ''}</span>
+                    <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
+                    <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 break-words">{plan.max_sites} site{plan.max_sites > 1 ? 's' : ''}</span>
                   </li>
                   <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700 dark:text-gray-300">{plan.max_users} utilisateur{plan.max_users > 1 ? 's' : ''} max</span>
+                    <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
+                    <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 break-words">{plan.max_users} utilisateur{plan.max_users > 1 ? 's' : ''} max</span>
                   </li>
                   <li className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700 dark:text-gray-300">{plan.max_storage_gb} GB de stockage</span>
+                    <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
+                    <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 break-words">{plan.max_storage_gb} GB de stockage</span>
                   </li>
-                  {plan.features && plan.features.map((feature: string, idx: number) => (
+                  {plan.features && plan.features.slice(0, 3).map((feature: string, idx: number) => (
                     <li key={idx} className="flex items-center">
-                      <span className="text-green-500 mr-2">✓</span>
-                      <span className="text-gray-700 dark:text-gray-300">{feature}</span>
+                      <span className="text-green-500 mr-2 flex-shrink-0">✓</span>
+                      <span className="text-sm sm:text-base text-gray-700 dark:text-gray-300 break-words">{feature}</span>
                     </li>
                   ))}
+                  {plan.features && plan.features.length > 3 && (
+                    <li className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                      +{plan.features.length - 3} autre{plan.features.length - 3 > 1 ? 's' : ''} fonctionnalité{plan.features.length - 3 > 1 ? 's' : ''}
+                    </li>
+                  )}
                 </ul>
               </div>
             ))}
@@ -1698,13 +1716,13 @@ function PricingPlanForm({
         />
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
         <label className="flex items-center">
           <input
             type="checkbox"
             checked={formData.is_active || false}
             onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-            className="mr-2"
+            className="mr-2 h-4 w-4"
           />
           <span className="text-sm text-gray-700 dark:text-gray-300">Plan actif</span>
         </label>
@@ -1714,23 +1732,23 @@ function PricingPlanForm({
             type="checkbox"
             checked={formData.is_featured || false}
             onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
-            className="mr-2"
+            className="mr-2 h-4 w-4"
           />
           <span className="text-sm text-gray-700 dark:text-gray-300">Marquer comme &quot;Populaire&quot;</span>
         </label>
       </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
         <button
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900 w-full sm:w-auto"
         >
           Annuler
         </button>
         <button
           onClick={onSave}
           disabled={!formData.name || !formData.slug}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
         >
           Enregistrer
         </button>
