@@ -436,7 +436,7 @@ setup-trial-cron: ## Configurer la tâche cron pour vérifier les trials automat
 
 urls: ## Afficher les URLs importantes
 	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
-	@printf "$(GREEN)🌐 URLs CMS CRM Solutions :$(NC)\n"
+	@printf "$(GREEN)🌐 URLs VTCBuilder :$(NC)\n"
 	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
 	@printf "  $(YELLOW)Frontend:$(NC)           http://localhost:3004\n"
 	@printf "  $(YELLOW)API Django:$(NC)         http://localhost:8088/api/\n"
