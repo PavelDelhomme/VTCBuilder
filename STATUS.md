@@ -422,19 +422,24 @@ python manage.py init_features
    - ✅ Amélioration gestion erreurs endpoints `/api/blocks/types/`, `/api/users/impersonation-status/`, `/api/system-settings/`
    - ✅ TemplateStorage rendu optionnel pour éviter erreurs import dans les tests
 
-2. **📄 Gestion Pages Publiques** (EN COURS)
+2. **🐛 Correction Erreur Build Frontend** (EN COURS)
+   - ✅ Ajout configuration paths dans `tsconfig.json` pour résoudre les imports `@/`
+   - ⏳ **À VÉRIFIER** : Redémarrer le frontend pour appliquer les changements
+   - ⏳ **À FAIRE** : Vérifier que tous les imports `@/services/*` fonctionnent correctement
+
+3. **📄 Gestion Pages Publiques** (EN COURS)
    - ⏳ Ajouter possibilité ajouter/supprimer des pages publiques dans `/admin/pages-public`
    - ⏳ Permettre titrer les pages publiques
    - ⏳ Vérifier que seule la homepage est listée actuellement
    - ⏳ Implémenter l'API pour activer/désactiver une page (TODO ligne 155 dans `frontend/src/app/admin/pages-public/page.tsx`)
 
-3. **📊 Statistiques d'Utilisation des Blocs** (PLANIFIÉ)
+4. **📊 Statistiques d'Utilisation des Blocs** (PLANIFIÉ)
    - ⏳ Implémenter tracking d'utilisation des blocs
    - ⏳ Créer endpoint pour récupérer statistiques d'utilisation
    - ⏳ Afficher blocs populaires dans l'éditeur
    - ⏳ Proposer blocs recommandés basés sur l'utilisation
 
-4. **🧪 Tests Backend - Migrations Schémas Tenants** (EN COURS)
+5. **🧪 Tests Backend - Migrations Schémas Tenants** (EN COURS)
    - ✅ Correction création schémas PostgreSQL pour tenants de test
    - ✅ Ajout fonction helper `setup_tenant_schema()` dans `conftest.py`
    - ✅ Correction tests: tenants, pages, services, bookings
@@ -1549,6 +1554,8 @@ cd frontend && npm install  # Installer Jest et dépendances
   - ✅ **Affichage couleurs Makefile corrigé** - Utilisation de `printf` au lieu de `echo` pour `make status` et `make help`
   - ✅ **Tests backend - Création schémas PostgreSQL** - Fonction helper `setup_tenant_schema()` ajoutée, tests corrigés
   - ✅ **TemplateStorage rendu optionnel** - Évite erreurs import dans les tests
+  - ✅ **Fichiers de configuration créés** - `.env.example`, `.gitignore`, `.dockerignore`, Dockerfiles frontend, `postcss.config.js`
+  - ✅ **Configuration TypeScript corrigée** - Ajout paths alias `@/*` dans `tsconfig.json` pour résoudre les imports
 - ⏳ **Tests complets de l'interface en cours** - Voir checklist ci-dessus
 - ⏳ Vérification que toutes les fonctionnalités fonctionnent sans erreurs
 - ⏳ **Améliorations éditeur en cours** - Voir section "Priorité Haute" ci-dessus
