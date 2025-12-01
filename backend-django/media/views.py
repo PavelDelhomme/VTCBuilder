@@ -9,7 +9,10 @@ from rest_framework.response import Response
 import logging
 from django.conf import settings
 from .models import Media, Template
-from .template_storage import TemplateStorage
+try:
+    from .template_storage import TemplateStorage
+except ImportError:
+    TemplateStorage = None
 from .serializers import (
     MediaSerializer, MediaUploadSerializer, MediaListSerializer,
     TemplateSerializer, TemplateListSerializer
@@ -422,13 +425,14 @@ class TemplateViewSet(viewsets.ModelViewSet):
                     template = Template.objects.create(**data)
                     
                     # Sauvegarder automatiquement dans les fichiers (custom templates)
-                    try:
-                        storage = TemplateStorage()
-                        template_data = storage.export_template_from_db(template)
-                        storage.save_template(template_data, is_default=False)
-                        logger.info(f"Template '{template.name}' sauvegardé dans les fichiers")
-                    except Exception as e:
-                        logger.warning(f"Impossible de sauvegarder le template dans les fichiers: {e}")
+                    if TemplateStorage:
+                        try:
+                            storage = TemplateStorage()
+                            template_data = storage.export_template_from_db(template)
+                            storage.save_template(template_data, is_default=False)
+                            logger.info(f"Template '{template.name}' sauvegardé dans les fichiers")
+                        except Exception as e:
+                            logger.warning(f"Impossible de sauvegarder le template dans les fichiers: {e}")
                     
                     # Générer automatiquement la preview si le template a du contenu HTML/CSS
                     if not template.preview_image and template.html_content:
@@ -517,13 +521,14 @@ class TemplateViewSet(viewsets.ModelViewSet):
                     template = serializer.instance
                     
                     # Sauvegarder automatiquement dans les fichiers (custom templates)
-                    try:
-                        storage = TemplateStorage()
-                        template_data = storage.export_template_from_db(template)
-                        storage.save_template(template_data, is_default=False)
-                        logger.info(f"Template '{template.name}' mis à jour dans les fichiers")
-                    except Exception as e:
-                        logger.warning(f"Impossible de sauvegarder le template dans les fichiers: {e}")
+                    if TemplateStorage:
+                        try:
+                            storage = TemplateStorage()
+                            template_data = storage.export_template_from_db(template)
+                            storage.save_template(template_data, is_default=False)
+                            logger.info(f"Template '{template.name}' mis à jour dans les fichiers")
+                        except Exception as e:
+                            logger.warning(f"Impossible de sauvegarder le template dans les fichiers: {e}")
                     
                     # Régénérer la preview si le contenu HTML/CSS a été modifié
                     if ('html_content' in request.data or 'css_content' in request.data) and request.data.get('regenerate_preview', False):
@@ -563,13 +568,14 @@ class TemplateViewSet(viewsets.ModelViewSet):
                     template = serializer.instance
                     
                     # Sauvegarder automatiquement dans les fichiers (custom templates)
-                    try:
-                        storage = TemplateStorage()
-                        template_data = storage.export_template_from_db(template)
-                        storage.save_template(template_data, is_default=False)
-                        logger.info(f"Template '{template.name}' mis à jour dans les fichiers")
-                    except Exception as e:
-                        logger.warning(f"Impossible de sauvegarder le template dans les fichiers: {e}")
+                    if TemplateStorage:
+                        try:
+                            storage = TemplateStorage()
+                            template_data = storage.export_template_from_db(template)
+                            storage.save_template(template_data, is_default=False)
+                            logger.info(f"Template '{template.name}' mis à jour dans les fichiers")
+                        except Exception as e:
+                            logger.warning(f"Impossible de sauvegarder le template dans les fichiers: {e}")
                     
                     # Régénérer la preview si le contenu HTML/CSS a été modifié
                     if ('html_content' in request.data or 'css_content' in request.data) and request.data.get('regenerate_preview', False):
@@ -623,12 +629,13 @@ class TemplateViewSet(viewsets.ModelViewSet):
                     instance.delete()
                     
                     # Supprimer aussi le fichier si c'est un template custom
-                    try:
-                        storage = TemplateStorage()
-                        storage.delete_template(slug, is_default=False)
-                        logger.info(f"Template '{slug}' supprimé des fichiers")
-                    except Exception as e:
-                        logger.warning(f"Impossible de supprimer le template des fichiers: {e}")
+                    if TemplateStorage:
+                        try:
+                            storage = TemplateStorage()
+                            storage.delete_template(slug, is_default=False)
+                            logger.info(f"Template '{slug}' supprimé des fichiers")
+                        except Exception as e:
+                            logger.warning(f"Impossible de supprimer le template des fichiers: {e}")
                     
                     return Response(status=status.HTTP_204_NO_CONTENT)
             except Template.DoesNotExist:
