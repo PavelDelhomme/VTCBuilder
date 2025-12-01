@@ -416,23 +416,30 @@ python manage.py init_features
 
 ### ⚡ Priorité Haute - En Cours (2025-12-01)
 
-1. **🔧 Correction Erreurs CORS et 500** (EN COURS)
+1. **🔧 Correction Erreurs CORS et 500** (✅ COMPLÉTÉ)
    - ✅ Amélioration middleware CORS pour garantir headers toujours présents
    - ✅ Ajout gestion OPTIONS pour preflight requests
    - ✅ Amélioration gestion erreurs endpoints `/api/blocks/types/`, `/api/users/impersonation-status/`, `/api/system-settings/`
-   - ⏳ **À TESTER** : Vérifier que les erreurs CORS sont résolues après redémarrage backend
-   - ⏳ **À TESTER** : Vérifier que les erreurs 500 sont résolues et retournent des messages d'erreur clairs
+   - ✅ TemplateStorage rendu optionnel pour éviter erreurs import dans les tests
 
 2. **📄 Gestion Pages Publiques** (EN COURS)
    - ⏳ Ajouter possibilité ajouter/supprimer des pages publiques dans `/admin/pages-public`
    - ⏳ Permettre titrer les pages publiques
    - ⏳ Vérifier que seule la homepage est listée actuellement
+   - ⏳ Implémenter l'API pour activer/désactiver une page (TODO ligne 155 dans `frontend/src/app/admin/pages-public/page.tsx`)
 
 3. **📊 Statistiques d'Utilisation des Blocs** (PLANIFIÉ)
    - ⏳ Implémenter tracking d'utilisation des blocs
    - ⏳ Créer endpoint pour récupérer statistiques d'utilisation
    - ⏳ Afficher blocs populaires dans l'éditeur
    - ⏳ Proposer blocs recommandés basés sur l'utilisation
+
+4. **🧪 Tests Backend - Migrations Schémas Tenants** (EN COURS)
+   - ✅ Correction création schémas PostgreSQL pour tenants de test
+   - ✅ Ajout fonction helper `setup_tenant_schema()` dans `conftest.py`
+   - ✅ Correction tests: tenants, pages, services, bookings
+   - ⏳ **À FAIRE** : Améliorer exécution migrations dans schémas des tenants (68 tests échouent encore car tables non créées)
+   - ⏳ **À FAIRE** : Vérifier que `migrate_schemas` fonctionne correctement dans les tests
 
 ### 📋 Priorité Moyenne - Planifié
 
@@ -1195,13 +1202,15 @@ Voir [docs/project/COUTS_PROJET.md](./docs/project/COUTS_PROJET.md) pour plus de
     - Slug auto-généré manquant dans certains tests
     - Domaines manquants pour tenants de test
     - Schémas tenant non créés pour tests
-- [ ] **Correction des erreurs identifiées** - En cours (2025-11-27)
+- [x] **Correction des erreurs identifiées** - ✅ Partiellement complété (2025-12-01)
   - Correction import Domain ✅
   - Fichier DEMARRAGE_RAPIDE.txt supprimé ✅
   - Tests templates créés ✅ (2025-11-27)
-  - À faire : Corriger tests tenant-specific avec tenant_context
-  - À faire : Ajouter génération slug dans tests Tenant
-  - À faire : Créer domaines pour tous les tenants de test
+  - Correction tests tenant-specific avec tenant_context ✅
+  - Ajout génération slug dans tests Tenant ✅
+  - Création domaines pour tous les tenants de test ✅
+  - Ajout fonction helper `setup_tenant_schema()` ✅
+  - ⏳ **RESTE À FAIRE** : Améliorer exécution migrations dans schémas (68 tests échouent encore)
 - [ ] **Vérification couverture de code** - Atteindre minimum 70% de couverture
 - [ ] **Intégration CI/CD** - Automatiser l'exécution des tests
 
@@ -1537,9 +1546,13 @@ cd frontend && npm install  # Installer Jest et dépendances
   - ✅ Toggle afficher/masquer mot de passe dans page login
   - ✅ Migrations automatiques au démarrage
   - ✅ Super admin créé automatiquement au démarrage
+  - ✅ **Affichage couleurs Makefile corrigé** - Utilisation de `printf` au lieu de `echo` pour `make status` et `make help`
+  - ✅ **Tests backend - Création schémas PostgreSQL** - Fonction helper `setup_tenant_schema()` ajoutée, tests corrigés
+  - ✅ **TemplateStorage rendu optionnel** - Évite erreurs import dans les tests
 - ⏳ **Tests complets de l'interface en cours** - Voir checklist ci-dessus
 - ⏳ Vérification que toutes les fonctionnalités fonctionnent sans erreurs
 - ⏳ **Améliorations éditeur en cours** - Voir section "Priorité Haute" ci-dessus
+- ⏳ **Tests backend - Migrations schémas** - 68 tests échouent encore (tables non créées dans schémas tenants)
 
 **Modifications Récentes** :
 

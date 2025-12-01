@@ -17,23 +17,23 @@ NC = \033[0m # No Color
 ##@ Aide
 
 help: ## Afficher l'aide
-	@echo "$(BLUE)═══════════════════════════════════════════════════════════════$(NC)"
-	@echo "$(GREEN)    VTCBuilder Django - Commandes disponibles$(NC)"
-	@echo "$(BLUE)═══════════════════════════════════════════════════════════════$(NC)"
+	@printf "$(BLUE)═══════════════════════════════════════════════════════════════$(NC)\n"
+	@printf "$(GREEN)    VTCBuilder Django - Commandes disponibles$(NC)\n"
+	@printf "$(BLUE)═══════════════════════════════════════════════════════════════$(NC)\n"
 	@awk 'BEGIN {FS = ":.*##"; printf "\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(YELLOW)%-20s$(NC) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BLUE)%s$(NC)\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
-	@echo ""
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)📁 Commandes Backend Django (backend-django/):$(NC)"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@printf "\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)📁 Commandes Backend Django (backend-django/):$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
 	@cd backend-django && make help | grep -E "(install|setup|start|stop|restart|build|logs|clean|migrate|superuser|shell|test|lint|format|urls)" | sed 's/^/  /'
-	@echo ""
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)📁 Commandes Frontend (frontend/):$(NC)"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "  $(YELLOW)npm-install         $(NC) Installer les dépendances npm"
-	@echo "  $(YELLOW)npm-build           $(NC) Build du frontend"
-	@echo "  $(YELLOW)npm-dev             $(NC) Démarrer le mode développement"
-	@echo "  $(YELLOW)npm                 $(NC) Exécuter une commande npm"
+	@printf "\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)📁 Commandes Frontend (frontend/):$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "  $(YELLOW)npm-install         $(NC) Installer les dépendances npm\n"
+	@printf "  $(YELLOW)npm-build           $(NC) Build du frontend\n"
+	@printf "  $(YELLOW)npm-dev             $(NC) Démarrer le mode développement\n"
+	@printf "  $(YELLOW)npm                 $(NC) Exécuter une commande npm\n"
 
 ##@ Installation et Configuration
 
