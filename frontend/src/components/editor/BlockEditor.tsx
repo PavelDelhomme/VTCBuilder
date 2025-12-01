@@ -1450,6 +1450,21 @@ function BlockRenderer({
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Lignes (grid-template-rows)
+            </label>
+            <input
+              type="text"
+              value={block.data?.rows || 'auto'}
+              onChange={(e) => onUpdate({ data: { ...block.data, rows: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              placeholder="auto ou repeat(2, 1fr)"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Exemples: auto, repeat(2, 1fr), 100px 200px, minmax(100px, auto)
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Espacement (gap)
             </label>
             <input
@@ -5675,6 +5690,53 @@ function BlockLayoutPanel({
               className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="0"
             />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Hauteur
+            </label>
+            <input
+              type="text"
+              value={block?.height || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                onUpdate({ height: e.target.value })
+              }}
+              className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="auto, 100px, 50vh, 100%"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Exemples: auto, 100px, 50vh, 100%, min-height(200px)
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Hauteur min
+              </label>
+              <input
+                type="text"
+                value={block?.minHeight || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  onUpdate({ minHeight: e.target.value })
+                }}
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="0px"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Hauteur max
+              </label>
+              <input
+                type="text"
+                value={block?.maxHeight || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  onUpdate({ maxHeight: e.target.value })
+                }}
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="none"
+              />
+            </div>
           </div>
         </div>
       </div>
