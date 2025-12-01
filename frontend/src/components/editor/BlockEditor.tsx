@@ -275,6 +275,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       { id: 92, name: 'social-links', label: 'Liens Sociaux', icon: '🔗', category: 'custom', description: 'Liens réseaux sociaux', schema: {}, default_styles: {}, is_active: true, order: 92, created_at: '', updated_at: '' },
       
       // Blocs Footer/Header
+      { id: 99, name: 'header', label: 'En-tête', icon: '📋', category: 'custom', description: 'Header avec navigation et logo', schema: {}, default_styles: {}, is_active: true, order: 99, created_at: '', updated_at: '' },
       { id: 100, name: 'footer', label: 'Pied de Page', icon: '⬇️', category: 'custom', description: 'Footer personnalisé', schema: {}, default_styles: {}, is_active: true, order: 100, created_at: '', updated_at: '' },
       { id: 101, name: 'contact-form', label: 'Formulaire Contact', icon: '📧', category: 'custom', description: 'Formulaire de contact', schema: {}, default_styles: {}, is_active: true, order: 101, created_at: '', updated_at: '' },
       { id: 102, name: 'faq-section', label: 'Section FAQ', icon: '❓', category: 'custom', description: 'Section FAQ', schema: {}, default_styles: {}, is_active: true, order: 102, created_at: '', updated_at: '' },
@@ -3901,6 +3902,187 @@ function BlockRenderer({
           )}
         </div>
       )
+    case 'header':
+      const headerLinks = block.data.links || []
+      return (
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Texte du logo
+            </label>
+            <input
+              type="text"
+              value={block.data.logo_text || 'VTCBuilder'}
+              onChange={(e) => onUpdate({ data: { ...block.data, logo_text: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              placeholder="VTCBuilder"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              URL du logo (lien)
+            </label>
+            <input
+              type="text"
+              value={block.data.logo_url || '/'}
+              onChange={(e) => onUpdate({ data: { ...block.data, logo_url: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              placeholder="/"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Image du logo (URL)
+            </label>
+            <input
+              type="text"
+              value={block.data.logo_image || ''}
+              onChange={(e) => onUpdate({ data: { ...block.data, logo_image: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              placeholder="https://..."
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Badge (optionnel)
+            </label>
+            <input
+              type="text"
+              value={block.data.badge || ''}
+              onChange={(e) => onUpdate({ data: { ...block.data, badge: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              placeholder="Beta"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Header sticky
+            </label>
+            <input
+              type="checkbox"
+              checked={block.data.sticky !== false}
+              onChange={(e) => onUpdate({ data: { ...block.data, sticky: e.target.checked } })}
+              className="w-4 h-4"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Afficher le toggle de thème
+            </label>
+            <input
+              type="checkbox"
+              checked={block.data.show_theme_toggle !== false}
+              onChange={(e) => onUpdate({ data: { ...block.data, show_theme_toggle: e.target.checked } })}
+              className="w-4 h-4"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Liens de navigation
+            </label>
+            <div className="space-y-2">
+              {headerLinks.map((link: any, index: number) => (
+                <div key={index} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={link.label || ''}
+                    onChange={(e) => {
+                      const newLinks = [...headerLinks]
+                      newLinks[index] = { ...link, label: e.target.value }
+                      onUpdate({ data: { ...block.data, links: newLinks } })
+                    }}
+                    className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                    placeholder="Label"
+                  />
+                  <input
+                    type="text"
+                    value={link.url || ''}
+                    onChange={(e) => {
+                      const newLinks = [...headerLinks]
+                      newLinks[index] = { ...link, url: e.target.value }
+                      onUpdate({ data: { ...block.data, links: newLinks } })
+                    }}
+                    className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                    placeholder="URL"
+                  />
+                  <button
+                    onClick={() => {
+                      const newLinks = headerLinks.filter((_: any, i: number) => i !== index)
+                      onUpdate({ data: { ...block.data, links: newLinks } })
+                    }}
+                    className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => {
+                  const newLinks = [...headerLinks, { label: '', url: '#' }]
+                  onUpdate({ data: { ...block.data, links: newLinks } })
+                }}
+                className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                + Ajouter un lien
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Bouton CTA (optionnel)
+            </label>
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={block.data.cta_button?.text || ''}
+                onChange={(e) => onUpdate({ 
+                  data: { 
+                    ...block.data, 
+                    cta_button: { 
+                      ...block.data.cta_button, 
+                      text: e.target.value 
+                    } 
+                  } 
+                })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                placeholder="Texte du bouton"
+              />
+              <input
+                type="text"
+                value={block.data.cta_button?.url || ''}
+                onChange={(e) => onUpdate({ 
+                  data: { 
+                    ...block.data, 
+                    cta_button: { 
+                      ...block.data.cta_button, 
+                      url: e.target.value 
+                    } 
+                  } 
+                })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                placeholder="URL du bouton"
+              />
+              <select
+                value={block.data.cta_button?.style || 'primary'}
+                onChange={(e) => onUpdate({ 
+                  data: { 
+                    ...block.data, 
+                    cta_button: { 
+                      ...block.data.cta_button, 
+                      style: e.target.value 
+                    } 
+                  } 
+                })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              >
+                <option value="primary">Primaire</option>
+                <option value="secondary">Secondaire</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )
+    
     case 'footer':
       const footerLinks = block.data.links || []
       const footerColumns = block.data.columns || [
