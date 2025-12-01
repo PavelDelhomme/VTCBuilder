@@ -644,31 +644,185 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 min-h-0" style={{ scrollBehavior: 'smooth' }}>
-                <div className="flex items-center justify-between mb-4 sticky top-0 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 pb-2 z-10">
-                  <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Blocs disponibles</h3>
-                  {/* Filtre par catégorie */}
-                  <select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">Tous</option>
-                    <option value="layout">Structure</option>
-                    <option value="content">Contenu</option>
-                    <option value="media">Médias</option>
-                    <option value="custom">Personnalisé</option>
-                  </select>
+                {/* Header avec recherche et filtres */}
+                <div className="sticky top-0 bg-gradient-to-b from-gray-50 via-gray-50 to-transparent dark:from-gray-900 dark:via-gray-900 dark:to-transparent pb-4 z-10 mb-4">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3">Blocs disponibles</h3>
+                  
+                  {/* Barre de recherche */}
+                  <div className="relative mb-3">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Rechercher un bloc..."
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filtres par catégorie - Boutons modernes */}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setCategoryFilter('all')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                        categoryFilter === 'all'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      Tous
+                    </button>
+                    <button
+                      onClick={() => setCategoryFilter('layout')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                        categoryFilter === 'layout'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      📐 Structure
+                    </button>
+                    <button
+                      onClick={() => setCategoryFilter('content')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                        categoryFilter === 'content'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      📝 Contenu
+                    </button>
+                    <button
+                      onClick={() => setCategoryFilter('media')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                        categoryFilter === 'media'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      🖼️ Médias
+                    </button>
+                    <button
+                      onClick={() => setCategoryFilter('custom')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                        categoryFilter === 'custom'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      ⚙️ Personnalisé
+                    </button>
+                  </div>
                 </div>
         
-        {/* Group by category - Trier pour mettre layout en premier */}
-        {['layout', 'content', 'media', 'custom']
-          .filter(category => categoryFilter === 'all' || category === categoryFilter)
-          .map((category) => {
-          // Filtrer et trier les blocs par catégorie (layout en premier avec order croissant)
-          const categoryBlocks = blockTypes
-            .filter((bt: BlockType) => bt.category === category)
-            .sort((a, b) => (a.order || 999) - (b.order || 999))
-          if (categoryBlocks.length === 0) return null
+        {/* Affichage des blocs - Recherche ou groupé par catégorie */}
+        {(() => {
+          // Filtrer les blocs selon la recherche et la catégorie
+          const filteredBlockTypes = blockTypes.filter((bt: BlockType) => {
+            const matchesCategory = categoryFilter === 'all' || bt.category === categoryFilter
+            const matchesSearch = !searchQuery || 
+              bt.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              bt.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (bt.description && bt.description.toLowerCase().includes(searchQuery.toLowerCase()))
+            return matchesCategory && matchesSearch
+          })
+
+          // Si recherche active, afficher tous les résultats sans groupement
+          if (searchQuery) {
+            const sortedBlocks = filteredBlockTypes.sort((a: BlockType, b: BlockType) => {
+              // Trier par pertinence (nom qui commence par la recherche en premier)
+              const aStarts = a.name.toLowerCase().startsWith(searchQuery.toLowerCase()) || 
+                             a.label.toLowerCase().startsWith(searchQuery.toLowerCase())
+              const bStarts = b.name.toLowerCase().startsWith(searchQuery.toLowerCase()) || 
+                             b.label.toLowerCase().startsWith(searchQuery.toLowerCase())
+              if (aStarts && !bStarts) return -1
+              if (!aStarts && bStarts) return 1
+              return (a.order || 0) - (b.order || 0)
+            })
+
+            if (sortedBlocks.length === 0) {
+              return (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Aucun bloc trouvé</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Essayez avec d'autres mots-clés</p>
+                </div>
+              )
+            }
+
+            return (
+              <div className="space-y-2">
+                {sortedBlocks.map((blockType: BlockType) => {
+                  const isPremium = !!(blockType.available_plans && blockType.available_plans.length > 0)
+                  const canUse = canUseBlockType(blockType.name, isPremium)
+                  
+                  return (
+                    <button
+                      key={blockType.id}
+                      onClick={() => {
+                        if (canUse) {
+                          addBlock(blockType)
+                          setSidebarOpen(false)
+                        }
+                      }}
+                      disabled={!canUse}
+                      className={`w-full p-3 rounded-lg border transition-all text-left group ${
+                        canUse
+                          ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-md hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-[0.98]'
+                          : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-xl shadow-sm">
+                          {blockType.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
+                            {blockType.label}
+                          </div>
+                          {blockType.description && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                              {blockType.description}
+                            </div>
+                          )}
+                        </div>
+                        <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          }
+
+          // Sinon, afficher groupé par catégorie
+          return ['layout', 'content', 'media', 'custom']
+            .filter(category => categoryFilter === 'all' || category === categoryFilter)
+            .map((category) => {
+              const categoryBlocks = filteredBlockTypes
+                .filter((bt: BlockType) => bt.category === category)
+                .sort((a: BlockType, b: BlockType) => (a.order || 999) - (b.order || 999))
+              if (categoryBlocks.length === 0) return null
           
           const categoryLabels: { [key: string]: string } = {
             content: 'Contenu',
