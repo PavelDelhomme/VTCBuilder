@@ -37,6 +37,10 @@ export async function middleware(request: NextRequest) {
     const tenantSlug = parts[0]
     
     // Vérifier/créer le tenant via l'API backend
+    // Utiliser un timeout pour éviter les blocages
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 secondes timeout
+    
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9495'
       const checkResponse = await fetch(`${apiUrl}/api/tenants/check-or-create/`, {
@@ -48,14 +52,20 @@ export async function middleware(request: NextRequest) {
           slug: tenantSlug,
           domain: domain,
         }),
+        signal: controller.signal,
       })
+      
+      clearTimeout(timeoutId)
       
       if (!checkResponse.ok) {
         console.warn(`[Middleware] Erreur vérification tenant ${tenantSlug}:`, checkResponse.status)
       }
-    } catch (error) {
-      // Ne pas bloquer la requête si l'API n'est pas disponible
-      console.warn(`[Middleware] Impossible de vérifier/créer le tenant ${tenantSlug}:`, error)
+    } catch (error: any) {
+      clearTimeout(timeoutId)
+      // Ne pas bloquer la requête si l'API n'est pas disponible ou timeout
+      if (error.name !== 'AbortError') {
+        console.warn(`[Middleware] Impossible de vérifier/créer le tenant ${tenantSlug}:`, error.message)
+      }
     }
   }
   
