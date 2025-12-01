@@ -1087,11 +1087,12 @@ const SortableBlock = React.memo(function SortableBlock({
 
   // Gérer le clic sur le bloc pour ouvrir les paramètres directement
   const handleBlockClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Fermer le menu contextuel si ouvert
+    // Toujours fermer le menu contextuel d'abord si ouvert
     if (showMenu) {
       closeContextMenu()
-      // Ne pas ouvrir les paramètres si on vient de fermer le menu
       e.stopPropagation()
+      e.preventDefault()
+      // Ne pas ouvrir les paramètres immédiatement après fermeture du menu
       return
     }
     
@@ -1114,12 +1115,13 @@ const SortableBlock = React.memo(function SortableBlock({
     e.preventDefault()
     e.stopPropagation()
     // Fermer le menu précédent s'il existe
-    closeContextMenu()
-    // Attendre un peu pour éviter les conflits
-    setTimeout(() => {
-      setContextMenu({ x: e.clientX, y: e.clientY })
-      setShowMenu(true)
-    }, 10)
+    if (showMenu) {
+      closeContextMenu()
+      return
+    }
+    // Ouvrir le menu contextuel
+    setContextMenu({ x: e.clientX, y: e.clientY })
+    setShowMenu(true)
   }
 
   // Fermer le menu contextuel
@@ -1168,8 +1170,9 @@ const SortableBlock = React.memo(function SortableBlock({
         onMouseDown={(e) => {
           // Empêcher le menu contextuel de se rouvrir après un clic gauche
           if (e.button === 0 && showMenu) {
-            // Clic gauche : fermer le menu et ne pas le rouvrir
+            // Clic gauche : fermer le menu immédiatement
             closeContextMenu()
+            e.stopPropagation()
           }
         }}
       >
