@@ -1699,25 +1699,38 @@ class InvoiceTemplateViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """Filter templates based on user role"""
+        """Filter templates based on user role - always use public schema"""
         try:
+            from django_tenants.utils import schema_context
+            
             user = self.request.user
             
-            if user.is_super_admin():
-                return InvoiceTemplate.objects.all()
-            
-            # Tenant users see only active templates
-            return InvoiceTemplate.objects.filter(is_active=True)
+            # InvoiceTemplate is a shared model, always access from public schema
+            with schema_context('public'):
+                if user.is_super_admin():
+                    return InvoiceTemplate.objects.all()
+                
+                # Tenant users see only active templates
+                return InvoiceTemplate.objects.filter(is_active=True)
         except Exception as e:
             logger.error(f"Error in InvoiceTemplateViewSet.get_queryset: {e}", exc_info=True)
-            return InvoiceTemplate.objects.none()
+            try:
+                from django_tenants.utils import schema_context
+                with schema_context('public'):
+                    return InvoiceTemplate.objects.none()
+            except:
+                return InvoiceTemplate.objects.none()
     
     def list(self, request, *args, **kwargs):
         """List templates with error handling"""
         try:
-            response = super().list(request, *args, **kwargs)
-            add_cors_headers(response, request)
-            return response
+            from django_tenants.utils import schema_context
+            
+            # Ensure we're in public schema context
+            with schema_context('public'):
+                response = super().list(request, *args, **kwargs)
+                add_cors_headers(response, request)
+                return response
         except Exception as e:
             logger.error(f"Error in InvoiceTemplateViewSet.list: {e}", exc_info=True)
             error_response = Response({
@@ -1737,9 +1750,11 @@ class InvoiceTemplateViewSet(viewsets.ModelViewSet):
             add_cors_headers(error_response, request)
             return error_response
         
-        response = super().create(request, *args, **kwargs)
-        add_cors_headers(response, request)
-        return response
+        from django_tenants.utils import schema_context
+        with schema_context('public'):
+            response = super().create(request, *args, **kwargs)
+            add_cors_headers(response, request)
+            return response
     
     def update(self, request, *args, **kwargs):
         """Only super admin can update templates"""
@@ -1751,9 +1766,11 @@ class InvoiceTemplateViewSet(viewsets.ModelViewSet):
             add_cors_headers(error_response, request)
             return error_response
         
-        response = super().update(request, *args, **kwargs)
-        add_cors_headers(response, request)
-        return response
+        from django_tenants.utils import schema_context
+        with schema_context('public'):
+            response = super().update(request, *args, **kwargs)
+            add_cors_headers(response, request)
+            return response
     
     def destroy(self, request, *args, **kwargs):
         """Only super admin can delete templates"""
@@ -1765,9 +1782,11 @@ class InvoiceTemplateViewSet(viewsets.ModelViewSet):
             add_cors_headers(error_response, request)
             return error_response
         
-        response = super().destroy(request, *args, **kwargs)
-        add_cors_headers(response, request)
-        return response
+        from django_tenants.utils import schema_context
+        with schema_context('public'):
+            response = super().destroy(request, *args, **kwargs)
+            add_cors_headers(response, request)
+            return response
     
     @action(detail=True, methods=['post'])
     def set_default(self, request, pk=None):
@@ -1780,55 +1799,60 @@ class InvoiceTemplateViewSet(viewsets.ModelViewSet):
             add_cors_headers(error_response, request)
             return error_response
         
-        template = self.get_object()
-        # Unset other defaults
-        InvoiceTemplate.objects.filter(is_default=True).update(is_default=False)
-        template.is_default = True
-        template.save()
-        
-        response = Response({
-            'status': 'Template set as default',
-            'template': InvoiceTemplateSerializer(template).data
-        })
-        add_cors_headers(response, request)
-        return response
+        from django_tenants.utils import schema_context
+        with schema_context('public'):
+            template = self.get_object()
+            # Unset other defaults
+            InvoiceTemplate.objects.filter(is_default=True).update(is_default=False)
+            template.is_default = True
+            template.save()
+            
+            response = Response({
+                'status': 'Template set as default',
+                'template': InvoiceTemplateSerializer(template).data
+            })
+            add_cors_headers(response, request)
+            return response
     
     @action(detail=True, methods=['get'])
     def preview(self, request, pk=None):
         """Preview template with sample invoice data"""
-        template = self.get_object()
+        from django_tenants.utils import schema_context
         
-        # Create sample invoice data
-        sample_data = {
-            'invoice_number': 'INV-SAMPLE-001',
-            'tenant_name': 'Exemple Tenant',
-            'tenant_email': 'exemple@tenant.com',
-            'issue_date': '01/01/2024',
-            'due_date': '31/01/2024',
-            'paid_at': None,
-            'subtotal': 100.0,
-            'tax': 20.0,
-            'total': 120.0,
-            'currency': 'EUR',
-            'status': 'Ouverte',
-            'plan_name': 'Plan Business',
-            'subscription_id': 1,
-        }
-        
-        from django.template import Template, Context
-        template_obj = Template(template.html_template)
-        context = Context(sample_data)
-        html = template_obj.render(context)
-        
-        if template.css_styles:
-            html = f'<style>{template.css_styles}</style>\n{html}'
-        
-        response = Response({
-            'html': html,
-            'template': InvoiceTemplateSerializer(template).data
-        })
-        add_cors_headers(response, request)
-        return response
+        with schema_context('public'):
+            template = self.get_object()
+            
+            # Create sample invoice data
+            sample_data = {
+                'invoice_number': 'INV-SAMPLE-001',
+                'tenant_name': 'Exemple Tenant',
+                'tenant_email': 'exemple@tenant.com',
+                'issue_date': '01/01/2024',
+                'due_date': '31/01/2024',
+                'paid_at': None,
+                'subtotal': 100.0,
+                'tax': 20.0,
+                'total': 120.0,
+                'currency': 'EUR',
+                'status': 'Ouverte',
+                'plan_name': 'Plan Business',
+                'subscription_id': 1,
+            }
+            
+            from django.template import Template, Context
+            template_obj = Template(template.html_template)
+            context = Context(sample_data)
+            html = template_obj.render(context)
+            
+            if template.css_styles:
+                html = f'<style>{template.css_styles}</style>\n{html}'
+            
+            response = Response({
+                'html': html,
+                'template': InvoiceTemplateSerializer(template).data
+            })
+            add_cors_headers(response, request)
+            return response
 
 
 @api_view(['POST'])
