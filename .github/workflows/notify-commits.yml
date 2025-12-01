@@ -55,3 +55,28 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "[Voir le commit](${{ steps.commit-info.outputs.url }})" >> $GITHUB_STEP_SUMMARY
 
+      - name: Send email notification
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "🚀 VTCBuilder - Nouveau commit sur ${{ steps.commit-info.outputs.branch }}"
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: VTCBuilder CI
+          body: |
+            🚀 Nouveau commit détecté sur VTCBuilder!
+            
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            📝 Message: ${{ steps.commit-info.outputs.message }}
+            👤 Auteur: ${{ steps.commit-info.outputs.author }}
+            🌿 Branche: ${{ steps.commit-info.outputs.branch }}
+            🔗 Hash: ${{ steps.commit-info.outputs.hash }}
+            🔗 URL: ${{ steps.commit-info.outputs.url }}
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            
+            [Voir le commit](${{ steps.commit-info.outputs.url }})
+          content_type: text/html
+
