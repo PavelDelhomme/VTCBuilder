@@ -14,6 +14,8 @@ export default function AdminCallToActionsPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingCta, setEditingCta] = useState<CallToAction | null>(null)
+  const [viewingCta, setViewingCta] = useState<CallToAction | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; ctaId: number | null; ctaName: string }>({ show: false, ctaId: null, ctaName: '' })
   const [formData, setFormData] = useState({
     name: '',
     label: '',
@@ -97,6 +99,7 @@ export default function AdminCallToActionsPage() {
       }
 
       resetForm()
+      setShowForm(false)
       loadCtas()
     } catch (error: any) {
       console.error('Erreur sauvegarde CTA:', error)
@@ -121,6 +124,10 @@ export default function AdminCallToActionsPage() {
     setShowForm(false)
   }
 
+  const handleView = (cta: CallToAction) => {
+    setViewingCta(cta)
+  }
+
   const handleEdit = (cta: CallToAction) => {
     setEditingCta(cta)
     setFormData({
@@ -136,20 +143,29 @@ export default function AdminCallToActionsPage() {
       is_global: cta.is_global,
     })
     setShowForm(true)
+    setViewingCta(null) // Fermer la popup de visualisation si ouverte
   }
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce call-to-action ?')) {
-      return
-    }
+  const handleDeleteClick = (cta: CallToAction) => {
+    setDeleteConfirm({ show: true, ctaId: cta.id, ctaName: cta.label || cta.name })
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm.ctaId) return
+    
     try {
-      await callToActionService.delete(id)
+      await callToActionService.delete(deleteConfirm.ctaId)
       toast.success('Call-to-Action supprimé avec succès !')
+      setDeleteConfirm({ show: false, ctaId: null, ctaName: '' })
       loadCtas()
     } catch (error: any) {
       console.error('Erreur suppression CTA:', error)
       toast.error('Erreur lors de la suppression')
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirm({ show: false, ctaId: null, ctaName: '' })
   }
 
   const getTypeBadge = (type: string) => {
@@ -205,13 +221,25 @@ export default function AdminCallToActionsPage() {
         </button>
       }
     >
-      {/* Form */}
+      {/* Form Modal */}
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 mb-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-4">
-            {editingCta ? 'Modifier le Call-to-Action' : 'Créer un Nouveau Call-to-Action'}
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                {editingCta ? 'Modifier le Call-to-Action' : 'Créer un Nouveau Call-to-Action'}
+              </h2>
+              <button
+                onClick={resetForm}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -350,22 +378,210 @@ export default function AdminCallToActionsPage() {
               </label>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    type="submit"
+                    className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    {editingCta ? 'Mettre à jour' : 'Créer'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="w-full sm:w-auto bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Modal */}
+      {viewingCta && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                {viewingCta.label}
+              </h2>
               <button
-                type="submit"
-                className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                onClick={() => setViewingCta(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
-                {editingCta ? 'Mettre à jour' : 'Créer'}
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-6">
+                {/* Preview */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Aperçu</h3>
+                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-center">
+                      {viewingCta.type === 'button' && (
+                        <button
+                          style={viewingCta.styles || {}}
+                          className="px-6 py-3 rounded-lg font-medium transition-colors"
+                        >
+                          {viewingCta.default_text}
+                        </button>
+                      )}
+                      {viewingCta.type === 'link' && (
+                        <a
+                          href={viewingCta.default_url}
+                          style={viewingCta.styles || {}}
+                          className="text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          {viewingCta.default_text}
+                        </a>
+                      )}
+                      {viewingCta.type === 'banner' && (
+                        <div
+                          style={viewingCta.styles || {}}
+                          className="w-full p-4 rounded-lg text-center"
+                        >
+                          {viewingCta.default_text}
+                        </div>
+                      )}
+                      {['popup', 'inline', 'sticky', 'floating'].includes(viewingCta.type) && (
+                        <div
+                          style={viewingCta.styles || {}}
+                          className="px-6 py-3 rounded-lg"
+                        >
+                          {viewingCta.default_text}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Nom</label>
+                    <p className="text-sm font-mono text-gray-900 dark:text-gray-100">{viewingCta.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Type</label>
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getTypeBadge(viewingCta.type)}`}>
+                      {getTypeLabel(viewingCta.type)}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Texte par défaut</label>
+                    <p className="text-sm text-gray-900 dark:text-gray-100">{viewingCta.default_text}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">URL par défaut</label>
+                    <p className="text-sm font-mono text-gray-900 dark:text-gray-100 break-all">{viewingCta.default_url}</p>
+                  </div>
+                  {viewingCta.description && (
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Description</label>
+                      <p className="text-sm text-gray-900 dark:text-gray-100">{viewingCta.description}</p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Statut</label>
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                      viewingCta.is_active 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    }`}>
+                      {viewingCta.is_active ? 'Actif' : 'Inactif'}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Visibilité</label>
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                      viewingCta.is_global 
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    }`}>
+                      {viewingCta.is_global ? 'Global' : 'Privé'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Styles */}
+                {viewingCta.styles && Object.keys(viewingCta.styles).length > 0 && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Styles</label>
+                    <pre className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700 text-xs overflow-x-auto">
+                      {JSON.stringify(viewingCta.styles, null, 2)}
+                    </pre>
+                  </div>
+                )}
+
+                {/* Config */}
+                {viewingCta.config && Object.keys(viewingCta.config).length > 0 && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Configuration</label>
+                    <pre className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700 text-xs overflow-x-auto">
+                      {JSON.stringify(viewingCta.config, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 flex-shrink-0">
+              <button
+                onClick={() => {
+                  setViewingCta(null)
+                  handleEdit(viewingCta)
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Modifier
               </button>
               <button
-                type="button"
-                onClick={resetForm}
-                className="w-full sm:w-auto bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                onClick={() => setViewingCta(null)}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Confirmer la suppression
+              </h3>
+            </div>
+            <div className="px-6 py-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Êtes-vous sûr de vouloir supprimer le call-to-action <strong className="text-gray-900 dark:text-gray-100">&quot;{deleteConfirm.ctaName}&quot;</strong> ?
+              </p>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+                Cette action est irréversible.
+              </p>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+              <button
+                onClick={handleDeleteCancel}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 Annuler
               </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                Supprimer
+              </button>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
@@ -382,7 +598,8 @@ export default function AdminCallToActionsPage() {
               {ctas.map((cta) => (
                 <div
                   key={cta.id}
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                  onClick={() => handleView(cta)}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                     <div className="flex-1 min-w-0">
@@ -410,10 +627,11 @@ export default function AdminCallToActionsPage() {
                         Texte: &quot;{cta.default_text}&quot; → <span className="font-mono">{cta.default_url}</span>
                       </div>
                     </div>
-                    <div className="flex gap-2 sm:flex-shrink-0">
+                    <div className="flex gap-2 sm:flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleEdit(cta)}
                         className="flex-1 sm:flex-none px-3 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                        title="Modifier"
                       >
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -421,8 +639,9 @@ export default function AdminCallToActionsPage() {
                         <span className="hidden sm:inline">Modifier</span>
                       </button>
                       <button
-                        onClick={() => handleDelete(cta.id)}
+                        onClick={() => handleDeleteClick(cta)}
                         className="flex-1 sm:flex-none px-3 py-2 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                        title="Supprimer"
                       >
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
