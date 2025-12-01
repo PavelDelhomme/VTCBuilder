@@ -7,6 +7,7 @@ import AdminLayout from '@/components/AdminLayout'
 import api from '@/lib/api'
 import PageLoader from '@/components/PageLoader'
 import billingService from '@/services/billing.service'
+import analyticsService, { UsageStats } from '@/services/analytics.service'
 
 interface DetailedStats {
   overview: {
@@ -119,6 +120,7 @@ export default function StatsPage() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<DetailedStats | null>(null)
   const [billingStats, setBillingStats] = useState<any>(null)
+  const [usageStats, setUsageStats] = useState<UsageStats | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -135,17 +137,23 @@ export default function StatsPage() {
     try {
       setLoading(true)
       
-      // Charger les stats détaillées et les stats de billing en parallèle
-      const [statsResponse, billingStatsResponse] = await Promise.allSettled([
+      // Charger les stats détaillées, les stats de billing et les stats d'utilisation en parallèle
+      const [statsResponse, billingStatsResponse, usageStatsResponse] = await Promise.allSettled([
         api.get('/stats/detailed/'),
-        billingService.getBillingStats().catch(() => null) // Ne pas bloquer si billing stats échoue
+        billingService.getBillingStats().catch(() => null), // Ne pas bloquer si billing stats échoue
+        analyticsService.getUsageStats().catch(() => null) // Ne pas bloquer si usage stats échoue
       ])
       
       const response = statsResponse.status === 'fulfilled' ? statsResponse.value : null
       const billingData = billingStatsResponse.status === 'fulfilled' ? billingStatsResponse.value : null
+      const usageData = usageStatsResponse.status === 'fulfilled' ? usageStatsResponse.value : null
       
       if (billingData) {
         setBillingStats(billingData)
+      }
+      
+      if (usageData) {
+        setUsageStats(usageData)
       }
       
       // Fonction pour normaliser les données du backend vers la structure attendue
@@ -1232,6 +1240,136 @@ export default function StatsPage() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Statistiques d'Utilisation des Fonctionnalités */}
+        {usageStats && (
+          <>
+            {/* Résumé des Actions */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                <svg className="h-6 w-6 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Statistiques d'Utilisation
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-indigo-50 rounded-lg">
+                  <p className="text-2xl font-bold text-indigo-600">{formatNumber(usageStats.summary.total_actions)}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Actions</p>
+                </div>
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <p className="text-2xl font-bold text-blue-600">{formatNumber(usageStats.summary.actions_today)}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Aujourd'hui</p>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <p className="text-2xl font-bold text-green-600">{formatNumber(usageStats.summary.actions_this_week)}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Cette Semaine</p>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <p className="text-2xl font-bold text-purple-600">{formatNumber(usageStats.summary.actions_this_month)}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Ce Mois</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions les Plus Utilisées */}
+            {usageStats.most_used_actions && usageStats.most_used_actions.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Actions les Plus Utilisées</h3>
+                <div className="space-y-3">
+                  {usageStats.most_used_actions.slice(0, 15).map((action, index) => (
+                    <div key={index}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {action.action_name || action.action_type}
+                        </span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(action.count)}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-indigo-500 h-2 rounded-full"
+                          style={{
+                            width: `${(action.count / Math.max(...usageStats.most_used_actions.map(a => a.count), 1)) * 100}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Fonctionnalités les Plus Utilisées */}
+            {usageStats.feature_usage_stats && usageStats.feature_usage_stats.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Fonctionnalités les Plus Utilisées</h3>
+                <div className="space-y-3">
+                  {usageStats.feature_usage_stats.map((feature, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{feature.feature_name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{feature.tenant_count} tenant{feature.tenant_count > 1 ? 's' : ''}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-indigo-600">{formatNumber(feature.total_usage)}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">utilisations</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Timeline des Actions (30 derniers jours) */}
+            {usageStats.actions_timeline && usageStats.actions_timeline.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Timeline des Actions (30 derniers jours)</h3>
+                <div className="overflow-x-auto">
+                  <div className="flex items-end justify-between space-x-1 h-48" style={{ minWidth: 'max-content' }}>
+                    {usageStats.actions_timeline.map((day, index) => {
+                      const maxCount = Math.max(...usageStats.actions_timeline.map(d => d.count))
+                      const height = maxCount > 0 ? (day.count / maxCount) * 100 : 0
+                      return (
+                        <div key={index} className="flex-1 flex flex-col items-center min-w-[30px]">
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-t relative" style={{ height: `${Math.max(height, 5)}%` }}>
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t"></div>
+                          </div>
+                          <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-2 text-center transform -rotate-45 origin-top-left whitespace-nowrap">
+                            {day.label}
+                          </p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">{day.count}</p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* CTAs les Plus Cliqués */}
+            {usageStats.most_clicked_ctas && usageStats.most_clicked_ctas.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">CTAs et Boutons les Plus Cliqués</h3>
+                <div className="space-y-3">
+                  {usageStats.most_clicked_ctas.map((cta, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{cta.action_name}</p>
+                        {cta.resource_type && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{cta.resource_type}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-green-600">{formatNumber(cta.count)}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">clics</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </AdminLayout>

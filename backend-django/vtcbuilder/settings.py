@@ -38,6 +38,7 @@ SHARED_APPS = [
     'settings_app',
     'blocks',
     'projects',
+    'analytics',
 ]
 
 TENANT_APPS = [

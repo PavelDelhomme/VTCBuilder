@@ -121,6 +121,9 @@ urlpatterns = [
     # Analytics
     path('analytics/block-usage/', block_usage_tracking_view, name='analytics-block-usage-slash'),
     path('analytics/block-usage', block_usage_tracking_view, name='analytics-block-usage'),
+    
+    # Analytics app URLs
+    path('analytics/', include('analytics.urls')),
 
     # Include router URLs LAST (order matters!)
     path('', include(router.urls)),

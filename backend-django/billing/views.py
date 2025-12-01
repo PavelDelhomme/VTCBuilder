@@ -1579,9 +1579,8 @@ def billing_stats(request):
             })
         
         # ========== STATISTIQUES GLOBALES ==========
-        total_tenants = Tenant.objects.filter(deleted_at__isnull=True).count()
+        # Note: total_tenants est retiré car c'est déjà dans /admin/stats
         tenants_with_subscription = Subscription.objects.values('tenant').distinct().count()
-        tenants_without_subscription = total_tenants - tenants_with_subscription
         
         # Revenu récurrent mensuel (MRR)
         mrr = Decimal('0')
@@ -1627,10 +1626,8 @@ def billing_stats(request):
             'failed_payments': failed_payments,
             'payment_methods_stats': payment_methods_stats,
             
-            # Tenants
-            'total_tenants': total_tenants,
+            # Tenants (seulement les stats liées aux abonnements)
             'tenants_with_subscription': tenants_with_subscription,
-            'tenants_without_subscription': tenants_without_subscription,
         })
         add_cors_headers(response, request)
         return response
