@@ -102,28 +102,35 @@ function SubscriptionRow({
   }
 
   return (
-    <tr className="hover:bg-gray-50 dark:bg-gray-900">
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-        {subscription.tenant?.name || '-'}
+    <tr className="hover:bg-gray-50 dark:hover:bg-gray-900">
+      <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm font-medium text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-gray-800 z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)] min-w-[150px]">
+        <div className="min-w-0">
+          <div className="truncate break-words">{subscription.tenant?.name || '-'}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 truncate hidden sm:block">{subscription.tenant?.email || ''}</div>
+        </div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-        {subscription.plan.name}
+      <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 min-w-[120px]">
+        <div className="truncate break-words">{subscription.plan.name}</div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(subscription.status)}`}>
+      <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 min-w-[100px]">
+        <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getStatusBadge(subscription.status)}`}>
           {getStatusLabel(subscription.status)}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 capitalize">
+      <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 capitalize hidden md:table-cell min-w-[80px]">
         {subscription.billing_cycle === 'monthly' ? 'Mensuel' : 'Annuel'}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-        {new Date(subscription.current_period_start).toLocaleDateString('fr-FR')} - {new Date(subscription.current_period_end).toLocaleDateString('fr-FR')}
+      <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell min-w-[180px]">
+        <div className="text-xs sm:text-sm">
+          <div>{new Date(subscription.current_period_start).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</div>
+          <div className="text-gray-400">-</div>
+          <div>{new Date(subscription.current_period_end).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</div>
+        </div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm">
+      <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm min-w-[100px]">
         {subscription.unpaid_amount && subscription.unpaid_amount > 0 ? (
           <div>
-            <span className="font-semibold text-red-600">{subscription.unpaid_amount.toFixed(2)}€</span>
+            <span className="font-semibold text-red-600 break-words">{subscription.unpaid_amount.toFixed(2)}€</span>
             {subscription.unpaid_invoices_count && subscription.unpaid_invoices_count > 0 && (
               <span className="block text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {subscription.unpaid_invoices_count} facture{subscription.unpaid_invoices_count > 1 ? 's' : ''}
@@ -134,14 +141,14 @@ function SubscriptionRow({
           <span className="text-green-600">À jour</span>
         )}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-        <div className="flex flex-wrap justify-end items-center gap-2">
+      <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-right text-sm sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-2px_0_4px_rgba(0,0,0,0.1)] min-w-[140px]">
+        <div className="flex flex-wrap justify-end items-center gap-1 sm:gap-2">
           <button
             onClick={() => router.push(`/admin/billing/subscriptions/${subscription.id}`)}
-            className="text-blue-600 hover:text-blue-900"
+            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 sm:p-0"
             title="Voir les détails complets"
           >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
@@ -149,28 +156,27 @@ function SubscriptionRow({
           <div className="relative inline-block text-left">
             <button
               onClick={() => setShowMenu(!showMenu)}
-            disabled={!!actionLoading}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-          >
+              disabled={!!actionLoading}
+              className="inline-flex items-center px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
             {actionLoading ? (
               <>
                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                En cours...
+                <span className="hidden sm:inline">En cours...</span>
+                <span className="sm:hidden">...</span>
               </>
             ) : (
               <>
-                Actions
+                <span className="hidden sm:inline">Actions</span>
+                <span className="sm:hidden">⚙️</span>
                 <svg className="ml-2 -mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </>
             )}
-            <svg className="ml-2 -mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
           </button>
 
           {showMenu && (
@@ -873,32 +879,56 @@ export default function BillingPage() {
               + Créer un abonnement
             </button>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <div className="overflow-x-auto">
-              <ResponsiveTable
-                headers={['Tenant', 'Plan', 'Statut', 'Cycle', 'Période', 'Montant', 'Actions']}
-                emptyMessage="Aucun abonnement"
-              >
-              {subscriptions.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                    Aucun abonnement trouvé
-                  </td>
-                </tr>
-              ) : (
-                subscriptions.map((subscription) => (
-                  <SubscriptionRow
-                    key={subscription.id}
-                    subscription={subscription}
-                    getStatusBadge={getStatusBadge}
-                    billingService={billingService}
-                    pricingPlans={pricingPlans}
-                    onUpdate={loadBillingData}
-                    router={router}
-                  />
-                ))
-              )}
-            </ResponsiveTable>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden w-full max-w-full">
+            <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
+                  <tr>
+                    <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky left-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[2px_0_4px_rgba(0,0,0,0.1)] min-w-[150px]">
+                      Tenant
+                    </th>
+                    <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[120px]">
+                      Plan
+                    </th>
+                    <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[100px]">
+                      Statut
+                    </th>
+                    <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell min-w-[80px]">
+                      Cycle
+                    </th>
+                    <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell min-w-[180px]">
+                      Période
+                    </th>
+                    <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[100px]">
+                      Montant
+                    </th>
+                    <th className="px-3 sm:px-4 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky right-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)] min-w-[140px]">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {subscriptions.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-3 sm:px-4 lg:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        Aucun abonnement trouvé
+                      </td>
+                    </tr>
+                  ) : (
+                    subscriptions.map((subscription) => (
+                      <SubscriptionRow
+                        key={subscription.id}
+                        subscription={subscription}
+                        getStatusBadge={getStatusBadge}
+                        billingService={billingService}
+                        pricingPlans={pricingPlans}
+                        onUpdate={loadBillingData}
+                        router={router}
+                      />
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
