@@ -17,6 +17,16 @@ const nextConfig = {
     }
     return config
   },
+  // Configuration pour le développement
+  devIndicators: {
+    buildActivity: true,
+  },
+  // Assurer que les fichiers statiques sont servis correctement
+  experimental: {
+    outputFileTracingIncludes: {
+      '/**': ['./**/*'],
+    },
+  },
 }
 
 module.exports = nextConfig
