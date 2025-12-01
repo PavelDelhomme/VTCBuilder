@@ -1173,34 +1173,6 @@ const SortableBlock = React.memo(function SortableBlock({
         </div>
       </div>
 
-      {/* Resize Handles - Only visible when selected */}
-      {isSelected && (
-        <>
-          {/* Corner handles */}
-          <div
-            className="absolute top-0 left-0 w-4 h-4 cursor-nwse-resize bg-blue-500 border-2 border-white dark:border-gray-800 rounded-br-lg z-20 hover:bg-blue-600"
-            onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleResizeStart(e, 'left')}
-            title="Redimensionner"
-          />
-          <div
-            className="absolute top-0 right-0 w-4 h-4 cursor-nesw-resize bg-blue-500 border-2 border-white dark:border-gray-800 rounded-bl-lg z-20 hover:bg-blue-600"
-            onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleResizeStart(e, 'right')}
-            title="Redimensionner"
-          />
-          {/* Edge handles */}
-          <div
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-8 cursor-ew-resize bg-blue-500 border-2 border-white dark:border-gray-800 rounded-r-lg z-20 hover:bg-blue-600"
-            onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleResizeStart(e, 'left')}
-            title="Redimensionner"
-          />
-          <div
-            className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-8 cursor-ew-resize bg-blue-500 border-2 border-white dark:border-gray-800 rounded-l-lg z-20 hover:bg-blue-600"
-            onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleResizeStart(e, 'right')}
-            title="Redimensionner"
-          />
-        </>
-      )}
-
       {/* Block Content - Simple and Clean */}
       <div className={`${isSmall ? 'p-2 sm:p-3' : 'p-4 sm:p-6'} bg-white dark:bg-gray-800`}>
         {/* Simple indicator when selected */}
