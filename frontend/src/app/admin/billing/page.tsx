@@ -1943,71 +1943,107 @@ function PaymentsHistoryTab({
       </div>
 
       {/* Payments Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <ResponsiveTable
-          headers={['Date', 'Tenant', 'Facture', 'Montant', 'Méthode', 'Statut', 'Détails']}
-          emptyMessage="Aucun paiement"
-        >
-          {filteredPayments.length === 0 ? (
-            <tr>
-              <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                Aucun paiement trouvé
-              </td>
-            </tr>
-          ) : (
-            filteredPayments.map((payment) => (
-              <tr key={payment.id} className="hover:bg-gray-50 dark:bg-gray-900">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {payment.paid_at
-                    ? new Date(payment.paid_at).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : payment.created_at
-                    ? new Date(payment.created_at).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })
-                    : '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {payment.tenant?.name || '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {payment.invoice?.invoice_number || '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  {parseFloat(payment.amount.toString()).toFixed(2)} {payment.currency}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {getMethodLabel(payment.method)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                      payment.status
-                    )}`}
-                  >
-                    {getStatusLabel(payment.status)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  {payment.stripe_payment_intent_id && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400" title={payment.stripe_payment_intent_id}>
-                      Stripe: {payment.stripe_payment_intent_id.slice(-8)}
-                    </span>
-                  )}
-                </td>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden w-full max-w-full">
+        <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900">
+              <tr>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky left-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[2px_0_4px_rgba(0,0,0,0.1)] min-w-[150px]">
+                  Date
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[150px]">
+                  Tenant
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell min-w-[120px]">
+                  Facture
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[100px]">
+                  Montant
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell min-w-[120px]">
+                  Méthode
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[100px]">
+                  Statut
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky right-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)] min-w-[150px]">
+                  Détails
+                </th>
               </tr>
-            ))
-          )}
-        </ResponsiveTable>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredPayments.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-3 sm:px-4 lg:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    Aucun paiement trouvé
+                  </td>
+                </tr>
+              ) : (
+                filteredPayments.map((payment) => (
+                  <tr key={payment.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 sticky left-0 bg-white dark:bg-gray-800 z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)] min-w-[150px]">
+                      <div className="text-xs sm:text-sm">
+                        {payment.paid_at
+                          ? new Date(payment.paid_at).toLocaleDateString('fr-FR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                            })
+                          : payment.created_at
+                          ? new Date(payment.created_at).toLocaleDateString('fr-FR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                            })
+                          : '-'}
+                        {(payment.paid_at || payment.created_at) && (
+                          <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                            {payment.paid_at
+                              ? new Date(payment.paid_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                              : payment.created_at
+                              ? new Date(payment.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                              : ''}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm font-medium text-gray-900 dark:text-gray-100 min-w-[150px]">
+                      <div className="min-w-0">
+                        <div className="truncate break-words">{payment.tenant?.name || '-'}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500 truncate hidden sm:block">{payment.tenant?.email || ''}</div>
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell min-w-[120px]">
+                      <div className="truncate break-words font-mono">{payment.invoice?.invoice_number || '-'}</div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm font-semibold text-gray-900 dark:text-gray-100 min-w-[100px]">
+                      <div className="break-words">{parseFloat(payment.amount.toString()).toFixed(2)} {payment.currency}</div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell min-w-[120px]">
+                      {getMethodLabel(payment.method)}
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 min-w-[100px]">
+                      <span
+                        className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getStatusBadge(
+                          payment.status
+                        )}`}
+                      >
+                        {getStatusLabel(payment.status)}
+                      </span>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-2px_0_4px_rgba(0,0,0,0.1)] min-w-[150px]">
+                      {payment.stripe_payment_intent_id && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 break-words" title={payment.stripe_payment_intent_id}>
+                          Stripe: {payment.stripe_payment_intent_id.slice(-8)}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )
@@ -2128,67 +2164,92 @@ function PaymentMethodsTab({
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <ResponsiveTable
-          headers={['Nom', 'Type', 'Statut', 'Commission', 'Limites', 'Actions']}
-          emptyMessage="Aucun mode de paiement"
-        >
-          {paymentMethods.length === 0 ? (
-            <tr>
-              <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                Aucun mode de paiement configuré
-              </td>
-            </tr>
-          ) : (
-            paymentMethods.map((method) => (
-              <tr key={method.id} className="hover:bg-gray-50 dark:bg-gray-900">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    {method.icon && <span className="mr-2 text-xl">{method.icon}</span>}
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{method.name}</div>
-                      {method.description && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{method.description}</div>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {methodTypeLabels[method.method_type] || method.method_type}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex flex-col gap-1">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      method.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {method.is_active ? 'Actif' : 'Inactif'}
-                    </span>
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      method.is_enabled ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 dark:bg-gray-900 text-gray-800'
-                    }`}>
-                      {method.is_enabled ? 'Disponible' : 'Masqué'}
-                    </span>
-                    {method.requires_validation && (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                        Validation requise
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {method.fee_percentage > 0 && `${method.fee_percentage}%`}
-                  {method.fee_percentage > 0 && method.fee_fixed > 0 && ' + '}
-                  {method.fee_fixed > 0 && `${method.fee_fixed}€`}
-                  {method.fee_percentage === 0 && method.fee_fixed === 0 && 'Aucune'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {method.min_amount && `Min: ${method.min_amount}€`}
-                  {method.min_amount && method.max_amount && ' / '}
-                  {method.max_amount && `Max: ${method.max_amount}€`}
-                  {!method.min_amount && !method.max_amount && '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end gap-2">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden w-full max-w-full">
+        <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900">
+              <tr>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky left-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[2px_0_4px_rgba(0,0,0,0.1)] min-w-[200px]">
+                  Nom
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[120px]">
+                  Type
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[150px]">
+                  Statut
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell min-w-[120px]">
+                  Commission
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell min-w-[150px]">
+                  Limites
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky right-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)] min-w-[140px]">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {paymentMethods.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-3 sm:px-4 lg:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    Aucun mode de paiement configuré
+                  </td>
+                </tr>
+              ) : (
+                paymentMethods.map((method) => (
+                  <tr key={method.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 sticky left-0 bg-white dark:bg-gray-800 z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)] min-w-[200px]">
+                      <div className="flex items-center min-w-0">
+                        {method.icon && <span className="mr-2 text-xl flex-shrink-0">{method.icon}</span>}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate break-words">{method.name}</div>
+                          {method.description && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate break-words">{method.description}</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 min-w-[120px]">
+                      <div className="truncate break-words">{methodTypeLabels[method.method_type] || method.method_type}</div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 min-w-[150px]">
+                      <div className="flex flex-col gap-1 flex-wrap">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+                          method.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {method.is_active ? 'Actif' : 'Inactif'}
+                        </span>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+                          method.is_enabled ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 dark:bg-gray-900 text-gray-800'
+                        }`}>
+                          {method.is_enabled ? 'Disponible' : 'Masqué'}
+                        </span>
+                        {method.requires_validation && (
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800 whitespace-nowrap">
+                            Validation requise
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell min-w-[120px]">
+                      <div className="break-words">
+                        {method.fee_percentage > 0 && `${method.fee_percentage}%`}
+                        {method.fee_percentage > 0 && method.fee_fixed > 0 && ' + '}
+                        {method.fee_fixed > 0 && `${method.fee_fixed}€`}
+                        {method.fee_percentage === 0 && method.fee_fixed === 0 && 'Aucune'}
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell min-w-[150px]">
+                      <div className="break-words">
+                        {method.min_amount && `Min: ${method.min_amount}€`}
+                        {method.min_amount && method.max_amount && ' / '}
+                        {method.max_amount && `Max: ${method.max_amount}€`}
+                        {!method.min_amount && !method.max_amount && '-'}
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-right text-sm font-medium sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-2px_0_4px_rgba(0,0,0,0.1)] min-w-[140px]">
+                      <div className="flex items-center justify-end gap-1 sm:gap-2 flex-wrap">
                     {editing === method.id ? (
                       <PaymentMethodForm
                         formData={formData}

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import billingService, { Invoice } from '@/services/billing.service'
 import tenantService, { Tenant } from '@/services/tenant.service'
-import ResponsiveTable from '@/components/ResponsiveTable'
 import toast from 'react-hot-toast'
 
 interface InvoicesTabProps {
@@ -266,94 +265,120 @@ export default function InvoicesTab({ invoices: initialInvoices, getStatusBadge,
           </div>
         </div>
       ) : (
-        <ResponsiveTable
-          headers={['N° Facture', 'Tenant', 'Date', 'Montant', 'Statut', 'Actions']}
-          emptyMessage="Aucune facture"
-        >
-          {filteredInvoices.length === 0 ? (
-            <tr>
-              <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                Aucune facture trouvée
-              </td>
-            </tr>
-          ) : (
-            filteredInvoices.map((invoice) => (
-              <tr key={invoice.id} className="hover:bg-gray-50 dark:bg-gray-900">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 font-mono">
-                  {invoice.invoice_number}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {invoice.tenant?.name || '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {new Date(invoice.issue_date).toLocaleDateString('fr-FR')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  {formatPrice(invoice.total, invoice.currency)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(invoice.status)}`}>
-                    {getStatusLabel(invoice.status)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                  <div className="flex justify-end items-center gap-2">
-                    <button
-                      onClick={() => handleViewInvoice(invoice)}
-                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400"
-                      title="Voir les détails"
-                    >
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleViewHTML(invoice)}
-                      className="text-green-600 hover:text-green-900 dark:text-green-400"
-                      title="Voir en HTML"
-                    >
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleDownloadPDF(invoice)}
-                      className="text-purple-600 hover:text-purple-900 dark:text-purple-400"
-                      title="Télécharger PDF/HTML"
-                    >
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </button>
-                    {invoice.status !== 'paid' && invoice.status !== 'void' && (
-                      <>
-                        <button
-                          onClick={() => handleMarkPaid(invoice)}
-                          className="text-green-600 hover:text-green-900 dark:text-green-400"
-                          title="Marquer comme payée"
-                        >
-                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleSendReminder(invoice)}
-                          className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400"
-                          title="Envoyer un rappel"
-                        >
-                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                          </svg>
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </td>
+        <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900">
+              <tr>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky left-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[2px_0_4px_rgba(0,0,0,0.1)] min-w-[120px]">
+                  N° Facture
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[150px]">
+                  Tenant
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell min-w-[100px]">
+                  Date
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[100px]">
+                  Montant
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[100px]">
+                  Statut
+                </th>
+                <th className="px-3 sm:px-4 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky right-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)] min-w-[200px]">
+                  Actions
+                </th>
               </tr>
-            ))
-          )}
-        </ResponsiveTable>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredInvoices.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-3 sm:px-4 lg:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                    Aucune facture trouvée
+                  </td>
+                </tr>
+              ) : (
+                filteredInvoices.map((invoice) => (
+                  <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm font-medium text-gray-900 dark:text-gray-100 font-mono sticky left-0 bg-white dark:bg-gray-800 z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)] min-w-[120px]">
+                      <div className="truncate break-words">{invoice.invoice_number}</div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 min-w-[150px]">
+                      <div className="min-w-0">
+                        <div className="truncate break-words">{invoice.tenant?.name || '-'}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500 truncate hidden sm:block">{invoice.tenant?.email || ''}</div>
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell min-w-[100px]">
+                      {new Date(invoice.issue_date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm font-semibold text-gray-900 dark:text-gray-100 min-w-[100px]">
+                      <div className="break-words">{formatPrice(invoice.total, invoice.currency)}</div>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 min-w-[100px]">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getStatusBadge(invoice.status)}`}>
+                        {getStatusLabel(invoice.status)}
+                      </span>
+                    </td>
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-right text-sm sticky right-0 bg-white dark:bg-gray-800 z-10 shadow-[-2px_0_4px_rgba(0,0,0,0.1)] min-w-[200px]">
+                      <div className="flex flex-wrap justify-end items-center gap-1 sm:gap-2">
+                        <button
+                          onClick={() => handleViewInvoice(invoice)}
+                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1 sm:p-0"
+                          title="Voir les détails"
+                        >
+                          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleViewHTML(invoice)}
+                          className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 p-1 sm:p-0"
+                          title="Voir en HTML"
+                        >
+                          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadPDF(invoice)}
+                          className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 p-1 sm:p-0"
+                          title="Télécharger PDF/HTML"
+                        >
+                          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </button>
+                        {invoice.status !== 'paid' && invoice.status !== 'void' && (
+                          <>
+                            <button
+                              onClick={() => handleMarkPaid(invoice)}
+                              className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 p-1 sm:p-0"
+                              title="Marquer comme payée"
+                            >
+                              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleSendReminder(invoice)}
+                              className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300 p-1 sm:p-0"
+                              title="Envoyer un rappel"
+                            >
+                              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                              </svg>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )
