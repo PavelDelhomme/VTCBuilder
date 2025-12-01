@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import authService from '@/services/auth.service'
 import { useTheme } from '@/contexts/ThemeContext'
+import projectService, { Project } from '@/services/project.service'
 
 interface MenuItem {
   name: string
   href: string
   icon: React.ReactNode
+  isAccordion?: boolean
 }
 
 interface AdminSidebarProps {
@@ -22,12 +24,36 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
+  const [projectsExpanded, setProjectsExpanded] = useState(false)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loadingProjects, setLoadingProjects] = useState(false)
+  const [selectedTenantFilter, setSelectedTenantFilter] = useState<number | null>(null)
   const { resolvedTheme, toggleTheme } = useTheme()
 
   useEffect(() => {
     setMounted(true)
     setUser(authService.getStoredUser())
   }, [])
+
+  // Load projects when accordion is expanded
+  useEffect(() => {
+    if (projectsExpanded && projects.length === 0 && !loadingProjects) {
+      loadProjects()
+    }
+  }, [projectsExpanded])
+
+  const loadProjects = async () => {
+    try {
+      setLoadingProjects(true)
+      const data = await projectService.getAll()
+      setProjects(data)
+    } catch (error) {
+      console.error('Erreur chargement projets:', error)
+      setProjects([])
+    } finally {
+      setLoadingProjects(false)
+    }
+  }
 
   // Use external control if provided, otherwise use internal state
   const sidebarOpen = externalIsOpen !== undefined ? externalIsOpen : isOpen
@@ -114,15 +140,7 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       ),
-    },
-    {
-      name: 'Pages Publiques',
-      href: '/admin/pages-public',
-      icon: (
-        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      ),
+      isAccordion: true,
     },
     {
       name: 'Paramètres',
@@ -205,6 +223,179 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
           {menuItems.map((item) => {
             const active = isActive(item.href)
             
+            // Handle accordion for Projects
+            if (item.isAccordion && item.name === 'Projets') {
+              const isProjectsActive = pathname.startsWith('/admin/projects') || pathname.startsWith('/admin/pages-public')
+              const systemProjects = projects.filter(p => p.is_system_project)
+              const tenantProjects = projects.filter(p => !p.is_system_project)
+              const filteredTenantProjects = selectedTenantFilter 
+                ? tenantProjects.filter(p => p.tenant?.id === selectedTenantFilter)
+                : tenantProjects
+              
+              // Get unique tenants for filter
+              const uniqueTenants = Array.from(
+                new Map(tenantProjects.map(p => [p.tenant?.id, p.tenant])).entries()
+              ).filter(([id]) => id !== null && id !== undefined)
+
+              return (
+                <div key={item.href}>
+                  <button
+                    onClick={() => {
+                      if (projectsExpanded) {
+                        setProjectsExpanded(false)
+                      } else {
+                        setProjectsExpanded(true)
+                        if (projects.length === 0) {
+                          loadProjects()
+                        }
+                      }
+                    }}
+                    className={`w-full flex items-center justify-between px-6 py-3 text-sm font-medium transition-colors ${
+                      isProjectsActive
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-r-4 border-blue-700 dark:border-blue-400'
+                        : 'text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <span className={isProjectsActive ? 'text-blue-700 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}>
+                        {item.icon}
+                      </span>
+                      <span className="ml-3">{item.name}</span>
+                    </div>
+                    <svg
+                      className={`h-4 w-4 transition-transform ${projectsExpanded ? 'rotate-90' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Accordion Content */}
+                  {projectsExpanded && (
+                    <div className="bg-gray-50 dark:bg-gray-900/50">
+                      {/* Filter by Tenant */}
+                      {uniqueTenants.length > 0 && (
+                        <div className="px-6 py-2 border-b border-gray-200 dark:border-gray-700">
+                          <select
+                            value={selectedTenantFilter || ''}
+                            onChange={(e) => setSelectedTenantFilter(e.target.value ? parseInt(e.target.value) : null)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full px-2 py-1 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300"
+                          >
+                            <option value="">Tous les tenants</option>
+                            {uniqueTenants.map(([id, tenant]) => (
+                              <option key={id} value={id}>
+                                {tenant?.name || `Tenant ${id}`}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {/* System Projects (Admin) */}
+                      {systemProjects.length > 0 && (
+                        <>
+                          <div className="px-6 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Projet Admin
+                          </div>
+                          {systemProjects.map((project) => {
+                            const isProjectActive = pathname === `/admin/projects/${project.id}` || 
+                              (pathname.startsWith('/admin/pages-public') && project.is_system_project)
+                            return (
+                              <button
+                                key={project.id}
+                                onClick={() => {
+                                  router.push(`/admin/projects/${project.id}`)
+                                  handleClose()
+                                }}
+                                className={`w-full flex items-center px-10 py-2 text-xs font-medium transition-colors ${
+                                  isProjectActive
+                                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                }`}
+                              >
+                                <span className="truncate">{project.name}</span>
+                                {project.pages_count !== undefined && (
+                                  <span className="ml-auto text-gray-400 dark:text-gray-500">
+                                    ({project.pages_count})
+                                  </span>
+                                )}
+                              </button>
+                            )
+                          })}
+                          {/* Separator */}
+                          {filteredTenantProjects.length > 0 && (
+                            <div className="px-6 py-2 border-t border-gray-200 dark:border-gray-700">
+                              <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Projets Tenants
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {/* Tenant Projects */}
+                      {loadingProjects ? (
+                        <div className="px-10 py-4 text-xs text-gray-500 dark:text-gray-400">
+                          Chargement...
+                        </div>
+                      ) : filteredTenantProjects.length > 0 ? (
+                        filteredTenantProjects.map((project) => {
+                          const isProjectActive = pathname === `/admin/projects/${project.id}`
+                          return (
+                            <button
+                              key={project.id}
+                              onClick={() => {
+                                router.push(`/admin/projects/${project.id}`)
+                                handleClose()
+                              }}
+                              className={`w-full flex items-center px-10 py-2 text-xs font-medium transition-colors ${
+                                isProjectActive
+                                  ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400'
+                                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                              }`}
+                            >
+                              <span className="truncate">{project.name}</span>
+                              {project.tenant && (
+                                <span className="ml-2 text-gray-400 dark:text-gray-500 text-xs">
+                                  ({project.tenant.name})
+                                </span>
+                              )}
+                              {project.pages_count !== undefined && (
+                                <span className="ml-auto text-gray-400 dark:text-gray-500">
+                                  ({project.pages_count})
+                                </span>
+                              )}
+                            </button>
+                          )
+                        })
+                      ) : (
+                        <div className="px-10 py-4 text-xs text-gray-500 dark:text-gray-400">
+                          Aucun projet
+                        </div>
+                      )}
+
+                      {/* View All Projects Link */}
+                      <div className="px-6 py-2 border-t border-gray-200 dark:border-gray-700">
+                        <button
+                          onClick={() => {
+                            router.push('/admin/projects')
+                            handleClose()
+                          }}
+                          className="w-full text-left px-4 py-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                        >
+                          Voir tous les projets →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            }
+            
+            // Regular menu items
             return (
               <button
                 key={item.href}

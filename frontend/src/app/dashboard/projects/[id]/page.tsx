@@ -104,14 +104,14 @@ export default function ProjectDetailPage() {
 
   if (loading || !project) {
     return (
-      <DashboardLayout title="Projet" subtitle="Chargement...">
+      <AdminLayout title="Projet" subtitle="Chargement...">
         <PageLoader text="Chargement du projet..." />
-      </DashboardLayout>
+      </AdminLayout>
     )
   }
 
   return (
-    <DashboardLayout
+    <AdminLayout
       title={project.name}
       subtitle={`Gérer les pages du projet ${project.slug}`}
       headerActions={
@@ -198,7 +198,7 @@ export default function ProjectDetailPage() {
                     <button
                       onClick={() => {
                         if (page.page_type === 'public') {
-                          router.push(`/dashboard/pages-public/${page.page_slug}/edit`)
+                          router.push(`/admin/pages-public/${page.page_slug}/edit`)
                         } else {
                           // TODO: Navigate to tenant page editor
                         }
@@ -258,7 +258,7 @@ export default function ProjectDetailPage() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   )
 }
 
