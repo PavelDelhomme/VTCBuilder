@@ -422,11 +422,13 @@ python manage.py init_features
    - ✅ Amélioration gestion erreurs endpoints `/api/blocks/types/`, `/api/users/impersonation-status/`, `/api/system-settings/`
    - ✅ TemplateStorage rendu optionnel pour éviter erreurs import dans les tests
 
-2. **🐛 Correction Erreur Build Frontend** (EN COURS)
+2. **🐛 Correction Erreur Build Frontend** (✅ COMPLÉTÉ)
    - ✅ Ajout configuration paths dans `tsconfig.json` pour résoudre les imports `@/`
    - ✅ Création fichier `tenant-utils.ts` manquant avec fonctions `isTenantSubdomain()` et `getTenantSlug()`
-   - ⏳ **PROBLÈME RESTANT** : Next.js ne détecte toujours pas les fichiers malgré la configuration
-   - ⏳ **À FAIRE** : Vérifier le montage des volumes Docker et reconstruire le container frontend si nécessaire
+   - ✅ Configuration `baseUrl` et `paths` ajoutée dans `tsconfig.json`
+   - ✅ Fichiers de configuration créés (`.env.example`, `.gitignore`, `.dockerignore`, Dockerfiles)
+   - ✅ Nettoyage références CMS_CRM_Solutions (containers et volumes Docker supprimés)
+   - ✅ Workflow GitHub Actions simplifié (notifications sans email externe)
 
 3. **📄 Gestion Pages Publiques** (EN COURS)
    - ⏳ Ajouter possibilité ajouter/supprimer des pages publiques dans `/admin/pages-public`
@@ -1557,6 +1559,9 @@ cd frontend && npm install  # Installer Jest et dépendances
   - ✅ **TemplateStorage rendu optionnel** - Évite erreurs import dans les tests
   - ✅ **Fichiers de configuration créés** - `.env.example`, `.gitignore`, `.dockerignore`, Dockerfiles frontend, `postcss.config.js`
   - ✅ **Configuration TypeScript corrigée** - Ajout paths alias `@/*` dans `tsconfig.json` pour résoudre les imports
+  - ✅ **Fichier tenant-utils.ts créé** - Fonctions `isTenantSubdomain()` et `getTenantSlug()` ajoutées
+  - ✅ **Nettoyage projet** - Suppression containers/volumes CMS_CRM_Solutions, correction Makefile
+  - ✅ **Workflow GitHub simplifié** - Notifications sans configuration email externe
 - ⏳ **Tests complets de l'interface en cours** - Voir checklist ci-dessus
 - ⏳ Vérification que toutes les fonctionnalités fonctionnent sans erreurs
 - ⏳ **Améliorations éditeur en cours** - Voir section "Priorité Haute" ci-dessus
