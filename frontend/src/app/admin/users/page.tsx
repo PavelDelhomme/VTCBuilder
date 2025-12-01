@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
 import AdminLayout from '@/components/AdminLayout'
-import ResponsiveTable from '@/components/ResponsiveTable'
 import userService, { User } from '@/services/user.service'
 import toast from 'react-hot-toast'
 import PageLoader from '@/components/PageLoader'
@@ -389,7 +388,10 @@ export default function UsersPage() {
                     </tr>
                   ))
                 )}
-          </ResponsiveTable>
+                </tbody>
+              </table>
+            </div>
+          </div>
     </AdminLayout>
   )
 }

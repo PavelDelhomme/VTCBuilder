@@ -6,7 +6,7 @@ import authService from '@/services/auth.service'
 import AdminLayout from '@/components/AdminLayout'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import billingService, { PricingPlan } from '@/services/billing.service'
-import callToActionService, { CallToAction } from '@/services/blocks.service'
+import { callToActionService, CallToAction } from '@/services/blocks.service'
 import toast from 'react-hot-toast'
 import PageLoader from '@/components/PageLoader'
 

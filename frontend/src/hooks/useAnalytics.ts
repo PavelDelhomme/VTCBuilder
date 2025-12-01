@@ -32,7 +32,7 @@ export function useAnalytics() {
       let tenantId: number | undefined
 
       try {
-        const currentUser = authService.getCurrentUser()
+        const currentUser = authService.getStoredUser()
         if (currentUser) {
           userId = currentUser.id
           tenantId = currentUser.tenant_id

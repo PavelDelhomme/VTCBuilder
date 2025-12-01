@@ -347,7 +347,7 @@ function InvoiceTemplateModal({
       .replace(/\{\{ status \}\}/g, 'Payé')
       .replace(/\{\{ plan_name \}\}/g, 'Plan Business')
       .replace(/\{\{ subscription_id \}\}/g, '123')
-      .replace(/\{% if paid_at %\}.*?\{\% endif %\}/gs, '') // Supprimer les conditions Django
+      .replace(/\{% if paid_at %\}[\s\S]*?\{\% endif %\}/g, '') // Supprimer les conditions Django
 
     // Ajouter le CSS
     if (css) {

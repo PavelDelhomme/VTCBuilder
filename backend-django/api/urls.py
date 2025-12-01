@@ -41,6 +41,14 @@ except (ImportError, RuntimeError) as e:
     ProjectViewSet = None
 from .views import DashboardView, DetailedStatsView, block_usage_tracking_view
 
+# Analytics app - conditional import
+try:
+    from analytics.urls import urlpatterns as analytics_urlpatterns
+    ANALYTICS_AVAILABLE = True
+except (ImportError, RuntimeError):
+    ANALYTICS_AVAILABLE = False
+    analytics_urlpatterns = []
+
 # Router for viewsets
 router = DefaultRouter()
 router.register(r'tenants', TenantViewSet, basename='tenant')
@@ -123,7 +131,7 @@ urlpatterns = [
     path('analytics/block-usage', block_usage_tracking_view, name='analytics-block-usage'),
     
     # Analytics app URLs
-    path('analytics/', include('analytics.urls')),
+    *([path('analytics/', include('analytics.urls'))] if ANALYTICS_AVAILABLE else []),
 
     # Include router URLs LAST (order matters!)
     path('', include(router.urls)),

@@ -107,5 +107,3 @@ const projectService = {
 
 export default projectService
 
-export default projectService
-

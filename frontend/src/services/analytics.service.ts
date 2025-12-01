@@ -47,6 +47,7 @@ class AnalyticsService {
           feature_usage_stats: [],
           actions_timeline: [],
           most_clicked_ctas: [],
+          buttons_by_user: [],
           most_viewed_pages: [],
           summary: {
             total_actions: 0,
