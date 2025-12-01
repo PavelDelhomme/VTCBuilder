@@ -286,14 +286,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
 
   // Styles du contenu (appliqués aux éléments internes comme boutons, textes, etc.)
   const contentStyles: React.CSSProperties = {
-    // Couleur de fond (si pas de gradient)
-    backgroundColor: block.styles?.background && !block.styles?.background.includes('gradient') 
-      ? block.styles?.background 
-      : block.styles?.background_color || block.styles?.backgroundColor,
-    // Gradient background
+    // Couleur de fond - Utiliser background pour tout (évite le conflit avec backgroundColor)
     background: block.styles?.background && block.styles?.background.includes('gradient')
       ? block.styles?.background
-      : undefined,
+      : block.styles?.background_color || block.styles?.backgroundColor || undefined,
     // Couleur de texte
     color: block.styles?.color,
     // Opacité

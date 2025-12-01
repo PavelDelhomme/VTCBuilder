@@ -49,7 +49,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const [selectedBlock, setSelectedBlock] = useState<string | null>(externalSelectedBlockId || null)
   
   const [sidebarOpen, setSidebarOpen] = useState(true) // Ouvrir par défaut sur desktop
-  const [propertiesTab, setPropertiesTab] = useState<'content' | 'layout' | 'style'>('content')
+  const [propertiesTab, setPropertiesTab] = useState<'content' | 'layout' | 'style'>('layout') // Layout en premier
   
   // Synchroniser avec la sélection externe (optimisé pour éviter les conflits)
   useEffect(() => {
@@ -629,19 +629,9 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                 </button>
               </div>
 
-              {/* Tabs pour Propriétés, Mise en page et Style */}
+              {/* Tabs pour Mise en page, Style et Contenu (ordre optimisé) */}
               <div className="border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div className="flex gap-2 px-4 overflow-x-auto">
-                  <button
-                    onClick={() => setPropertiesTab('content')}
-                    className={`px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
-                      propertiesTab === 'content'
-                        ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                    }`}
-                  >
-                    📝 Contenu
-                  </button>
                   <button
                     onClick={() => setPropertiesTab('layout')}
                     className={`px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
@@ -662,12 +652,39 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   >
                     🎨 Style
                   </button>
+                  <button
+                    onClick={() => setPropertiesTab('content')}
+                    className={`px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
+                      propertiesTab === 'content'
+                        ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    📝 Contenu
+                  </button>
                 </div>
               </div>
 
               {/* Properties Content */}
               <div className="flex-1 overflow-y-auto p-4">
-                {propertiesTab === 'content' ? (
+                {propertiesTab === 'layout' ? (
+                  selectedBlockData ? (
+                    <BlockLayoutPanel
+                      block={selectedBlockData.block}
+                      onUpdate={updateBlock}
+                      allBlocks={history.state}
+                    />
+                  ) : null
+                ) : propertiesTab === 'style' ? (
+                  selectedBlockData ? (
+                    <BlockStylePanel
+                      block={selectedBlockData.block}
+                      onUpdate={updateBlock}
+                      allBlocks={history.state}
+                      blockTypes={blockTypes}
+                    />
+                  ) : null
+                ) : propertiesTab === 'content' ? (
                   <>
                     {/* Actions du bloc (Dupliquer, Supprimer) */}
                     <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -720,89 +737,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                       />
                     )}
                   </>
-                ) : propertiesTab === 'layout' ? (
-                  <>
-                    {/* Configuration Layout (Largeur, Conteneur, Z-index) */}
-                    <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wider">Mise en page du conteneur</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Largeur (colonnes sur 12)
-                          </label>
-                          <select
-                            value={selectedBlockData?.block?.layout || 12}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                              if (selectedBlock) {
-                                updateBlock(selectedBlock, { layout: parseInt(e.target.value) as Block['layout'] })
-                              }
-                            }}
-                            className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value={12}>12/12 (Pleine largeur)</option>
-                            <option value={11}>11/12</option>
-                            <option value={10}>10/12</option>
-                            <option value={9}>9/12 (3/4)</option>
-                            <option value={8}>8/12 (2/3)</option>
-                            <option value={7}>7/12</option>
-                            <option value={6}>6/12 (1/2)</option>
-                            <option value={5}>5/12</option>
-                            <option value={4}>4/12 (1/3)</option>
-                            <option value={3}>3/12 (1/4)</option>
-                            <option value={2}>2/12 (1/6)</option>
-                            <option value={1}>1/12</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Conteneur
-                          </label>
-                          <select
-                            value={selectedBlockData?.block?.container || 'container'}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                              if (selectedBlock) {
-                                updateBlock(selectedBlock, { container: e.target.value as Block['container'] })
-                              }
-                            }}
-                            className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          >
-                            <option value="container">Conteneur</option>
-                            <option value="container-fluid">Fluide</option>
-                            <option value="none">Aucun</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Z-index
-                          </label>
-                          <input
-                            type="number"
-                            value={selectedBlockData?.block?.styles?.z_index || 0}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                              if (selectedBlock && selectedBlockData?.block) {
-                                updateBlock(selectedBlock, {
-                                  styles: {
-                                    ...selectedBlockData.block.styles,
-                                    z_index: parseInt(e.target.value) || 0,
-                                  },
-                                })
-                              }
-                            }}
-                            className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="0"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  selectedBlockData && (
-                    <BlockStylePanel
-                      block={selectedBlockData.block}
-                      onUpdate={(updates) => updateBlock(selectedBlock, updates)}
-                    />
-                  )
-                )}
+                ) : null}
               </div>
 
               {/* Bouton retour aux blocs */}
@@ -5241,6 +5176,200 @@ function BlockRenderer({
         </div>
       )
   }
+}
+
+// Block Layout Panel (Alignement et Grille)
+function BlockLayoutPanel({
+  block,
+  onUpdate,
+  allBlocks = [],
+}: {
+  block: Block
+  onUpdate: (updates: Partial<Block>) => void
+  allBlocks?: Block[]
+}) {
+  return (
+    <div className="space-y-4">
+      {/* Configuration Layout (Largeur, Conteneur, Z-index) */}
+      <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wider">Mise en page du conteneur</h4>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Largeur (colonnes sur 12)
+            </label>
+            <select
+              value={block?.layout || 12}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                onUpdate({ layout: parseInt(e.target.value) as Block['layout'] })
+              }}
+              className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value={12}>12/12 (Pleine largeur)</option>
+              <option value={11}>11/12</option>
+              <option value={10}>10/12</option>
+              <option value={9}>9/12 (3/4)</option>
+              <option value={8}>8/12 (2/3)</option>
+              <option value={7}>7/12</option>
+              <option value={6}>6/12 (1/2)</option>
+              <option value={5}>5/12</option>
+              <option value={4}>4/12 (1/3)</option>
+              <option value={3}>3/12 (1/4)</option>
+              <option value={2}>2/12 (1/6)</option>
+              <option value={1}>1/12</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Conteneur
+            </label>
+            <select
+              value={block?.container || 'container'}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                onUpdate({ container: e.target.value as Block['container'] })
+              }}
+              className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="container">Conteneur</option>
+              <option value="container-fluid">Fluide</option>
+              <option value="none">Aucun</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Z-index
+            </label>
+            <input
+              type="number"
+              value={block?.styles?.z_index || 0}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                onUpdate({
+                  styles: {
+                    ...block.styles,
+                    z_index: parseInt(e.target.value) || 0,
+                  },
+                })
+              }}
+              className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="0"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Position et Alignement */}
+      <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wider">Position et Alignement</h4>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Type de position
+            </label>
+            <select
+              value={block?.position?.type || 'static'}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                onUpdate({
+                  position: {
+                    ...block.position,
+                    type: e.target.value as 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky',
+                  },
+                })
+              }}
+              className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="static">Statique</option>
+              <option value="relative">Relative</option>
+              <option value="absolute">Absolue</option>
+              <option value="fixed">Fixe</option>
+              <option value="sticky">Collant</option>
+            </select>
+          </div>
+          {block?.position?.type !== 'static' && (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Top
+                  </label>
+                  <input
+                    type="text"
+                    value={block?.position?.top || ''}
+                    onChange={(e) => {
+                      onUpdate({
+                        position: {
+                          ...block.position,
+                          top: e.target.value,
+                        },
+                      })
+                    }}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                    placeholder="0px"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Right
+                  </label>
+                  <input
+                    type="text"
+                    value={block?.position?.right || ''}
+                    onChange={(e) => {
+                      onUpdate({
+                        position: {
+                          ...block.position,
+                          right: e.target.value,
+                        },
+                      })
+                    }}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                    placeholder="0px"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Bottom
+                  </label>
+                  <input
+                    type="text"
+                    value={block?.position?.bottom || ''}
+                    onChange={(e) => {
+                      onUpdate({
+                        position: {
+                          ...block.position,
+                          bottom: e.target.value,
+                        },
+                      })
+                    }}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                    placeholder="0px"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Left
+                  </label>
+                  <input
+                    type="text"
+                    value={block?.position?.left || ''}
+                    onChange={(e) => {
+                      onUpdate({
+                        position: {
+                          ...block.position,
+                          left: e.target.value,
+                        },
+                      })
+                    }}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                    placeholder="0px"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // Block Style Panel (Peinture/Styling)
