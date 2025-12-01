@@ -5,7 +5,23 @@ export interface UsageStats {
   actions_by_resource: Array<{ resource_type: string; count: number }>
   feature_usage_stats: Array<{ feature_name: string; total_usage: number; tenant_count: number }>
   actions_timeline: Array<{ date: string; label: string; count: number }>
-  most_clicked_ctas: Array<{ action_name: string; resource_type: string; count: number }>
+  most_clicked_ctas: Array<{ 
+    action_name: string
+    resource_type: string
+    count: number
+    user__email?: string
+    user__id?: number
+    tenant__name?: string
+  }>
+  buttons_by_user: Array<{
+    user__email: string
+    user__id: number
+    user__first_name?: string
+    user__last_name?: string
+    action_name: string
+    resource_type: string
+    count: number
+  }>
   most_viewed_pages: Array<{ resource_id: number; metadata: any; count: number }>
   summary: {
     total_actions: number
@@ -51,14 +67,27 @@ class AnalyticsService {
     action_type: string
     action_name: string
     resource_type?: string
-    resource_id?: number
+    resource_id?: number | string
     metadata?: any
+    user?: number
+    tenant?: number
   }) {
     try {
-      await api.post('/analytics/actions/', actionData)
-    } catch (error) {
+      // Ne pas tracker si on est dans l'admin
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+        return
+      }
+      
+      await api.post('/analytics/actions/', actionData, {
+        // Ne pas bloquer si l'utilisateur n'est pas authentifié
+        validateStatus: (status) => status < 500,
+      })
+    } catch (error: any) {
       // Silently fail - analytics should not break the app
-      console.warn('Failed to track action:', error)
+      // Ne logger que les erreurs critiques (500+)
+      if (error.response?.status >= 500) {
+        console.warn('Failed to track action:', error)
+      }
     }
   }
 

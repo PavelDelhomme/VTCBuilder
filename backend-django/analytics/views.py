@@ -5,12 +5,12 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from api.utils import add_cors_headers
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from datetime import timedelta
 from .models import UserAction, FeatureUsage
 from .serializers import UserActionSerializer, FeatureUsageSerializer
-from api.utils import add_cors_headers
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,11 +22,16 @@ class UserActionViewSet(viewsets.ModelViewSet):
     """
     queryset = UserAction.objects.all()
     serializer_class = UserActionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # Permettre le tracking même pour les visiteurs anonymes
     
     def get_queryset(self):
         """Filter actions based on user role"""
         user = self.request.user
+        
+        # Si non authentifié, retourner vide (seuls les admins peuvent voir)
+        if not user.is_authenticated:
+            return UserAction.objects.none()
+        
         queryset = UserAction.objects.all()
         
         # Super admin can see all actions
@@ -42,12 +47,19 @@ class UserActionViewSet(viewsets.ModelViewSet):
         return queryset.order_by('-created_at')
     
     def create(self, request, *args, **kwargs):
-        """Create a new user action"""
-        # Auto-fill user and tenant if not provided
-        if not request.data.get('user'):
-            request.data['user'] = request.user.id
-        if not request.data.get('tenant') and hasattr(request.user, 'tenant'):
-            request.data['tenant'] = request.user.tenant.id
+        """Create a new user action - accessible without authentication for public tracking"""
+        # Auto-fill user if authenticated
+        if request.user.is_authenticated:
+            if not request.data.get('user'):
+                request.data['user'] = request.user.id
+            if not request.data.get('tenant') and hasattr(request.user, 'tenant'):
+                request.data['tenant'] = request.user.tenant.id
+        
+        # Détecter le tenant depuis le domaine si non fourni
+        if not request.data.get('tenant'):
+            tenant = self.detect_tenant_from_domain(request)
+            if tenant:
+                request.data['tenant'] = tenant.id
         
         # Auto-fill IP and user agent
         if not request.data.get('ip_address'):
@@ -55,7 +67,37 @@ class UserActionViewSet(viewsets.ModelViewSet):
         if not request.data.get('user_agent'):
             request.data['user_agent'] = request.META.get('HTTP_USER_AGENT', '')
         
-        return super().create(request, *args, **kwargs)
+        response = super().create(request, *args, **kwargs)
+        add_cors_headers(response, request)
+        return response
+    
+    def detect_tenant_from_domain(self, request):
+        """Détecter le tenant depuis le domaine de la requête"""
+        try:
+            host = request.META.get('HTTP_HOST', '')
+            if not host:
+                return None
+            
+            # Extraire le sous-domaine (ex: demo-vtc.localhost -> demo-vtc)
+            parts = host.split('.')
+            if len(parts) >= 2:
+                subdomain = parts[0]
+                if subdomain and subdomain != 'www' and subdomain != 'localhost' and subdomain != '127':
+                    from tenants.models import Tenant, Domain
+                    try:
+                        # Chercher par slug
+                        tenant = Tenant.objects.filter(slug=subdomain, deleted_at__isnull=True).first()
+                        if tenant:
+                            return tenant
+                        # Chercher par domaine personnalisé
+                        domain = Domain.objects.filter(domain=host, tenant__deleted_at__isnull=True).first()
+                        if domain:
+                            return domain.tenant
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        return None
     
     def get_client_ip(self, request):
         """Get client IP address"""
@@ -246,12 +288,22 @@ def usage_stats(request):
                 'count': count,
             })
         
-        # Most clicked buttons/CTAs
+        # Most clicked buttons/CTAs with user details
         most_clicked_ctas = all_actions.filter(
-            action_type__in=['button_click', 'cta_click']
-        ).values('action_name', 'resource_type').annotate(
+            action_type__in=['button_click', 'cta_click', 'link_click']
+        ).values('action_name', 'resource_type', 'user__email', 'user__id', 'tenant__name').annotate(
             count=Count('id')
-        ).order_by('-count')[:10]
+        ).order_by('-count')[:20]
+        
+        # Buttons clicked by user
+        buttons_by_user = all_actions.filter(
+            action_type__in=['button_click', 'cta_click', 'link_click']
+        ).exclude(user__isnull=True).values(
+            'user__email', 'user__id', 'user__first_name', 'user__last_name',
+            'action_name', 'resource_type'
+        ).annotate(
+            count=Count('id')
+        ).order_by('-count')[:50]
         
         # Most viewed pages
         most_viewed_pages = all_actions.filter(
@@ -266,6 +318,7 @@ def usage_stats(request):
             'feature_usage_stats': list(feature_usage_stats),
             'actions_timeline': actions_timeline,
             'most_clicked_ctas': list(most_clicked_ctas),
+            'buttons_by_user': list(buttons_by_user),
             'most_viewed_pages': list(most_viewed_pages),
             'summary': {
                 'total_actions': all_actions.count(),

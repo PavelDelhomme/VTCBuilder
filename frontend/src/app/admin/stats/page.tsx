@@ -1362,9 +1362,17 @@ export default function StatsPage() {
                     <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                       <div className="flex-1">
                         <p className="font-medium text-gray-900 dark:text-gray-100">{cta.action_name}</p>
-                        {cta.resource_type && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{cta.resource_type}</p>
-                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          {cta.resource_type && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{cta.resource_type}</span>
+                          )}
+                          {cta.user__email && (
+                            <span className="text-xs text-blue-600 dark:text-blue-400">par {cta.user__email}</span>
+                          )}
+                          {cta.tenant__name && (
+                            <span className="text-xs text-purple-600 dark:text-purple-400">({cta.tenant__name})</span>
+                          )}
+                        </div>
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold text-green-600">{formatNumber(cta.count)}</p>
@@ -1372,6 +1380,50 @@ export default function StatsPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Boutons par Utilisateur */}
+            {usageStats.buttons_by_user && usageStats.buttons_by_user.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Boutons Cliqués par Utilisateur</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-900">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Utilisateur</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bouton</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Clics</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                      {usageStats.buttons_by_user.map((item, index) => (
+                        <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {item.user__first_name && item.user__last_name
+                                  ? `${item.user__first_name} ${item.user__last_name}`
+                                  : item.user__email}
+                              </span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{item.user__email}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-sm text-gray-900 dark:text-gray-100">{item.action_name}</span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{item.resource_type || 'button'}</span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <span className="text-sm font-bold text-green-600">{formatNumber(item.count)}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}

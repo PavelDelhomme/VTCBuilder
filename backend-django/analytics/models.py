@@ -27,6 +27,7 @@ class UserAction(models.Model):
         ('booking_delete', 'Booking Deleted'),
         ('template_use', 'Template Used'),
         ('button_click', 'Button Clicked'),
+        ('link_click', 'Link Clicked'),
         ('form_submit', 'Form Submitted'),
         ('login', 'User Login'),
         ('logout', 'User Logout'),
