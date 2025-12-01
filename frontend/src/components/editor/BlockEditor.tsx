@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -48,6 +48,9 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const [blockTypes, setBlockTypes] = useState<BlockType[]>([])
   const [selectedBlock, setSelectedBlock] = useState<string | null>(externalSelectedBlockId || null)
   
+  const [sidebarOpen, setSidebarOpen] = useState(true) // Ouvrir par défaut sur desktop
+  const [propertiesTab, setPropertiesTab] = useState<'content' | 'layout' | 'style'>('content')
+  
   // Synchroniser avec la sélection externe (optimisé pour éviter les conflits)
   useEffect(() => {
     if (externalSelectedBlockId !== undefined && externalSelectedBlockId !== selectedBlock) {
@@ -59,26 +62,15 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     }
   }, [externalSelectedBlockId]) // Retirer selectedBlock des dépendances pour éviter les boucles
   
-  // Notifier le parent quand la sélection change (debounced pour éviter trop d'appels)
+  // Notifier le parent quand la sélection change (dans une transition pour ne pas bloquer)
   useEffect(() => {
     if (onBlockSelect) {
-      // Utiliser requestIdleCallback pour ne pas bloquer le rendu
-      const timeoutId = setTimeout(() => {
+      // Utiliser startTransition pour ne pas bloquer le rendu
+      startTransition(() => {
         onBlockSelect(selectedBlock)
-      }, 0)
-      return () => clearTimeout(timeoutId)
+      })
     }
   }, [selectedBlock, onBlockSelect])
-  const [sidebarOpen, setSidebarOpen] = useState(true) // Ouvrir par défaut sur desktop
-  const [propertiesTab, setPropertiesTab] = useState<'content' | 'layout' | 'style'>('content')
-  
-  // S'assurer que la sidebar est ouverte quand un bloc est sélectionné (INSTANTANÉ, synchrone)
-  useEffect(() => {
-    if (selectedBlock) {
-      // Mise à jour synchrone pour réactivité immédiate
-      setSidebarOpen(true)
-    }
-  }, [selectedBlock])
   const { canUseBlockType } = useFeatures()
   
   // Historique avec undo/redo
@@ -426,15 +418,17 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     }
   }, [history, trackBlockAction])
 
-  // Gérer l'ouverture des paramètres - afficher dans la sidebar (INSTANTANÉ, synchrone)
+  // Gérer l'ouverture des paramètres - afficher dans la sidebar (OPTIMISÉ)
   const handleSelectBlock = useCallback((blockId: string) => {
     // Log pour diagnostic
     console.log('[BlockEditor] handleSelectBlock appelé pour:', blockId, 'à', Date.now())
     
-    // Mise à jour synchrone IMMÉDIATE (pas de délai, pas de requestAnimationFrame)
-    // Utiliser flushSync pour forcer un rendu synchrone si nécessaire
+    // Mise à jour immédiate de l'état (synchrone pour la réactivité)
     setSelectedBlock(blockId)
     setSidebarOpen(true)
+    
+    // Les notifications au parent sont faites dans une transition (non bloquante)
+    // via le useEffect ci-dessus
     
     // Log après mise à jour
     console.log('[BlockEditor] État mis à jour:', blockId)
@@ -447,13 +441,30 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   }, [])
 
   // Mémoriser le bloc sélectionné pour éviter les recherches répétées (OPTIMISATION PERFORMANCE)
+  // Utiliser une Map pour des recherches O(1) au lieu de O(n)
+  const blocksMap = useMemo(() => {
+    const map = new Map<string, Block>()
+    history.state.forEach((block: Block) => {
+      map.set(block.id, block)
+    })
+    return map
+  }, [history.state])
+  
+  const blockTypesMap = useMemo(() => {
+    const map = new Map<string, BlockType>()
+    blockTypes.forEach((bt: BlockType) => {
+      map.set(bt.name, bt)
+    })
+    return map
+  }, [blockTypes])
+  
   const selectedBlockData = useMemo(() => {
     if (!selectedBlock) return null
-    const block = history.state.find((b: Block) => b.id === selectedBlock)
+    const block = blocksMap.get(selectedBlock)
     if (!block) return null
-    const blockType = blockTypes.find((bt: BlockType) => bt.name === block.type)
+    const blockType = blockTypesMap.get(block.type)
     return { block, blockType }
-  }, [selectedBlock, history.state, blockTypes])
+  }, [selectedBlock, blocksMap, blockTypesMap])
 
   return (
     <div className="flex h-full w-full flex-col relative">
