@@ -674,21 +674,22 @@ export default function BillingPage() {
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Revenus des 12 Derniers Mois</h3>
               <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
                 <div className="flex items-end justify-between space-x-1 sm:space-x-2 h-48 sm:h-64" style={{ minWidth: 'max-content' }}>
-                {stats.monthly_revenues_chart.map((month: any, index: number) => {
-                  const maxRevenue = Math.max(...stats.monthly_revenues_chart.map((m: any) => m.revenue || 0))
-                  const height = maxRevenue > 0 ? (month.revenue / maxRevenue) * 100 : 0
-                  return (
-                    <div key={index} className="flex-1 flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-t relative" style={{ height: `${Math.max(height, 5)}%` }}>
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t"></div>
+                  {stats.monthly_revenues_chart.map((month: any, index: number) => {
+                    const maxRevenue = Math.max(...stats.monthly_revenues_chart.map((m: any) => m.revenue || 0))
+                    const height = maxRevenue > 0 ? (month.revenue / maxRevenue) * 100 : 0
+                    return (
+                      <div key={index} className="flex-1 flex flex-col items-center min-w-[40px] sm:min-w-[50px]">
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-t relative" style={{ height: `${Math.max(height, 5)}%` }}>
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t"></div>
+                        </div>
+                        <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mt-2 text-center transform -rotate-45 origin-top-left whitespace-nowrap">
+                          {month.label?.split(' ')[0] || month.month}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-500 mt-1">{month.revenue.toFixed(0)}€</p>
                       </div>
-                      <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mt-2 text-center transform -rotate-45 origin-top-left whitespace-nowrap">
-                        {month.label?.split(' ')[0] || month.month}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-500 mt-1">{month.revenue.toFixed(0)}€</p>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
             </div>
           )}
@@ -893,6 +894,7 @@ export default function BillingPage() {
                 ))
               )}
             </ResponsiveTable>
+            </div>
           </div>
         </div>
       )}
