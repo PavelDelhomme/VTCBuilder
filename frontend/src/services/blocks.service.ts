@@ -14,6 +14,8 @@ export interface BlockType {
   default_styles: Record<string, any>;
   render_template?: Record<string, any>; // Template de rendu JSON pour le bloc
   call_to_action?: Record<string, any>;
+  call_to_actions?: CallToAction[];
+  call_to_action_ids?: number[];
   available_plans?: number[];
   plan_names?: string[];
   is_active: boolean;
@@ -180,4 +182,75 @@ class BlocksService {
 }
 
 export default new BlocksService();
+
+// Call-to-Action Service
+export interface CallToAction {
+  id: number
+  name: string
+  label: string
+  description?: string
+  type: 'button' | 'link' | 'banner' | 'popup' | 'inline' | 'sticky' | 'floating'
+  default_text: string
+  default_url: string
+  styles: Record<string, any>
+  config: Record<string, any>
+  is_active: boolean
+  is_global: boolean
+  created_at: string
+  updated_at: string
+}
+
+class CallToActionService {
+  async getAll(): Promise<CallToAction[]> {
+    try {
+      const response = await api.get('/blocks/call-to-actions/')
+      return Array.isArray(response.data) ? response.data : response.data.results || []
+    } catch (error: any) {
+      console.error('Error fetching call-to-actions:', error)
+      return []
+    }
+  }
+
+  async getById(id: number): Promise<CallToAction | null> {
+    try {
+      const response = await api.get(`/blocks/call-to-actions/${id}/`)
+      return response.data
+    } catch (error: any) {
+      console.error(`Error fetching call-to-action ${id}:`, error)
+      return null
+    }
+  }
+
+  async create(data: Partial<CallToAction>): Promise<CallToAction | null> {
+    try {
+      const response = await api.post('/blocks/call-to-actions/', data)
+      return response.data
+    } catch (error: any) {
+      console.error('Error creating call-to-action:', error)
+      throw error
+    }
+  }
+
+  async update(id: number, data: Partial<CallToAction>): Promise<CallToAction | null> {
+    try {
+      const response = await api.patch(`/blocks/call-to-actions/${id}/`, data)
+      return response.data
+    } catch (error: any) {
+      console.error(`Error updating call-to-action ${id}:`, error)
+      throw error
+    }
+  }
+
+  async delete(id: number): Promise<boolean> {
+    try {
+      await api.delete(`/blocks/call-to-actions/${id}/`)
+      return true
+    } catch (error: any) {
+      console.error(`Error deleting call-to-action ${id}:`, error)
+      throw error
+    }
+  }
+}
+
+export const callToActionService = new CallToActionService()
 

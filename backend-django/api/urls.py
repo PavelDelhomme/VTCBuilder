@@ -17,13 +17,14 @@ from services.views import ServiceViewSet
 from bookings.views import BookingViewSet
 from media.views import MediaViewSet, TemplateViewSet
 try:
-    from blocks.views import BlockTypeViewSet, BlockTemplateViewSet
+    from blocks.views import BlockTypeViewSet, BlockTemplateViewSet, CallToActionViewSet
     BLOCKS_AVAILABLE = True
 except (ImportError, RuntimeError) as e:
     # Si l'app blocks n'est pas disponible, on laisse vide
     BLOCKS_AVAILABLE = False
     BlockTypeViewSet = None
     BlockTemplateViewSet = None
+    CallToActionViewSet = None
 
 from billing.views import (
     PricingPlanViewSet, SubscriptionViewSet,
@@ -49,6 +50,8 @@ router.register(r'templates', TemplateViewSet, basename='template')
 if BLOCKS_AVAILABLE and BlockTypeViewSet:
     router.register(r'blocks/types', BlockTypeViewSet, basename='block-type')
     router.register(r'blocks/templates', BlockTemplateViewSet, basename='block-template')
+if BLOCKS_AVAILABLE and CallToActionViewSet:
+    router.register(r'blocks/call-to-actions', CallToActionViewSet, basename='call-to-action')
 router.register(r'pricing-plans', PricingPlanViewSet, basename='pricing-plan')
 router.register(r'subscriptions', SubscriptionViewSet, basename='subscription')
 router.register(r'invoices', InvoiceViewSet, basename='invoice')

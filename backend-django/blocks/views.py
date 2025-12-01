@@ -14,16 +14,18 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 try:
-    from .models import BlockType, BlockTemplate
-    from .serializers import BlockTypeSerializer, BlockTemplateSerializer
+    from .models import BlockType, BlockTemplate, CallToAction
+    from .serializers import BlockTypeSerializer, BlockTemplateSerializer, CallToActionSerializer
     BLOCKS_MODELS_AVAILABLE = True
 except Exception as e:
     logger.error(f"Error importing blocks models/serializers: {e}", exc_info=True)
     BLOCKS_MODELS_AVAILABLE = False
     BlockType = None
     BlockTemplate = None
+    CallToAction = None
     BlockTypeSerializer = None
     BlockTemplateSerializer = None
+    CallToActionSerializer = None
 
 
 class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
@@ -181,6 +183,107 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
             error_response = Response({
                 'error': 'An error occurred while fetching the block type',
                 'message': str(e) if settings.DEBUG else 'Unable to load block type'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            add_cors_headers(error_response, request)
+            return error_response
+
+
+class CallToActionViewSet(CORSMixin, viewsets.ModelViewSet):
+    """
+    ViewSet for CallToAction - Full CRUD operations
+    Super admin can manage all CTAs
+    """
+    serializer_class = CallToActionSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+    def get_queryset(self):
+        """Get queryset with error handling"""
+        try:
+            if not BLOCKS_MODELS_AVAILABLE or CallToAction is None:
+                logger.error("CallToAction model is not available")
+                return CallToAction.objects.none() if CallToAction else []
+            
+            user = self.request.user
+            
+            # Super admin sees all CTAs (including inactive)
+            if hasattr(user, 'is_super_admin') and user.is_super_admin():
+                queryset = CallToAction.objects.all()
+            else:
+                # Others see only active and global CTAs
+                queryset = CallToAction.objects.filter(is_active=True, is_global=True)
+            
+            # Filter by type if provided
+            cta_type = self.request.query_params.get('type')
+            if cta_type:
+                queryset = queryset.filter(type=cta_type)
+            
+            return queryset.order_by('name')
+        except Exception as e:
+            logger.error(f"Error in CallToActionViewSet.get_queryset: {e}", exc_info=True)
+            return CallToAction.objects.none() if CallToAction else []
+
+    def perform_create(self, serializer):
+        """Only super admin can create CTAs"""
+        try:
+            user = self.request.user
+            if not (hasattr(user, 'is_super_admin') and user.is_super_admin()):
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("Only super admin can create call-to-actions")
+            serializer.save()
+        except Exception as e:
+            logger.error(f"Error in CallToActionViewSet.perform_create: {e}", exc_info=True)
+            raise
+
+    def perform_update(self, serializer):
+        """Only super admin can update CTAs"""
+        try:
+            user = self.request.user
+            if not (hasattr(user, 'is_super_admin') and user.is_super_admin()):
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("Only super admin can update call-to-actions")
+            serializer.save()
+        except Exception as e:
+            logger.error(f"Error in CallToActionViewSet.perform_update: {e}", exc_info=True)
+            raise
+
+    def perform_destroy(self, instance):
+        """Only super admin can delete CTAs"""
+        try:
+            user = self.request.user
+            if not (hasattr(user, 'is_super_admin') and user.is_super_admin()):
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("Only super admin can delete call-to-actions")
+            instance.delete()
+        except Exception as e:
+            logger.error(f"Error in CallToActionViewSet.perform_destroy: {e}", exc_info=True)
+            raise
+
+    def list(self, request, *args, **kwargs):
+        """List CTAs with error handling"""
+        try:
+            if request.method == 'OPTIONS':
+                response = Response()
+                add_cors_headers(response, request)
+                return response
+            
+            if not request.user or not request.user.is_authenticated:
+                error_response = Response({
+                    'error': 'Authentication required'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+                add_cors_headers(error_response, request)
+                return error_response
+            
+            queryset = self.get_queryset()
+            serializer = self.get_serializer(queryset, many=True)
+            response = Response(serializer.data)
+            add_cors_headers(response, request)
+            return response
+        except Exception as e:
+            logger.error(f"Error in CallToActionViewSet.list: {e}", exc_info=True)
+            error_response = Response({
+                'error': 'An error occurred while fetching call-to-actions',
+                'message': str(e) if settings.DEBUG else 'Unable to load call-to-actions'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             add_cors_headers(error_response, request)
             return error_response

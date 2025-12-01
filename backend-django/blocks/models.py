@@ -4,6 +4,64 @@ Block models for modular page builder
 from django.db import models
 
 
+class CallToAction(models.Model):
+    """
+    Call-to-Action templates that can be reused across blocks
+    """
+    TYPE_CHOICES = [
+        ('button', 'Bouton'),
+        ('link', 'Lien'),
+        ('banner', 'Bannière'),
+        ('popup', 'Popup'),
+        ('inline', 'Inline'),
+        ('sticky', 'Fixe'),
+        ('floating', 'Flottant'),
+    ]
+    
+    name = models.CharField(max_length=255, unique=True, help_text="Nom du CTA (ex: Bouton Principal, Lien Contact)")
+    label = models.CharField(max_length=255, help_text="Libellé affiché")
+    description = models.TextField(blank=True, null=True, help_text="Description du CTA")
+    
+    # Type de CTA
+    type = models.CharField(max_length=50, choices=TYPE_CHOICES, default='button', help_text="Type de CTA")
+    
+    # Configuration par défaut
+    default_text = models.CharField(max_length=255, default='Cliquez ici', help_text="Texte par défaut")
+    default_url = models.CharField(max_length=500, default='#', help_text="URL par défaut")
+    
+    # Styles et configuration
+    styles = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Styles CSS (ex: {background: '#3B82F6', color: '#FFFFFF', borderRadius: '8px'})"
+    )
+    
+    # Configuration avancée
+    config = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Configuration avancée (target, rel, onclick, etc.)"
+    )
+    
+    # Visibilité
+    is_active = models.BooleanField(default=True, help_text="Activer/désactiver ce CTA")
+    is_global = models.BooleanField(default=True, help_text="CTA disponible pour tous les blocs")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        app_label = 'blocks'
+        db_table = 'call_to_actions'
+        ordering = ['name']
+        verbose_name = 'Call-to-Action'
+        verbose_name_plural = 'Call-to-Actions'
+    
+    def __str__(self):
+        return self.label
+
+
 class BlockType(models.Model):
     """
     Types of blocks available in the system
@@ -36,10 +94,19 @@ class BlockType(models.Model):
     )
     
     # Call-to-action configuration (pour les boutons, liens, etc.)
+    # Ancien champ JSON (déprécié mais conservé pour compatibilité)
     call_to_action = models.JSONField(
         default=dict, 
         blank=True, 
-        help_text="Configuration des call-to-action (boutons, liens, etc.)"
+        help_text="Configuration des call-to-action (déprécié - utiliser call_to_actions)"
+    )
+    
+    # Call-to-actions réutilisables (nouveau système)
+    call_to_actions = models.ManyToManyField(
+        CallToAction,
+        related_name='blocks',
+        blank=True,
+        help_text="Call-to-actions disponibles pour ce bloc"
     )
     
     # Plans tarifaires qui donnent accès à ce bloc
