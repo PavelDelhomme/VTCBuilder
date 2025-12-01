@@ -5627,6 +5627,202 @@ function BlockLayoutPanel({
 }) {
   return (
     <div className="space-y-4">
+      {/* Configuration spécifique pour les conteneurs flex et grille */}
+      {(block.type === 'grid-container' || block.type === 'flex-container' || block.type === 'columns') && (
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <h4 className="text-xs font-bold text-blue-700 dark:text-blue-300 mb-3 uppercase tracking-wider">
+            {block.type === 'grid-container' && 'Configuration de la grille'}
+            {block.type === 'flex-container' && 'Configuration Flexbox'}
+            {block.type === 'columns' && 'Configuration Colonnes'}
+          </h4>
+          <div className="space-y-3">
+            {block.type === 'grid-container' && (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Colonnes (grid-template-columns)
+                  </label>
+                  <input
+                    type="text"
+                    value={block.data?.columns || 'repeat(3, 1fr)'}
+                    onChange={(e) => onUpdate({ data: { ...block.data, columns: e.target.value } })}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="repeat(3, 1fr)"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Exemples: repeat(3, 1fr), 1fr 2fr 1fr, auto auto, 200px 1fr
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Lignes (grid-template-rows)
+                  </label>
+                  <input
+                    type="text"
+                    value={block.data?.rows || 'auto'}
+                    onChange={(e) => onUpdate({ data: { ...block.data, rows: e.target.value } })}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="auto ou repeat(2, 1fr)"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Exemples: auto, repeat(2, 1fr), 100px 200px, minmax(100px, auto)
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Espacement (gap)
+                  </label>
+                  <input
+                    type="text"
+                    value={block.data?.gap || '1rem'}
+                    onChange={(e) => onUpdate({ data: { ...block.data, gap: e.target.value } })}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="1rem"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Exemples: 1rem, 20px, 1rem 2rem (row-gap column-gap)
+                  </p>
+                </div>
+              </>
+            )}
+            {block.type === 'flex-container' && (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Direction
+                  </label>
+                  <select
+                    value={block.data?.direction || 'row'}
+                    onChange={(e) => onUpdate({ data: { ...block.data, direction: e.target.value } })}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="row">Horizontal (row)</option>
+                    <option value="column">Vertical (column)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Wrap
+                  </label>
+                  <select
+                    value={block.data?.wrap || 'nowrap'}
+                    onChange={(e) => onUpdate({ data: { ...block.data, wrap: e.target.value } })}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="nowrap">Pas de retour à la ligne</option>
+                    <option value="wrap">Retour à la ligne</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Espacement (gap)
+                  </label>
+                  <input
+                    type="text"
+                    value={block.data?.gap || '1rem'}
+                    onChange={(e) => onUpdate({ data: { ...block.data, gap: e.target.value } })}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="1rem"
+                  />
+                </div>
+              </>
+            )}
+            {block.type === 'columns' && (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Nombre de colonnes
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="12"
+                    value={block.data?.columns_count || 2}
+                    onChange={(e) => onUpdate({ data: { ...block.data, columns_count: parseInt(e.target.value) || 2 } })}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Espacement (gap)
+                  </label>
+                  <input
+                    type="text"
+                    value={block.styles?.gap || block.data?.gap || '1rem'}
+                    onChange={(e) => onUpdate({ 
+                      styles: { ...block.styles, gap: e.target.value },
+                      data: { ...block.data, gap: e.target.value }
+                    })}
+                    className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="1rem"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Configuration Layout (Largeur, Conteneur, Z-index) */}
+      <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wider">Mise en page du conteneur</h4>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Largeur (colonnes sur 12)
+            </label>
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <h4 className="text-xs font-bold text-blue-700 dark:text-blue-300 mb-3 uppercase tracking-wider">Configuration de la grille</h4>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Colonnes (grid-template-columns)
+              </label>
+              <input
+                type="text"
+                value={block.data?.columns || 'repeat(3, 1fr)'}
+                onChange={(e) => onUpdate({ data: { ...block.data, columns: e.target.value } })}
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="repeat(3, 1fr)"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Exemples: repeat(3, 1fr), 1fr 2fr 1fr, auto auto, 200px 1fr
+              </p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Lignes (grid-template-rows)
+              </label>
+              <input
+                type="text"
+                value={block.data?.rows || 'auto'}
+                onChange={(e) => onUpdate({ data: { ...block.data, rows: e.target.value } })}
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="auto ou repeat(2, 1fr)"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Exemples: auto, repeat(2, 1fr), 100px 200px, minmax(100px, auto)
+              </p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Espacement (gap)
+              </label>
+              <input
+                type="text"
+                value={block.data?.gap || '1rem'}
+                onChange={(e) => onUpdate({ data: { ...block.data, gap: e.target.value } })}
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="1rem"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Exemples: 1rem, 20px, 1rem 2rem (row-gap column-gap)
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Configuration Layout (Largeur, Conteneur, Z-index) */}
       <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
         <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wider">Mise en page du conteneur</h4>
