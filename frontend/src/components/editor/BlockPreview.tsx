@@ -972,26 +972,6 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       )
     }
     
-    case 'grid-container-old':
-      return (
-        <div style={{ ...contentStyles, display: 'grid', gridTemplateColumns: block.data?.columns || 'repeat(3, 1fr)', gap: block.data?.gap || '1rem' }} className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <div className="text-center text-gray-500 dark:text-gray-400">
-            <div className="text-2xl mb-2">⚏</div>
-            <div className="text-sm font-semibold">Grille</div>
-            <div className="text-xs mt-1">Colonnes: {block.data?.columns || '3'}</div>
-            {block.children && block.children.length > 0 && (
-              <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: block.data?.columns || 'repeat(3, 1fr)' }}>
-                {block.children.map((child: any, idx: number) => (
-                  <div key={idx} className="p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
-                    Bloc {idx + 1}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )
-    
     case 'columns':
       const columnCount = block.data.columns_count || 2
       return (
