@@ -543,7 +543,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   selectedBlockData ? (
                     <BlockLayoutPanel
                       block={selectedBlockData.block}
-                      onUpdate={updateBlock}
+                      onUpdate={(updates) => updateBlock(selectedBlock, updates)}
                       allBlocks={history.state}
                     />
                   ) : null
@@ -551,7 +551,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   selectedBlockData ? (
                     <BlockStylePanel
                       block={selectedBlockData.block}
-                      onUpdate={updateBlock}
+                      onUpdate={(updates) => updateBlock(selectedBlock, updates)}
                       allBlocks={history.state}
                       blockTypes={blockTypes}
                     />
@@ -906,7 +906,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
               </div>
             </div>
           )
-        })}
+        })
+        })()}
         
         {/* Fallback if no categories */}
         {blockTypes.length > 0 && !blockTypes.some((bt: BlockType) => bt.category) && (
@@ -5771,66 +5772,6 @@ function BlockLayoutPanel({
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Largeur (colonnes sur 12)
             </label>
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <h4 className="text-xs font-bold text-blue-700 dark:text-blue-300 mb-3 uppercase tracking-wider">Configuration de la grille</h4>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Colonnes (grid-template-columns)
-              </label>
-              <input
-                type="text"
-                value={block.data?.columns || 'repeat(3, 1fr)'}
-                onChange={(e) => onUpdate({ data: { ...block.data, columns: e.target.value } })}
-                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="repeat(3, 1fr)"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Exemples: repeat(3, 1fr), 1fr 2fr 1fr, auto auto, 200px 1fr
-              </p>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Lignes (grid-template-rows)
-              </label>
-              <input
-                type="text"
-                value={block.data?.rows || 'auto'}
-                onChange={(e) => onUpdate({ data: { ...block.data, rows: e.target.value } })}
-                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="auto ou repeat(2, 1fr)"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Exemples: auto, repeat(2, 1fr), 100px 200px, minmax(100px, auto)
-              </p>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Espacement (gap)
-              </label>
-              <input
-                type="text"
-                value={block.data?.gap || '1rem'}
-                onChange={(e) => onUpdate({ data: { ...block.data, gap: e.target.value } })}
-                className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="1rem"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Exemples: 1rem, 20px, 1rem 2rem (row-gap column-gap)
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Configuration Layout (Largeur, Conteneur, Z-index) */}
-      <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wider">Mise en page du conteneur</h4>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Largeur (colonnes sur 12)
-            </label>
             <select
               value={block?.layout || 12}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -6702,7 +6643,7 @@ function BlockPropertiesPanel({
                 />
               )}
             </div>
-            )
+          )
           })}
         </div>
       )}

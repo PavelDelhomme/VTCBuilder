@@ -31,7 +31,10 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setLoading(true)
     try {
-      const response = await authService.login(data)
+      const response = await authService.login({
+        email: data.email || '',
+        password: data.password || ''
+      })
       
       // Vérifier si l'utilisateur est authentifié
       if (authService.isAuthenticated()) {

@@ -108,7 +108,11 @@ export default function AdminTemplatesPage() {
     
     // Extract variables in format {{variable_name}}
     const regex = /\{\{(\w+)\}\}/g
-    const matches = [...combined.matchAll(regex)]
+    const matches: RegExpExecArray[] = []
+    let match: RegExpExecArray | null
+    while ((match = regex.exec(combined)) !== null) {
+      matches.push(match)
+    }
     const variables = Array.from(new Set(matches.map(m => m[1])))
     
     setDetectedVariables(variables)

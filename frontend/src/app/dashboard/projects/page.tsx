@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import DashboardLayout from '@/components/DashboardLayout'
+import TenantLayout from '@/components/TenantLayout'
 import projectService, { Project } from '@/services/project.service'
 import toast from 'react-hot-toast'
 import PageLoader from '@/components/PageLoader'
@@ -64,14 +64,14 @@ export default function ProjectsManagement() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Projets" subtitle="Gestion des projets et sites">
+      <TenantLayout title="Projets" subtitle="Gestion des projets et sites">
         <PageLoader text="Chargement des projets..." />
-      </DashboardLayout>
+      </TenantLayout>
     )
   }
 
   return (
-    <DashboardLayout
+    <TenantLayout
       title="Projets"
       subtitle="Gérez vos projets et sites web - Groupez vos pages par projet"
       headerActions={
@@ -194,7 +194,7 @@ export default function ProjectsManagement() {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </TenantLayout>
   )
 }
 
