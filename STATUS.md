@@ -424,8 +424,9 @@ python manage.py init_features
 
 2. **🐛 Correction Erreur Build Frontend** (EN COURS)
    - ✅ Ajout configuration paths dans `tsconfig.json` pour résoudre les imports `@/`
-   - ⏳ **À VÉRIFIER** : Redémarrer le frontend pour appliquer les changements
-   - ⏳ **À FAIRE** : Vérifier que tous les imports `@/services/*` fonctionnent correctement
+   - ✅ Création fichier `tenant-utils.ts` manquant avec fonctions `isTenantSubdomain()` et `getTenantSlug()`
+   - ⏳ **PROBLÈME RESTANT** : Next.js ne détecte toujours pas les fichiers malgré la configuration
+   - ⏳ **À FAIRE** : Vérifier le montage des volumes Docker et reconstruire le container frontend si nécessaire
 
 3. **📄 Gestion Pages Publiques** (EN COURS)
    - ⏳ Ajouter possibilité ajouter/supprimer des pages publiques dans `/admin/pages-public`
