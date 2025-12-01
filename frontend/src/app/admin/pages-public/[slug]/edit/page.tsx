@@ -231,12 +231,29 @@ export default function EditPublicPage() {
             Ouvrir dans un nouvel onglet
           </button>
 
-          {/* Back Button */}
+          {/* New Page Button */}
           <button
-            onClick={() => router.push('/admin/pages-public')}
-            className="px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
+            onClick={async () => {
+              // Sauvegarder la page actuelle avant de créer une nouvelle
+              try {
+                await handleSave()
+                // Créer une nouvelle page avec un slug unique
+                const newSlug = prompt('Entrez le slug de la nouvelle page (ex: ma-nouvelle-page):')
+                if (newSlug && newSlug.trim()) {
+                  const slug = newSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
+                  // Naviguer vers l'éditeur de la nouvelle page
+                  router.push(`/admin/pages-public/${slug}/edit`)
+                }
+              } catch (error) {
+                toast.error('Erreur lors de la sauvegarde')
+              }
+            }}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
           >
-            Retour
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nouvelle page
           </button>
 
           {/* Auto-save indicator */}

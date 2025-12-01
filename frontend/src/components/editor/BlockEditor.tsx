@@ -7,6 +7,7 @@ import { CSS } from '@dnd-kit/utilities'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import { useFeatures } from '@/contexts/FeaturesContext'
 import UrlInputWithSuggestions from './UrlInputWithSuggestions'
+import PageSelector from './PageSelector'
 import { useHistory } from '@/hooks/useHistory'
 import { useBlockTracking } from '@/hooks/useBlockTracking'
 
@@ -1413,14 +1414,17 @@ function BlockRenderer({
           />
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              URL du lien
+              Navigation vers une page
             </label>
-            <UrlInputWithSuggestions
-            value={block.data.url || ''}
+            <PageSelector
+              value={block.data.url || ''}
               onChange={(url) => onUpdate({ data: { ...block.data, url } })}
-              placeholder="URL ou sélectionner une page..."
+              placeholder="Sélectionner une page..."
               className="text-sm"
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              💡 Sélectionnez une page du tenant ou une page publique pour créer un lien de navigation
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
