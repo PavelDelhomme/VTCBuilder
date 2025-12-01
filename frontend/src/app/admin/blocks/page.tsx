@@ -6,7 +6,7 @@ import authService from '@/services/auth.service'
 import AdminLayout from '@/components/AdminLayout'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import billingService, { PricingPlan } from '@/services/billing.service'
-import ResponsiveTable from '@/components/ResponsiveTable'
+import DataTable, { Column, Filter } from '@/components/DataTable'
 import toast from 'react-hot-toast'
 import PageLoader from '@/components/PageLoader'
 
@@ -703,162 +703,179 @@ export default function AdminBlocksPage() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 mb-6">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Filtres</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Status Filter */}
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Statut
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value as 'all' | 'active' | 'inactive' })}
-              className="w-full px-3 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-            >
-              <option value="all">Tous</option>
-              <option value="active">Actifs</option>
-              <option value="inactive">Inactifs</option>
-            </select>
-          </div>
-
-          {/* Premium Filter */}
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Premium
-            </label>
-            <select
-              value={filters.premium}
-              onChange={(e) => setFilters({ ...filters, premium: e.target.value as 'all' | 'premium' | 'free' })}
-              className="w-full px-3 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-            >
-              <option value="all">Tous</option>
-              <option value="premium">Premium (avec plans requis)</option>
-              <option value="free">Gratuit (sans plans requis)</option>
-            </select>
-          </div>
-
-          {/* Category Filter */}
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Catégorie
-            </label>
-            <select
-              value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value as 'all' | 'content' | 'layout' | 'media' | 'custom' })}
-              className="w-full px-3 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-            >
-              <option value="all">Toutes</option>
-              <option value="content">Contenu</option>
-              <option value="layout">Mise en page</option>
-              <option value="media">Médias</option>
-              <option value="custom">Personnalisé</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Blocks List */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-        <ResponsiveTable
-          headers={['Nom', 'Label', 'Catégorie', 'Icône', 'Plans requis', 'Statut', 'Ordre', 'Actions']}
-          emptyMessage="Aucun bloc pour le moment"
-        >
-          {filteredBlocks.length === 0 ? (
-            <tr>
-              <td colSpan={8} className="px-3 sm:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                {blocks.length === 0 
-                  ? "Aucun bloc pour le moment. Créez-en un nouveau !"
-                  : "Aucun bloc ne correspond aux filtres sélectionnés."}
-              </td>
-            </tr>
-          ) : (
-            filteredBlocks.map((block) => (
-              <tr key={block.id} className="hover:bg-gray-50 dark:bg-gray-900">
-                <td className="px-3 sm:px-6 py-4">
-                  <code className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded break-all">
-                    {block.name}
-                  </code>
-                </td>
-                <td className="px-3 sm:px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{block.icon}</span>
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{block.label}</div>
-                      {block.description && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1">
-                          {block.description}
-                        </div>
-                      )}
-                    </div>
+      {/* Blocks List with DataTable */}
+      <DataTable
+        data={blocks}
+        columns={[
+          {
+            key: 'name',
+            label: 'Nom',
+            render: (block) => (
+              <code className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded break-all max-w-[150px] block truncate" title={block.name}>
+                {block.name}
+              </code>
+            ),
+            sortable: true,
+            minWidth: '120px',
+          },
+          {
+            key: 'label',
+            label: 'Label',
+            render: (block) => (
+              <div className="flex items-center gap-2 min-w-[200px]">
+                <span className="text-lg flex-shrink-0">{block.icon}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title={block.label}>
+                    {block.label}
                   </div>
-                </td>
-                <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getCategoryBadge(block.category)}`}>
-                    {getCategoryLabel(block.category)}
-                  </span>
-                </td>
-                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-2xl">
-                  {block.icon}
-                </td>
-                <td className="px-3 sm:px-6 py-4">
-                  {block.plan_names && block.plan_names.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {block.plan_names.map((planName, idx) => (
-                        <span key={idx} className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {planName}
-                        </span>
-                      ))}
+                  {block.description && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1 hidden sm:block" title={block.description}>
+                      {block.description}
                     </div>
-                  ) : (
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                      Gratuit
+                  )}
+                </div>
+              </div>
+            ),
+            sortable: true,
+            minWidth: '200px',
+          },
+          {
+            key: 'category',
+            label: 'Catégorie',
+            render: (block) => (
+              <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getCategoryBadge(block.category)}`}>
+                {getCategoryLabel(block.category)}
+              </span>
+            ),
+            sortable: true,
+            hidden: 'md',
+            minWidth: '100px',
+          },
+          {
+            key: 'icon',
+            label: 'Icône',
+            render: (block) => <span className="text-2xl">{block.icon}</span>,
+            sortable: false,
+            hidden: 'lg',
+            minWidth: '60px',
+          },
+          {
+            key: 'plans',
+            label: 'Plans requis',
+            render: (block) => (
+              block.plan_names && block.plan_names.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {block.plan_names.slice(0, 2).map((planName, idx) => (
+                    <span key={idx} className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 whitespace-nowrap">
+                      {planName}
+                    </span>
+                  ))}
+                  {block.plan_names.length > 2 && (
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
+                      +{block.plan_names.length - 2}
                     </span>
                   )}
-                </td>
-                <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => handleToggleActive(block)}
-                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      block.is_active
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 dark:bg-gray-900 text-gray-800'
-                    }`}
-                  >
-                    {block.is_active ? 'Actif' : 'Inactif'}
-                  </button>
-                </td>
-                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                  {block.order}
-                </td>
-                <td className="px-3 sm:px-6 py-4 text-right text-sm font-medium">
-                  <div className="flex justify-end items-center flex-wrap gap-1 sm:gap-2">
-                    <button
-                      onClick={() => handleEdit(block)}
-                      className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50"
-                      title="Modifier"
-                    >
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(block.id, block.label)}
-                      className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50"
-                      title="Supprimer"
-                    >
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          )}
-        </ResponsiveTable>
-      </div>
+                </div>
+              ) : (
+                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 whitespace-nowrap">
+                  Gratuit
+                </span>
+              )
+            ),
+            sortable: false,
+            hidden: 'lg',
+            minWidth: '120px',
+          },
+          {
+            key: 'is_active',
+            label: 'Statut',
+            render: (block) => (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleToggleActive(block)
+                }}
+                className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+                  block.is_active
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                    : 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200'
+                }`}
+              >
+                {block.is_active ? 'Actif' : 'Inactif'}
+              </button>
+            ),
+            sortable: true,
+            minWidth: '90px',
+          },
+          {
+            key: 'order',
+            label: 'Ordre',
+            render: (block) => (
+              <span className="text-sm text-gray-900 dark:text-gray-100">{block.order}</span>
+            ),
+            sortable: true,
+            hidden: 'md',
+            minWidth: '80px',
+          },
+        ]}
+        filters={[
+          {
+            key: 'is_active',
+            label: 'Statut',
+            type: 'select',
+            options: [
+              { value: 'all', label: 'Tous' },
+              { value: 'true', label: 'Actifs' },
+              { value: 'false', label: 'Inactifs' },
+            ],
+          },
+          {
+            key: 'category',
+            label: 'Catégorie',
+            type: 'select',
+            options: [
+              { value: 'all', label: 'Toutes' },
+              { value: 'content', label: 'Contenu' },
+              { value: 'layout', label: 'Mise en page' },
+              { value: 'media', label: 'Médias' },
+              { value: 'custom', label: 'Personnalisé' },
+            ],
+          },
+        ]}
+        searchable={true}
+        searchPlaceholder="Rechercher un bloc par nom, label ou description..."
+        sortable={true}
+        emptyMessage={blocks.length === 0 ? "Aucun bloc pour le moment. Créez-en un nouveau !" : "Aucun bloc ne correspond aux filtres sélectionnés."}
+        actions={(block) => (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleEdit(block)
+              }}
+              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1.5 sm:p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              title="Modifier"
+            >
+              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDelete(block.id, block.label)
+              }}
+              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              title="Supprimer"
+            >
+              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </>
+        )}
+        actionsSticky={true}
+      />
     </AdminLayout>
   )
 }
