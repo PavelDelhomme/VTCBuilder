@@ -141,6 +141,32 @@ def system_settings_view(request):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             
+            # Synchroniser les pages publiques avec le projet système après sauvegarde
+            try:
+                from projects.models import Project, ProjectPage
+                system_project = Project.objects.filter(slug='vtcbuilder-public-site', is_system_project=True).first()
+                if system_project:
+                    # Ajouter la page d'accueil si elle existe
+                    if instance.public_homepage_blocks is not None:
+                        ProjectPage.objects.get_or_create(
+                            project=system_project,
+                            page_slug='home',
+                            page_type='public',
+                            defaults={'order': 0}
+                        )
+                    
+                    # Ajouter les autres pages publiques
+                    if instance.public_pages:
+                        for order, (slug, page_data) in enumerate(instance.public_pages.items(), start=1):
+                            ProjectPage.objects.get_or_create(
+                                project=system_project,
+                                page_slug=slug,
+                                page_type='public',
+                                defaults={'order': order}
+                            )
+            except Exception as sync_error:
+                logger.warning(f"Erreur synchronisation pages publiques avec projet: {sync_error}")
+            
             status_code = status.HTTP_200_OK if instance.pk else status.HTTP_201_CREATED
             response = Response(serializer.data, status=status_code)
             add_cors_headers(response, request)

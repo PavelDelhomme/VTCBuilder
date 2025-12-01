@@ -173,7 +173,7 @@ class Command(BaseCommand):
                 'category': 'content',
                 'description': 'Navigation pagination',
                 'order': 16,
-            },
+                },
             {
                 'name': 'tags',
                 'label': 'Tags',
@@ -349,7 +349,7 @@ class Command(BaseCommand):
                 'category': 'custom',
                 'description': 'Formulaire de contact',
                 'order': 30,
-            },
+                },
             {
                 'name': 'form-newsletter',
                 'label': 'Newsletter',
@@ -373,7 +373,7 @@ class Command(BaseCommand):
                 'category': 'custom',
                 'description': 'Formulaire d\'inscription',
                 'order': 33,
-            },
+                },
             {
                 'name': 'booking-form',
                 'label': 'Réservation',
@@ -389,7 +389,7 @@ class Command(BaseCommand):
                 'category': 'custom',
                 'description': 'Formulaire de contact',
                 'order': 35,
-            },
+                },
             
             # Blocs Interactifs
             {
@@ -583,7 +583,7 @@ class Command(BaseCommand):
                 'category': 'layout',
                 'description': 'Footer personnalisé',
                 'order': -6,
-            },
+                },
             {
                 'name': 'faq-section',
                 'label': 'Section FAQ',
@@ -593,10 +593,10 @@ class Command(BaseCommand):
                 'order': 80,
             },
         ]
-        
+
         created_count = 0
         updated_count = 0
-        
+
         for block_data in default_blocks:
             # Get default render template for this block type
             render_template = get_default_render_template(block_data['name'])
@@ -604,12 +604,12 @@ class Command(BaseCommand):
             block_type, created = BlockType.objects.get_or_create(
                 name=block_data['name'],
                 defaults={
-                    'label': block_data['label'],
-                    'icon': block_data['icon'],
-                    'category': block_data['category'],
+                'label': block_data['label'],
+                'icon': block_data['icon'],
+                'category': block_data['category'],
                     'description': block_data['description'],
                     'order': block_data['order'],
-                    'is_active': True,
+                'is_active': True,
                     'schema': {},
                     'default_styles': {},
                     'render_template': render_template,
@@ -640,7 +640,7 @@ class Command(BaseCommand):
                     self.stdout.write(
                         self.style.WARNING(f'🔄 Bloc mis à jour: {block_type.label} ({block_type.name})')
                     )
-        
+
         self.stdout.write(
             self.style.SUCCESS(
                 f'\n✅ Terminé: {created_count} blocs créés, {updated_count} blocs mis à jour'
