@@ -313,9 +313,14 @@ class DetailedStatsView(APIView):
                 from pages.models import Page
                 from collections import Counter
                 from django_tenants.utils import tenant_context
+                from django_tenants.utils import get_public_schema_name
                 import json
                 
                 block_counter = Counter()
+                
+                # Vérifier qu'on n'est pas dans le schéma public (où les tables n'existent pas)
+                current_schema = connection.schema_name if hasattr(connection, 'schema_name') else None
+                public_schema = get_public_schema_name()
                 
                 # Iterate through all active tenants and aggregate block usage
                 active_tenants = TenantModel.objects.filter(deleted_at__isnull=True)
@@ -330,7 +335,10 @@ class DetailedStatsView(APIView):
                                             block_type = block.get('type', 'unknown')
                                             block_counter[block_type] += 1
                     except Exception as e:
-                        logger.warning(f"Error calculating blocks usage for tenant {tenant.id}: {e}")
+                        # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
+                        error_msg = str(e).lower()
+                        if not ('relation' in error_msg and 'does not exist' in error_msg):
+                            logger.warning(f"Error calculating blocks usage for tenant {tenant.id}: {e}")
                         continue
                 
                 # Get top 10 most used blocks
@@ -339,7 +347,10 @@ class DetailedStatsView(APIView):
                     for block_type, count in block_counter.most_common(10)
                 ]
             except Exception as e:
-                logger.warning(f"Error calculating blocks usage: {e}")
+                # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
+                error_msg = str(e).lower()
+                if not ('relation' in error_msg and 'does not exist' in error_msg):
+                    logger.warning(f"Error calculating blocks usage: {e}")
                 stats['blocks_usage'] = []
             
             # Add templates usage statistics
@@ -399,12 +410,18 @@ class DetailedStatsView(APIView):
                             pages_stats['created_this_week'] += Page.objects.filter(created_at__gte=timezone.now() - timedelta(days=7)).count()
                             pages_stats['created_this_month'] += Page.objects.filter(created_at__gte=timezone.now() - timedelta(days=30)).count()
                     except Exception as e:
-                        logger.warning(f"Error calculating pages stats for tenant {tenant.id}: {e}")
+                        # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
+                        error_msg = str(e).lower()
+                        if not ('relation' in error_msg and 'does not exist' in error_msg):
+                            logger.warning(f"Error calculating pages stats for tenant {tenant.id}: {e}")
                         continue
                 
                 stats['pages_stats'] = pages_stats
             except Exception as e:
-                logger.warning(f"Error calculating pages stats: {e}")
+                # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
+                error_msg = str(e).lower()
+                if not ('relation' in error_msg and 'does not exist' in error_msg):
+                    logger.warning(f"Error calculating pages stats: {e}")
                 stats['pages_stats'] = {}
             
             # Add services statistics - aggregate across all tenant schemas
@@ -431,12 +448,18 @@ class DetailedStatsView(APIView):
                             services_stats['created_this_week'] += Service.objects.filter(created_at__gte=timezone.now() - timedelta(days=7)).count()
                             services_stats['created_this_month'] += Service.objects.filter(created_at__gte=timezone.now() - timedelta(days=30)).count()
                     except Exception as e:
-                        logger.warning(f"Error calculating services stats for tenant {tenant.id}: {e}")
+                        # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
+                        error_msg = str(e).lower()
+                        if not ('relation' in error_msg and 'does not exist' in error_msg):
+                            logger.warning(f"Error calculating services stats for tenant {tenant.id}: {e}")
                         continue
                 
                 stats['services_stats'] = services_stats
             except Exception as e:
-                logger.warning(f"Error calculating services stats: {e}")
+                # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
+                error_msg = str(e).lower()
+                if not ('relation' in error_msg and 'does not exist' in error_msg):
+                    logger.warning(f"Error calculating services stats: {e}")
                 stats['services_stats'] = {}
             
             # Add bookings statistics - aggregate across all tenant schemas
@@ -469,12 +492,18 @@ class DetailedStatsView(APIView):
                             bookings_stats['this_week'] += Booking.objects.filter(pickup_datetime__gte=timezone.now() - timedelta(days=7)).count()
                             bookings_stats['this_month'] += Booking.objects.filter(pickup_datetime__gte=timezone.now() - timedelta(days=30)).count()
                     except Exception as e:
-                        logger.warning(f"Error calculating bookings stats for tenant {tenant.id}: {e}")
+                        # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
+                        error_msg = str(e).lower()
+                        if not ('relation' in error_msg and 'does not exist' in error_msg):
+                            logger.warning(f"Error calculating bookings stats for tenant {tenant.id}: {e}")
                         continue
                 
                 stats['bookings_stats'] = bookings_stats
             except Exception as e:
-                logger.warning(f"Error calculating bookings stats: {e}")
+                # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
+                error_msg = str(e).lower()
+                if not ('relation' in error_msg and 'does not exist' in error_msg):
+                    logger.warning(f"Error calculating bookings stats: {e}")
                 stats['bookings_stats'] = {}
             
             # Add users by role

@@ -67,11 +67,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
     
     def list(self, request, *args, **kwargs):
         """List projects with CORS"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Vérifier l'authentification avant de continuer
+        if not request.user or not request.user.is_authenticated:
+            response = Response(
+                {'error': 'Authentication required'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            add_cors_headers(response, request)
+            # Ne pas logger comme une erreur, c'est normal pour les requêtes non authentifiées
+            return response
+        
         try:
             response = super().list(request, *args, **kwargs)
             add_cors_headers(response, request)
             return response
         except Exception as e:
+            logger.error(f"Error in ProjectViewSet.list: {e}", exc_info=True)
             response = Response(
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
