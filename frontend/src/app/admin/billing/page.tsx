@@ -943,9 +943,11 @@ export default function BillingPage() {
 
       {/* Invoice Templates Tab */}
       {activeTab === 'invoice-templates' && (
-        <InvoiceTemplatesTab
-          onUpdate={loadBillingData}
-        />
+        <div className="w-full max-w-full overflow-x-hidden">
+          <InvoiceTemplatesTab
+            onUpdate={loadBillingData}
+          />
+        </div>
       )}
 
       {/* Unpaid Items Tab */}

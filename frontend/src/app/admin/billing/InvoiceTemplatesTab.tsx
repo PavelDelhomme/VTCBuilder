@@ -118,43 +118,44 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
   }
 
   return (
-    <div className="space-y-6">
-      <div className="mb-6 flex justify-between items-center">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+    <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
           Créez et personnalisez les templates HTML pour vos factures
         </p>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm sm:text-base w-full sm:w-auto justify-center"
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Créer un template
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <ResponsiveTable
-          headers={['Nom', 'Description', 'Par défaut', 'Actif', 'Créé le', 'Actions']}
-          emptyMessage="Aucun template"
-        >
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden w-full max-w-full">
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <ResponsiveTable
+            headers={['Nom', 'Description', 'Par défaut', 'Actif', 'Créé le', 'Actions']}
+            emptyMessage="Aucun template"
+          >
           {templates.length === 0 ? (
             <tr>
-              <td colSpan={6} className="px-4 sm:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+              <td colSpan={6} className="px-3 sm:px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                 Aucun template de facture. Créez-en un pour commencer.
               </td>
             </tr>
           ) : (
             templates.map((template) => (
               <tr key={template.id} className="hover:bg-gray-50 dark:bg-gray-900">
-                <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {template.name}
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 min-w-[120px]">
+                  <div className="truncate max-w-[150px] sm:max-w-none">{template.name}</div>
                 </td>
-                <td className="px-4 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  <div className="truncate max-w-xs">{template.description || '-'}</div>
+                <td className="px-3 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
+                  <div className="truncate max-w-[200px]">{template.description || '-'}</div>
                 </td>
-                <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap min-w-[100px]">
                   {template.is_default ? (
                     <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                       Oui
@@ -165,7 +166,7 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
                     </span>
                   )}
                 </td>
-                <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap min-w-[80px]">
                   {template.is_active ? (
                     <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                       Actif
@@ -176,11 +177,11 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
                     </span>
                   )}
                 </td>
-                <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell min-w-[100px]">
                   {new Date(template.created_at).toLocaleDateString('fr-FR')}
                 </td>
-                <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-right text-sm">
-                  <div className="flex justify-end items-center gap-1 sm:gap-2 flex-wrap">
+                <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm sticky right-0 bg-white dark:bg-gray-800 z-10 min-w-[140px]">
+                  <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap">
                     <button
                       onClick={() => handlePreview(template)}
                       className="text-blue-600 hover:text-blue-900 dark:text-blue-400 p-1 sm:p-0"
@@ -226,6 +227,7 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
             ))
           )}
         </ResponsiveTable>
+        </div>
       </div>
 
       {/* Create/Edit Modal */}
@@ -248,10 +250,10 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
 
       {/* Preview Modal */}
       {previewTemplate && previewHtml && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] my-4 overflow-hidden flex flex-col">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 truncate">
                 Prévisualisation : {previewTemplate.name}
               </h3>
               <button
@@ -259,19 +261,21 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
                   setPreviewTemplate(null)
                   setPreviewHtml('')
                 }}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 ml-2"
               >
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <div className="flex-1 overflow-auto p-6">
-              <iframe
-                srcDoc={previewHtml}
-                className="w-full h-full min-h-[500px] border border-gray-300 dark:border-gray-600 rounded"
-                title="Preview"
-              />
+            <div className="flex-1 overflow-auto p-3 sm:p-6 min-w-0">
+              <div className="overflow-x-auto">
+                <iframe
+                  srcDoc={previewHtml}
+                  className="w-full h-full min-h-[400px] sm:min-h-[500px] border border-gray-300 dark:border-gray-600 rounded"
+                  title="Preview"
+                />
+              </div>
             </div>
           </div>
         </div>
