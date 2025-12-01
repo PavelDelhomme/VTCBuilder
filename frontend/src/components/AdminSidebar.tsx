@@ -98,6 +98,15 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
       ),
     },
     {
+      name: 'Call-to-Actions',
+      href: '/admin/blocks/call-to-actions',
+      icon: (
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      ),
+    },
+    {
       name: 'Projets',
       href: '/admin/projects',
       icon: (
