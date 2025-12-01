@@ -727,6 +727,11 @@ a {
                             fields_to_insert.append('price')
                             values_to_insert.append(template_data.get('price', 0))
                         
+                        # Add usage_count if it exists (required field)
+                        if 'usage_count' in existing_columns:
+                            fields_to_insert.append('usage_count')
+                            values_to_insert.append(0)
+                        
                         if 'html_content' in existing_columns:
                             fields_to_insert.append('html_content')
                             values_to_insert.append(template_data['html_content'])
@@ -740,14 +745,32 @@ a {
                             fields_to_insert.append('variables')
                             values_to_insert.append(json.dumps(template_data['variables']))
                         
-                        placeholders = ', '.join(['%s'] * len(values_to_insert))
+                        # Add timestamps if they exist (required fields)
+                        if 'created_at' in existing_columns:
+                            fields_to_insert.append('created_at')
+                            values_to_insert.append('NOW()')
+                        if 'updated_at' in existing_columns:
+                            fields_to_insert.append('updated_at')
+                            values_to_insert.append('NOW()')
+                        
+                        # Build the query - handle NOW() specially
+                        placeholders = []
+                        for i, field in enumerate(fields_to_insert):
+                            if values_to_insert[i] == 'NOW()':
+                                placeholders.append('NOW()')
+                            else:
+                                placeholders.append('%s')
+                        
+                        # Filter out NOW() values from the values list
+                        sql_values = [v for v in values_to_insert if v != 'NOW()']
                         fields_str = ', '.join(fields_to_insert)
+                        placeholders_str = ', '.join(placeholders)
                         
                         cursor.execute(f"""
                             INSERT INTO templates ({fields_str})
-                            VALUES ({placeholders})
+                            VALUES ({placeholders_str})
                             RETURNING id
-                        """, values_to_insert)
+                        """, sql_values)
                         
                         template_id = cursor.fetchone()[0]
                         template = Template.objects.only('id', 'slug', 'name').get(id=template_id)
