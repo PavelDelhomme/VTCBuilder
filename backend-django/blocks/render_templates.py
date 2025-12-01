@@ -1,12 +1,37 @@
 """
 Default render templates for blocks
 These templates are stored in the database and can be customized by admins
+
+Templates can be loaded from JSON file (backend-django/blocks/data/render_templates.json)
+or defined here as fallback.
 """
+import json
+import os
 from typing import Dict, Any
+
+# Charger les templates depuis le fichier JSON si disponible
+def _load_render_templates_from_json() -> Dict[str, Dict[str, Any]]:
+    """Load render templates from JSON file if it exists"""
+    json_path = os.path.join(
+        os.path.dirname(__file__),
+        'data',
+        'render_templates.json'
+    )
+    
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            # Si erreur, utiliser les templates par défaut ci-dessous
+            pass
+    
+    return {}
 
 # Templates de rendu par défaut pour chaque type de bloc
 # Structure: { component: 'div', props: {...}, children: [...] }
-DEFAULT_RENDER_TEMPLATES: Dict[str, Dict[str, Any]] = {
+# Ces templates sont utilisés comme fallback si le fichier JSON n'existe pas
+_DEFAULT_RENDER_TEMPLATES_FALLBACK: Dict[str, Dict[str, Any]] = {
     'heading': {
         'type': 'component',
         'component': 'heading',
@@ -282,6 +307,12 @@ DEFAULT_RENDER_TEMPLATES: Dict[str, Dict[str, Any]] = {
     },
     # ... autres templates seront ajoutés progressivement
 }
+
+# Charger les templates depuis JSON ou utiliser le fallback
+_LOADED_TEMPLATES = _load_render_templates_from_json()
+DEFAULT_RENDER_TEMPLATES: Dict[str, Dict[str, Any]] = (
+    _LOADED_TEMPLATES if _LOADED_TEMPLATES else _DEFAULT_RENDER_TEMPLATES_FALLBACK
+)
 
 def get_default_render_template(block_name: str) -> Dict[str, Any]:
     """Get default render template for a block type"""

@@ -1,0 +1,303 @@
+{
+  "heading": {
+    "type": "component",
+    "component": "heading",
+    "props": {
+      "className": "mb-6",
+      "style": {
+        "textAlign": "{{data.align}}",
+        "fontSize": "{{styles.font_size}}",
+        "fontWeight": "{{styles.font_weight}}",
+        "color": "{{data.color}}"
+      }
+    },
+    "children": "{{data.text}}",
+    "level": "{{data.level}}"
+  },
+  "text": {
+    "type": "component",
+    "component": "div",
+    "props": {
+      "className": "mb-6 prose dark:prose-invert max-w-none",
+      "dangerouslySetInnerHTML": true,
+      "style": {
+        "fontSize": "{{styles.font_size}}",
+        "lineHeight": "{{styles.line_height}}"
+      }
+    },
+    "content": "{{data.content}}"
+  },
+  "image": {
+    "type": "component",
+    "component": "img",
+    "props": {
+      "className": "rounded-lg shadow-md",
+      "style": {
+        "width": "{{data.width}}%",
+        "maxWidth": "100%"
+      }
+    },
+    "src": "{{data.url}}",
+    "alt": "{{data.alt}}"
+  },
+  "button": {
+    "type": "component",
+    "component": "a",
+    "props": {
+      "className": "inline-block px-6 py-3 rounded-lg font-medium transition-colors",
+      "href": "{{data.url}}",
+      "style": {
+        "backgroundColor": "{{data.background_color}}",
+        "color": "{{data.text_color}}"
+      }
+    },
+    "children": "{{data.text}}"
+  },
+  "pricing-card": {
+    "type": "component",
+    "component": "div",
+    "props": {
+      "className": "bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 relative border-2",
+      "style": {
+        "borderColor": "{{data.is_featured ? \"#3B82F6\" : \"#E5E7EB\"}}"
+      }
+    },
+    "children": [
+      {
+        "type": "component",
+        "component": "div",
+        "props": {
+          "className": "mb-4"
+        },
+        "children": "{{data.is_featured ? \"<span class=\\\"bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-semibold\\\">Populaire</span>\" : \"\"}}"
+      },
+      {
+        "type": "component",
+        "component": "h3",
+        "props": {
+          "className": "text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2"
+        },
+        "children": "{{data.name}}"
+      },
+      {
+        "type": "component",
+        "component": "p",
+        "props": {
+          "className": "text-gray-600 dark:text-gray-400 mb-4 text-sm"
+        },
+        "children": "{{data.description}}"
+      },
+      {
+        "type": "component",
+        "component": "div",
+        "props": {
+          "className": "mb-6"
+        },
+        "children": [
+          {
+            "type": "component",
+            "component": "span",
+            "props": {
+              "className": "text-4xl font-extrabold text-gray-900 dark:text-gray-100"
+            },
+            "children": "{{data.price}}"
+          },
+          {
+            "type": "component",
+            "component": "span",
+            "props": {
+              "className": "text-gray-600 dark:text-gray-400"
+            },
+            "children": "/mois"
+          }
+        ]
+      },
+      {
+        "type": "component",
+        "component": "ul",
+        "props": {
+          "className": "space-y-2 mb-6 text-sm"
+        },
+        "children": "{{data.features}}"
+      }
+    ]
+  },
+  "billing-cycle-toggle": {
+    "type": "component",
+    "component": "div",
+    "props": {
+      "className": "flex justify-center mb-8"
+    },
+    "children": [
+      {
+        "type": "component",
+        "component": "button",
+        "props": {
+          "className": "px-6 py-2 rounded-md font-medium transition-colors",
+          "data-cycle": "monthly"
+        },
+        "children": "Mensuel"
+      },
+      {
+        "type": "component",
+        "component": "button",
+        "props": {
+          "className": "px-6 py-2 rounded-md font-medium transition-colors",
+          "data-cycle": "yearly"
+        },
+        "children": "Annuel"
+      }
+    ]
+  },
+  "form-login": {
+    "type": "component",
+    "component": "form",
+    "props": {
+      "className": "space-y-4",
+      "action": "{{data.action || \"/api/auth/login/\"}}",
+      "method": "POST"
+    },
+    "children": [
+      {
+        "type": "component",
+        "component": "input",
+        "props": {
+          "type": "email",
+          "name": "email",
+          "placeholder": "{{data.email_placeholder || \"votre@email.com\"}}",
+          "className": "w-full px-4 py-2 border rounded-lg",
+          "required": true
+        }
+      },
+      {
+        "type": "component",
+        "component": "input",
+        "props": {
+          "type": "password",
+          "name": "password",
+          "placeholder": "{{data.password_placeholder || \"••••••••\"}}",
+          "className": "w-full px-4 py-2 border rounded-lg",
+          "required": true
+        }
+      },
+      {
+        "type": "component",
+        "component": "button",
+        "props": {
+          "type": "submit",
+          "className": "w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
+        },
+        "children": "{{data.submit_text || \"Se connecter\"}}"
+      }
+    ]
+  },
+  "docs-grid": {
+    "type": "component",
+    "component": "div",
+    "props": {
+      "className": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+    },
+    "children": "{{data.sections}}"
+  },
+  "quick-start-section": {
+    "type": "component",
+    "component": "div",
+    "props": {
+      "className": "bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 mb-12 text-white"
+    },
+    "children": [
+      {
+        "type": "component",
+        "component": "h2",
+        "props": {
+          "className": "text-3xl font-bold mb-4"
+        },
+        "children": "{{data.title || \"🚀 Démarrage rapide\"}}"
+      },
+      {
+        "type": "component",
+        "component": "p",
+        "props": {
+          "className": "text-xl text-white/90 mb-6"
+        },
+        "children": "{{data.description}}"
+      },
+      {
+        "type": "component",
+        "component": "a",
+        "props": {
+          "href": "{{data.cta_url || \"/register\"}}",
+          "className": "inline-block bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50"
+        },
+        "children": "{{data.cta_text || \"Créer mon compte →\"}}"
+      }
+    ]
+  },
+  "faq-filters": {
+    "type": "component",
+    "component": "div",
+    "props": {
+      "className": "flex flex-wrap justify-center gap-3 mb-12"
+    },
+    "children": "{{data.categories}}"
+  },
+  "support-hours": {
+    "type": "component",
+    "component": "div",
+    "props": {
+      "className": "bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8"
+    },
+    "children": [
+      {
+        "type": "component",
+        "component": "h2",
+        "props": {
+          "className": "text-xl font-bold text-gray-900 dark:text-gray-100 mb-4"
+        },
+        "children": "{{data.title || \"Horaires de support\"}}"
+      },
+      {
+        "type": "component",
+        "component": "div",
+        "props": {
+          "className": "space-y-2 text-gray-600 dark:text-gray-400"
+        },
+        "children": "{{data.hours}}"
+      }
+    ]
+  },
+  "trial-info": {
+    "type": "component",
+    "component": "div",
+    "props": {
+      "className": "bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+    },
+    "children": [
+      {
+        "type": "component",
+        "component": "div",
+        "props": {
+          "className": "flex items-center"
+        },
+        "children": [
+          {
+            "type": "component",
+            "component": "svg",
+            "props": {
+              "className": "h-5 w-5 mr-2 text-blue-600 dark:text-blue-400"
+            },
+            "children": ""
+          },
+          {
+            "type": "component",
+            "component": "p",
+            "props": {
+              "className": "text-sm text-blue-800 dark:text-blue-200"
+            },
+            "children": "{{data.message || \"<strong>Essai gratuit de 14 jours</strong> - Enregistrez votre carte bancaire, mais aucun prélèvement ne sera effectué pendant l'essai.\"}}"
+          }
+        ]
+      }
+    ]
+  }
+}
