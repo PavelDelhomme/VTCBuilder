@@ -86,9 +86,18 @@ export default function DataTable<T extends { id: number | string }>({
         if (value && value !== 'all') {
           result = result.filter(item => {
             const itemValue = (item as any)[key]
+            
+            // Handle boolean values
+            if (typeof itemValue === 'boolean') {
+              return String(itemValue) === value
+            }
+            
+            // Handle arrays
             if (Array.isArray(itemValue)) {
               return itemValue.some(v => String(v).toLowerCase() === value.toLowerCase())
             }
+            
+            // Handle strings and numbers
             return String(itemValue).toLowerCase() === value.toLowerCase()
           })
         }
