@@ -449,6 +449,8 @@ python manage.py init_features
    - ✅ Correction création schémas PostgreSQL pour tenants de test
    - ✅ Ajout fonction helper `setup_tenant_schema()` dans `conftest.py`
    - ✅ Correction tests: tenants, pages, services, bookings
+   - ✅ **Création domaines et schémas pour tous les tenants de test** - Script `setup_test_tenants.py` créé
+   - ✅ **Tenants de test disponibles** : test-enterprise, test-business, test-starter, demo-vtc
    - ⏳ **À FAIRE** : Améliorer exécution migrations dans schémas des tenants (68 tests échouent encore car tables non créées)
    - ⏳ **À FAIRE** : Vérifier que `migrate_schemas` fonctionne correctement dans les tests
 
