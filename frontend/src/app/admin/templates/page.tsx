@@ -730,18 +730,27 @@ export default function AdminTemplatesPage() {
                     </button>
                   </div>
                   <div className="p-4 bg-white dark:bg-gray-800">
-                    <style dangerouslySetInnerHTML={{ __html: formData.css_content || '' }} />
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: Object.entries(formData.variables || {}).reduce(
-                          (html, [key, value]: [string, any]) => {
-                            const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g')
-                            return html.replace(regex, value?.default || `{{${key}}}`)
-                          },
-                          formData.html_content || ''
-                        ),
-                      }}
-                    />
+                    {formData.css_content && (
+                      <style dangerouslySetInnerHTML={{ __html: formData.css_content }} />
+                    )}
+                    {formData.html_content ? (
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: Object.entries(formData.variables || {}).reduce(
+                            (html, [key, value]: [string, any]) => {
+                              const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g')
+                              return html.replace(regex, value?.default || `{{${key}}}`)
+                            },
+                            formData.html_content
+                          ),
+                        }}
+                      />
+                    ) : (
+                      <div className="text-center text-gray-500 dark:text-gray-400 p-8">
+                        <p>Aucun contenu HTML à prévisualiser</p>
+                        <p className="text-xs mt-2">Ajoutez du contenu HTML dans l'onglet HTML pour voir la prévisualisation</p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 {(!formData.html_content && !formData.css_content) && (
