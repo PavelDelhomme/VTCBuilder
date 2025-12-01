@@ -1540,6 +1540,20 @@ cd frontend && npm install  # Installer Jest et dépendances
 
 ### ✅ Corrections Récentes (2025-12-01)
 
+#### Blocs pour Pages Publiques (Register, Login, Contact, Docs, FAQ)
+1. ✅ **9 nouveaux blocs créés pour reproduire les pages publiques**
+   - `billing-cycle-toggle` : Toggle mensuel/annuel pour plans tarifaires
+   - `pricing-card` : Carte de plan tarifaire avec features et prix
+   - `pricing-cards-grid` : Grille de cartes de plans tarifaires
+   - `form-login` : Formulaire de connexion avec email et mot de passe
+   - `docs-grid` : Grille de sections de documentation avec icônes et liens
+   - `quick-start-section` : Section de démarrage rapide avec CTA
+   - `faq-filters` : Filtres par catégorie pour section FAQ
+   - `support-hours` : Affichage des horaires de support
+   - `trial-info` : Section d'information sur l'essai gratuit
+   - Templates de rendu ajoutés dans `render_templates.py`
+   - Tous les blocs sont maintenant disponibles dans l'éditeur pour créer les pages publiques
+
 #### Menu Projets avec Accordéon dans AdminSidebar
 1. ✅ **Remplacement "Pages Publiques" par menu "Projets" avec accordéon**
    - Menu déroulant avec flèche pour afficher les projets
