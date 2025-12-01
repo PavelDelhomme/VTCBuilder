@@ -9,6 +9,7 @@ import tenantService, { Tenant } from '@/services/tenant.service'
 import ResponsiveTable from '@/components/ResponsiveTable'
 import CreateSubscriptionModal from './CreateSubscriptionModal'
 import InvoicesTab from './InvoicesTab'
+import InvoiceTemplatesTab from './InvoiceTemplatesTab'
 import toast from 'react-hot-toast'
 import PageLoader from '@/components/PageLoader'
 import FeaturesListEditor from '@/components/FeaturesListEditor'
@@ -486,7 +487,7 @@ export default function BillingPage() {
             Paiements ({payments.length})
           </button>
           <button
-            onClick={() => router.push('/admin/billing/invoice-templates')}
+            onClick={() => setActiveTab('invoice-templates')}
             className={`py-2 px-4 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === 'invoice-templates'
                 ? 'border-blue-500 text-blue-600'
@@ -937,6 +938,13 @@ export default function BillingPage() {
           paymentMethods={paymentMethods}
           onUpdate={loadBillingData}
           billingService={billingService}
+        />
+      )}
+
+      {/* Invoice Templates Tab */}
+      {activeTab === 'invoice-templates' && (
+        <InvoiceTemplatesTab
+          onUpdate={loadBillingData}
         />
       )}
 

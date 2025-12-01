@@ -192,6 +192,8 @@ class FeatureUsageViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def usage_stats(request):
     """Get comprehensive usage statistics"""
     try:
