@@ -237,15 +237,39 @@ export default function EditPublicPage() {
               // Sauvegarder la page actuelle avant de créer une nouvelle
               try {
                 await handleSave()
-                // Créer une nouvelle page avec un slug unique
-                const newSlug = prompt('Entrez le slug de la nouvelle page (ex: ma-nouvelle-page):')
-                if (newSlug && newSlug.trim()) {
-                  const slug = newSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
-                  // Naviguer vers l'éditeur de la nouvelle page
-                  router.push(`/admin/pages-public/${slug}/edit`)
+                
+                // Récupérer les pages existantes pour trouver le prochain numéro
+                const currentSettings = await api.get('/system-settings/')
+                const publicPages = currentSettings.data.public_pages || {}
+                
+                // Trouver le prochain numéro disponible
+                let pageNumber = 1
+                let newSlug = `nouvelle-page-${pageNumber}`
+                while (publicPages[newSlug]) {
+                  pageNumber++
+                  newSlug = `nouvelle-page-${pageNumber}`
                 }
+                
+                // Créer la nouvelle page avec un nom automatique
+                const newPageTitle = `Nouvelle page ${pageNumber}`
+                publicPages[newSlug] = {
+                  title: newPageTitle,
+                  blocks: [],
+                  meta_title: '',
+                  meta_description: '',
+                  is_active: true,
+                  order: Object.keys(publicPages).length + 1,
+                }
+                
+                // Sauvegarder la nouvelle page
+                await api.patch('/system-settings/', { public_pages: publicPages })
+                toast.success(`Page "${newPageTitle}" créée avec succès !`)
+                
+                // Naviguer vers l'éditeur de la nouvelle page
+                router.push(`/admin/pages-public/${newSlug}/edit`)
               } catch (error) {
-                toast.error('Erreur lors de la sauvegarde')
+                console.error('Erreur création nouvelle page:', error)
+                toast.error('Erreur lors de la création de la nouvelle page')
               }
             }}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
