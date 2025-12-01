@@ -18,10 +18,12 @@ NC = \033[0m # No Color
 
 generate-public-pages: ## Générer les pages publiques dans l'éditeur pour les tenants
 	@printf "$(GREEN)🚀 Génération des pages publiques dans l'éditeur...$(NC)\n"
-	@docker compose exec -T $(BACKEND_CONTAINER) python manage.py generate_public_pages || \
-	 docker compose exec -T $(BACKEND_CONTAINER) python manage.py generate_public_pages --schema=public || \
+	@docker exec $(BACKEND_CONTAINER) python manage.py generate_public_pages || \
+	 docker exec $(BACKEND_CONTAINER) python manage.py generate_public_pages --schema=public || \
 	 (printf "$(YELLOW)⚠️  Impossible d'exécuter la commande dans le conteneur.$(NC)\n" && \
 	  printf "$(BLUE)Exécutez manuellement :$(NC)\n" && \
+	  printf "  docker exec $(BACKEND_CONTAINER) python manage.py generate_public_pages\n" && \
+	  printf "  ou\n" && \
 	  printf "  cd backend-django && python manage.py generate_public_pages\n")
 
 restore-public-pages: ## Restaurer les pages publiques depuis le backup
