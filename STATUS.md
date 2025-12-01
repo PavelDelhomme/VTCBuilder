@@ -1536,9 +1536,40 @@ cd frontend && npm install  # Installer Jest et dépendances
 ## 🔄 Dernière Mise à Jour
 
 **Date** : 2025-12-01  
-**Focus Actuel** : Corrections erreurs + Système de trial + Améliorations éditeur
+**Focus Actuel** : Corrections erreurs + Système de trial + Améliorations éditeur + Templates opérationnels + Menu Projets avec accordéon
 
 ### ✅ Corrections Récentes (2025-12-01)
+
+#### Menu Projets avec Accordéon dans AdminSidebar
+1. ✅ **Remplacement "Pages Publiques" par menu "Projets" avec accordéon**
+   - Menu déroulant avec flèche pour afficher les projets
+   - Chargement automatique des projets au premier déploiement
+   - Séparation visuelle entre projet admin (système) et projets tenants
+   - Filtre par tenant dans le menu déroulant
+   - Affichage du nombre de pages par projet
+   - Navigation directe vers un projet depuis le menu
+   - Lien "Voir tous les projets" en bas de l'accordéon
+   - Indicateur visuel pour le projet actif
+   - Compatible dark mode
+
+#### Templates par Défaut avec HTML, CSS et Variables
+2. ✅ **Commande `create_default_templates` créée**
+   - Création de 3 templates complets avec HTML, CSS et variables
+   - Template VTC Minimaliste : design épuré avec 12 variables
+   - Template VTC Moderne : design contemporain
+   - Template VTC Classique : style professionnel
+   - Détection automatique des variables dans l'interface admin
+   - Prévisualisation fonctionnelle avec remplacement des variables
+   - Migration conditionnelle pour ajouter html_content, css_content, preview_image
+   - Tous les templates ont maintenant HTML, CSS et variables opérationnels
+   - Gestion correcte des champs requis (structure, price, usage_count, timestamps)
+
+#### Correction Erreur 500 - DetailedStatsView
+3. ✅ **Erreur UnboundLocalError corrigée**
+   - Suppression import local redondant de `Tenant` dans `DetailedStatsView`
+   - L'import global en haut du fichier est maintenant utilisé correctement
+   - Résout l'erreur 500 sur `/api/stats/detailed/`
+   - Endpoint `/admin/stats` fonctionne maintenant correctement
 
 #### Configuration CORS - IP Réseau Local
 1. ✅ **Ajout IP 192.168.1.134 aux CORS**
@@ -1555,7 +1586,7 @@ cd frontend && npm install  # Installer Jest et dépendances
    - Permet l'accès à l'admin depuis `http://192.168.1.134:9494`
 
 #### Page Statistiques Admin
-2. ✅ **Suppression sections non pertinentes de `/admin/stats`**
+4. ✅ **Suppression sections non pertinentes de `/admin/stats`**
    - ❌ Retiré : "Tenants par Plan"
    - ❌ Retiré : "Utilisateurs par Rôle"
    - ❌ Retiré : "Tenants Récemment Créés"
@@ -1563,7 +1594,7 @@ cd frontend && npm install  # Installer Jest et dépendances
    - ✅ Conservé : Alertes, Activité Récente, Demandes d'inscription, Overview Cards, Statuts, Revenu
 
 #### Système de Stockage Templates
-3. ✅ **Système de stockage fichiers pour templates**
+5. ✅ **Système de stockage fichiers pour templates**
    - Création `TemplateStorage` pour gérer templates en JSON
    - Structure : `media/templates/default/` (système) et `media/templates/custom/` (admin)
    - Commandes : `export_template`, `import_template`, `sync_templates`

@@ -331,7 +331,7 @@ class DetailedStatsView(APIView):
             try:
                 from media.models import Template
                 from django_tenants.utils import tenant_context
-                from tenants.models import Tenant
+                # Tenant is already imported at the top of the file
                 
                 # Get templates from reference tenant or any tenant
                 templates_usage = []
