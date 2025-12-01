@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AdminSidebar from './AdminSidebar'
 import MobileHeader from './MobileHeader'
 import ImpersonationBanner from './ImpersonationBanner'
@@ -14,8 +14,48 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children, title, subtitle, headerActions }: AdminLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true) // Sidebar ouvert par défaut sur desktop
+  // Sidebar fermé par défaut sur mobile, ouvert sur desktop
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const { resolvedTheme, toggleTheme } = useTheme()
+
+  // Détecter la taille d'écran et ajuster l'état initial du sidebar
+  useEffect(() => {
+    // Vérifier que window est disponible (client-side uniquement)
+    if (typeof window === 'undefined') return
+
+    const checkScreenSize = () => {
+      // Sur desktop (lg: 1024px+), ouvrir le sidebar par défaut
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(true)
+      } else {
+        // Sur mobile, fermer le sidebar
+        setSidebarOpen(false)
+      }
+    }
+
+    // Vérifier au montage
+    checkScreenSize()
+
+    // Écouter les changements de taille d'écran
+    window.addEventListener('resize', checkScreenSize)
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
+
+  // Empêcher le scroll du body quand le sidebar est ouvert sur mobile
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return
+
+    if (sidebarOpen && window.innerWidth < 1024) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = ''
+      }
+    }
+  }, [sidebarOpen])
 
   return (
     <div className="h-screen bg-gray-100 dark:bg-gray-900 flex flex-col overflow-hidden">
@@ -34,6 +74,7 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
         <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {/* Main Content - S'adapte à l'espace disponible, marge conditionnelle selon l'état du sidebar */}
+        {/* Sur mobile: toujours ml-0 (pas de marge), sur desktop: ml-64 si ouvert, ml-0 si fermé */}
         <div className={`flex-1 w-full min-w-0 transition-all duration-300 flex flex-col overflow-hidden ${
           sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'
         }`}>

@@ -21,7 +21,7 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminSidebarProps = {}) {
   const router = useRouter()
   const pathname = usePathname()
-  const [isOpen, setIsOpen] = useState(true) // Sidebar ouvert par défaut
+  const [isOpen, setIsOpen] = useState(false) // Sidebar fermé par défaut (sera géré par le parent)
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
   const [projectsExpanded, setProjectsExpanded] = useState(false)
@@ -178,7 +178,10 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
 
   const handleItemClick = (href: string) => {
     router.push(href)
-    handleClose() // Close sidebar on mobile after navigation
+    // Fermer le sidebar sur mobile après navigation, garder ouvert sur desktop
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      handleClose()
+    }
   }
 
   return (
