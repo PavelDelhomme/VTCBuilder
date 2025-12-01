@@ -7,34 +7,48 @@ from .models import BlockType, BlockTemplate
 
 class BlockTypeSerializer(serializers.ModelSerializer):
     """Serializer for BlockType"""
+    # Use read_only for available_plans to avoid queryset requirement at class definition
     available_plans = serializers.PrimaryKeyRelatedField(
         many=True,
-        read_only=False,
+        read_only=True  # Read-only to avoid queryset requirement
+    )
+    plan_names = serializers.SerializerMethodField()
+    # Separate field for writing
+    available_plan_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
         required=False,
         allow_empty=True
     )
-    plan_names = serializers.SerializerMethodField()
     
     class Meta:
         model = BlockType
         fields = [
             'id', 'name', 'label', 'icon', 'category',
             'description', 'schema', 'default_styles',
-            'call_to_action', 'available_plans', 'plan_names',
+            'call_to_action', 'available_plans', 'available_plan_ids', 'plan_names',
             'is_active', 'order',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Set queryset for available_plans dynamically to avoid import issues
-        try:
+    def create(self, validated_data):
+        """Handle available_plan_ids on create"""
+        plan_ids = validated_data.pop('available_plan_ids', None)
+        instance = super().create(validated_data)
+        if plan_ids:
             from billing.models import PricingPlan
-            self.fields['available_plans'].queryset = PricingPlan.objects.all()
-        except Exception:
-            # If PricingPlan is not available yet, use read_only
-            self.fields['available_plans'].read_only = True
+            instance.available_plans.set(PricingPlan.objects.filter(id__in=plan_ids))
+        return instance
+    
+    def update(self, instance, validated_data):
+        """Handle available_plan_ids on update"""
+        plan_ids = validated_data.pop('available_plan_ids', None)
+        instance = super().update(instance, validated_data)
+        if plan_ids is not None:
+            from billing.models import PricingPlan
+            instance.available_plans.set(PricingPlan.objects.filter(id__in=plan_ids))
+        return instance
     
     def get_plan_names(self, obj):
         """Return list of plan names for this block"""
