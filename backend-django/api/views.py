@@ -337,8 +337,11 @@ class DetailedStatsView(APIView):
                     except Exception as e:
                         # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
                         error_msg = str(e).lower()
-                        if not ('relation' in error_msg and 'does not exist' in error_msg):
-                            logger.warning(f"Error calculating blocks usage for tenant {tenant.id}: {e}")
+                        # Vérifier si c'est une erreur "relation does not exist" (normale dans public schema)
+                        if 'relation' in error_msg and 'does not exist' in error_msg:
+                            # Ne pas logger, c'est normal dans le contexte multi-tenant
+                            continue
+                        logger.warning(f"Error calculating blocks usage for tenant {tenant.id}: {e}")
                         continue
                 
                 # Get top 10 most used blocks
@@ -349,7 +352,11 @@ class DetailedStatsView(APIView):
             except Exception as e:
                 # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
                 error_msg = str(e).lower()
-                if not ('relation' in error_msg and 'does not exist' in error_msg):
+                # Vérifier si c'est une erreur "relation does not exist" (normale dans public schema)
+                if 'relation' in error_msg and 'does not exist' in error_msg:
+                    # Ne pas logger, c'est normal dans le contexte multi-tenant
+                    pass
+                else:
                     logger.warning(f"Error calculating blocks usage: {e}")
                 stats['blocks_usage'] = []
             
@@ -412,15 +419,22 @@ class DetailedStatsView(APIView):
                     except Exception as e:
                         # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
                         error_msg = str(e).lower()
-                        if not ('relation' in error_msg and 'does not exist' in error_msg):
-                            logger.warning(f"Error calculating pages stats for tenant {tenant.id}: {e}")
+                        # Vérifier si c'est une erreur "relation does not exist" (normale dans public schema)
+                        if 'relation' in error_msg and 'does not exist' in error_msg:
+                            # Ne pas logger, c'est normal dans le contexte multi-tenant
+                            continue
+                        logger.warning(f"Error calculating pages stats for tenant {tenant.id}: {e}")
                         continue
                 
                 stats['pages_stats'] = pages_stats
             except Exception as e:
                 # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
                 error_msg = str(e).lower()
-                if not ('relation' in error_msg and 'does not exist' in error_msg):
+                # Vérifier si c'est une erreur "relation does not exist" (normale dans public schema)
+                if 'relation' in error_msg and 'does not exist' in error_msg:
+                    # Ne pas logger, c'est normal dans le contexte multi-tenant
+                    pass
+                else:
                     logger.warning(f"Error calculating pages stats: {e}")
                 stats['pages_stats'] = {}
             
@@ -450,15 +464,22 @@ class DetailedStatsView(APIView):
                     except Exception as e:
                         # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
                         error_msg = str(e).lower()
-                        if not ('relation' in error_msg and 'does not exist' in error_msg):
-                            logger.warning(f"Error calculating services stats for tenant {tenant.id}: {e}")
+                        # Vérifier si c'est une erreur "relation does not exist" (normale dans public schema)
+                        if 'relation' in error_msg and 'does not exist' in error_msg:
+                            # Ne pas logger, c'est normal dans le contexte multi-tenant
+                            continue
+                        logger.warning(f"Error calculating services stats for tenant {tenant.id}: {e}")
                         continue
                 
                 stats['services_stats'] = services_stats
             except Exception as e:
                 # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
                 error_msg = str(e).lower()
-                if not ('relation' in error_msg and 'does not exist' in error_msg):
+                # Vérifier si c'est une erreur "relation does not exist" (normale dans public schema)
+                if 'relation' in error_msg and 'does not exist' in error_msg:
+                    # Ne pas logger, c'est normal dans le contexte multi-tenant
+                    pass
+                else:
                     logger.warning(f"Error calculating services stats: {e}")
                 stats['services_stats'] = {}
             
@@ -494,15 +515,22 @@ class DetailedStatsView(APIView):
                     except Exception as e:
                         # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
                         error_msg = str(e).lower()
-                        if not ('relation' in error_msg and 'does not exist' in error_msg):
-                            logger.warning(f"Error calculating bookings stats for tenant {tenant.id}: {e}")
+                        # Vérifier si c'est une erreur "relation does not exist" (normale dans public schema)
+                        if 'relation' in error_msg and 'does not exist' in error_msg:
+                            # Ne pas logger, c'est normal dans le contexte multi-tenant
+                            continue
+                        logger.warning(f"Error calculating bookings stats for tenant {tenant.id}: {e}")
                         continue
                 
                 stats['bookings_stats'] = bookings_stats
             except Exception as e:
                 # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
                 error_msg = str(e).lower()
-                if not ('relation' in error_msg and 'does not exist' in error_msg):
+                # Vérifier si c'est une erreur "relation does not exist" (normale dans public schema)
+                if 'relation' in error_msg and 'does not exist' in error_msg:
+                    # Ne pas logger, c'est normal dans le contexte multi-tenant
+                    pass
+                else:
                     logger.warning(f"Error calculating bookings stats: {e}")
                 stats['bookings_stats'] = {}
             
