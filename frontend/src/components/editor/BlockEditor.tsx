@@ -51,6 +51,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   
   const [sidebarOpen, setSidebarOpen] = useState(true) // Ouvrir par défaut sur desktop
   const [propertiesTab, setPropertiesTab] = useState<'content' | 'layout' | 'style'>('layout') // Layout en premier
+  const [categoryFilter, setCategoryFilter] = useState<string>('all') // Filtre par catégorie
   
   // Synchroniser avec la sélection externe (optimisé pour éviter les conflits)
   useEffect(() => {
@@ -189,6 +190,12 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   // Fonction pour créer les blocs par défaut si l'API ne retourne rien
   const getDefaultBlockTypes = (): BlockType[] => {
     return [
+      // Blocs de Structure (EN PREMIER - pour définir la structure avant le contenu)
+      { id: 0, name: 'container', label: 'Conteneur', icon: '📦', category: 'layout', description: 'Conteneur avec largeur maximale', schema: {}, default_styles: {}, is_active: true, order: 0, created_at: '', updated_at: '' },
+      { id: -1, name: 'flex-container', label: 'Flex Container', icon: '📐', category: 'layout', description: 'Conteneur flexbox pour aligner les éléments', schema: {}, default_styles: {}, is_active: true, order: -1, created_at: '', updated_at: '' },
+      { id: -2, name: 'grid-container', label: 'Grille', icon: '⚏', category: 'layout', description: 'Grille CSS pour créer des layouts complexes', schema: {}, default_styles: {}, is_active: true, order: -2, created_at: '', updated_at: '' },
+      { id: -3, name: 'columns', label: 'Colonnes', icon: '📊', category: 'layout', description: 'Système de colonnes (12 colonnes)', schema: {}, default_styles: {}, is_active: true, order: -3, created_at: '', updated_at: '' },
+      
       // Blocs de Contenu
       { id: 1, name: 'heading', label: 'Titre', icon: '📝', category: 'content', description: 'Titre avec différents niveaux', schema: {}, default_styles: {}, is_active: true, order: 1, created_at: '', updated_at: '' },
       { id: 2, name: 'text', label: 'Texte', icon: '📄', category: 'content', description: 'Bloc de texte simple', schema: {}, default_styles: {}, is_active: true, order: 2, created_at: '', updated_at: '' },
@@ -207,8 +214,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       { id: 15, name: 'tags', label: 'Tags', icon: '🏷️', category: 'content', description: 'Tags/étiquettes', schema: {}, default_styles: {}, is_active: true, order: 15, created_at: '', updated_at: '' },
       { id: 16, name: 'badge', label: 'Badge', icon: '🏷️', category: 'content', description: 'Badge/étiquette simple', schema: {}, default_styles: {}, is_active: true, order: 16, created_at: '', updated_at: '' },
       
-      // Blocs de Mise en Page
-      { id: 20, name: 'columns', label: 'Colonnes', icon: '📊', category: 'layout', description: 'Colonnes avec blocs imbriqués', schema: {}, default_styles: {}, is_active: true, order: 20, created_at: '', updated_at: '' },
+      // Blocs de Mise en Page (autres)
       { id: 21, name: 'rows', label: 'Lignes', icon: '📐', category: 'layout', description: 'Lignes pour colonnes', schema: {}, default_styles: {}, is_active: true, order: 21, created_at: '', updated_at: '' },
       { id: 22, name: 'section', label: 'Section', icon: '📦', category: 'layout', description: 'Section avec fond personnalisé', schema: {}, default_styles: {}, is_active: true, order: 22, created_at: '', updated_at: '' },
       
@@ -772,12 +778,31 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   </svg>
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 min-h-0">
-                <h3 className="hidden lg:block text-base font-bold text-gray-900 dark:text-gray-100 mb-5 pb-3 border-b border-gray-200 dark:border-gray-700">Blocs disponibles</h3>
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 min-h-0" style={{ scrollBehavior: 'smooth' }}>
+                <div className="flex items-center justify-between mb-4 sticky top-0 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 pb-2 z-10">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Blocs disponibles</h3>
+                  {/* Filtre par catégorie */}
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">Tous</option>
+                    <option value="layout">Structure</option>
+                    <option value="content">Contenu</option>
+                    <option value="media">Médias</option>
+                    <option value="custom">Personnalisé</option>
+                  </select>
+                </div>
         
-        {/* Group by category */}
-        {['content', 'layout', 'media', 'custom'].map((category) => {
-          const categoryBlocks = blockTypes.filter((bt: BlockType) => bt.category === category)
+        {/* Group by category - Trier pour mettre layout en premier */}
+        {['layout', 'content', 'media', 'custom']
+          .filter(category => categoryFilter === 'all' || category === categoryFilter)
+          .map((category) => {
+          // Filtrer et trier les blocs par catégorie (layout en premier avec order croissant)
+          const categoryBlocks = blockTypes
+            .filter((bt: BlockType) => bt.category === category)
+            .sort((a, b) => (a.order || 999) - (b.order || 999))
           if (categoryBlocks.length === 0) return null
           
           const categoryLabels: { [key: string]: string } = {
@@ -1331,6 +1356,94 @@ function BlockRenderer({
 }) {
   // Render based on block type
   switch (block.type) {
+    case 'container':
+      return (
+        <div className="space-y-3">
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <p className="text-xs text-blue-800 dark:text-blue-200">
+              📦 Conteneur: Ajoutez des blocs enfants pour structurer votre contenu.
+            </p>
+          </div>
+        </div>
+      )
+    
+    case 'flex-container':
+      return (
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Direction
+            </label>
+            <select
+              value={block.data?.direction || 'row'}
+              onChange={(e) => onUpdate({ data: { ...block.data, direction: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+            >
+              <option value="row">Horizontal (row)</option>
+              <option value="column">Vertical (column)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Wrap
+            </label>
+            <select
+              value={block.data?.wrap || 'nowrap'}
+              onChange={(e) => onUpdate({ data: { ...block.data, wrap: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+            >
+              <option value="nowrap">Pas de retour à la ligne</option>
+              <option value="wrap">Retour à la ligne</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Espacement (gap)
+            </label>
+            <input
+              type="text"
+              value={block.data?.gap || '1rem'}
+              onChange={(e) => onUpdate({ data: { ...block.data, gap: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              placeholder="1rem"
+            />
+          </div>
+        </div>
+      )
+    
+    case 'grid-container':
+      return (
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Colonnes (grid-template-columns)
+            </label>
+            <input
+              type="text"
+              value={block.data?.columns || 'repeat(3, 1fr)'}
+              onChange={(e) => onUpdate({ data: { ...block.data, columns: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              placeholder="repeat(3, 1fr)"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Exemples: repeat(3, 1fr), 1fr 2fr 1fr, auto auto
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Espacement (gap)
+            </label>
+            <input
+              type="text"
+              value={block.data?.gap || '1rem'}
+              onChange={(e) => onUpdate({ data: { ...block.data, gap: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              placeholder="1rem"
+            />
+          </div>
+        </div>
+      )
+    
     case 'text':
       return (
         <div className="space-y-3">
