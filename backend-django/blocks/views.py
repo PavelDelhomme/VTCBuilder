@@ -104,7 +104,7 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
             raise
 
     def list(self, request, *args, **kwargs):
-        """List block types with comprehensive error handling"""
+        """List block types with comprehensive error handling and auto-creation of defaults"""
         try:
             # Handle OPTIONS request for CORS preflight
             if request.method == 'OPTIONS':
@@ -128,6 +128,17 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
                 }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
                 add_cors_headers(error_response, request)
                 return error_response
+            
+            # Auto-create default blocks if none exist
+            if not BlockType.objects.exists():
+                logger.info("No block types found, creating default blocks...")
+                try:
+                    from django.core.management import call_command
+                    call_command('create_default_block_types', verbosity=0)
+                    logger.info("Default block types created successfully")
+                except Exception as e:
+                    logger.error(f"Error creating default block types: {e}", exc_info=True)
+                    # Continue anyway - will return empty list
             
             # Get queryset
             queryset = self.get_queryset()

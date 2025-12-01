@@ -3,43 +3,54 @@ Management command to create default block types
 """
 from django.core.management.base import BaseCommand
 from blocks.models import BlockType
-from billing.models import PricingPlan
 
 
 class Command(BaseCommand):
-    help = 'Create default block types for the page builder'
+    help = 'Create default block types if they do not exist'
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('Creating default block types...'))
-
-        # Get pricing plans
-        try:
-            starter_plan = PricingPlan.objects.filter(slug='starter').first()
-            business_plan = PricingPlan.objects.filter(slug='business').first()
-            enterprise_plan = PricingPlan.objects.filter(slug='enterprise').first()
-        except Exception as e:
-            self.stdout.write(self.style.WARNING(f'⚠️  Could not load pricing plans: {e}'))
-            starter_plan = None
-            business_plan = None
-            enterprise_plan = None
-
         default_blocks = [
+            # Blocs de Structure (EN PREMIER - pour définir la structure avant le contenu)
+            {
+                'name': 'container',
+                'label': 'Conteneur',
+                'icon': '📦',
+                'category': 'layout',
+                'description': 'Conteneur avec largeur maximale',
+                'order': -10,
+            },
+            {
+                'name': 'flex-container',
+                'label': 'Flex Container',
+                'icon': '📐',
+                'category': 'layout',
+                'description': 'Conteneur flexbox pour aligner les éléments',
+                'order': -9,
+            },
+            {
+                'name': 'grid-container',
+                'label': 'Grille',
+                'icon': '⚏',
+                'category': 'layout',
+                'description': 'Grille CSS pour créer des layouts complexes',
+                'order': -8,
+            },
+            {
+                'name': 'columns',
+                'label': 'Colonnes',
+                'icon': '📊',
+                'category': 'layout',
+                'description': 'Système de colonnes (12 colonnes)',
+                'order': -7,
+            },
+            
+            # Blocs de Contenu
             {
                 'name': 'heading',
                 'label': 'Titre',
                 'icon': '📝',
                 'category': 'content',
-                'description': 'Bloc de titre (H1, H2, H3, etc.)',
-                'schema': {
-                    'text': {'type': 'text', 'label': 'Texte du titre', 'required': True},
-                    'level': {'type': 'select', 'label': 'Niveau', 'options': ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], 'default': 'h2'},
-                    'align': {'type': 'select', 'label': 'Alignement', 'options': ['left', 'center', 'right'], 'default': 'left'},
-                },
-                'default_styles': {
-                    'font_size': '2rem',
-                    'font_weight': 'bold',
-                    'margin_bottom': '1rem',
-                },
+                'description': 'Titre avec différents niveaux',
                 'order': 1,
             },
             {
@@ -47,41 +58,24 @@ class Command(BaseCommand):
                 'label': 'Texte',
                 'icon': '📄',
                 'category': 'content',
-                'description': 'Bloc de texte avec formatage',
-                'schema': {
-                    'content': {'type': 'textarea', 'label': 'Contenu', 'required': True},
-                },
-                'default_styles': {
-                    'font_size': '1rem',
-                    'line_height': '1.6',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
+                'description': 'Bloc de texte simple',
                 'order': 2,
             },
             {
-                'name': 'image',
-                'label': 'Image',
-                'icon': '🖼️',
-                'category': 'media',
-                'description': 'Bloc image avec légende',
-                'schema': {
-                    'src': {'type': 'url', 'label': 'URL de l\'image', 'required': True},
-                    'alt': {'type': 'text', 'label': 'Texte alternatif'},
-                    'caption': {'type': 'text', 'label': 'Légende'},
-                    'align': {'type': 'select', 'label': 'Alignement', 'options': ['left', 'center', 'right'], 'default': 'center'},
-                },
-                'default_styles': {
-                    'max_width': '100%',
-                    'height': 'auto',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
+                'name': 'paragraph',
+                'label': 'Paragraphe',
+                'icon': '📝',
+                'category': 'content',
+                'description': 'Paragraphe formaté',
                 'order': 3,
+            },
+            {
+                'name': 'line',
+                'label': 'Ligne',
+                'icon': '➖',
+                'category': 'content',
+                'description': 'Ligne de séparation horizontale',
+                'order': 4,
             },
             {
                 'name': 'button',
@@ -89,169 +83,15 @@ class Command(BaseCommand):
                 'icon': '🔘',
                 'category': 'content',
                 'description': 'Bouton avec lien',
-                'schema': {
-                    'text': {'type': 'text', 'label': 'Texte du bouton', 'required': True},
-                    'url': {'type': 'url', 'label': 'URL', 'required': True},
-                    'style': {'type': 'select', 'label': 'Style', 'options': ['primary', 'secondary', 'outline'], 'default': 'primary'},
-                    'size': {'type': 'select', 'label': 'Taille', 'options': ['small', 'medium', 'large'], 'default': 'medium'},
-                },
-                'default_styles': {
-                    'padding': '0.75rem 1.5rem',
-                    'border_radius': '0.5rem',
-                },
-                'call_to_action': {
-                    'enabled': True,
-                    'type': 'button',
-                    'default_text': 'Cliquez ici',
-                    'default_url': '#',
-                    'styles': {
-                        'primary': {'background': '#3B82F6', 'color': '#FFFFFF'},
-                        'secondary': {'background': '#6B7280', 'color': '#FFFFFF'},
-                        'outline': {'border': '2px solid #3B82F6', 'color': '#3B82F6'},
-                    },
-                },
-                'available_plans': [],  # Gratuit
-                'order': 4,
-            },
-            {
-                'name': 'columns',
-                'label': 'Colonnes',
-                'icon': '📊',
-                'category': 'layout',
-                'description': 'Bloc de colonnes (mise en page)',
-                'schema': {
-                    'columns_count': {'type': 'number', 'label': 'Nombre de colonnes', 'min': 2, 'max': 4, 'default': 2},
-                },
-                'default_styles': {
-                    'display': 'grid',
-                    'gap': '1rem',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
                 'order': 5,
             },
             {
-                'name': 'video',
-                'label': 'Vidéo',
-                'icon': '🎥',
-                'category': 'media',
-                'description': 'Bloc vidéo (YouTube, Vimeo, etc.)',
-                'schema': {
-                    'url': {'type': 'url', 'label': 'URL de la vidéo', 'required': True},
-                    'autoplay': {'type': 'boolean', 'label': 'Lecture automatique', 'default': False},
-                    'controls': {'type': 'boolean', 'label': 'Contrôles', 'default': True},
-                },
-                'default_styles': {
-                    'width': '100%',
-                    'aspect_ratio': '16/9',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
-                'order': 6,
-            },
-            {
-                'name': 'spacer',
-                'label': 'Espaceur',
-                'icon': '↕️',
-                'category': 'layout',
-                'description': 'Espace vertical',
-                'schema': {
-                    'height': {'type': 'number', 'label': 'Hauteur (px)', 'min': 10, 'max': 200, 'default': 40},
-                },
-                'default_styles': {
-                    'display': 'block',
-                    'height': '40px',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
-                'order': 7,
-            },
-            {
-                'name': 'divider',
-                'label': 'Séparateur',
-                'icon': '➖',
-                'category': 'layout',
-                'description': 'Ligne de séparation horizontale',
-                'schema': {
-                    'style': {'type': 'select', 'label': 'Style', 'options': ['solid', 'dashed', 'dotted'], 'default': 'solid'},
-                    'width': {'type': 'select', 'label': 'Largeur', 'options': ['full', 'half', 'third'], 'default': 'full'},
-                },
-                'default_styles': {
-                    'border_top': '1px solid #e5e7eb',
-                    'margin': '2rem 0',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
-                'order': 8,
-            },
-            {
-                'name': 'form',
-                'label': 'Formulaire',
-                'icon': '📋',
+                'name': 'link',
+                'label': 'Lien',
+                'icon': '🔗',
                 'category': 'content',
-                'description': 'Formulaire de contact',
-                'schema': {
-                    'fields': {'type': 'json', 'label': 'Champs du formulaire'},
-                    'submit_text': {'type': 'text', 'label': 'Texte du bouton', 'default': 'Envoyer'},
-                },
-                'default_styles': {},
-                'call_to_action': {
-                    'enabled': True,
-                    'type': 'submit',
-                    'default_text': 'Envoyer',
-                    'action': 'submit_form',
-                },
-                'available_plans': ['starter'],  # Nécessite au moins Starter
-                'order': 9,
-            },
-            {
-                'name': 'map',
-                'label': 'Carte',
-                'icon': '🗺️',
-                'category': 'media',
-                'description': 'Carte Google Maps ou OpenStreetMap',
-                'schema': {
-                    'address': {'type': 'text', 'label': 'Adresse', 'required': True},
-                    'zoom': {'type': 'number', 'label': 'Niveau de zoom', 'min': 1, 'max': 20, 'default': 15},
-                },
-                'default_styles': {
-                    'width': '100%',
-                    'height': '400px',
-                },
-                'call_to_action': {
-                    'enabled': False,  # Pas de CTA pour une carte
-                },
-                'available_plans': ['business'],  # Nécessite au moins Business
-                'order': 10,
-            },
-            {
-                'name': 'gallery',
-                'label': 'Galerie d\'images',
-                'icon': '🖼️',
-                'category': 'media',
-                'description': 'Galerie d\'images avec grille',
-                'schema': {
-                    'images': {'type': 'json', 'label': 'Liste des images (array d\'URLs)'},
-                    'columns': {'type': 'number', 'label': 'Nombre de colonnes', 'min': 2, 'max': 6, 'default': 3},
-                    'gap': {'type': 'number', 'label': 'Espacement (px)', 'min': 0, 'max': 50, 'default': 10},
-                },
-                'default_styles': {
-                    'display': 'grid',
-                    'gap': '1rem',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
-                'order': 11,
+                'description': 'Lien hypertexte',
+                'order': 6,
             },
             {
                 'name': 'list',
@@ -259,19 +99,7 @@ class Command(BaseCommand):
                 'icon': '📋',
                 'category': 'content',
                 'description': 'Liste à puces ou numérotée',
-                'schema': {
-                    'items': {'type': 'textarea', 'label': 'Éléments (un par ligne)', 'required': True},
-                    'type': {'type': 'select', 'label': 'Type', 'options': ['unordered', 'ordered'], 'default': 'unordered'},
-                    'icon': {'type': 'select', 'label': 'Icône', 'options': ['disc', 'circle', 'square', 'decimal', 'lower-alpha'], 'default': 'disc'},
-                },
-                'default_styles': {
-                    'padding_left': '1.5rem',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
-                'order': 12,
+                'order': 7,
             },
             {
                 'name': 'quote',
@@ -279,37 +107,15 @@ class Command(BaseCommand):
                 'icon': '💬',
                 'category': 'content',
                 'description': 'Bloc de citation',
-                'schema': {
-                    'text': {'type': 'textarea', 'label': 'Texte de la citation', 'required': True},
-                    'author': {'type': 'text', 'label': 'Auteur'},
-                    'source': {'type': 'text', 'label': 'Source'},
-                },
-                'default_styles': {
-                    'font_style': 'italic',
-                    'border_left': '4px solid #3B82F6',
-                    'padding_left': '1rem',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
-                'order': 13,
+                'order': 8,
             },
             {
                 'name': 'accordion',
                 'label': 'Accordéon',
                 'icon': '📑',
                 'category': 'content',
-                'description': 'Bloc accordéon (FAQ, etc.)',
-                'schema': {
-                    'items': {'type': 'json', 'label': 'Éléments (array avec title et content)'},
-                },
-                'default_styles': {},
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
-                'order': 14,
+                'description': 'Accordéon pour FAQ',
+                'order': 9,
             },
             {
                 'name': 'table',
@@ -317,41 +123,15 @@ class Command(BaseCommand):
                 'icon': '📊',
                 'category': 'content',
                 'description': 'Tableau de données',
-                'schema': {
-                    'headers': {'type': 'json', 'label': 'En-têtes (array)'},
-                    'rows': {'type': 'json', 'label': 'Lignes (array de arrays)'},
-                    'striped': {'type': 'boolean', 'label': 'Lignes alternées', 'default': True},
-                },
-                'default_styles': {
-                    'border': '1px solid #e5e7eb',
-                    'border_collapse': 'collapse',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
-                'order': 15,
+                'order': 10,
             },
             {
                 'name': 'alert',
                 'label': 'Alerte',
                 'icon': '⚠️',
                 'category': 'content',
-                'description': 'Message d\'alerte ou d\'information',
-                'schema': {
-                    'text': {'type': 'textarea', 'label': 'Message', 'required': True},
-                    'type': {'type': 'select', 'label': 'Type', 'options': ['info', 'success', 'warning', 'error'], 'default': 'info'},
-                    'dismissible': {'type': 'boolean', 'label': 'Fermable', 'default': False},
-                },
-                'default_styles': {
-                    'padding': '1rem',
-                    'border_radius': '0.5rem',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
-                'order': 16,
+                'description': 'Message d\'alerte',
+                'order': 11,
             },
             {
                 'name': 'code',
@@ -359,129 +139,500 @@ class Command(BaseCommand):
                 'icon': '💻',
                 'category': 'content',
                 'description': 'Bloc de code',
-                'schema': {
-                    'code': {'type': 'textarea', 'label': 'Code', 'required': True},
-                    'language': {'type': 'text', 'label': 'Langage (html, css, js, etc.)'},
-                },
-                'default_styles': {
-                    'font_family': 'monospace',
-                    'background': '#f3f4f6',
-                    'padding': '1rem',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
+                'order': 12,
+            },
+            {
+                'name': 'divider',
+                'label': 'Séparateur',
+                'icon': '➖',
+                'category': 'content',
+                'description': 'Ligne de séparation',
+                'order': 13,
+            },
+            {
+                'name': 'spacer',
+                'label': 'Espaceur',
+                'icon': '⬜',
+                'category': 'content',
+                'description': 'Espace vertical ou horizontal',
+                'order': 14,
+            },
+            {
+                'name': 'breadcrumb',
+                'label': 'Fil d\'Ariane',
+                'icon': '🍞',
+                'category': 'content',
+                'description': 'Navigation breadcrumb',
+                'order': 15,
+            },
+            {
+                'name': 'pagination',
+                'label': 'Pagination',
+                'icon': '📄',
+                'category': 'content',
+                'description': 'Navigation pagination',
+                'order': 16,
+            },
+            {
+                'name': 'tags',
+                'label': 'Tags',
+                'icon': '🏷️',
+                'category': 'content',
+                'description': 'Tags/étiquettes',
                 'order': 17,
+            },
+            {
+                'name': 'badge',
+                'label': 'Badge',
+                'icon': '🏷️',
+                'category': 'content',
+                'description': 'Badge/étiquette simple',
+                'order': 18,
+            },
+            
+            # Blocs Médias
+            {
+                'name': 'image',
+                'label': 'Image',
+                'icon': '🖼️',
+                'category': 'media',
+                'description': 'Image avec légende',
+                'order': 1,
+            },
+            {
+                'name': 'gallery',
+                'label': 'Galerie',
+                'icon': '🖼️',
+                'category': 'media',
+                'description': 'Galerie d\'images',
+                'order': 2,
+            },
+            {
+                'name': 'video',
+                'label': 'Vidéo',
+                'icon': '🎥',
+                'category': 'media',
+                'description': 'Vidéo intégrée',
+                'order': 3,
+            },
+            {
+                'name': 'video-embed',
+                'label': 'Vidéo Embed',
+                'icon': '📺',
+                'category': 'media',
+                'description': 'YouTube, Vimeo, etc.',
+                'order': 4,
             },
             {
                 'name': 'embed',
                 'label': 'Intégration',
                 'icon': '🔗',
                 'category': 'media',
-                'description': 'Intégrer du contenu externe (iframe)',
-                'schema': {
-                    'url': {'type': 'url', 'label': 'URL à intégrer', 'required': True},
-                    'height': {'type': 'number', 'label': 'Hauteur (px)', 'min': 100, 'max': 1200, 'default': 400},
-                },
-                'default_styles': {
-                    'width': '100%',
-                    'border': 'none',
-                },
-                'call_to_action': {
-                    'enabled': False,
-                },
-                'available_plans': [],  # Gratuit
-                'order': 18,
+                'description': 'Contenu intégré (iframe)',
+                'order': 5,
             },
             {
-                'name': 'hero',
-                'label': 'Hero (Bannière)',
-                'icon': '🎯',
+                'name': 'audio-player',
+                'label': 'Lecteur Audio',
+                'icon': '🎵',
+                'category': 'media',
+                'description': 'Lecteur audio',
+                'order': 6,
+            },
+            {
+                'name': 'map',
+                'label': 'Carte',
+                'icon': '🗺️',
+                'category': 'media',
+                'description': 'Carte interactive',
+                'order': 7,
+            },
+            {
+                'name': 'carousel',
+                'label': 'Carrousel',
+                'icon': '🎠',
+                'category': 'media',
+                'description': 'Carrousel d\'images',
+                'order': 8,
+            },
+            
+            # Blocs de Mise en Page
+            {
+                'name': 'rows',
+                'label': 'Lignes',
+                'icon': '📐',
                 'category': 'layout',
-                'description': 'Section hero avec titre, sous-titre et CTA',
-                'schema': {
-                    'title': {'type': 'text', 'label': 'Titre principal', 'required': True},
-                    'subtitle': {'type': 'textarea', 'label': 'Sous-titre'},
-                    'button_text': {'type': 'text', 'label': 'Texte du bouton'},
-                    'button_url': {'type': 'url', 'label': 'URL du bouton'},
-                    'background_image': {'type': 'url', 'label': 'Image de fond'},
-                    'overlay': {'type': 'boolean', 'label': 'Overlay sombre', 'default': True},
-                },
-                'default_styles': {
-                    'padding': '4rem 2rem',
-                    'text_align': 'center',
-                },
-                'call_to_action': {
-                    'enabled': True,
-                    'type': 'button',
-                    'default_text': 'Découvrir',
-                    'default_url': '#',
-                    'position': 'center',
-                    'styles': {
-                        'primary': {'background': '#3B82F6', 'color': '#FFFFFF', 'size': 'large'},
-                    },
-                },
-                'available_plans': [],  # Gratuit
+                'description': 'Lignes pour colonnes',
+                'order': -5,
+            },
+            {
+                'name': 'section',
+                'label': 'Section',
+                'icon': '📦',
+                'category': 'layout',
+                'description': 'Section avec fond personnalisé',
+                'order': -4,
+            },
+            
+            # Blocs de Données
+            {
+                'name': 'table',
+                'label': 'Tableau',
+                'icon': '📊',
+                'category': 'custom',
+                'description': 'Tableau interactif',
+                'order': 20,
+            },
+            {
+                'name': 'chart',
+                'label': 'Graphique',
+                'icon': '📈',
+                'category': 'custom',
+                'description': 'Graphiques Chart.js',
+                'order': 21,
+            },
+            {
+                'name': 'stats',
+                'label': 'Statistiques',
+                'icon': '📊',
+                'category': 'custom',
+                'description': 'Affichage de statistiques',
+                'order': 22,
+            },
+            {
+                'name': 'progress-bar',
+                'label': 'Barre de Progression',
+                'icon': '📊',
+                'category': 'custom',
+                'description': 'Barre de progression horizontale',
+                'order': 23,
+            },
+            {
+                'name': 'progress-circle',
+                'label': 'Cercle de Progression',
+                'icon': '⭕',
+                'category': 'custom',
+                'description': 'Cercle de progression',
+                'order': 24,
+            },
+            {
+                'name': 'timeline',
+                'label': 'Chronologie',
+                'icon': '⏱️',
+                'category': 'custom',
+                'description': 'Timeline d\'événements',
+                'order': 25,
+            },
+            {
+                'name': 'calendar',
+                'label': 'Calendrier',
+                'icon': '📅',
+                'category': 'custom',
+                'description': 'Calendrier avec événements',
+                'order': 26,
+            },
+            {
+                'name': 'countdown',
+                'label': 'Compte à Rebours',
+                'icon': '⏰',
+                'category': 'custom',
+                'description': 'Compte à rebours',
+                'order': 27,
+            },
+            
+            # Blocs de Formulaire
+            {
+                'name': 'form',
+                'label': 'Formulaire',
+                'icon': '📝',
+                'category': 'custom',
+                'description': 'Formulaire de contact',
+                'order': 30,
+            },
+            {
+                'name': 'form-newsletter',
+                'label': 'Newsletter',
+                'icon': '📧',
+                'category': 'custom',
+                'description': 'Formulaire newsletter',
+                'order': 31,
+            },
+            {
+                'name': 'form-search',
+                'label': 'Recherche',
+                'icon': '🔍',
+                'category': 'custom',
+                'description': 'Formulaire de recherche',
+                'order': 32,
+            },
+            {
+                'name': 'form-inscription',
+                'label': 'Inscription',
+                'icon': '✍️',
+                'category': 'custom',
+                'description': 'Formulaire d\'inscription',
+                'order': 33,
+            },
+            {
+                'name': 'booking-form',
+                'label': 'Réservation',
+                'icon': '📅',
+                'category': 'custom',
+                'description': 'Formulaire de réservation VTC',
+                'order': 34,
+            },
+            {
+                'name': 'contact-form',
+                'label': 'Formulaire Contact',
+                'icon': '📧',
+                'category': 'custom',
+                'description': 'Formulaire de contact',
+                'order': 35,
+            },
+            
+            # Blocs Interactifs
+            {
+                'name': 'tabs',
+                'label': 'Onglets',
+                'icon': '📑',
+                'category': 'custom',
+                'description': 'Onglets interactifs',
+                'order': 40,
+            },
+            {
+                'name': 'modal',
+                'label': 'Modal',
+                'icon': '🪟',
+                'category': 'custom',
+                'description': 'Popup modal',
+                'order': 41,
+            },
+            
+            # Blocs de Design
+            {
+                'name': 'hero',
+                'label': 'Hero',
+                'icon': '🎯',
+                'category': 'content',
+                'description': 'Section hero avec fond',
                 'order': 0,
             },
+            {
+                'name': 'banner',
+                'label': 'Bannière',
+                'icon': '🎨',
+                'category': 'custom',
+                'description': 'Bannière avec image de fond',
+                'order': 50,
+            },
+            {
+                'name': 'cta-section',
+                'label': 'CTA Section',
+                'icon': '📢',
+                'category': 'custom',
+                'description': 'Section call-to-action',
+                'order': 51,
+            },
+            {
+                'name': 'feature-card',
+                'label': 'Carte Fonctionnalité',
+                'icon': '✨',
+                'category': 'custom',
+                'description': 'Carte de fonctionnalité',
+                'order': 52,
+            },
+            {
+                'name': 'icon-box',
+                'label': 'Boîte Icône',
+                'icon': '📦',
+                'category': 'custom',
+                'description': 'Boîte avec icône',
+                'order': 53,
+            },
+            {
+                'name': 'card',
+                'label': 'Carte',
+                'icon': '🃏',
+                'category': 'custom',
+                'description': 'Carte générique',
+                'order': 54,
+            },
+            {
+                'name': 'testimonials',
+                'label': 'Témoignages',
+                'icon': '💬',
+                'category': 'custom',
+                'description': 'Témoignages clients',
+                'order': 55,
+            },
+            {
+                'name': 'logo-grid',
+                'label': 'Grille de Logos',
+                'icon': '🏢',
+                'category': 'custom',
+                'description': 'Grille de logos partenaires',
+                'order': 56,
+            },
+            {
+                'name': 'team-member',
+                'label': 'Membre d\'Équipe',
+                'icon': '👤',
+                'category': 'custom',
+                'description': 'Carte membre d\'équipe',
+                'order': 57,
+            },
+            {
+                'name': 'features-grid',
+                'label': 'Grille Fonctionnalités',
+                'icon': '⭐',
+                'category': 'custom',
+                'description': 'Grille de fonctionnalités',
+                'order': 58,
+            },
+            
+            # Blocs VTC
+            {
+                'name': 'pricing-table-vtc',
+                'label': 'Tarifs VTC',
+                'icon': '💰',
+                'category': 'custom',
+                'description': 'Tableau de prix VTC',
+                'order': 60,
+            },
+            {
+                'name': 'service-zones',
+                'label': 'Zones de Service',
+                'icon': '📍',
+                'category': 'custom',
+                'description': 'Zones de service VTC',
+                'order': 61,
+            },
+            {
+                'name': 'vehicle-gallery',
+                'label': 'Galerie Véhicules',
+                'icon': '🚗',
+                'category': 'custom',
+                'description': 'Galerie de véhicules',
+                'order': 62,
+            },
+            {
+                'name': 'contact-buttons',
+                'label': 'Boutons Contact',
+                'icon': '📞',
+                'category': 'custom',
+                'description': 'Boutons de contact VTC',
+                'order': 63,
+            },
+            {
+                'name': 'badges',
+                'label': 'Badges',
+                'icon': '🏅',
+                'category': 'custom',
+                'description': 'Badges et certifications',
+                'order': 64,
+            },
+            {
+                'name': 'pricing',
+                'label': 'Tarifs',
+                'icon': '💳',
+                'category': 'custom',
+                'description': 'Tableau de tarifs',
+                'order': 65,
+            },
+            
+            # Blocs Utilitaires
+            {
+                'name': 'search-bar',
+                'label': 'Barre de Recherche',
+                'icon': '🔍',
+                'category': 'custom',
+                'description': 'Barre de recherche',
+                'order': 70,
+            },
+            {
+                'name': 'rating',
+                'label': 'Évaluation',
+                'icon': '⭐',
+                'category': 'custom',
+                'description': 'Système d\'évaluation',
+                'order': 71,
+            },
+            {
+                'name': 'social-links',
+                'label': 'Liens Sociaux',
+                'icon': '🔗',
+                'category': 'custom',
+                'description': 'Liens réseaux sociaux',
+                'order': 72,
+            },
+            
+            # Blocs Footer/Header
+            {
+                'name': 'header',
+                'label': 'En-tête',
+                'icon': '📋',
+                'category': 'layout',
+                'description': 'Header avec navigation et logo',
+                'order': -11,
+            },
+            {
+                'name': 'footer',
+                'label': 'Pied de Page',
+                'icon': '⬇️',
+                'category': 'layout',
+                'description': 'Footer personnalisé',
+                'order': -6,
+            },
+            {
+                'name': 'faq-section',
+                'label': 'Section FAQ',
+                'icon': '❓',
+                'category': 'custom',
+                'description': 'Section FAQ',
+                'order': 80,
+            },
         ]
-
+        
         created_count = 0
         updated_count = 0
-
+        
         for block_data in default_blocks:
-            # Extract available_plans slugs
-            plan_slugs = block_data.get('available_plans', [])
-            call_to_action = block_data.get('call_to_action', {})
-            
-            # Remove these from defaults dict
-            defaults = {
-                'label': block_data['label'],
-                'icon': block_data['icon'],
-                'category': block_data['category'],
-                'description': block_data.get('description', ''),
-                'schema': block_data.get('schema', {}),
-                'default_styles': block_data.get('default_styles', {}),
-                'call_to_action': call_to_action,
-                'order': block_data.get('order', 0),
-                'is_active': True,
-            }
-            
-            block_type, created = BlockType.objects.update_or_create(
+            block_type, created = BlockType.objects.get_or_create(
                 name=block_data['name'],
-                defaults=defaults
+                defaults={
+                    'label': block_data['label'],
+                    'icon': block_data['icon'],
+                    'category': block_data['category'],
+                    'description': block_data['description'],
+                    'order': block_data['order'],
+                    'is_active': True,
+                    'schema': {},
+                    'default_styles': {},
+                }
             )
-            
-            # Set available plans
-            if plan_slugs:
-                plans_to_add = []
-                for slug in plan_slugs:
-                    if slug == 'starter' and starter_plan:
-                        plans_to_add.append(starter_plan)
-                    elif slug == 'business' and business_plan:
-                        plans_to_add.append(business_plan)
-                    elif slug == 'enterprise' and enterprise_plan:
-                        plans_to_add.append(enterprise_plan)
-                
-                if plans_to_add:
-                    block_type.available_plans.set(plans_to_add)
-                    plan_names = ', '.join([p.name for p in plans_to_add])
-                    self.stdout.write(f'    📋 Plans associés: {plan_names}')
-                else:
-                    self.stdout.write(self.style.WARNING(f'    ⚠️  Plans non trouvés pour: {", ".join(plan_slugs)}'))
-            else:
-                # Si aucun plan, c'est gratuit - on s'assure que la liste est vide
-                block_type.available_plans.clear()
             
             if created:
                 created_count += 1
-                self.stdout.write(self.style.SUCCESS(f'  ✅ Created: {block_type.label}'))
+                self.stdout.write(
+                    self.style.SUCCESS(f'✅ Bloc créé: {block_type.label} ({block_type.name})')
+                )
             else:
-                updated_count += 1
-                self.stdout.write(self.style.WARNING(f'  🔄 Updated: {block_type.label}'))
-
-        self.stdout.write(self.style.SUCCESS(
-            f'\n✅ Block types created: {created_count}, updated: {updated_count}'
-        ))
-
+                # Mettre à jour les champs si nécessaire
+                updated = False
+                for key, value in block_data.items():
+                    if key != 'name' and getattr(block_type, key) != value:
+                        setattr(block_type, key, value)
+                        updated = True
+                
+                if updated:
+                    block_type.save()
+                    updated_count += 1
+                    self.stdout.write(
+                        self.style.WARNING(f'🔄 Bloc mis à jour: {block_type.label} ({block_type.name})')
+                    )
+        
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'\n✅ Terminé: {created_count} blocs créés, {updated_count} blocs mis à jour'
+            )
+        )

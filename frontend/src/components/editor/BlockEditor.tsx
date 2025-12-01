@@ -187,170 +187,33 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [history, handleUndo, handleRedo])
 
-  // Fonction pour créer les blocs par défaut si l'API ne retourne rien
-  const getDefaultBlockTypes = (): BlockType[] => {
-    return [
-      // Blocs de Structure (EN PREMIER - pour définir la structure avant le contenu)
-      { id: 0, name: 'container', label: 'Conteneur', icon: '📦', category: 'layout', description: 'Conteneur avec largeur maximale', schema: {}, default_styles: {}, is_active: true, order: 0, created_at: '', updated_at: '' },
-      { id: -1, name: 'flex-container', label: 'Flex Container', icon: '📐', category: 'layout', description: 'Conteneur flexbox pour aligner les éléments', schema: {}, default_styles: {}, is_active: true, order: -1, created_at: '', updated_at: '' },
-      { id: -2, name: 'grid-container', label: 'Grille', icon: '⚏', category: 'layout', description: 'Grille CSS pour créer des layouts complexes', schema: {}, default_styles: {}, is_active: true, order: -2, created_at: '', updated_at: '' },
-      { id: -3, name: 'columns', label: 'Colonnes', icon: '📊', category: 'layout', description: 'Système de colonnes (12 colonnes)', schema: {}, default_styles: {}, is_active: true, order: -3, created_at: '', updated_at: '' },
-      
-      // Blocs de Contenu
-      { id: 1, name: 'heading', label: 'Titre', icon: '📝', category: 'content', description: 'Titre avec différents niveaux', schema: {}, default_styles: {}, is_active: true, order: 1, created_at: '', updated_at: '' },
-      { id: 2, name: 'text', label: 'Texte', icon: '📄', category: 'content', description: 'Bloc de texte simple', schema: {}, default_styles: {}, is_active: true, order: 2, created_at: '', updated_at: '' },
-      { id: 3, name: 'paragraph', label: 'Paragraphe', icon: '📝', category: 'content', description: 'Paragraphe formaté', schema: {}, default_styles: {}, is_active: true, order: 3, created_at: '', updated_at: '' },
-      { id: 4, name: 'line', label: 'Ligne', icon: '➖', category: 'content', description: 'Texte sur une ligne', schema: {}, default_styles: {}, is_active: true, order: 4, created_at: '', updated_at: '' },
-      { id: 5, name: 'button', label: 'Bouton', icon: '🔘', category: 'content', description: 'Bouton avec lien', schema: {}, default_styles: {}, is_active: true, order: 5, created_at: '', updated_at: '' },
-      { id: 6, name: 'link', label: 'Lien', icon: '🔗', category: 'content', description: 'Lien hypertexte', schema: {}, default_styles: {}, is_active: true, order: 6, created_at: '', updated_at: '' },
-      { id: 7, name: 'list', label: 'Liste', icon: '📋', category: 'content', description: 'Liste à puces ou numérotée', schema: {}, default_styles: {}, is_active: true, order: 7, created_at: '', updated_at: '' },
-      { id: 8, name: 'quote', label: 'Citation', icon: '💬', category: 'content', description: 'Citation avec auteur', schema: {}, default_styles: {}, is_active: true, order: 8, created_at: '', updated_at: '' },
-      { id: 9, name: 'code', label: 'Code', icon: '💻', category: 'content', description: 'Bloc de code avec coloration', schema: {}, default_styles: {}, is_active: true, order: 9, created_at: '', updated_at: '' },
-      { id: 10, name: 'alert', label: 'Alerte', icon: '⚠️', category: 'content', description: 'Message d\'alerte', schema: {}, default_styles: {}, is_active: true, order: 10, created_at: '', updated_at: '' },
-      { id: 11, name: 'divider', label: 'Séparateur', icon: '➖', category: 'content', description: 'Ligne de séparation', schema: {}, default_styles: {}, is_active: true, order: 11, created_at: '', updated_at: '' },
-      { id: 12, name: 'spacer', label: 'Espaceur', icon: '⬜', category: 'content', description: 'Espace vertical ou horizontal', schema: {}, default_styles: {}, is_active: true, order: 12, created_at: '', updated_at: '' },
-      { id: 13, name: 'breadcrumb', label: 'Fil d\'Ariane', icon: '🍞', category: 'content', description: 'Navigation breadcrumb', schema: {}, default_styles: {}, is_active: true, order: 13, created_at: '', updated_at: '' },
-      { id: 14, name: 'pagination', label: 'Pagination', icon: '📄', category: 'content', description: 'Navigation pagination', schema: {}, default_styles: {}, is_active: true, order: 14, created_at: '', updated_at: '' },
-      { id: 15, name: 'tags', label: 'Tags', icon: '🏷️', category: 'content', description: 'Tags/étiquettes', schema: {}, default_styles: {}, is_active: true, order: 15, created_at: '', updated_at: '' },
-      { id: 16, name: 'badge', label: 'Badge', icon: '🏷️', category: 'content', description: 'Badge/étiquette simple', schema: {}, default_styles: {}, is_active: true, order: 16, created_at: '', updated_at: '' },
-      
-      // Blocs de Mise en Page (autres)
-      { id: 21, name: 'rows', label: 'Lignes', icon: '📐', category: 'layout', description: 'Lignes pour colonnes', schema: {}, default_styles: {}, is_active: true, order: 21, created_at: '', updated_at: '' },
-      { id: 22, name: 'section', label: 'Section', icon: '📦', category: 'layout', description: 'Section avec fond personnalisé', schema: {}, default_styles: {}, is_active: true, order: 22, created_at: '', updated_at: '' },
-      
-      // Blocs Médias
-      { id: 30, name: 'image', label: 'Image', icon: '🖼️', category: 'media', description: 'Image avec légende', schema: {}, default_styles: {}, is_active: true, order: 30, created_at: '', updated_at: '' },
-      { id: 31, name: 'video', label: 'Vidéo', icon: '🎥', category: 'media', description: 'Vidéo intégrée', schema: {}, default_styles: {}, is_active: true, order: 31, created_at: '', updated_at: '' },
-      { id: 32, name: 'video-embed', label: 'Vidéo Embed', icon: '📺', category: 'media', description: 'YouTube, Vimeo, etc.', schema: {}, default_styles: {}, is_active: true, order: 32, created_at: '', updated_at: '' },
-      { id: 33, name: 'gallery', label: 'Galerie', icon: '🖼️', category: 'media', description: 'Galerie d\'images', schema: {}, default_styles: {}, is_active: true, order: 33, created_at: '', updated_at: '' },
-      { id: 34, name: 'audio-player', label: 'Lecteur Audio', icon: '🎵', category: 'media', description: 'Lecteur audio', schema: {}, default_styles: {}, is_active: true, order: 34, created_at: '', updated_at: '' },
-      { id: 35, name: 'map', label: 'Carte', icon: '🗺️', category: 'media', description: 'Carte interactive', schema: {}, default_styles: {}, is_active: true, order: 35, created_at: '', updated_at: '' },
-      { id: 36, name: 'carousel', label: 'Carrousel', icon: '🎠', category: 'media', description: 'Carrousel d\'images', schema: {}, default_styles: {}, is_active: true, order: 36, created_at: '', updated_at: '' },
-      
-      // Blocs de Données (Premium)
-      { id: 40, name: 'table', label: 'Tableau', icon: '📊', category: 'custom', description: 'Tableau interactif', schema: {}, default_styles: {}, is_active: true, order: 40, created_at: '', updated_at: '' },
-      { id: 41, name: 'chart', label: 'Graphique', icon: '📈', category: 'custom', description: 'Graphiques Chart.js', schema: {}, default_styles: {}, is_active: true, order: 41, created_at: '', updated_at: '' },
-      { id: 42, name: 'stats', label: 'Statistiques', icon: '📊', category: 'custom', description: 'Affichage de statistiques', schema: {}, default_styles: {}, is_active: true, order: 42, created_at: '', updated_at: '' },
-      { id: 43, name: 'progress-bar', label: 'Barre de Progression', icon: '📊', category: 'custom', description: 'Barre de progression horizontale', schema: {}, default_styles: {}, is_active: true, order: 43, created_at: '', updated_at: '' },
-      { id: 44, name: 'progress-circle', label: 'Cercle de Progression', icon: '⭕', category: 'custom', description: 'Cercle de progression', schema: {}, default_styles: {}, is_active: true, order: 44, created_at: '', updated_at: '' },
-      { id: 45, name: 'timeline', label: 'Chronologie', icon: '⏱️', category: 'custom', description: 'Timeline d\'événements', schema: {}, default_styles: {}, is_active: true, order: 45, created_at: '', updated_at: '' },
-      { id: 46, name: 'calendar', label: 'Calendrier', icon: '📅', category: 'custom', description: 'Calendrier avec événements', schema: {}, default_styles: {}, is_active: true, order: 46, created_at: '', updated_at: '' },
-      { id: 47, name: 'countdown', label: 'Compte à Rebours', icon: '⏰', category: 'custom', description: 'Compte à rebours', schema: {}, default_styles: {}, is_active: true, order: 47, created_at: '', updated_at: '' },
-      
-      // Blocs de Formulaire
-      { id: 50, name: 'form', label: 'Formulaire', icon: '📝', category: 'custom', description: 'Formulaire de contact', schema: {}, default_styles: {}, is_active: true, order: 50, created_at: '', updated_at: '' },
-      { id: 51, name: 'form-newsletter', label: 'Newsletter', icon: '📧', category: 'custom', description: 'Formulaire newsletter', schema: {}, default_styles: {}, is_active: true, order: 51, created_at: '', updated_at: '' },
-      { id: 52, name: 'form-search', label: 'Recherche', icon: '🔍', category: 'custom', description: 'Formulaire de recherche', schema: {}, default_styles: {}, is_active: true, order: 52, created_at: '', updated_at: '' },
-      { id: 53, name: 'form-inscription', label: 'Inscription', icon: '✍️', category: 'custom', description: 'Formulaire d\'inscription', schema: {}, default_styles: {}, is_active: true, order: 53, created_at: '', updated_at: '' },
-      { id: 54, name: 'booking-form', label: 'Réservation', icon: '📅', category: 'custom', description: 'Formulaire de réservation VTC', schema: {}, default_styles: {}, is_active: true, order: 54, created_at: '', updated_at: '' },
-      
-      // Blocs Interactifs
-      { id: 60, name: 'tabs', label: 'Onglets', icon: '📑', category: 'custom', description: 'Onglets interactifs', schema: {}, default_styles: {}, is_active: true, order: 60, created_at: '', updated_at: '' },
-      { id: 61, name: 'accordion', label: 'Accordéon', icon: '📖', category: 'custom', description: 'Accordéon dépliable', schema: {}, default_styles: {}, is_active: true, order: 61, created_at: '', updated_at: '' },
-      { id: 62, name: 'modal', label: 'Modal', icon: '🪟', category: 'custom', description: 'Popup modal', schema: {}, default_styles: {}, is_active: true, order: 62, created_at: '', updated_at: '' },
-      
-      // Blocs de Design
-      { id: 70, name: 'hero', label: 'Hero', icon: '🎯', category: 'custom', description: 'Section hero avec fond', schema: {}, default_styles: {}, is_active: true, order: 70, created_at: '', updated_at: '' },
-      { id: 71, name: 'banner', label: 'Bannière', icon: '🎨', category: 'custom', description: 'Bannière avec image de fond', schema: {}, default_styles: {}, is_active: true, order: 71, created_at: '', updated_at: '' },
-      { id: 72, name: 'cta-section', label: 'CTA Section', icon: '📢', category: 'custom', description: 'Section call-to-action', schema: {}, default_styles: {}, is_active: true, order: 72, created_at: '', updated_at: '' },
-      { id: 73, name: 'feature-card', label: 'Carte Fonctionnalité', icon: '✨', category: 'custom', description: 'Carte de fonctionnalité', schema: {}, default_styles: {}, is_active: true, order: 73, created_at: '', updated_at: '' },
-      { id: 74, name: 'icon-box', label: 'Boîte Icône', icon: '📦', category: 'custom', description: 'Boîte avec icône', schema: {}, default_styles: {}, is_active: true, order: 74, created_at: '', updated_at: '' },
-      { id: 75, name: 'card', label: 'Carte', icon: '🃏', category: 'custom', description: 'Carte générique', schema: {}, default_styles: {}, is_active: true, order: 75, created_at: '', updated_at: '' },
-      { id: 76, name: 'testimonials', label: 'Témoignages', icon: '💬', category: 'custom', description: 'Témoignages clients', schema: {}, default_styles: {}, is_active: true, order: 76, created_at: '', updated_at: '' },
-      { id: 77, name: 'logo-grid', label: 'Grille de Logos', icon: '🏢', category: 'custom', description: 'Grille de logos partenaires', schema: {}, default_styles: {}, is_active: true, order: 77, created_at: '', updated_at: '' },
-      { id: 78, name: 'team-member', label: 'Membre d\'Équipe', icon: '👤', category: 'custom', description: 'Carte membre d\'équipe', schema: {}, default_styles: {}, is_active: true, order: 78, created_at: '', updated_at: '' },
-      { id: 79, name: 'features-grid', label: 'Grille Fonctionnalités', icon: '⭐', category: 'custom', description: 'Grille de fonctionnalités', schema: {}, default_styles: {}, is_active: true, order: 79, created_at: '', updated_at: '' },
-      
-      // Blocs VTC
-      { id: 80, name: 'pricing-table-vtc', label: 'Tarifs VTC', icon: '💰', category: 'custom', description: 'Tableau de prix VTC', schema: {}, default_styles: {}, is_active: true, order: 80, created_at: '', updated_at: '' },
-      { id: 81, name: 'service-zones', label: 'Zones de Service', icon: '📍', category: 'custom', description: 'Zones de service VTC', schema: {}, default_styles: {}, is_active: true, order: 81, created_at: '', updated_at: '' },
-      { id: 82, name: 'vehicle-gallery', label: 'Galerie Véhicules', icon: '🚗', category: 'custom', description: 'Galerie de véhicules', schema: {}, default_styles: {}, is_active: true, order: 82, created_at: '', updated_at: '' },
-      { id: 83, name: 'contact-buttons', label: 'Boutons Contact', icon: '📞', category: 'custom', description: 'Boutons de contact VTC', schema: {}, default_styles: {}, is_active: true, order: 83, created_at: '', updated_at: '' },
-      { id: 84, name: 'badges', label: 'Badges', icon: '🏅', category: 'custom', description: 'Badges et certifications', schema: {}, default_styles: {}, is_active: true, order: 84, created_at: '', updated_at: '' },
-      { id: 85, name: 'pricing', label: 'Tarifs', icon: '💳', category: 'custom', description: 'Tableau de tarifs', schema: {}, default_styles: {}, is_active: true, order: 85, created_at: '', updated_at: '' },
-      
-      // Blocs Utilitaires
-      { id: 90, name: 'search-bar', label: 'Barre de Recherche', icon: '🔍', category: 'custom', description: 'Barre de recherche', schema: {}, default_styles: {}, is_active: true, order: 90, created_at: '', updated_at: '' },
-      { id: 91, name: 'rating', label: 'Évaluation', icon: '⭐', category: 'custom', description: 'Système d\'évaluation', schema: {}, default_styles: {}, is_active: true, order: 91, created_at: '', updated_at: '' },
-      { id: 92, name: 'social-links', label: 'Liens Sociaux', icon: '🔗', category: 'custom', description: 'Liens réseaux sociaux', schema: {}, default_styles: {}, is_active: true, order: 92, created_at: '', updated_at: '' },
-      
-      // Blocs Footer/Header
-      { id: 99, name: 'header', label: 'En-tête', icon: '📋', category: 'custom', description: 'Header avec navigation et logo', schema: {}, default_styles: {}, is_active: true, order: 99, created_at: '', updated_at: '' },
-      { id: 100, name: 'footer', label: 'Pied de Page', icon: '⬇️', category: 'custom', description: 'Footer personnalisé', schema: {}, default_styles: {}, is_active: true, order: 100, created_at: '', updated_at: '' },
-      { id: 101, name: 'contact-form', label: 'Formulaire Contact', icon: '📧', category: 'custom', description: 'Formulaire de contact', schema: {}, default_styles: {}, is_active: true, order: 101, created_at: '', updated_at: '' },
-      { id: 102, name: 'faq-section', label: 'Section FAQ', icon: '❓', category: 'custom', description: 'Section FAQ', schema: {}, default_styles: {}, is_active: true, order: 102, created_at: '', updated_at: '' },
-    ]
-  }
+  // Les blocs par défaut sont maintenant créés automatiquement par l'API
+  // Plus besoin de getDefaultBlockTypes() - l'API crée les blocs si aucun n'existe
 
   const loadBlockTypes = async () => {
     try {
-      // Toujours utiliser les blocs par défaut en priorité pour garantir la disponibilité
-      const defaultTypes = getDefaultBlockTypes()
-      
-      // Si des blocs sont fournis via props ET qu'il y en a, fusionner avec les blocs par défaut
+      // Si des blocs sont fournis via props, les utiliser directement
       if (availableBlockTypes && availableBlockTypes.length > 0) {
-        // Fusionner les blocs par défaut avec ceux de l'API pour éviter les doublons
-        const mergedTypes: BlockType[] = []
-        const seenNames = new Set<string>()
-        
-        // D'abord ajouter les blocs de l'API (priorité)
-        availableBlockTypes.forEach((apiType: BlockType) => {
-          if (!seenNames.has(apiType.name)) {
-            mergedTypes.push(apiType)
-            seenNames.add(apiType.name)
-          }
-        })
-        
-        // Ensuite ajouter les blocs par défaut qui n'existent pas déjà
-        defaultTypes.forEach((defaultType: BlockType) => {
-          if (!seenNames.has(defaultType.name)) {
-            mergedTypes.push(defaultType)
-            seenNames.add(defaultType.name)
-          }
-        })
-        
-        setBlockTypes(mergedTypes)
+        setBlockTypes(availableBlockTypes)
       } else {
-        // Si availableBlockTypes est vide ou undefined, essayer de charger depuis l'API
+        // Sinon, charger depuis l'API (qui créera automatiquement les blocs par défaut si nécessaire)
         try {
           const apiTypes = await blocksService.getBlockTypes()
           if (apiTypes && apiTypes.length > 0) {
-            // Fusionner avec les blocs par défaut
-            const mergedTypes: BlockType[] = []
-            const seenNames = new Set<string>()
-            
-            // D'abord ajouter les blocs de l'API (priorité)
-            apiTypes.forEach((apiType: BlockType) => {
-              if (!seenNames.has(apiType.name)) {
-                mergedTypes.push(apiType)
-                seenNames.add(apiType.name)
-              }
-            })
-            
-            // Ensuite ajouter les blocs par défaut qui n'existent pas déjà
-            defaultTypes.forEach((defaultType: BlockType) => {
-              if (!seenNames.has(defaultType.name)) {
-                mergedTypes.push(defaultType)
-                seenNames.add(defaultType.name)
-              }
-            })
-            
-            setBlockTypes(mergedTypes)
+            setBlockTypes(apiTypes)
           } else {
-            // Pas de blocs de l'API, utiliser uniquement les blocs par défaut
-            console.log('Utilisation des blocs par défaut (49 blocs)')
-            setBlockTypes(defaultTypes)
+            // Si l'API retourne vide (ne devrait pas arriver car l'API crée les blocs automatiquement)
+            console.warn('Aucun bloc disponible depuis l\'API')
+            setBlockTypes([])
           }
         } catch (apiError) {
-          // Erreur API, utiliser les blocs par défaut
-          console.warn('Erreur chargement blocs API, utilisation des blocs par défaut:', apiError)
-          setBlockTypes(defaultTypes)
+          console.error('Erreur chargement blocs API:', apiError)
+          setBlockTypes([])
         }
       }
     } catch (error) {
       console.error('Error loading block types:', error)
-      // En cas d'erreur, utiliser les blocs par défaut
-      setBlockTypes(getDefaultBlockTypes())
+      setBlockTypes([])
     }
   }
 
