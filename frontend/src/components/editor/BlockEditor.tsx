@@ -1087,10 +1087,24 @@ const SortableBlock = React.memo(function SortableBlock({
 
   // Gérer le clic sur le bloc pour ouvrir les paramètres directement
   const handleBlockClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Fermer le menu contextuel si ouvert
+    if (showMenu) {
+      closeContextMenu()
+      // Ne pas ouvrir les paramètres si on vient de fermer le menu
+      e.stopPropagation()
+      return
+    }
+    
     // Ignorer si on clique sur les handles de redimensionnement
     if ((e.target as HTMLElement).closest('[class*="cursor-nwse-resize"], [class*="cursor-nesw-resize"], [class*="cursor-ew-resize"]')) {
       return
     }
+    
+    // Ignorer si on clique sur le menu contextuel
+    if ((e.target as HTMLElement).closest('[data-context-menu]')) {
+      return
+    }
+    
     // Ouvrir les paramètres directement
     onSelect()
   }
@@ -1099,8 +1113,13 @@ const SortableBlock = React.memo(function SortableBlock({
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    setContextMenu({ x: e.clientX, y: e.clientY })
-    setShowMenu(true)
+    // Fermer le menu précédent s'il existe
+    closeContextMenu()
+    // Attendre un peu pour éviter les conflits
+    setTimeout(() => {
+      setContextMenu({ x: e.clientX, y: e.clientY })
+      setShowMenu(true)
+    }, 10)
   }
 
   // Fermer le menu contextuel
@@ -1113,15 +1132,22 @@ const SortableBlock = React.memo(function SortableBlock({
   useEffect(() => {
     if (showMenu) {
       const handleClickOutside = (e: MouseEvent) => {
-        if (!(e.target as HTMLElement).closest('[data-context-menu]')) {
-          closeContextMenu()
+        const target = e.target as HTMLElement
+        // Ne pas fermer si on clique sur le menu lui-même
+        if (target.closest('[data-context-menu]')) {
+          return
         }
+        // Fermer le menu
+        closeContextMenu()
       }
-      document.addEventListener('click', handleClickOutside)
-      document.addEventListener('contextmenu', handleClickOutside)
+      
+      // Utiliser capture phase pour intercepter avant les autres handlers
+      document.addEventListener('click', handleClickOutside, true)
+      document.addEventListener('contextmenu', handleClickOutside, true)
+      
       return () => {
-        document.removeEventListener('click', handleClickOutside)
-        document.removeEventListener('contextmenu', handleClickOutside)
+        document.removeEventListener('click', handleClickOutside, true)
+        document.removeEventListener('contextmenu', handleClickOutside, true)
       }
     }
   }, [showMenu])
@@ -1139,6 +1165,13 @@ const SortableBlock = React.memo(function SortableBlock({
         className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] ${isResizing ? 'select-none' : ''} group cursor-pointer`}
         onClick={handleBlockClick}
         onContextMenu={handleContextMenu}
+        onMouseDown={(e) => {
+          // Empêcher le menu contextuel de se rouvrir après un clic gauche
+          if (e.button === 0 && showMenu) {
+            // Clic gauche : fermer le menu et ne pas le rouvrir
+            closeContextMenu()
+          }
+        }}
       >
       {/* Resize Handles - Only visible when selected */}
       {isSelected && (
@@ -1226,7 +1259,14 @@ const SortableBlock = React.memo(function SortableBlock({
             left: `${contextMenu.x}px`,
             top: `${contextMenu.y}px`,
           }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            // Ne pas fermer le menu si on clique dedans
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+            // Empêcher la propagation pour éviter que le clic ne déclenche handleBlockClick
+          }}
         >
           <button
             onClick={(e) => {
