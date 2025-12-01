@@ -38,88 +38,88 @@ help: ## Afficher l'aide
 ##@ Installation et Configuration
 
 install: ## Installation complète du projet
-	@echo "$(GREEN)📦 Installation du projet VTCBuilder Django...$(NC)"
-	@echo "$(GREEN)🐳 Construction des images Docker...$(NC)"
+	@printf "$(GREEN)📦 Installation du projet VTCBuilder Django...$(NC)\n"
+	@printf "$(GREEN)🐳 Construction des images Docker...$(NC)\n"
 	@cd backend-django && $(MAKE) install
-	@echo "$(GREEN)✅ Installation terminée !$(NC)"
-	@echo "$(BLUE)Utilisez 'make setup-backend-django' pour la configuration complète$(NC)"
+	@printf "$(GREEN)✅ Installation terminée !$(NC)\n"
+	@printf "$(BLUE)Utilisez 'make setup-backend-django' pour la configuration complète$(NC)\n"
 
 setup: setup-backend-django ## Alias pour setup-backend-django
 
 setup-backend-django: ## Installation et configuration complète du backend Django
-	@echo "$(GREEN)✨ Configuration complète Django...$(NC)"
-	@echo "$(YELLOW)📦 Installation du backend Django...$(NC)"
+	@printf "$(GREEN)✨ Configuration complète Django...$(NC)\n"
+	@printf "$(YELLOW)📦 Installation du backend Django...$(NC)\n"
 	@cd backend-django && $(MAKE) install
-	@echo "$(YELLOW)🗄️  Configuration des migrations...$(NC)"
+	@printf "$(YELLOW)🗄️  Configuration des migrations...$(NC)\n"
 	@cd backend-django && $(MAKE) migrate
-	@echo "$(YELLOW)🔐 Configuration des permissions...$(NC)"
+	@printf "$(YELLOW)🔐 Configuration des permissions...$(NC)\n"
 	@cd backend-django && $(MAKE) setup-permissions
-	@echo "$(GREEN)✅ Configuration terminée !$(NC)"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)🚀 Application prête ! Utilisez 'make start' pour démarrer$(NC)"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)📍 URLs disponibles après démarrage :$(NC)"
+	@printf "$(GREEN)✅ Configuration terminée !$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)🚀 Application prête ! Utilisez 'make start' pour démarrer$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)📍 URLs disponibles après démarrage :$(NC)\n"
 	@echo "   Frontend:     http://localhost:9494"
 	@echo "   API Django:   http://localhost:9495/api/"
 	@echo "   Admin Django: http://localhost:9495/admin/"
 	@echo "   PgAdmin:      http://localhost:9498"
 	@echo "   PostgreSQL:   localhost:9496"
 	@echo "   Redis:        localhost:9497"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)🔐 Compte Super Admin :$(NC)"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)🔐 Compte Super Admin :$(NC)\n"
 	@echo "   Email:    admin@vtcbuilder.com"
 	@echo "   Password: admin123"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
 
 quick-start: setup-backend-django start ## Configuration complète + démarrage en une commande
-	@echo "$(GREEN)🎉 Tout est prêt et démarré !$(NC)"
+	@printf "$(GREEN)🎉 Tout est prêt et démarré !$(NC)\n"
 
 ##@ Gestion des Containers
 
 start: ## Démarrer tous les services
-	@echo "$(GREEN)🚀 Démarrage des services Django...$(NC)"
+	@printf "$(GREEN)🚀 Démarrage des services Django...$(NC)\n"
 	@cd backend-django && $(MAKE) start
-	@echo "$(GREEN)✅ Services démarrés !$(NC)"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)📍 URLs d'accès :$(NC)"
+	@printf "$(GREEN)✅ Services démarrés !$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)📍 URLs d'accès :$(NC)\n"
 	@echo "   Frontend:     http://localhost:9494"
 	@echo "   API Django:   http://localhost:9495/api/"
 	@echo "   Admin Django: http://localhost:9495/admin/"
 	@echo "   PgAdmin:      http://localhost:9498"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)💡 Utilisez 'make logs' pour voir les logs$(NC)"
-	@echo "$(GREEN)💡 Utilisez 'make status' pour vérifier le statut$(NC)"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)💡 Utilisez 'make logs' pour voir les logs$(NC)\n"
+	@printf "$(GREEN)💡 Utilisez 'make status' pour vérifier le statut$(NC)\n"
 
 up: ## Démarrer tous les services
-	@echo "$(GREEN)🚀 Démarrage des services Django...$(NC)"
+	@printf "$(GREEN)🚀 Démarrage des services Django...$(NC)\n"
 	@cd backend-django && $(MAKE) start
-	@echo "$(GREEN)✅ Services démarrés !$(NC)"
+	@printf "$(GREEN)✅ Services démarrés !$(NC)\n"
 
 
 stop: ## Arrêter tous les services
-	@echo "$(YELLOW)⏸️  Arrêt des services...$(NC)"
+	@printf "$(YELLOW)⏸️  Arrêt des services...$(NC)\n"
 	@cd backend-django && $(MAKE) stop
-	@echo "$(GREEN)✅ Services arrêtés !$(NC)"
+	@printf "$(GREEN)✅ Services arrêtés !$(NC)\n"
 
 restart: ## Redémarrer tous les services
-	@echo "$(YELLOW)🔄 Redémarrage des services...$(NC)"
+	@printf "$(YELLOW)🔄 Redémarrage des services...$(NC)\n"
 	@cd backend-django && $(MAKE) restart
-	@echo "$(GREEN)✅ Services redémarrés !$(NC)"
+	@printf "$(GREEN)✅ Services redémarrés !$(NC)\n"
 
 down: ## Arrêter et supprimer tous les containers
-	@echo "$(RED)🗑️  Suppression des containers...$(NC)"
+	@printf "$(RED)🗑️  Suppression des containers...$(NC)\n"
 	@cd backend-django && $(MAKE) down
-	@echo "$(GREEN)✅ Containers supprimés !$(NC)"
+	@printf "$(GREEN)✅ Containers supprimés !$(NC)\n"
 
 build: ## Reconstruire les images Docker
-	@echo "$(GREEN)🔨 Reconstruction des images...$(NC)"
+	@printf "$(GREEN)🔨 Reconstruction des images...$(NC)\n"
 	@cd backend-django && $(MAKE) build
-	@echo "$(GREEN)✅ Images reconstruites !$(NC)"
+	@printf "$(GREEN)✅ Images reconstruites !$(NC)\n"
 
 rebuild: ## Tout reconstruire et redémarrer
-	@echo "$(GREEN)🔄 Reconstruction complète...$(NC)"
+	@printf "$(GREEN)🔄 Reconstruction complète...$(NC)\n"
 	@cd backend-django && $(MAKE) rebuild
-	@echo "$(GREEN)✅ Reconstruction terminée !$(NC)"
+	@printf "$(GREEN)✅ Reconstruction terminée !$(NC)\n"
 
 status: ## Afficher le statut des services VTCBuilder
 	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
@@ -160,70 +160,70 @@ collectstatic: ## Collecter les fichiers statiques
 	@cd backend-django && $(MAKE) collectstatic
 
 test: test-backend test-frontend ## Exécuter tous les tests (backend + frontend)
-	@echo "$(GREEN)✅ Tous les tests terminés !$(NC)"
+	@printf "$(GREEN)✅ Tous les tests terminés !$(NC)\n"
 
 test-backend: ## Exécuter les tests backend
-	@echo "$(GREEN)🧪 Exécution des tests backend...$(NC)"
+	@printf "$(GREEN)🧪 Exécution des tests backend...$(NC)\n"
 	@cd backend-django && $(MAKE) test
-	@echo "$(GREEN)✅ Tests backend terminés !$(NC)"
+	@printf "$(GREEN)✅ Tests backend terminés !$(NC)\n"
 
 test-api: ## Tester tous les endpoints de l'API
-	@echo "$(GREEN)🧪 Tests des endpoints API...$(NC)"
+	@printf "$(GREEN)🧪 Tests des endpoints API...$(NC)\n"
 	@cd backend-django && $(MAKE) test-api
-	@echo "$(GREEN)✅ Tests API terminés !$(NC)"
+	@printf "$(GREEN)✅ Tests API terminés !$(NC)\n"
 
 test-frontend: ## Exécuter les tests frontend
-	@echo "$(GREEN)🧪 Exécution des tests frontend...$(NC)"
+	@printf "$(GREEN)🧪 Exécution des tests frontend...$(NC)\n"
 	@cd frontend && npm test -- --passWithNoTests
-	@echo "$(GREEN)✅ Tests frontend terminés !$(NC)"
+	@printf "$(GREEN)✅ Tests frontend terminés !$(NC)\n"
 
 check-errors: ## Vérifier les erreurs dans les logs backend
-	@echo "$(BLUE)🔍 Vérification des erreurs...$(NC)"
+	@printf "$(BLUE)🔍 Vérification des erreurs...$(NC)\n"
 	@cd backend-django && $(MAKE) check-errors
 
 verify-features: ## Vérifier l'accès aux features selon les plans
-	@echo "$(GREEN)🔐 Vérification de l'accès aux features...$(NC)"
+	@printf "$(GREEN)🔐 Vérification de l'accès aux features...$(NC)\n"
 	@cd backend-django && $(MAKE) verify-features
-	@echo "$(GREEN)✅ Vérification terminée !$(NC)"
+	@printf "$(GREEN)✅ Vérification terminée !$(NC)\n"
 
 test-coverage: ## Exécuter les tests avec couverture de code
-	@echo "$(GREEN)📊 Exécution des tests avec couverture...$(NC)"
+	@printf "$(GREEN)📊 Exécution des tests avec couverture...$(NC)\n"
 	@cd backend-django && $(MAKE) test-coverage
 	@cd frontend && npm test -- --coverage --passWithNoTests
-	@echo "$(GREEN)✅ Rapports de couverture générés !$(NC)"
+	@printf "$(GREEN)✅ Rapports de couverture générés !$(NC)\n"
 
 ##@ Tests Billing (Abonnements, Paiements, Factures)
 
 test-billing: test-subscriptions test-payments test-invoices ## Exécuter tous les tests de facturation
-	@echo "$(GREEN)✅ Tous les tests de facturation terminés !$(NC)"
+	@printf "$(GREEN)✅ Tous les tests de facturation terminés !$(NC)\n"
 
 test-subscriptions: ## Tester les abonnements (subscriptions)
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)🧪 Tests des Abonnements (Subscriptions)$(NC)"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)🧪 Tests des Abonnements (Subscriptions)$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
 	@cd backend-django && $(MAKE) test-subscriptions-internal
-	@echo "$(GREEN)✅ Tests des abonnements terminés !$(NC)"
+	@printf "$(GREEN)✅ Tests des abonnements terminés !$(NC)\n"
 
 test-payments: ## Tester les paiements (payments)
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)🧪 Tests des Paiements (Payments)$(NC)"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)🧪 Tests des Paiements (Payments)$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
 	@cd backend-django && $(MAKE) test-payments-internal
-	@echo "$(GREEN)✅ Tests des paiements terminés !$(NC)"
+	@printf "$(GREEN)✅ Tests des paiements terminés !$(NC)\n"
 
 test-invoices: ## Tester les factures (invoices)
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)🧪 Tests des Factures (Invoices)$(NC)"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)🧪 Tests des Factures (Invoices)$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
 	@cd backend-django && $(MAKE) test-invoices-internal
-	@echo "$(GREEN)✅ Tests des factures terminés !$(NC)"
+	@printf "$(GREEN)✅ Tests des factures terminés !$(NC)\n"
 
 test-pricing-plans: ## Tester les plans tarifaires (pricing plans)
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)🧪 Tests des Plans Tarifaires (Pricing Plans)$(NC)"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)🧪 Tests des Plans Tarifaires (Pricing Plans)$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
 	@cd backend-django && $(MAKE) test-pricing-plans-internal
-	@echo "$(GREEN)✅ Tests des plans tarifaires terminés !$(NC)"
+	@printf "$(GREEN)✅ Tests des plans tarifaires terminés !$(NC)\n"
 
 ##@ Tests Trial (Abonnements d'essai)
 
@@ -265,94 +265,94 @@ logs-redis: ## Logs Redis
 ##@ Frontend (frontend/)
 
 npm-install: ## Installer les dépendances npm
-	@echo "$(GREEN)📦 Installation des dépendances npm...$(NC)"
+	@printf "$(GREEN)📦 Installation des dépendances npm...$(NC)\n"
 	@cd frontend && npm install
 
 npm-build: ## Build du frontend
-	@echo "$(GREEN)🔨 Build du frontend...$(NC)"
+	@printf "$(GREEN)🔨 Build du frontend...$(NC)\n"
 	@cd frontend && npm run build
 
 npm-dev: ## Démarrer le mode développement
-	@echo "$(GREEN)🚀 Démarrage du mode développement...$(NC)"
+	@printf "$(GREEN)🚀 Démarrage du mode développement...$(NC)\n"
 	@cd frontend && npm run dev
 
 npm-test: ## Tester le frontend (unitaires)
-	@echo "$(GREEN)🧪 Tests unitaires du frontend...$(NC)"
+	@printf "$(GREEN)🧪 Tests unitaires du frontend...$(NC)\n"
 	@cd frontend && npm test -- --passWithNoTests
-	@echo "$(GREEN)✅ Tests frontend terminés$(NC)"
+	@printf "$(GREEN)✅ Tests frontend terminés$(NC)\n"
 
 npm: ## Exécuter une commande npm
-	@echo "$(BLUE)🔧 Exécution de npm $(cmd)...$(NC)"
+	@printf "$(BLUE)🔧 Exécution de npm $(cmd)...$(NC)\n"
 	@cd frontend && npm $(cmd)
 
 ##@ Accès aux Containers
 
 bash-backend: ## Accéder au terminal du backend Django
-	@echo "$(BLUE)🔧 Accès au container backend Django...$(NC)"
+	@printf "$(BLUE)🔧 Accès au container backend Django...$(NC)\n"
 	@cd backend-django && $(MAKE) shell
 
 bash-frontend: ## Accéder au terminal du frontend
-	@echo "$(BLUE)🔧 Accès au container frontend...$(NC)"
+	@printf "$(BLUE)🔧 Accès au container frontend...$(NC)\n"
 	@docker exec -it vtcbuilder-frontend /bin/sh
 
 db-cli: ## Accéder à PostgreSQL CLI
-	@echo "$(BLUE)🗄️  Accès à PostgreSQL...$(NC)"
+	@printf "$(BLUE)🗄️  Accès à PostgreSQL...$(NC)\n"
 	@cd backend-django && $(MAKE) dbshell
 
 ##@ Nettoyage
 
 clean: ## Nettoyer les containers et volumes
-	@echo "$(RED)🧹 Nettoyage complet...$(NC)"
+	@printf "$(RED)🧹 Nettoyage complet...$(NC)\n"
 	@$(DOCKER_COMPOSE) down -v
 	@docker system prune -f
-	@echo "$(GREEN)✅ Nettoyage terminé !$(NC)"
+	@printf "$(GREEN)✅ Nettoyage terminé !$(NC)\n"
 
 clean-all: clean ## Nettoyage complet + suppression des images
 	@docker rmi $(shell docker images -q vtcbuilder* 2>/dev/null) 2>/dev/null || true
-	@echo "$(GREEN)✅ Nettoyage complet terminé !$(NC)"
+	@printf "$(GREEN)✅ Nettoyage complet terminé !$(NC)\n"
 
 reset: clean-all install start ## Reset complet du projet
 
 ##@ Production
 
 prod-build: ## Build pour la production
-	@echo "$(GREEN)🚀 Build production...$(NC)"
+	@printf "$(GREEN)🚀 Build production...$(NC)\n"
 	@$(DOCKER_COMPOSE) -f docker-compose.yml -f docker-compose.prod.yml build
-	@echo "$(GREEN)✅ Build production terminé !$(NC)"
+	@printf "$(GREEN)✅ Build production terminé !$(NC)\n"
 
 prod-up: ## Démarrer en mode production
-	@echo "$(GREEN)🚀 Démarrage en production...$(NC)"
+	@printf "$(GREEN)🚀 Démarrage en production...$(NC)\n"
 	@$(DOCKER_COMPOSE) -f docker-compose.yml -f docker-compose.prod.yml up -d
-	@echo "$(GREEN)✅ Production démarrée !$(NC)"
+	@printf "$(GREEN)✅ Production démarrée !$(NC)\n"
 
 prod-deploy: prod-build prod-up migrate optimize ## Déploiement complet en production
-	@echo "$(GREEN)✅ Déploiement production terminé !$(NC)"
+	@printf "$(GREEN)✅ Déploiement production terminé !$(NC)\n"
 
 ##@ Utilitaires
 
 # Commandes Laravel obsolètes supprimées - Projet migré vers Django
 
 urls: ## Afficher toutes les URLs du projet
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)🌐 URLs de l'application VTCBuilder :$(NC)"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)🌐 URLs de l'application VTCBuilder :$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
 	@echo "  $(YELLOW)Frontend Next.js:$(NC)  http://localhost:9494"
 	@echo "  $(YELLOW)Backend API:$(NC)        http://localhost:9495/api/"
 	@echo "  $(YELLOW)Admin Django:$(NC)       http://localhost:9495/admin/"
 	@echo "  $(YELLOW)PgAdmin:$(NC)            http://localhost:9498"
 	@echo "  $(YELLOW)PostgreSQL:$(NC)         localhost:9496"
 	@echo "  $(YELLOW)Redis:$(NC)              localhost:9497"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(GREEN)🔐 Comptes de test :$(NC)"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)🔐 Comptes de test :$(NC)\n"
 	@echo "  $(YELLOW)Super Admin:$(NC)        admin@vtcbuilder.com / admin123"
-	@echo "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
 
 info: ## Informations système Docker
-	@echo "$(BLUE)ℹ️  Informations Docker :$(NC)"
+	@printf "$(BLUE)ℹ️  Informations Docker :$(NC)\n"
 	@docker --version
 	@docker-compose --version
 	@echo ""
-	@echo "$(BLUE)💾 Utilisation disque :$(NC)"
+	@printf "$(BLUE)💾 Utilisation disque :$(NC)\n"
 	@docker system df
 
 # Commande par défaut
