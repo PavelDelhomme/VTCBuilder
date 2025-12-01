@@ -426,9 +426,12 @@ python manage.py init_features
    - ✅ Ajout configuration paths dans `tsconfig.json` pour résoudre les imports `@/`
    - ✅ Création fichier `tenant-utils.ts` manquant avec fonctions `isTenantSubdomain()` et `getTenantSlug()`
    - ✅ Configuration `baseUrl` et `paths` ajoutée dans `tsconfig.json`
+   - ✅ Configuration webpack dans `next.config.js` pour résoudre les imports `@/`
+   - ✅ Installation dépendances npm dans le container frontend (`npm install`)
    - ✅ Fichiers de configuration créés (`.env.example`, `.gitignore`, `.dockerignore`, Dockerfiles)
    - ✅ Nettoyage références CMS_CRM_Solutions (containers et volumes Docker supprimés)
    - ✅ Workflow GitHub Actions simplifié (notifications sans email externe)
+   - ✅ **RÉSOLU** : Toutes les erreurs "Module not found" corrigées, frontend fonctionne correctement
 
 3. **📄 Gestion Pages Publiques** (EN COURS)
    - ⏳ Ajouter possibilité ajouter/supprimer des pages publiques dans `/admin/pages-public`
