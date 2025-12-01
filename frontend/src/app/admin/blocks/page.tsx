@@ -16,11 +16,6 @@ export default function AdminBlocksPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingBlock, setEditingBlock] = useState<BlockType | null>(null)
-  const [filters, setFilters] = useState({
-    status: 'all' as 'all' | 'active' | 'inactive',
-    premium: 'all' as 'all' | 'premium' | 'free',
-    category: 'all' as 'all' | 'content' | 'layout' | 'media' | 'custom',
-  })
   const [formData, setFormData] = useState({
     name: '',
     label: '',
@@ -218,22 +213,6 @@ export default function AdminBlocksPage() {
     return labels[category] || category
   }
 
-  // Filter blocks based on filters
-  const filteredBlocks = blocks.filter((block) => {
-    // Status filter
-    if (filters.status === 'active' && !block.is_active) return false
-    if (filters.status === 'inactive' && block.is_active) return false
-
-    // Premium filter
-    const isPremium = block.available_plans && block.available_plans.length > 0
-    if (filters.premium === 'premium' && !isPremium) return false
-    if (filters.premium === 'free' && isPremium) return false
-
-    // Category filter
-    if (filters.category !== 'all' && block.category !== filters.category) return false
-
-    return true
-  })
 
   // Render preview based on schema
   const renderPreview = () => {
