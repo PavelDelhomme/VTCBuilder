@@ -981,6 +981,7 @@ const SortableBlock = React.memo(function SortableBlock({
 }) {
   // État pour le menu contextuel
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
+  const [showMenu, setShowMenu] = useState(false)
   const {
     attributes,
     listeners,
@@ -1083,26 +1084,46 @@ const SortableBlock = React.memo(function SortableBlock({
     return 'w-4 h-4 sm:w-5 sm:h-5'
   }
 
-  // Gérer le clic droit pour afficher le menu contextuel
+  // Gérer le clic sur le bloc pour ouvrir les paramètres directement
+  const handleBlockClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Ignorer si on clique sur les handles de redimensionnement
+    if ((e.target as HTMLElement).closest('[class*="cursor-nwse-resize"], [class*="cursor-nesw-resize"], [class*="cursor-ew-resize"]')) {
+      return
+    }
+    // Ouvrir les paramètres directement
+    onSelect()
+  }
+
+  // Gérer le clic droit pour afficher le menu contextuel (optionnel)
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setContextMenu({ x: e.clientX, y: e.clientY })
+    setShowMenu(true)
   }
 
   // Fermer le menu contextuel
   const closeContextMenu = () => {
     setContextMenu(null)
+    setShowMenu(false)
   }
 
   // Fermer le menu si on clique ailleurs
   useEffect(() => {
-    if (contextMenu) {
-      const handleClickOutside = () => closeContextMenu()
+    if (showMenu) {
+      const handleClickOutside = (e: MouseEvent) => {
+        if (!(e.target as HTMLElement).closest('[data-context-menu]')) {
+          closeContextMenu()
+        }
+      }
       document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
+      document.addEventListener('contextmenu', handleClickOutside)
+      return () => {
+        document.removeEventListener('click', handleClickOutside)
+        document.removeEventListener('contextmenu', handleClickOutside)
+      }
     }
-  }, [contextMenu])
+  }, [showMenu])
 
   return (
     <>
@@ -1114,7 +1135,8 @@ const SortableBlock = React.memo(function SortableBlock({
           }
         }}
         style={style}
-        className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] ${isResizing ? 'select-none' : ''} group`}
+        className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] ${isResizing ? 'select-none' : ''} group cursor-pointer`}
+        onClick={handleBlockClick}
         onContextMenu={handleContextMenu}
       >
       {/* Resize Handles - Only visible when selected */}
@@ -1146,13 +1168,19 @@ const SortableBlock = React.memo(function SortableBlock({
       )}
       {/* Block Header - Modern Design */}
       <div
-        className={`flex items-center justify-between ${getPadding()} cursor-move transition-colors ${
+        className={`flex items-center justify-between ${getPadding()} transition-colors ${
           isSelected 
             ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-b border-blue-200 dark:border-blue-700' 
             : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-800'
         }`}
         {...attributes}
         {...listeners}
+        onClick={(e) => {
+          // Ne pas ouvrir les paramètres si on drag
+          if (!isDragging) {
+            e.stopPropagation()
+          }
+        }}
       >
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
           <div className={`flex-shrink-0 ${getIconContainerSize()} rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-700`}>
@@ -1165,10 +1193,10 @@ const SortableBlock = React.memo(function SortableBlock({
             )}
           </div>
         </div>
-        {/* Indicateur clic droit - visible au survol */}
+        {/* Indicateur clic pour paramètres - visible au survol */}
         <div className="flex items-center gap-1 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded">
-            Clic droit pour paramètres
+          <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+            <span className="text-blue-600 dark:text-blue-400">⚙️</span> Cliquer pour paramètres
           </div>
         </div>
       </div>
@@ -1189,9 +1217,10 @@ const SortableBlock = React.memo(function SortableBlock({
       </div>
 
       {/* Menu contextuel */}
-      {contextMenu && (
+      {contextMenu && showMenu && (
         <div
-          className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl py-1 min-w-[180px]"
+          data-context-menu
+          className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl py-1 min-w-[180px]"
           style={{
             left: `${contextMenu.x}px`,
             top: `${contextMenu.y}px`,
