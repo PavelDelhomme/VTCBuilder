@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, startTransition } from 'react'
 import { useRouter } from 'next/navigation'
 
 /**
@@ -11,12 +11,14 @@ export function useNavigationLoading() {
   const [navigatingTo, setNavigatingTo] = useState<string | null>(null)
 
   const navigate = useCallback((path: string) => {
+    // Mettre à jour l'état immédiatement pour afficher le loader
     setIsNavigating(true)
     setNavigatingTo(path)
-    // Utiliser setTimeout pour permettre au render de s'exécuter avant la navigation
-    setTimeout(() => {
+    
+    // Utiliser startTransition pour permettre au render de s'exécuter avant la navigation
+    startTransition(() => {
       router.push(path)
-    }, 0)
+    })
   }, [router])
 
   return {
