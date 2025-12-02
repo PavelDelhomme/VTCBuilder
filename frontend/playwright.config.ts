@@ -45,7 +45,15 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        // Use system Chromium on Alpine Linux (skip headless shell which requires glibc)
+        channel: undefined, // Disable channel to force executablePath
+        executablePath: '/usr/bin/chromium-browser',
+        launchOptions: {
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--headless=new', '--disable-dev-shm-usage', '--disable-gpu'],
+        },
+      },
     },
 
     {

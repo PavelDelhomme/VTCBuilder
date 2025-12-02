@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   playwright:
     image: mcr.microsoft.com/playwright:v1.40.0-focal
@@ -9,13 +7,11 @@ services:
       - ./frontend:/app
       - ./playwright-report:/app/playwright-report
     environment:
-      - PLAYWRIGHT_BASE_URL=http://frontend:3000
+      - PLAYWRIGHT_BASE_URL=http://vtcbuilder-frontend:3000
       - CI=true
     networks:
       - vtcbuilder_network
-    depends_on:
-      - frontend
-    command: npx playwright test --reporter=html,json,list
+    command: sh -c "npm install && npx playwright install chromium && npx playwright test --reporter=html,json,list --project=chromium"
 
 networks:
   vtcbuilder_network:

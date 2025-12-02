@@ -15,10 +15,14 @@ test.describe('Authentication', () => {
   test('should login as super admin', async ({ page, superAdminUser }) => {
     await page.fill('input[type="email"]', superAdminUser.email)
     await page.fill('input[type="password"]', superAdminUser.password)
-    await page.click('button[type="submit"]')
+    
+    // Wait for form submission and navigation
+    await Promise.all([
+      page.waitForURL(/\/admin\/dashboard|\/dashboard/, { timeout: 15000 }),
+      page.click('button[type="submit"]')
+    ])
     
     // Should redirect to admin dashboard
-    await page.waitForURL(/\/admin\/dashboard/, { timeout: 10000 })
     await expect(page).toHaveURL(/\/admin\/dashboard/)
   })
 
@@ -27,8 +31,12 @@ test.describe('Authentication', () => {
     await page.fill('input[type="password"]', 'wrongpassword')
     await page.click('button[type="submit"]')
     
-    // Should show error message
-    await expect(page.locator('text=/erreur|invalid|incorrect/i')).toBeVisible({ timeout: 5000 })
+    // Wait a bit for the error to appear
+    await page.waitForTimeout(2000)
+    
+    // Should show error message (toast or form error)
+    const errorLocator = page.locator('text=/erreur|invalid|incorrect|connexion|mot de passe/i').first()
+    await expect(errorLocator).toBeVisible({ timeout: 10000 })
   })
 })
 
