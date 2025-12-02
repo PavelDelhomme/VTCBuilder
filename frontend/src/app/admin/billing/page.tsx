@@ -419,9 +419,9 @@ export default function BillingPage() {
       title="Facturation"
       subtitle="Gestion complète de la facturation et des paiements"
     >
-      <div className="w-full max-w-full overflow-x-hidden">
+      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
       {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex-shrink-0 mb-4 border-b border-gray-200 dark:border-gray-700">
         {/* Mobile: Menu déroulant */}
         <div className="lg:hidden mb-4">
           <select
@@ -543,9 +543,11 @@ export default function BillingPage() {
         </nav>
       </div>
 
-      {/* Overview Tab - Dashboard Complet */}
-      {activeTab === 'overview' && stats && (
-        <div className="space-y-6">
+      {/* Content Area - Scrollable */}
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        {/* Overview Tab - Dashboard Complet */}
+        {activeTab === 'overview' && stats && (
+          <div className="space-y-6 pb-6">
           {/* Cartes Statistiques Principales */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {/* Revenus Totaux */}
@@ -860,16 +862,16 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Fallback si pas de stats */}
-      {activeTab === 'overview' && !stats && (
-        <div className="text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400">Chargement des statistiques...</p>
-        </div>
-      )}
+        {/* Fallback si pas de stats */}
+        {activeTab === 'overview' && !stats && (
+          <div className="text-center py-12 pb-6">
+            <p className="text-gray-600 dark:text-gray-400">Chargement des statistiques...</p>
+          </div>
+        )}
 
       {/* Subscriptions Tab */}
       {activeTab === 'subscriptions' && (
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-6 pb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">Abonnements</h2>
             <button
@@ -936,25 +938,29 @@ export default function BillingPage() {
 
       {/* Invoices Tab */}
       {activeTab === 'invoices' && (
-        <InvoicesTab
-          invoices={invoices}
-          getStatusBadge={getStatusBadge}
-          onUpdate={loadBillingData}
-        />
+        <div className="pb-6">
+          <InvoicesTab
+            invoices={invoices}
+            getStatusBadge={getStatusBadge}
+            onUpdate={loadBillingData}
+          />
+        </div>
       )}
 
       {/* Payments Tab */}
       {activeTab === 'payments' && (
-        <PaymentsHistoryTab
-          payments={payments}
-          getStatusBadge={getStatusBadge}
-          onUpdate={loadBillingData}
-        />
+        <div className="pb-6">
+          <PaymentsHistoryTab
+            payments={payments}
+            getStatusBadge={getStatusBadge}
+            onUpdate={loadBillingData}
+          />
+        </div>
       )}
 
       {/* Plans Tab */}
       {activeTab === 'plans' && (
-        <div className="w-full max-w-full overflow-x-hidden">
+        <div className="w-full max-w-full pb-6">
           <PricingPlansTab
             pricingPlans={pricingPlans}
             onUpdate={loadBillingData}
@@ -966,16 +972,18 @@ export default function BillingPage() {
 
       {/* Payment Methods Tab */}
       {activeTab === 'payment-methods' && (
-        <PaymentMethodsTab
-          paymentMethods={paymentMethods}
-          onUpdate={loadBillingData}
-          billingService={billingService}
-        />
+        <div className="pb-6">
+          <PaymentMethodsTab
+            paymentMethods={paymentMethods}
+            onUpdate={loadBillingData}
+            billingService={billingService}
+          />
+        </div>
       )}
 
       {/* Invoice Templates Tab */}
       {activeTab === 'invoice-templates' && (
-        <div className="w-full max-w-full overflow-x-hidden">
+        <div className="w-full max-w-full pb-6">
           <InvoiceTemplatesTab
             onUpdate={loadBillingData}
           />
@@ -984,7 +992,7 @@ export default function BillingPage() {
 
       {/* Unpaid Items Tab */}
       {activeTab === 'unpaid' && (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-6">
           {loadingUnpaid || unpaidItems === null ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
@@ -1263,6 +1271,7 @@ export default function BillingPage() {
         />
       )}
       </div>
+      </div>
     </AdminLayout>
   )
 }
@@ -1381,7 +1390,7 @@ function PricingPlansTab({
   const sortedPlans = [...pricingPlans].sort((a, b) => (a.order || 0) - (b.order || 0))
 
   return (
-    <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
+    <div className="space-y-4 sm:space-y-6 w-full min-h-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
         <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">Gestion des Plans Tarifaires</h2>
         <button
@@ -1854,7 +1863,7 @@ function PaymentsHistoryTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full min-h-0">
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -2138,7 +2147,7 @@ function PaymentMethodsTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full min-h-0">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Gestion des Modes de Paiement</h2>
         <button
