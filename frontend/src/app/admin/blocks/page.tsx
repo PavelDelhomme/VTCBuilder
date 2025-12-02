@@ -697,7 +697,6 @@ export default function AdminBlocksPage() {
             ),
             sortable: true,
             minWidth: '180px',
-            sticky: 'left',
           },
           {
             key: 'label',
@@ -855,7 +854,7 @@ export default function AdminBlocksPage() {
             </button>
           </>
         )}
-        actionsSticky={true}
+        actionsSticky={false}
       />
       </div>
     </AdminLayout>

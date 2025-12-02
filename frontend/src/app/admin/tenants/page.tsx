@@ -230,12 +230,12 @@ export default function TenantsPage() {
 
           {/* Tenants List */}
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden w-full max-w-full">
-            <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+            <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
                     <th 
-                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[200px] sticky left-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[2px_0_4px_rgba(0,0,0,0.1)]"
+                      className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[200px]"
                       onClick={() => handleSort('name')}
                     >
                       <div className="flex items-center">
@@ -279,7 +279,7 @@ export default function TenantsPage() {
                         <SortIcon field="created_at" />
                       </div>
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[160px] sticky right-0 bg-gray-50 dark:bg-gray-900 z-20 shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">
+                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[160px]">
                       Actions
                     </th>
                   </tr>
@@ -305,7 +305,7 @@ export default function TenantsPage() {
                         router.push(`/admin/tenants/${tenant.id}`)
                       }}
                     >
-                      <td className="px-3 sm:px-6 py-4 sticky left-0 bg-white dark:bg-gray-800 z-10 min-w-[200px] shadow-[2px_0_4px_rgba(0,0,0,0.1)]">
+                      <td className="px-3 sm:px-6 py-4 min-w-[200px]">
                         <div className="flex items-center">
                           <div>
                             <div className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">{tenant.name}</div>
@@ -344,7 +344,7 @@ export default function TenantsPage() {
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell min-w-[110px]">
                         {new Date(tenant.created_at).toLocaleDateString('fr-FR')}
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white dark:bg-gray-800 z-10 min-w-[160px] shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium min-w-[160px]">
                         <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={(e) => {
