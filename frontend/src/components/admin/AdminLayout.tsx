@@ -109,11 +109,13 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
       <ImpersonationBanner />
       
       {/* Mobile Header */}
+      {!hideHeader && (
       <MobileHeader 
         title={title} 
         subtitle={subtitle}
         onMenuClick={() => setSidebarOpen(true)}
       />
+      )}
 
       <div className="flex relative flex-1 min-h-0 overflow-hidden">
         {/* Sidebar - Toujours présent mais caché/surpimposé selon la taille d'écran */}
