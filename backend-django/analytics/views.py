@@ -320,7 +320,7 @@ def usage_stats(request):
         
         # Actions by user (detailed)
         actions_by_user = all_actions.exclude(user__isnull=True).values(
-            'user__id', 'user__email', 'user__first_name', 'user__last_name', 'tenant__name', 'tenant__id'
+            'user__id', 'user__email', 'user__first_name', 'user__last_name'
         ).annotate(
             total_actions=Count('id'),
             page_views=Count('id', filter=Q(action_type='page_view')),
@@ -330,6 +330,23 @@ def usage_stats(request):
             block_actions=Count('id', filter=Q(action_type__in=['block_add', 'block_edit', 'block_delete'])),
             last_action=Max('created_at')
         ).order_by('-total_actions')[:50]
+        
+        # Add tenant info separately to avoid NoneType errors
+        for user_action in actions_by_user:
+            user_id = user_action['user__id']
+            try:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                user = User.objects.get(id=user_id)
+                if hasattr(user, 'tenant') and user.tenant is not None:
+                    user_action['tenant__name'] = user.tenant.name
+                    user_action['tenant__id'] = user.tenant.id
+                else:
+                    user_action['tenant__name'] = None
+                    user_action['tenant__id'] = None
+            except Exception:
+                user_action['tenant__name'] = None
+                user_action['tenant__id'] = None
         
         # Actions by tenant (detailed)
         actions_by_tenant = all_actions.exclude(tenant__isnull=True).values(
