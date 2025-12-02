@@ -266,7 +266,7 @@ class Command(BaseCommand):
                             'data': {
                                 'title': '',
                                 'show_title': False,  # Title is already in heading above
-                                'source': 'dynamic',
+                                'source': 'api',
                                 'api_endpoint': '/api/billing/pricing-plans/',
                                 'plans': [],  # Will be loaded from API in frontend
                             },
