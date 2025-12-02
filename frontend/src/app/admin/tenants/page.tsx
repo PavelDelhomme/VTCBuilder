@@ -5,8 +5,170 @@ import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
 import AdminLayout from '@/components/admin/AdminLayout'
 import tenantService, { Tenant } from '@/services/tenant.service'
+import userService from '@/services/user.service'
 import PageLoader from '@/components/shared/PageLoader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
+import toast from 'react-hot-toast'
+
+// Composant pour les actions des tenants
+function TenantActionsDropdown({
+  tenant,
+  onView,
+  onImpersonate,
+  onPasswordReset,
+  onActivate,
+  onSuspend,
+  onDelete,
+  onRestore,
+  isLoading,
+}: {
+  tenant: Tenant
+  onView: () => void
+  onImpersonate: () => void
+  onPasswordReset: () => void
+  onActivate: () => void
+  onSuspend: () => void
+  onDelete: () => void
+  onRestore: () => void
+  isLoading: boolean
+}) {
+  const [showMenu, setShowMenu] = useState(false)
+
+  return (
+    <div className="relative">
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          setShowMenu(!showMenu)
+        }}
+        disabled={isLoading}
+        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        title="Actions"
+      >
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+        </svg>
+      </button>
+      {showMenu && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setShowMenu(false)}
+          />
+          <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
+            <div className="py-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onView()
+                  setShowMenu(false)
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Voir détails
+              </button>
+              {!tenant.deleted_at && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onImpersonate()
+                      setShowMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Impersonner l'admin
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onPasswordReset()
+                      setShowMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                    Réinitialiser mot de passe admin
+                  </button>
+                  <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                  {tenant.status === 'active' ? (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onSuspend()
+                          setShowMenu(false)
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-yellow-600 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Suspendre
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onActivate()
+                        setShowMenu(false)
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                      </svg>
+                      Activer
+                    </button>
+                  )}
+                  <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDelete()
+                      setShowMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Supprimer
+                  </button>
+                </>
+              )}
+              {tenant.deleted_at && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onRestore()
+                    setShowMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Restaurer
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 export default function TenantsPage() {
   const router = useRouter()
@@ -38,26 +200,31 @@ export default function TenantsPage() {
     }
   }
 
-  const handleSuspend = async (id: number) => {
-    if (!confirm('Êtes-vous sûr de vouloir suspendre ce tenant ?')) return
+  const handleSuspend = async (id: number, tenantName: string) => {
+    if (!confirm(`⚠️ SUSPENSION ⚠️\n\nVous êtes sur le point de suspendre le tenant "${tenantName}".\n\nCette action va :\n- Empêcher l'accès au tenant\n- Les utilisateurs ne pourront plus se connecter\n\nÊtes-vous sûr de vouloir continuer ?`)) return
     setActionLoading({ ...actionLoading, [id]: 'suspend' })
     try {
       await tenantService.suspend(id)
+      toast.success('Tenant suspendu avec succès')
       await loadTenants()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur suspension:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la suspension')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
     }
   }
 
-  const handleActivate = async (id: number) => {
+  const handleActivate = async (id: number, tenantName: string) => {
+    if (!confirm(`Activer le tenant "${tenantName}" ?\n\nCette action va restaurer l'accès complet au tenant.`)) return
     setActionLoading({ ...actionLoading, [id]: 'activate' })
     try {
       await tenantService.activate(id)
+      toast.success('Tenant activé avec succès')
       await loadTenants()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur activation:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de l\'activation')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
     }
@@ -85,18 +252,76 @@ export default function TenantsPage() {
   }
 
   const handleRestore = async (id: number, tenantName: string) => {
-    if (!confirm(`Restaurer le tenant "${tenantName}" ?`)) return
+    if (!confirm(`⚠️ RESTAURATION ⚠️\n\nVous êtes sur le point de restaurer le tenant "${tenantName}".\n\nCette action va :\n- Restaurer l'accès au tenant\n- Réactiver tous les utilisateurs associés\n\nÊtes-vous sûr de vouloir continuer ?`)) return
     
     setActionLoading({ ...actionLoading, [id]: 'restore' })
     try {
       const result = await tenantService.restore(id)
-      alert(result.message || 'Tenant restauré avec succès')
+      toast.success(result.message || 'Tenant restauré avec succès')
       await loadTenants()
     } catch (error: any) {
       console.error('Erreur restauration:', error)
-      alert(error.response?.data?.error || 'Erreur lors de la restauration du tenant')
+      toast.error(error.response?.data?.error || 'Erreur lors de la restauration du tenant')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
+    }
+  }
+
+  const handleImpersonate = async (tenant: Tenant) => {
+    if (!confirm(`⚠️ IMPERSONNIFICATION ⚠️\n\nVous êtes sur le point d'impersonner l'administrateur du tenant "${tenant.name}".\n\nVous serez connecté en tant que cet administrateur pour gérer ses problèmes.\n\nÊtes-vous sûr de vouloir continuer ?`)) return
+    
+    setActionLoading({ ...actionLoading, [tenant.id]: 'impersonate' })
+    try {
+      // Récupérer l'utilisateur admin du tenant
+      const users = await userService.getAll()
+      const adminUser = users.find((u: any) => u.tenant?.id === tenant.id && u.role === 'tenant-admin')
+      
+      if (!adminUser) {
+        toast.error('Aucun administrateur trouvé pour ce tenant')
+        setActionLoading({ ...actionLoading, [tenant.id]: '' })
+        return
+      }
+
+      const result = await userService.impersonate(adminUser.id)
+      
+      // Update tokens in localStorage
+      if (result.tokens?.access) {
+        localStorage.setItem('token', result.tokens.access)
+        localStorage.setItem('refresh_token', result.tokens.refresh)
+        localStorage.setItem('user', JSON.stringify(result.target_user))
+      }
+      
+      toast.success(result.message || 'Impersonnification démarrée')
+      
+      // Redirect to dashboard
+      router.push('/dashboard')
+      
+      // Reload page to refresh user context
+      window.location.reload()
+    } catch (error: any) {
+      console.error('Erreur impersonnification:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de l\'impersonnification')
+      setActionLoading({ ...actionLoading, [tenant.id]: '' })
+    }
+  }
+
+  const handlePasswordReset = async (tenant: Tenant) => {
+    if (!confirm(`⚠️ RÉINITIALISATION MOT DE PASSE ⚠️\n\nVous êtes sur le point de réinitialiser le mot de passe de l'administrateur du tenant "${tenant.name}".\n\nLe mot de passe sera réinitialisé à "admin123" par défaut.\n\nÊtes-vous sûr de vouloir continuer ?`)) return
+    
+    setActionLoading({ ...actionLoading, [tenant.id]: 'password-reset' })
+    try {
+      // Utiliser l'endpoint reset_admin_password du backend via api
+      const api = (await import('@/lib/api')).default
+      const response = await api.post(`/tenants/${tenant.id}/reset_admin_password/`, {
+        password: 'admin123',
+      })
+      
+      toast.success('Mot de passe réinitialisé avec succès. Le nouveau mot de passe est "admin123"')
+    } catch (error: any) {
+      console.error('Erreur réinitialisation mot de passe:', error)
+      toast.error(error.response?.data?.error || error.message || 'Erreur lors de la réinitialisation du mot de passe')
+    } finally {
+      setActionLoading({ ...actionLoading, [tenant.id]: '' })
     }
   }
 
@@ -346,85 +571,104 @@ export default function TenantsPage() {
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium min-w-[160px]">
                         <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setNavigating(true)
-                              router.push(`/admin/tenants/${tenant.id}`)
-                            }}
-                            className="text-blue-600 hover:text-blue-900 p-1 sm:p-0"
-                            title="Voir détails"
-                          >
-                            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </button>
-                          {tenant.deleted_at ? (
-                            // Tenant is soft deleted - show restore button
+                          {/* Desktop: Boutons individuels */}
+                          <div className="hidden sm:flex justify-end items-center gap-1 sm:gap-2 flex-nowrap">
                             <button
-                              onClick={() => handleRestore(tenant.id, tenant.name)}
-                              disabled={actionLoading[tenant.id] === 'restore'}
-                              className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed p-1 sm:p-0"
-                              title="Restaurer le tenant"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setNavigating(true)
+                                router.push(`/admin/tenants/${tenant.id}`)
+                              }}
+                              className="text-blue-600 hover:text-blue-900 p-1 sm:p-0"
+                              title="Voir détails"
                             >
-                              {actionLoading[tenant.id] === 'restore' ? (
-                                <LoadingSpinner size="sm" />
-                              ) : (
-                                <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                              )}
+                              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
                             </button>
-                          ) : (
-                            <>
-                              {tenant.status === 'active' ? (
-                                <button
-                                  onClick={() => handleSuspend(tenant.id)}
-                                  disabled={actionLoading[tenant.id] === 'suspend'}
-                                  className="text-yellow-600 hover:text-yellow-900 disabled:opacity-50 disabled:cursor-not-allowed p-1 sm:p-0"
-                                  title="Suspendre"
-                                >
-                                  {actionLoading[tenant.id] === 'suspend' ? (
-                                    <LoadingSpinner size="sm" />
-                                  ) : (
-                                    <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                  )}
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleActivate(tenant.id)}
-                                  disabled={actionLoading[tenant.id] === 'activate'}
-                                  className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed p-1 sm:p-0"
-                                  title="Activer"
-                                >
-                                  {actionLoading[tenant.id] === 'activate' ? (
-                                    <LoadingSpinner size="sm" />
-                                  ) : (
-                                    <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                                    </svg>
-                                  )}
-                                </button>
-                              )}
+                            {tenant.deleted_at ? (
                               <button
-                                onClick={() => handleDelete(tenant.id, tenant.name)}
-                                disabled={actionLoading[tenant.id] === 'delete'}
-                                className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed p-1 sm:p-0"
-                                title="Marquer comme supprimé (récupérable pendant 1 mois)"
+                                onClick={() => handleRestore(tenant.id, tenant.name)}
+                                disabled={actionLoading[tenant.id] === 'restore'}
+                                className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed p-1 sm:p-0"
+                                title="Restaurer le tenant"
                               >
-                                {actionLoading[tenant.id] === 'delete' ? (
+                                {actionLoading[tenant.id] === 'restore' ? (
                                   <LoadingSpinner size="sm" />
                                 ) : (
                                   <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                   </svg>
                                 )}
                               </button>
-                            </>
-                          )}
+                            ) : (
+                              <>
+                                {tenant.status === 'active' ? (
+                                  <button
+                                    onClick={() => handleSuspend(tenant.id, tenant.name)}
+                                    disabled={actionLoading[tenant.id] === 'suspend'}
+                                    className="text-yellow-600 hover:text-yellow-900 disabled:opacity-50 disabled:cursor-not-allowed p-1 sm:p-0"
+                                    title="Suspendre"
+                                  >
+                                    {actionLoading[tenant.id] === 'suspend' ? (
+                                      <LoadingSpinner size="sm" />
+                                    ) : (
+                                      <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleActivate(tenant.id, tenant.name)}
+                                    disabled={actionLoading[tenant.id] === 'activate'}
+                                    className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed p-1 sm:p-0"
+                                    title="Activer"
+                                  >
+                                    {actionLoading[tenant.id] === 'activate' ? (
+                                      <LoadingSpinner size="sm" />
+                                    ) : (
+                                      <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleDelete(tenant.id, tenant.name)}
+                                  disabled={actionLoading[tenant.id] === 'delete'}
+                                  className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed p-1 sm:p-0"
+                                  title="Marquer comme supprimé (récupérable pendant 1 mois)"
+                                >
+                                  {actionLoading[tenant.id] === 'delete' ? (
+                                    <LoadingSpinner size="sm" />
+                                  ) : (
+                                    <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  )}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                          {/* Mobile: Menu dropdown avec trois points */}
+                          <div className="sm:hidden">
+                            <TenantActionsDropdown
+                              tenant={tenant}
+                              onView={() => {
+                                setNavigating(true)
+                                router.push(`/admin/tenants/${tenant.id}`)
+                              }}
+                              onImpersonate={() => handleImpersonate(tenant)}
+                              onPasswordReset={() => handlePasswordReset(tenant)}
+                              onActivate={() => handleActivate(tenant.id, tenant.name)}
+                              onSuspend={() => handleSuspend(tenant.id, tenant.name)}
+                              onDelete={() => handleDelete(tenant.id, tenant.name)}
+                              onRestore={() => handleRestore(tenant.id, tenant.name)}
+                              isLoading={!!actionLoading[tenant.id]}
+                            />
+                          </div>
                         </div>
                       </td>
                     </tr>
