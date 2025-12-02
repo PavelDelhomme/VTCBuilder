@@ -232,8 +232,15 @@ export default function EditPublicPage() {
       const settingsData: any = {}
       
       if (pageSlug === 'home') {
+        // Sauvegarder les blocs
         settingsData.public_homepage_blocks = blocks
-        settingsData.public_homepage_status = status
+        // Ne publier que si le statut est explicitement 'published'
+        // Sinon, garder en mode brouillon pour ne pas affecter la page publiée
+        if (status === 'published') {
+          settingsData.public_homepage_status = 'published'
+        } else {
+          settingsData.public_homepage_status = 'draft'
+        }
         settingsData.public_homepage_meta_title = metaTitle
         settingsData.public_homepage_meta_description = metaDescription
       } else {
