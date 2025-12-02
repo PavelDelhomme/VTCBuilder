@@ -102,6 +102,7 @@ make demo-tenant
 - **Frontend**: http://localhost:9494
 - **API Django**: http://localhost:9495/api/
 - **Admin Django**: http://localhost:9495/admin/
+- **Traefik Dashboard**: http://localhost:5050
 - **PgAdmin**: http://localhost:9498
 - **PostgreSQL**: localhost:9496
 - **Redis**: localhost:9497
