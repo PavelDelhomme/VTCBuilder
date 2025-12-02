@@ -351,11 +351,40 @@ class Command(BaseCommand):
             settings.public_homepage_meta_description = 'Plateforme complète pour créer et gérer votre site VTC professionnel'
             settings.save()
             
+            # Ensure homepage is in the system project
+            from projects.models import Project, ProjectPage
+            system_project, _ = Project.objects.get_or_create(
+                slug='vtcbuilder-public-site',
+                defaults={
+                    'name': 'VTCBuilder - Site Public',
+                    'description': 'Projet par défaut pour les pages publiques du site VTCBuilder.',
+                    'is_system_project': True,
+                    'tenant': None,
+                    'status': 'active',
+                }
+            )
+            
+            # Ensure homepage page is in project
+            project_page, created = ProjectPage.objects.get_or_create(
+                project=system_project,
+                page_slug='home',
+                page_type='public',
+                defaults={
+                    'order': 1,
+                    'is_active': True,
+                }
+            )
+            
             self.stdout.write(
                 self.style.SUCCESS(
                     f'\n✅ Page d\'accueil générée avec {len(blocks)} blocs principaux !\n'
                     f'   Statut: Brouillon (draft)\n'
-                    f'   Pour publier, allez dans /admin/pages-public/home/edit et changez le statut à "Publié"\n'
+                    f'   Projet: {system_project.name} (ID: {system_project.id})\n'
+                    f'   Page dans projet: {"Créée" if created else "Déjà présente"}\n'
+                    f'\n💡 Pour gérer la page:\n'
+                    f'   - Éditer: /admin/pages-public/home/edit\n'
+                    f'   - Via projet: /admin/projects/{system_project.id}\n'
+                    f'   - Publier: Changez le statut à "Publié" dans l\'éditeur\n'
                     f'\n💡 Pour restaurer la version précédente:\n'
                     f'   make restore-homepage\n'
                     f'   ou\n'
