@@ -310,12 +310,7 @@ export default function TenantsPage() {
     
     setActionLoading({ ...actionLoading, [tenant.id]: 'password-reset' })
     try {
-      // Utiliser l'endpoint reset_admin_password du backend via api
-      const api = (await import('@/lib/api')).default
-      const response = await api.post(`/tenants/${tenant.id}/reset_admin_password/`, {
-        password: 'admin123',
-      })
-      
+      await tenantService.resetAdminPassword(tenant.id, 'admin123')
       toast.success('Mot de passe réinitialisé avec succès. Le nouveau mot de passe est "admin123"')
     } catch (error: any) {
       console.error('Erreur réinitialisation mot de passe:', error)
