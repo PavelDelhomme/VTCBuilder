@@ -142,11 +142,11 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
                     {subtitle && <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">{subtitle}</p>}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 flex-shrink-0 w-full sm:w-auto">
                   {/* Dark Mode Toggle */}
                   <button
                     onClick={toggleTheme}
-                    className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-2 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors"
+                    className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-2 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
                     aria-label={resolvedTheme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
                     title={resolvedTheme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
                   >
@@ -160,7 +160,7 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
                       </svg>
                     )}
                   </button>
-                  {headerActions && <div className="w-full lg:w-auto">{headerActions}</div>}
+                  {headerActions && <div className="w-full sm:w-auto min-w-0">{headerActions}</div>}
                 </div>
               </div>
             </div>

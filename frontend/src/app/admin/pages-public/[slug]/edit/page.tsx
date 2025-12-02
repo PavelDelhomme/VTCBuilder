@@ -179,10 +179,10 @@ export default function EditPublicPage() {
       title={`Éditer ${PAGE_TITLES[pageSlug] || pageSlug}`}
       subtitle={`Créez et personnalisez la page ${pageSlug === 'home' ? 'd\'accueil' : pageSlug} avec l'éditeur de blocs complet`}
       headerActions={
-        <div className="flex gap-3 flex-wrap items-center">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap items-start sm:items-center w-full">
           {/* Page Selector - Isolated for better readability */}
           {availablePages.length > 1 && (
-            <div className="flex items-center gap-2 pr-3 border-r border-gray-300 dark:border-gray-600">
+            <div className="flex items-center gap-2 pr-0 sm:pr-3 border-0 sm:border-r border-gray-300 dark:border-gray-600 w-full sm:w-auto">
               <label className="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
                 Page:
               </label>
@@ -191,7 +191,7 @@ export default function EditPublicPage() {
                 onChange={(e) => {
                   router.push(`/admin/pages-public/${e.target.value}/edit`)
                 }}
-                className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm font-medium min-w-[180px]"
+                className="flex-1 sm:flex-none px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm font-medium min-w-[180px]"
               >
                 {availablePages.map((page) => (
                   <option key={page.slug} value={page.slug}>
@@ -205,17 +205,18 @@ export default function EditPublicPage() {
           {/* Preview Toggle */}
           <button
             onClick={() => setShowPreview(!showPreview)}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
+            className={`px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
               showPreview 
                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
                 : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
             }`}
           >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            {showPreview ? 'Masquer' : 'Afficher'} Prévisualisation
+            <span className="hidden sm:inline">{showPreview ? 'Masquer' : 'Afficher'} Prévisualisation</span>
+            <span className="sm:hidden">{showPreview ? 'Masquer' : 'Afficher'}</span>
           </button>
 
           {/* Preview Mode Selector */}
@@ -223,7 +224,7 @@ export default function EditPublicPage() {
             <div className="flex gap-1 bg-gray-100 dark:bg-gray-900 rounded-lg p-1">
               <button
                 onClick={() => setPreviewMode('desktop')}
-                className={`px-3 py-1 rounded text-sm transition-colors ${
+                className={`px-2 sm:px-3 py-1 rounded text-sm transition-colors ${
                   previewMode === 'desktop'
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
@@ -234,7 +235,7 @@ export default function EditPublicPage() {
               </button>
               <button
                 onClick={() => setPreviewMode('tablet')}
-                className={`px-3 py-1 rounded text-sm transition-colors ${
+                className={`px-2 sm:px-3 py-1 rounded text-sm transition-colors ${
                   previewMode === 'tablet'
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
@@ -245,7 +246,7 @@ export default function EditPublicPage() {
               </button>
               <button
                 onClick={() => setPreviewMode('mobile')}
-                className={`px-3 py-1 rounded text-sm transition-colors ${
+                className={`px-2 sm:px-3 py-1 rounded text-sm transition-colors ${
                   previewMode === 'mobile'
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
@@ -260,12 +261,13 @@ export default function EditPublicPage() {
           {/* External Preview */}
           <button
             onClick={() => window.open(`/${pageSlug === 'home' ? '' : pageSlug}`, '_blank')}
-            className="px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+            className="px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 whitespace-nowrap"
           >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
-            Ouvrir dans un nouvel onglet
+            <span className="hidden sm:inline">Ouvrir dans un nouvel onglet</span>
+            <span className="sm:hidden">Ouvrir</span>
           </button>
 
           {/* New Page Button */}
@@ -309,26 +311,29 @@ export default function EditPublicPage() {
                 toast.error('Erreur lors de la création de la nouvelle page')
               }
             }}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+            className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 whitespace-nowrap"
           >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Nouvelle page
+            <span className="hidden sm:inline">Nouvelle page</span>
+            <span className="sm:hidden">+ Page</span>
           </button>
 
           {/* Auto-save indicator */}
           {isAutoSaving ? (
-            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm">
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent"></div>
-              <span>Sauvegarde...</span>
+            <div className="flex items-center gap-2 px-2 sm:px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm whitespace-nowrap">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent flex-shrink-0"></div>
+              <span className="hidden sm:inline">Sauvegarde...</span>
+              <span className="sm:hidden">...</span>
             </div>
           ) : lastSaved ? (
-            <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-sm">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center gap-2 px-2 sm:px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-sm whitespace-nowrap">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span>Sauvegardé {lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span className="hidden sm:inline">Sauvegardé {lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span className="sm:hidden">{lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           ) : null}
 
@@ -336,19 +341,20 @@ export default function EditPublicPage() {
           <button
             onClick={handleSave}
             disabled={saving || isAutoSaving}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+            className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2 whitespace-nowrap"
           >
             {saving ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Sauvegarde...
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white flex-shrink-0"></div>
+                <span className="hidden sm:inline">Sauvegarde...</span>
+                <span className="sm:hidden">...</span>
               </>
             ) : (
               <>
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                Sauvegarder
+                <span>Sauvegarder</span>
               </>
             )}
           </button>
