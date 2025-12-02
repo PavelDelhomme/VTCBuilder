@@ -379,6 +379,18 @@ export default function EditPublicPage() {
               </>
             )}
           </button>
+
+          {/* Close Button */}
+          <button
+            onClick={() => router.push('/admin/projects/1')}
+            className="px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 whitespace-nowrap"
+            title="Quitter l'éditeur"
+          >
+            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span className="hidden sm:inline">Quitter</span>
+          </button>
         </div>
       }
     >
