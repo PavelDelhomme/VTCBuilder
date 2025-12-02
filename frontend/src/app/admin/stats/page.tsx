@@ -431,6 +431,7 @@ export default function StatsPage() {
               </nav>
             </div>
           </div>
+          </div>
         </div>
 
         {/* Content Area - Scrollable */}
