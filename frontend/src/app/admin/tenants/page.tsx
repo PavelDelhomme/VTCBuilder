@@ -8,10 +8,8 @@ import tenantService, { Tenant } from '@/services/tenant.service'
 import userService from '@/services/user.service'
 import PageLoader from '@/components/shared/PageLoader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
+import ActionsDropdown, { ActionItem } from '@/components/shared/ActionsDropdown'
 import toast from 'react-hot-toast'
-
-// Composant pour les actions des tenants
-function TenantActionsDropdown({
   tenant,
   onView,
   onImpersonate,
@@ -649,18 +647,88 @@ export default function TenantsPage() {
                           </div>
                           {/* Mobile: Menu dropdown avec trois points */}
                           <div className="sm:hidden">
-                            <TenantActionsDropdown
-                              tenant={tenant}
-                              onView={() => {
-                                setNavigating(true)
-                                router.push(`/admin/tenants/${tenant.id}`)
-                              }}
-                              onImpersonate={() => handleImpersonate(tenant)}
-                              onPasswordReset={() => handlePasswordReset(tenant)}
-                              onActivate={() => handleActivate(tenant.id, tenant.name)}
-                              onSuspend={() => handleSuspend(tenant.id, tenant.name)}
-                              onDelete={() => handleDelete(tenant.id, tenant.name)}
-                              onRestore={() => handleRestore(tenant.id, tenant.name)}
+                            <ActionsDropdown
+                              actions={[
+                                {
+                                  label: 'Voir détails',
+                                  icon: (
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                  ),
+                                  onClick: () => {
+                                    setNavigating(true)
+                                    router.push(`/admin/tenants/${tenant.id}`)
+                                  },
+                                },
+                                ...(!tenant.deleted_at ? [
+                                  {
+                                    label: 'Impersonner l\'admin',
+                                    icon: (
+                                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                      </svg>
+                                    ),
+                                    onClick: () => handleImpersonate(tenant),
+                                  },
+                                  {
+                                    label: 'Réinitialiser mot de passe admin',
+                                    icon: (
+                                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                      </svg>
+                                    ),
+                                    onClick: () => handlePasswordReset(tenant),
+                                    divider: true,
+                                  },
+                                  ...(tenant.status === 'active' ? [
+                                    {
+                                      label: 'Suspendre',
+                                      icon: (
+                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                      ),
+                                      onClick: () => handleSuspend(tenant.id, tenant.name),
+                                      variant: 'warning' as const,
+                                    },
+                                  ] : [
+                                    {
+                                      label: 'Activer',
+                                      icon: (
+                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                                        </svg>
+                                      ),
+                                      onClick: () => handleActivate(tenant.id, tenant.name),
+                                      variant: 'success' as const,
+                                    },
+                                  ]),
+                                  {
+                                    label: 'Supprimer',
+                                    icon: (
+                                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                      </svg>
+                                    ),
+                                    onClick: () => handleDelete(tenant.id, tenant.name),
+                                    variant: 'danger' as const,
+                                    divider: true,
+                                  },
+                                ] : [
+                                  {
+                                    label: 'Restaurer',
+                                    icon: (
+                                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                      </svg>
+                                    ),
+                                    onClick: () => handleRestore(tenant.id, tenant.name),
+                                    variant: 'success' as const,
+                                  },
+                                ]),
+                              ]}
                               isLoading={!!actionLoading[tenant.id]}
                             />
                           </div>
