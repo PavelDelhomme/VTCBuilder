@@ -678,9 +678,10 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   </svg>
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 min-h-0" style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}>
-                {/* Header avec recherche et filtres */}
-                <div className="sticky top-0 bg-gradient-to-b from-gray-50 via-gray-50 to-transparent dark:from-gray-900 dark:via-gray-900 dark:to-transparent pb-4 z-10 mb-4">
+              <div className="flex-1 overflow-y-auto min-h-0" style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch', maxHeight: '100%' }}>
+                <div className="p-4 sm:p-5 lg:p-6">
+                  {/* Header avec recherche et filtres */}
+                  <div className="sticky top-0 bg-gradient-to-b from-gray-50 via-gray-50 to-transparent dark:from-gray-900 dark:via-gray-900 dark:to-transparent pb-4 z-10 mb-4 -mx-4 sm:-mx-5 lg:-mx-6 px-4 sm:px-5 lg:px-6">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3">Blocs disponibles</h3>
                   
                   {/* Barre de recherche */}
