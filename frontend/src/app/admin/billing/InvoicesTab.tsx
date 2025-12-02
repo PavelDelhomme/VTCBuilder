@@ -176,8 +176,8 @@ export default function InvoicesTab({ invoices: initialInvoices, getStatusBadge,
   return (
     <div className="w-full space-y-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-      {/* Filters */}
-      <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+        {/* Filters */}
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Tenant Filter */}
           <div>
@@ -381,6 +381,7 @@ export default function InvoicesTab({ invoices: initialInvoices, getStatusBadge,
           </table>
         </div>
       )}
+      </div>
     </div>
   )
 }
