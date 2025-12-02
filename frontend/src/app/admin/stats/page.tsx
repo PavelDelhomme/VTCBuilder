@@ -436,7 +436,7 @@ export default function StatsPage() {
         {/* Content Area - Scrollable */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           {/* Cartes Statistiques Billing - Même style que /admin/billing */}
-        {billingStats && (
+          {billingStats && (
           <>
             {/* Première rangée - Cartes principales avec gradients */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
@@ -1319,7 +1319,7 @@ export default function StatsPage() {
         )}
 
         {/* Contenu des onglets */}
-        <div className="space-y-6">
+        <div className="space-y-6 min-h-0">
             {/* Onglet: Vue d'ensemble */}
             {activeTab === 'overview' && (
               <>
@@ -2008,7 +2008,6 @@ export default function StatsPage() {
               </div>
             )}
           </div>
-        </div>
         </div>
       </div>
     </AdminLayout>

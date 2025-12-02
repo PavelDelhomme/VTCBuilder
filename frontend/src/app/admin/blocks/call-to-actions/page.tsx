@@ -656,7 +656,6 @@ export default function AdminCallToActionsPage() {
           )}
         </div>
       </div>
-      </div>
     </AdminLayout>
   )
 }

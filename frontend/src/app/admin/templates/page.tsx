@@ -311,7 +311,7 @@ export default function AdminTemplatesPage() {
         </button>
       }
     >
-      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
+      <div className="w-full">
       {/* Form */}
       {showForm && (
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 mb-6">
@@ -950,7 +950,6 @@ export default function AdminTemplatesPage() {
             </table>
           </div>
         </div>
-      </div>
       </div>
     </AdminLayout>
   )
