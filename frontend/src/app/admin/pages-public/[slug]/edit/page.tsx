@@ -179,22 +179,27 @@ export default function EditPublicPage() {
       title={`Éditer ${PAGE_TITLES[pageSlug] || pageSlug}`}
       subtitle={`Créez et personnalisez la page ${pageSlug === 'home' ? 'd\'accueil' : pageSlug} avec l'éditeur de blocs complet`}
       headerActions={
-        <div className="flex gap-2 flex-wrap">
-          {/* Page Selector */}
+        <div className="flex gap-3 flex-wrap items-center">
+          {/* Page Selector - Isolated for better readability */}
           {availablePages.length > 1 && (
-            <select
-              value={pageSlug}
-              onChange={(e) => {
-                router.push(`/admin/pages-public/${e.target.value}/edit`)
-              }}
-              className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
-            >
-              {availablePages.map((page) => (
-                <option key={page.slug} value={page.slug}>
-                  {page.title}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-2 pr-3 border-r border-gray-300 dark:border-gray-600">
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                Page:
+              </label>
+              <select
+                value={pageSlug}
+                onChange={(e) => {
+                  router.push(`/admin/pages-public/${e.target.value}/edit`)
+                }}
+                className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm font-medium min-w-[180px]"
+              >
+                {availablePages.map((page) => (
+                  <option key={page.slug} value={page.slug}>
+                    {page.title}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
 
           {/* Preview Toggle */}
