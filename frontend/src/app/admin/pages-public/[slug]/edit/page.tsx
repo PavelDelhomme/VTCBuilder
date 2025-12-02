@@ -221,6 +221,25 @@ export default function EditPublicPage() {
             </div>
           )}
 
+          {/* Header Toggle */}
+          <button
+            onClick={() => setHeaderVisible(!headerVisible)}
+            className="px-3 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium whitespace-nowrap bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800"
+            title={headerVisible ? 'Masquer la barre supérieure' : 'Afficher la barre supérieure'}
+          >
+            {headerVisible ? (
+              <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            )}
+            <span className="hidden sm:inline">{headerVisible ? 'Masquer' : 'Afficher'} Barre</span>
+            <span className="sm:hidden">{headerVisible ? '↑' : '↓'}</span>
+          </button>
+
           {/* Preview Toggle */}
           <button
             onClick={() => setShowPreview(!showPreview)}
