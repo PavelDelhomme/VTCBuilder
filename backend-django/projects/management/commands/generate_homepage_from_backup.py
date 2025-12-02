@@ -1,10 +1,12 @@
 """
 Management command to generate the homepage with blocks matching the current design
+Creates a flat list of blocks that can be edited in the BlockEditor
 """
 from django.core.management.base import BaseCommand
 from settings_app.models import SystemSettings
 from .backup_homepage import Command as BackupCommand
 import json
+import uuid
 
 
 class Command(BaseCommand):
@@ -34,11 +36,11 @@ class Command(BaseCommand):
                 else:
                     self.stdout.write(self.style.WARNING('⚠️  Échec de la sauvegarde, mais continuation...\n'))
             
-            # Generate blocks matching the current design
+            # Generate blocks as a FLAT list (no nested children) - BlockEditor works with flat lists
             blocks = [
                 # Hero Section
                 {
-                    'id': 'hero-1',
+                    'id': f'hero-{uuid.uuid4().hex[:8]}',
                     'type': 'hero',
                     'data': {
                         'title': 'Le WordPress des Chauffeurs VTC',
@@ -66,9 +68,9 @@ class Command(BaseCommand):
                         'color': '#FFFFFF',
                     },
                 },
-                # Features Section Container
+                # Features Section - Container
                 {
-                    'id': 'section-features-1',
+                    'id': f'section-features-{uuid.uuid4().hex[:8]}',
                     'type': 'section',
                     'data': {
                         'title': '',
@@ -79,145 +81,141 @@ class Command(BaseCommand):
                         'padding_top': '80px',
                         'padding_bottom': '80px',
                     },
-                    'children': [
-                        # Features Title
-                        {
-                            'id': 'heading-features-1',
-                            'type': 'heading',
-                            'data': {
-                                'text': 'Tout ce dont vous avez besoin',
-                                'level': 2,
-                            },
-                            'styles': {
-                                'font_size': '3xl',
-                                'font_weight': 'bold',
-                                'text_align': 'center',
-                                'margin_bottom': '48px',
-                            },
-                        },
-                        # Features Grid Container
-                        {
-                            'id': 'grid-features-1',
-                            'type': 'grid-container',
-                            'data': {
-                                'columns': 3,
-                                'gap': '32px',
-                            },
-                            'styles': {
-                                'max_width': '1280px',
-                                'margin': '0 auto',
-                                'padding': '0 16px',
-                            },
-                            'children': [
-                                # Feature 1
-                                {
-                                    'id': 'feature-1',
-                                    'type': 'feature-card',
-                                    'data': {
-                                        'icon': '🎨',
-                                        'title': 'Site Professionnel',
-                                        'description': 'Designs modernes et responsive. Personnalisez votre site sans coder.',
-                                        'link_text': '',
-                                        'link_url': '',
-                                    },
-                                    'styles': {
-                                        'text_align': 'center',
-                                        'padding': '24px',
-                                        'border_radius': '8px',
-                                    },
-                                },
-                                # Feature 2
-                                {
-                                    'id': 'feature-2',
-                                    'type': 'feature-card',
-                                    'data': {
-                                        'icon': '📅',
-                                        'title': 'Réservations en Ligne',
-                                        'description': 'Système de réservation complet avec calendrier et notifications.',
-                                        'link_text': '',
-                                        'link_url': '',
-                                    },
-                                    'styles': {
-                                        'text_align': 'center',
-                                        'padding': '24px',
-                                        'border_radius': '8px',
-                                    },
-                                },
-                                # Feature 3
-                                {
-                                    'id': 'feature-3',
-                                    'type': 'feature-card',
-                                    'data': {
-                                        'icon': '💳',
-                                        'title': 'Paiements Intégrés',
-                                        'description': 'Acceptez les paiements en ligne. Cartes bancaires, virement, tout est possible.',
-                                        'link_text': '',
-                                        'link_url': '',
-                                    },
-                                    'styles': {
-                                        'text_align': 'center',
-                                        'padding': '24px',
-                                        'border_radius': '8px',
-                                    },
-                                },
-                                # Feature 4
-                                {
-                                    'id': 'feature-4',
-                                    'type': 'feature-card',
-                                    'data': {
-                                        'icon': '📱',
-                                        'title': 'Mobile First',
-                                        'description': 'Votre site s\'adapte automatiquement aux smartphones et tablettes.',
-                                        'link_text': '',
-                                        'link_url': '',
-                                    },
-                                    'styles': {
-                                        'text_align': 'center',
-                                        'padding': '24px',
-                                        'border_radius': '8px',
-                                    },
-                                },
-                                # Feature 5
-                                {
-                                    'id': 'feature-5',
-                                    'type': 'feature-card',
-                                    'data': {
-                                        'icon': '📊',
-                                        'title': 'Analytics Inclus',
-                                        'description': 'Suivez vos performances, réservations, revenus en temps réel.',
-                                        'link_text': '',
-                                        'link_url': '',
-                                    },
-                                    'styles': {
-                                        'text_align': 'center',
-                                        'padding': '24px',
-                                        'border_radius': '8px',
-                                    },
-                                },
-                                # Feature 6
-                                {
-                                    'id': 'feature-6',
-                                    'type': 'feature-card',
-                                    'data': {
-                                        'icon': '🔒',
-                                        'title': 'Sécurisé & Rapide',
-                                        'description': 'Hébergement sécurisé, sauvegardes automatiques, SSL inclus.',
-                                        'link_text': '',
-                                        'link_url': '',
-                                    },
-                                    'styles': {
-                                        'text_align': 'center',
-                                        'padding': '24px',
-                                        'border_radius': '8px',
-                                    },
-                                },
-                            ],
-                        },
-                    ],
                 },
-                # Pricing Section
+                # Features Title
                 {
-                    'id': 'section-pricing-1',
+                    'id': f'heading-features-{uuid.uuid4().hex[:8]}',
+                    'type': 'heading',
+                    'data': {
+                        'text': 'Tout ce dont vous avez besoin',
+                        'level': 2,
+                    },
+                    'styles': {
+                        'font_size': '3xl',
+                        'font_weight': 'bold',
+                        'text_align': 'center',
+                        'margin_bottom': '48px',
+                    },
+                },
+                # Features Grid Container
+                {
+                    'id': f'grid-features-{uuid.uuid4().hex[:8]}',
+                    'type': 'grid-container',
+                    'data': {
+                        'columns': 3,
+                        'gap': '32px',
+                    },
+                    'styles': {
+                        'max_width': '1280px',
+                        'margin': '0 auto',
+                        'padding': '0 16px',
+                    },
+                },
+                # Feature 1
+                {
+                    'id': f'feature-1-{uuid.uuid4().hex[:8]}',
+                    'type': 'feature-card',
+                    'data': {
+                        'icon': '🎨',
+                        'title': 'Site Professionnel',
+                        'description': 'Designs modernes et responsive. Personnalisez votre site sans coder.',
+                        'link_text': '',
+                        'link_url': '',
+                    },
+                    'styles': {
+                        'text_align': 'center',
+                        'padding': '24px',
+                        'border_radius': '8px',
+                    },
+                },
+                # Feature 2
+                {
+                    'id': f'feature-2-{uuid.uuid4().hex[:8]}',
+                    'type': 'feature-card',
+                    'data': {
+                        'icon': '📅',
+                        'title': 'Réservations en Ligne',
+                        'description': 'Système de réservation complet avec calendrier et notifications.',
+                        'link_text': '',
+                        'link_url': '',
+                    },
+                    'styles': {
+                        'text_align': 'center',
+                        'padding': '24px',
+                        'border_radius': '8px',
+                    },
+                },
+                # Feature 3
+                {
+                    'id': f'feature-3-{uuid.uuid4().hex[:8]}',
+                    'type': 'feature-card',
+                    'data': {
+                        'icon': '💳',
+                        'title': 'Paiements Intégrés',
+                        'description': 'Acceptez les paiements en ligne. Cartes bancaires, virement, tout est possible.',
+                        'link_text': '',
+                        'link_url': '',
+                    },
+                    'styles': {
+                        'text_align': 'center',
+                        'padding': '24px',
+                        'border_radius': '8px',
+                    },
+                },
+                # Feature 4
+                {
+                    'id': f'feature-4-{uuid.uuid4().hex[:8]}',
+                    'type': 'feature-card',
+                    'data': {
+                        'icon': '📱',
+                        'title': 'Mobile First',
+                        'description': 'Votre site s\'adapte automatiquement aux smartphones et tablettes.',
+                        'link_text': '',
+                        'link_url': '',
+                    },
+                    'styles': {
+                        'text_align': 'center',
+                        'padding': '24px',
+                        'border_radius': '8px',
+                    },
+                },
+                # Feature 5
+                {
+                    'id': f'feature-5-{uuid.uuid4().hex[:8]}',
+                    'type': 'feature-card',
+                    'data': {
+                        'icon': '📊',
+                        'title': 'Analytics Inclus',
+                        'description': 'Suivez vos performances, réservations, revenus en temps réel.',
+                        'link_text': '',
+                        'link_url': '',
+                    },
+                    'styles': {
+                        'text_align': 'center',
+                        'padding': '24px',
+                        'border_radius': '8px',
+                    },
+                },
+                # Feature 6
+                {
+                    'id': f'feature-6-{uuid.uuid4().hex[:8]}',
+                    'type': 'feature-card',
+                    'data': {
+                        'icon': '🔒',
+                        'title': 'Sécurisé & Rapide',
+                        'description': 'Hébergement sécurisé, sauvegardes automatiques, SSL inclus.',
+                        'link_text': '',
+                        'link_url': '',
+                    },
+                    'styles': {
+                        'text_align': 'center',
+                        'padding': '24px',
+                        'border_radius': '8px',
+                    },
+                },
+                # Pricing Section - Container
+                {
+                    'id': f'section-pricing-{uuid.uuid4().hex[:8]}',
                     'type': 'section',
                     'data': {
                         'title': '',
@@ -228,59 +226,57 @@ class Command(BaseCommand):
                         'padding_top': '80px',
                         'padding_bottom': '80px',
                     },
-                    'children': [
-                        # Pricing Title
-                        {
-                            'id': 'heading-pricing-1',
-                            'type': 'heading',
-                            'data': {
-                                'text': 'Tarifs Transparents',
-                                'level': 2,
-                            },
-                            'styles': {
-                                'font_size': '4xl',
-                                'font_weight': 'bold',
-                                'text_align': 'center',
-                                'margin_bottom': '16px',
-                            },
-                        },
-                        # Pricing Description
-                        {
-                            'id': 'text-pricing-1',
-                            'type': 'text',
-                            'data': {
-                                'text': 'Choisissez le plan adapté à vos besoins. Pas d\'engagement, changez de plan à tout moment.',
-                            },
-                            'styles': {
-                                'text_align': 'center',
-                                'margin_bottom': '48px',
-                                'max_width': '672px',
-                                'margin_left': 'auto',
-                                'margin_right': 'auto',
-                            },
-                        },
-                        # Pricing Block (will load plans from API dynamically)
-                        {
-                            'id': 'pricing-1',
-                            'type': 'pricing',
-                            'data': {
-                                'title': '',
-                                'show_title': False,  # Title is already in heading above
-                                'source': 'api',
-                                'api_endpoint': '/api/billing/pricing-plans/',
-                                'plans': [],  # Will be loaded from API in frontend
-                            },
-                            'styles': {
-                                'max_width': '1280px',
-                                'margin': '0 auto',
-                                'padding': '0 16px',
-                            },
-                        },
-                    ],
                 },
-                # CTA Section
+                # Pricing Title
                 {
-                    'id': 'section-cta-1',
+                    'id': f'heading-pricing-{uuid.uuid4().hex[:8]}',
+                    'type': 'heading',
+                    'data': {
+                        'text': 'Tarifs Transparents',
+                        'level': 2,
+                    },
+                    'styles': {
+                        'font_size': '4xl',
+                        'font_weight': 'bold',
+                        'text_align': 'center',
+                        'margin_bottom': '16px',
+                    },
+                },
+                # Pricing Description
+                {
+                    'id': f'text-pricing-{uuid.uuid4().hex[:8]}',
+                    'type': 'text',
+                    'data': {
+                        'text': 'Choisissez le plan adapté à vos besoins. Pas d\'engagement, changez de plan à tout moment.',
+                    },
+                    'styles': {
+                        'text_align': 'center',
+                        'margin_bottom': '48px',
+                        'max_width': '672px',
+                        'margin_left': 'auto',
+                        'margin_right': 'auto',
+                    },
+                },
+                # Pricing Block (will load plans from API dynamically)
+                {
+                    'id': f'pricing-{uuid.uuid4().hex[:8]}',
+                    'type': 'pricing',
+                    'data': {
+                        'title': '',
+                        'show_title': False,  # Title is already in heading above
+                        'source': 'api',
+                        'api_endpoint': '/api/billing/pricing-plans/',
+                        'plans': [],  # Will be loaded from API in frontend
+                    },
+                    'styles': {
+                        'max_width': '1280px',
+                        'margin': '0 auto',
+                        'padding': '0 16px',
+                    },
+                },
+                # CTA Section - Container
+                {
+                    'id': f'section-cta-{uuid.uuid4().hex[:8]}',
                     'type': 'section',
                     'data': {
                         'title': '',
@@ -292,55 +288,53 @@ class Command(BaseCommand):
                         'padding_bottom': '80px',
                         'text_align': 'center',
                     },
-                    'children': [
-                        # CTA Title
-                        {
-                            'id': 'heading-cta-1',
-                            'type': 'heading',
-                            'data': {
-                                'text': 'Prêt à démarrer ?',
-                                'level': 2,
-                            },
-                            'styles': {
-                                'font_size': '4xl',
-                                'font_weight': 'bold',
-                                'color': '#FFFFFF',
-                                'margin_bottom': '16px',
-                            },
-                        },
-                        # CTA Description
-                        {
-                            'id': 'text-cta-1',
-                            'type': 'text',
-                            'data': {
-                                'text': 'Créez votre site VTC professionnel dès aujourd\'hui. Essai gratuit de 14 jours.',
-                            },
-                            'styles': {
-                                'font_size': 'xl',
-                                'color': 'rgba(255, 255, 255, 0.9)',
-                                'margin_bottom': '32px',
-                            },
-                        },
-                        # CTA Button
-                        {
-                            'id': 'button-cta-1',
-                            'type': 'button',
-                            'data': {
-                                'text': '🚀 Créer mon compte gratuitement',
-                                'url': '/register',
-                                'style': 'primary',
-                            },
-                            'styles': {
-                                'background_color': '#FFFFFF',
-                                'color': '#2563EB',
-                                'padding': '16px 32px',
-                                'font_size': 'lg',
-                                'font_weight': 'bold',
-                                'border_radius': '8px',
-                                'display': 'inline-block',
-                            },
-                        },
-                    ],
+                },
+                # CTA Title
+                {
+                    'id': f'heading-cta-{uuid.uuid4().hex[:8]}',
+                    'type': 'heading',
+                    'data': {
+                        'text': 'Prêt à démarrer ?',
+                        'level': 2,
+                    },
+                    'styles': {
+                        'font_size': '4xl',
+                        'font_weight': 'bold',
+                        'color': '#FFFFFF',
+                        'margin_bottom': '16px',
+                    },
+                },
+                # CTA Description
+                {
+                    'id': f'text-cta-{uuid.uuid4().hex[:8]}',
+                    'type': 'text',
+                    'data': {
+                        'text': 'Créez votre site VTC professionnel dès aujourd\'hui. Essai gratuit de 14 jours.',
+                    },
+                    'styles': {
+                        'font_size': 'xl',
+                        'color': 'rgba(255, 255, 255, 0.9)',
+                        'margin_bottom': '32px',
+                    },
+                },
+                # CTA Button
+                {
+                    'id': f'button-cta-{uuid.uuid4().hex[:8]}',
+                    'type': 'button',
+                    'data': {
+                        'text': '🚀 Créer mon compte gratuitement',
+                        'url': '/register',
+                        'style': 'primary',
+                    },
+                    'styles': {
+                        'background_color': '#FFFFFF',
+                        'color': '#2563EB',
+                        'padding': '16px 32px',
+                        'font_size': 'lg',
+                        'font_weight': 'bold',
+                        'border_radius': '8px',
+                        'display': 'inline-block',
+                    },
                 },
             ]
             
@@ -377,7 +371,7 @@ class Command(BaseCommand):
             
             self.stdout.write(
                 self.style.SUCCESS(
-                    f'\n✅ Page d\'accueil générée avec {len(blocks)} blocs principaux !\n'
+                    f'\n✅ Page d\'accueil générée avec {len(blocks)} blocs (structure plate) !\n'
                     f'   Statut: Brouillon (draft)\n'
                     f'   Projet: {system_project.name} (ID: {system_project.id})\n'
                     f'   Page dans projet: {"Créée" if created else "Déjà présente"}\n'
@@ -385,6 +379,17 @@ class Command(BaseCommand):
                     f'   - Éditer: /admin/pages-public/home/edit\n'
                     f'   - Via projet: /admin/projects/{system_project.id}\n'
                     f'   - Publier: Changez le statut à "Publié" dans l\'éditeur\n'
+                    f'\n📝 Structure des blocs:\n'
+                    f'   - Hero (avec 2 boutons)\n'
+                    f'   - Section Features (fond blanc)\n'
+                    f'   - Titre Features\n'
+                    f'   - Grille Features (3 colonnes)\n'
+                    f'   - 6 Feature Cards\n'
+                    f'   - Section Pricing (fond gris)\n'
+                    f'   - Titre + Description Pricing\n'
+                    f'   - Bloc Pricing (chargement API)\n'
+                    f'   - Section CTA (fond gradient)\n'
+                    f'   - Titre + Description + Bouton CTA\n'
                     f'\n💡 Pour restaurer la version précédente:\n'
                     f'   make restore-homepage\n'
                     f'   ou\n'
@@ -395,4 +400,3 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR(f'❌ Erreur: {e}'))
             import traceback
             traceback.print_exc()
-
