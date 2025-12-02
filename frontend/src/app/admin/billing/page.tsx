@@ -2294,7 +2294,9 @@ function PaymentMethodsTab({
               </tr>
             ))
           )}
-        </ResponsiveTable>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

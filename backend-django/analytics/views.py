@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from api.utils import add_cors_headers
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q, Sum, Max
 from django.utils import timezone
 from datetime import timedelta
 from .models import UserAction, FeatureUsage
@@ -318,6 +318,128 @@ def usage_stats(request):
             count=Count('id')
         ).order_by('-count')[:10]
         
+        # Actions by user (detailed)
+        actions_by_user = all_actions.exclude(user__isnull=True).values(
+            'user__id', 'user__email', 'user__first_name', 'user__last_name', 'tenant__name', 'tenant__id'
+        ).annotate(
+            total_actions=Count('id'),
+            page_views=Count('id', filter=Q(action_type='page_view')),
+            button_clicks=Count('id', filter=Q(action_type__in=['button_click', 'cta_click'])),
+            link_clicks=Count('id', filter=Q(action_type='link_click')),
+            page_creates=Count('id', filter=Q(action_type='page_create')),
+            block_actions=Count('id', filter=Q(action_type__in=['block_add', 'block_edit', 'block_delete'])),
+            last_action=Max('created_at')
+        ).order_by('-total_actions')[:50]
+        
+        # Actions by tenant (detailed)
+        actions_by_tenant = all_actions.exclude(tenant__isnull=True).values(
+            'tenant__id', 'tenant__name', 'tenant__email'
+        ).annotate(
+            total_actions=Count('id'),
+            unique_users=Count('user', distinct=True),
+            page_views=Count('id', filter=Q(action_type='page_view')),
+            button_clicks=Count('id', filter=Q(action_type__in=['button_click', 'cta_click'])),
+            link_clicks=Count('id', filter=Q(action_type='link_click')),
+            page_creates=Count('id', filter=Q(action_type='page_create')),
+            block_actions=Count('id', filter=Q(action_type__in=['block_add', 'block_edit', 'block_delete'])),
+            last_action=Max('created_at')
+        ).order_by('-total_actions')[:30]
+        
+        # Actions by category (grouped)
+        actions_by_category = {
+            'navigation': all_actions.filter(action_type__in=['page_view', 'link_click']).count(),
+            'content_creation': all_actions.filter(action_type__in=['page_create', 'page_edit', 'block_add', 'block_edit']).count(),
+            'content_deletion': all_actions.filter(action_type__in=['page_delete', 'block_delete']).count(),
+            'interactions': all_actions.filter(action_type__in=['button_click', 'cta_click', 'form_submit']).count(),
+            'authentication': all_actions.filter(action_type__in=['login', 'logout', 'register']).count(),
+            'business': all_actions.filter(action_type__in=['service_create', 'service_edit', 'booking_create', 'booking_edit']).count(),
+            'billing': all_actions.filter(action_type__in=['subscription_create', 'subscription_update', 'payment_success', 'payment_failed']).count(),
+        }
+        
+        # Documentation pages tracking
+        docs_actions = all_actions.filter(
+            Q(action_type='page_view') & (
+                Q(metadata__path__icontains='/docs') |
+                Q(metadata__path__icontains='/documentation') |
+                Q(resource_type='docs_page')
+            )
+        )
+        docs_stats = {
+            'total_views': docs_actions.count(),
+            'unique_users': docs_actions.values('user').distinct().count(),
+            'most_viewed_docs': docs_actions.values('resource_id', 'metadata').annotate(
+                count=Count('id')
+            ).order_by('-count')[:10],
+            'views_by_day': []
+        }
+        # Docs views by day (last 30 days)
+        for i in range(29, -1, -1):
+            day = today - timedelta(days=i)
+            day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day.replace(hour=23, minute=59, second=59, microsecond=999999)
+            count = docs_actions.filter(created_at__gte=day_start, created_at__lte=day_end).count()
+            docs_stats['views_by_day'].append({
+                'date': day_start.strftime('%Y-%m-%d'),
+                'label': day_start.strftime('%d/%m'),
+                'count': count,
+            })
+        
+        # Public site actions (main site, not tenant sites)
+        public_site_actions = all_actions.filter(tenant__isnull=True)
+        public_site_stats = {
+            'total_actions': public_site_actions.count(),
+            'page_views': public_site_actions.filter(action_type='page_view').count(),
+            'button_clicks': public_site_actions.filter(action_type__in=['button_click', 'cta_click']).count(),
+            'link_clicks': public_site_actions.filter(action_type='link_click').count(),
+            'most_visited_pages': public_site_actions.filter(action_type='page_view').values(
+                'resource_id', 'metadata'
+            ).annotate(count=Count('id')).order_by('-count')[:10],
+        }
+        
+        # Tenant site actions
+        tenant_site_actions = all_actions.exclude(tenant__isnull=True)
+        tenant_site_stats = {
+            'total_actions': tenant_site_actions.count(),
+            'unique_tenants': tenant_site_actions.values('tenant').distinct().count(),
+            'page_views': tenant_site_actions.filter(action_type='page_view').count(),
+            'button_clicks': tenant_site_actions.filter(action_type__in=['button_click', 'cta_click']).count(),
+            'link_clicks': tenant_site_actions.filter(action_type='link_click').count(),
+        }
+        
+        # Actions by hour of day (for pattern analysis)
+        actions_by_hour = []
+        for hour in range(24):
+            count = all_actions.filter(created_at__hour=hour).count()
+            actions_by_hour.append({
+                'hour': hour,
+                'label': f'{hour:02d}h',
+                'count': count,
+            })
+        
+        # Actions by day of week (for pattern analysis)
+        actions_by_day_of_week = []
+        days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+        for day_num in range(7):
+            count = all_actions.filter(created_at__week_day=day_num + 2).count()  # Django uses 1=Sunday, so +2
+            actions_by_day_of_week.append({
+                'day': day_num,
+                'label': days[day_num],
+                'count': count,
+            })
+        
+        # Top links clicked (with URLs from metadata)
+        top_links = all_actions.filter(
+            action_type='link_click'
+        ).exclude(metadata__url__isnull=True).values('metadata__url', 'action_name').annotate(
+            count=Count('id')
+        ).order_by('-count')[:20]
+        
+        # Anonymous vs authenticated users
+        user_type_stats = {
+            'anonymous': all_actions.filter(user__isnull=True).count(),
+            'authenticated': all_actions.exclude(user__isnull=True).count(),
+        }
+        
         response = Response({
             'most_used_actions': list(most_used_actions),
             'actions_by_resource': list(actions_by_resource),
@@ -326,6 +448,16 @@ def usage_stats(request):
             'most_clicked_ctas': list(most_clicked_ctas),
             'buttons_by_user': list(buttons_by_user),
             'most_viewed_pages': list(most_viewed_pages),
+            'actions_by_user': list(actions_by_user),
+            'actions_by_tenant': list(actions_by_tenant),
+            'actions_by_category': actions_by_category,
+            'docs_stats': docs_stats,
+            'public_site_stats': public_site_stats,
+            'tenant_site_stats': tenant_site_stats,
+            'actions_by_hour': actions_by_hour,
+            'actions_by_day_of_week': actions_by_day_of_week,
+            'top_links': list(top_links),
+            'user_type_stats': user_type_stats,
             'summary': {
                 'total_actions': all_actions.count(),
                 'actions_today': all_actions.filter(created_at__gte=today).count(),

@@ -45,17 +45,9 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
     }
   }
 
-  // Initialiser l'état : restaurer depuis localStorage ou utiliser la valeur par défaut selon la taille d'écran
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    if (typeof window === 'undefined') return false
-    
-    const savedState = loadSidebarState()
-    const isDesktop = window.innerWidth >= 1024
-    
-    // Sur desktop, utiliser l'état sauvegardé ou true par défaut
-    // Sur mobile, toujours false (même si sauvegardé comme ouvert)
-    return isDesktop ? (savedState !== null ? savedState : true) : false
-  })
+  // Initialiser l'état : toujours false au début pour éviter les erreurs d'hydratation
+  // L'état sera mis à jour après le montage dans useEffect
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Sauvegarder l'état à chaque changement (uniquement sur desktop)
   useEffect(() => {
@@ -67,7 +59,7 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
     }
   }, [sidebarOpen])
 
-  // Détecter la taille d'écran et ajuster l'état du sidebar
+  // Détecter la taille d'écran et ajuster l'état du sidebar après le montage
   useEffect(() => {
     // Vérifier que window est disponible (client-side uniquement)
     if (typeof window === 'undefined') return
@@ -85,7 +77,7 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
       }
     }
 
-    // Vérifier au montage
+    // Vérifier au montage (après l'hydratation)
     checkScreenSize()
 
     // Écouter les changements de taille d'écran
@@ -175,8 +167,8 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
           </header>
 
           {/* Content - Utilise tout l'espace disponible avec scroll */}
-          <main className="flex-1 w-full min-w-0 overflow-y-auto overflow-x-hidden py-4 lg:py-6 px-3 sm:px-4 lg:px-6 xl:px-8">
-            <div className="w-full min-w-0">
+          <main className="flex-1 w-full min-w-0 overflow-hidden flex flex-col h-full">
+            <div className="w-full min-w-0 flex-1 overflow-hidden h-full">
               {children}
             </div>
           </main>

@@ -140,7 +140,7 @@ export default function ProjectDetailPage() {
         const settings = settingsResponse.data
         
         let pageData: any = null
-        let pageTitle = page.page_slug
+        const pageTitle = page.page_slug
         
         // Vérifier si c'est la homepage
         if (page.page_slug === 'home') {

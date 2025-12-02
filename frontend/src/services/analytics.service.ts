@@ -23,6 +23,70 @@ export interface UsageStats {
     count: number
   }>
   most_viewed_pages: Array<{ resource_id: number; metadata: any; count: number }>
+  actions_by_user?: Array<{
+    user__id: number
+    user__email: string
+    user__first_name?: string
+    user__last_name?: string
+    tenant__name?: string
+    tenant__id?: number
+    total_actions: number
+    page_views: number
+    button_clicks: number
+    link_clicks: number
+    page_creates: number
+    block_actions: number
+    last_action: string
+  }>
+  actions_by_tenant?: Array<{
+    tenant__id: number
+    tenant__name: string
+    tenant__email?: string
+    total_actions: number
+    unique_users: number
+    page_views: number
+    button_clicks: number
+    link_clicks: number
+    page_creates: number
+    block_actions: number
+    last_action: string
+  }>
+  actions_by_category?: {
+    navigation: number
+    content_creation: number
+    content_deletion: number
+    interactions: number
+    authentication: number
+    business: number
+    billing: number
+  }
+  docs_stats?: {
+    total_views: number
+    unique_users: number
+    most_viewed_docs: Array<{ resource_id: number; metadata: any; count: number }>
+    views_by_day: Array<{ date: string; label: string; count: number }>
+  }
+  public_site_stats?: {
+    total_actions: number
+    page_views: number
+    button_clicks: number
+    link_clicks: number
+    most_visited_pages: Array<{ resource_id: number; metadata: any; count: number }>
+  }
+  tenant_site_stats?: {
+    total_actions: number
+    unique_tenants: number
+    page_views: number
+    button_clicks: number
+    link_clicks: number
+  }
+  actions_by_hour?: Array<{ hour: number; label: string; count: number }>
+  actions_by_day_of_week?: Array<{ day: number; label: string; count: number }>
+  top_links?: Array<{ 'metadata__url': string; action_name: string; count: number }>
+  user_type_stats?: {
+    anonymous: number
+    authenticated: number
+  }
   summary: {
     total_actions: number
     actions_today: number

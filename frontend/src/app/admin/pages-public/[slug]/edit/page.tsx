@@ -34,6 +34,7 @@ export default function EditPublicPage() {
   const [status, setStatus] = useState<'draft' | 'published'>('draft')
   const [showPreview, setShowPreview] = useState(true)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
+  const [availablePages, setAvailablePages] = useState<Array<{ slug: string; title: string }>>([])
 
   // Sauvegarde automatique
   const { isSaving: isAutoSaving, lastSaved, updateLastSaved } = useAutoSave({
@@ -88,6 +89,20 @@ export default function EditPublicPage() {
       
       setBlockTypes(blockTypesData)
       const data = settingsResponse.data
+      
+      // Load available pages for navigation
+      const pagesList: Array<{ slug: string; title: string }> = []
+      if (data.public_homepage_blocks !== undefined) {
+        pagesList.push({ slug: 'home', title: 'Page d\'accueil' })
+      }
+      const otherPages = data.public_pages || {}
+      Object.entries(otherPages).forEach(([slug, pageData]: [string, any]) => {
+        pagesList.push({
+          slug,
+          title: pageData.title || PAGE_TITLES[slug] || slug.charAt(0).toUpperCase() + slug.slice(1),
+        })
+      })
+      setAvailablePages(pagesList)
       
       // Load page data based on slug
       if (pageSlug === 'home') {
@@ -165,6 +180,23 @@ export default function EditPublicPage() {
       subtitle={`Créez et personnalisez la page ${pageSlug === 'home' ? 'd\'accueil' : pageSlug} avec l'éditeur de blocs complet`}
       headerActions={
         <div className="flex gap-2 flex-wrap">
+          {/* Page Selector */}
+          {availablePages.length > 1 && (
+            <select
+              value={pageSlug}
+              onChange={(e) => {
+                router.push(`/admin/pages-public/${e.target.value}/edit`)
+              }}
+              className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+            >
+              {availablePages.map((page) => (
+                <option key={page.slug} value={page.slug}>
+                  {page.title}
+                </option>
+              ))}
+            </select>
+          )}
+
           {/* Preview Toggle */}
           <button
             onClick={() => setShowPreview(!showPreview)}
@@ -318,9 +350,9 @@ export default function EditPublicPage() {
         </div>
       }
     >
-      <div className="flex flex-col h-[calc(100vh-180px)]">
+      <div className="flex flex-col h-full min-h-0 overflow-hidden">
         {/* SEO Settings Bar */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex gap-4 items-center flex-wrap">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4 flex gap-3 sm:gap-4 items-center flex-wrap flex-shrink-0">
           {pageSlug === 'home' && (
             <div className="min-w-[150px]">
               <label htmlFor="status" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -366,10 +398,10 @@ export default function EditPublicPage() {
         </div>
 
         {/* Main Editor Area with Split View */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Editor Section */}
-          <div className={`${showPreview ? 'w-1/2' : 'w-full'} border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300`}>
-            <div className="flex-1 overflow-hidden">
+          <div className={`${showPreview ? 'w-1/2' : 'w-full'} border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
+            <div className="flex-1 overflow-hidden min-h-0 h-full">
               <BlockEditor 
                 blocks={blocks}
                 onChange={setBlocks}

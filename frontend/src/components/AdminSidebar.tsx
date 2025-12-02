@@ -178,12 +178,13 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
             ? 'translate-x-0' 
             : '-translate-x-full'
         }`}
+        suppressHydrationWarning
       >
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-blue-600">VTCBuilder</h2>
             <p className="text-xs text-gray-500 dark:text-gray-400" suppressHydrationWarning>
-              {mounted ? 'Super Admin' : 'Admin'}
+              {mounted && authService.isSuperAdmin() ? 'Super Admin' : 'Admin'}
             </p>
           </div>
           {/* Close button - toujours visible pour pouvoir fermer */}
@@ -239,7 +240,7 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
               ]
 
               return (
-                <div key={item.href}>
+                <div key={`accordion-gestion`}>
                   <button
                     onClick={() => setContentExpanded(!contentExpanded)}
                     className={`w-full flex items-center justify-between px-6 py-3 text-sm font-medium transition-colors ${
@@ -325,7 +326,7 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
               ]
 
               return (
-                <div key={item.href}>
+                <div key={`accordion-${item.name}`}>
                   <button
                     onClick={() => setClientsExpanded(!clientsExpanded)}
                     className={`w-full flex items-center justify-between px-6 py-3 text-sm font-medium transition-colors ${
@@ -399,7 +400,7 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
               ).filter(([id]) => id !== null && id !== undefined)
 
               return (
-                <div key={item.href}>
+                <div key={`accordion-projects`}>
                   <button
                     onClick={() => {
                       if (projectsExpanded) {
@@ -660,8 +661,8 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
             
             {/* User Info & Logout */}
             <div className="flex items-center justify-between">
-              <div>
-                {mounted ? (
+              <div suppressHydrationWarning>
+                {mounted && user ? (
                   <>
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.name || 'Admin'}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email || ''}</p>

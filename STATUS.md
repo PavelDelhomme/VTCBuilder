@@ -347,6 +347,61 @@ POST /api/templates/{id}/generate_preview/
    make test-api
    ```
 
+## 🔧 Corrections Récentes (Décembre 2025)
+
+### ✅ Améliorations Interface Admin et Éditeur (Décembre 2025)
+
+#### 🎨 Éditeur de Pages Publiques - Améliorations Majeures
+- ✅ **Correction des erreurs d'hydratation React** : Résolution des problèmes d'hydratation dans AdminSidebar et AdminLayout
+  - Persistance de l'état du drawer admin dans localStorage
+  - Correction des clés dupliquées dans les accordéons de navigation
+  - Initialisation correcte de l'état sidebar pour éviter les différences serveur/client
+- ✅ **Amélioration de l'affichage plein écran** : L'éditeur prend maintenant toute la hauteur disponible
+  - Suppression des espaces inutiles autour de l'éditeur
+  - Correction des débordements dans les panneaux de paramètres
+  - Gestion correcte du scroll dans les sections "Mise en page", "Style" et "Contenu"
+- ✅ **Navigation entre pages** : Ajout d'un sélecteur de pages dans le header de l'éditeur
+  - Permet de naviguer rapidement entre les pages publiques sans quitter l'éditeur
+  - Chargement automatique de toutes les pages disponibles
+- ✅ **Boutons Undo/Redo améliorés** : Boutons plus clairs et fonctionnels
+  - Remplacement des flèches `<` et `>` par des boutons avec texte "Annuler" et "Refaire"
+  - Icônes plus explicites et visibilité améliorée
+  - Debounce de 300ms pour les mises à jour de style (évite de polluer l'historique)
+  - Mises à jour immédiates pour le contenu texte
+
+#### 🐛 Corrections de Bugs
+- ✅ **Erreurs de syntaxe TypeScript** : Correction de toutes les erreurs dans `billing/page.tsx`
+  - Fermeture correcte des balises JSX (table, tbody, div)
+  - Correction de la structure du tableau des modes de paiement
+- ✅ **Erreurs ESLint** : Correction de `let pageTitle` → `const pageTitle` dans `projects/[id]/page.tsx`
+- ✅ **Erreurs d'hydratation** : Résolution complète des warnings React d'hydratation
+  - Suppression des différences entre rendu serveur et client
+  - Utilisation correcte de `suppressHydrationWarning` où nécessaire
+
+#### 📊 Page Statistiques - Améliorations
+- ✅ **Correction de l'affichage des onglets** : Les onglets s'affichent maintenant même si les données ne sont pas encore chargées
+- ✅ **Gestion des erreurs analytics** : Amélioration de la gestion des erreurs 404 pour l'endpoint analytics
+  - Suppression des warnings console inutiles
+  - Gestion gracieuse des erreurs réseau ou endpoints non disponibles
+
+#### 🎯 Navigation Admin - Améliorations
+- ✅ **Réorganisation de la navigation** : Groupement des éléments dans des accordéons
+  - "Gestion" : Templates, Blocs, Call-to-Actions
+  - "Clients" : Tenants, Utilisateurs
+  - "Projets" : Liste des projets avec accordéon
+- ✅ **Persistance de l'état du drawer** : Le drawer admin se souvient de son état (ouvert/fermé) entre les rechargements de page
+
+**Fichiers Modifiés** :
+- `frontend/src/components/AdminSidebar.tsx` - Correction hydratation, accordéons
+- `frontend/src/components/AdminLayout.tsx` - Persistance drawer, correction hauteur
+- `frontend/src/components/editor/BlockEditor.tsx` - Amélioration undo/redo, scroll, debounce
+- `frontend/src/app/admin/pages-public/[slug]/edit/page.tsx` - Navigation pages, affichage plein écran
+- `frontend/src/app/admin/billing/page.tsx` - Correction syntaxe TypeScript
+- `frontend/src/app/admin/projects/[id]/page.tsx` - Correction ESLint
+- `frontend/src/app/admin/stats/page.tsx` - Correction affichage onglets
+- `frontend/src/services/analytics.service.ts` - Amélioration gestion erreurs
+- `backend-django/analytics/views.py` - Support OPTIONS pour CORS
+
 ## 🔧 Corrections Récentes (01/12/2025)
 
 ### ✅ Erreurs Corrigées

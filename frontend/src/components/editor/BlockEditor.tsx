@@ -274,19 +274,49 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     }
   }, [history, selectedBlock, trackBlockAction])
 
-  const updateBlock = useCallback((blockId: string, updates: Partial<Block>) => {
+  // Debounce pour les mises à jour de style (éviter trop d'entrées dans l'historique)
+  const updateBlockTimeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({})
+  
+  const updateBlock = useCallback((blockId: string, updates: Partial<Block>, immediate: boolean = false) => {
     const block = history.state.find((b: Block) => b.id === blockId)
     const newBlocks = history.state.map((b: Block) =>
       b.id === blockId ? { ...b, ...updates } : b
     )
     
-    // Si on a fait undo avant (futur non vide), créer une nouvelle branche
-    // Le hook useHistory gère déjà cela en effaçant le futur et créant une nouvelle branche
-    history.set(newBlocks, true)
+    // Pour les changements de style (padding, margin, couleur, etc.), utiliser un debounce
+    // Pour les changements de contenu (texte, etc.), mettre à jour immédiatement
+    const isStyleUpdate = updates.styles !== undefined || 
+                         updates.layout !== undefined || 
+                         updates.container !== undefined ||
+                         updates.position !== undefined
     
-    // Tracker la modification du bloc (debounce implicite via historique)
-    if (block) {
-      trackBlockAction(block.type, 'update')
+    const updateHistory = () => {
+      // Si on a fait undo avant (futur non vide), créer une nouvelle branche
+      // Le hook useHistory gère déjà cela en effaçant le futur et créant une nouvelle branche
+      history.set(newBlocks, true)
+      
+      // Tracker la modification du bloc
+      if (block) {
+        trackBlockAction(block.type, 'update')
+      }
+    }
+    
+    if (immediate || !isStyleUpdate) {
+      // Mise à jour immédiate pour le contenu
+      if (updateBlockTimeoutRef.current[blockId]) {
+        clearTimeout(updateBlockTimeoutRef.current[blockId])
+        delete updateBlockTimeoutRef.current[blockId]
+      }
+      updateHistory()
+    } else {
+      // Debounce pour les styles (300ms)
+      if (updateBlockTimeoutRef.current[blockId]) {
+        clearTimeout(updateBlockTimeoutRef.current[blockId])
+      }
+      updateBlockTimeoutRef.current[blockId] = setTimeout(() => {
+        updateHistory()
+        delete updateBlockTimeoutRef.current[blockId]
+      }, 300)
     }
   }, [history, trackBlockAction])
 
@@ -339,7 +369,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   }, [selectedBlock, blocksMap, blockTypesMap])
 
   return (
-    <div className="flex h-full w-full flex-col relative">
+    <div className="flex h-full w-full flex-col relative min-h-0 overflow-hidden">
       {/* Toolbar - Enhanced with History Navigation */}
       <div className="flex items-center justify-between px-4 lg:px-6 xl:px-8 py-2.5 lg:py-3 bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex items-center gap-3 lg:gap-4 flex-wrap">
@@ -360,36 +390,38 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             </svg>
           </button>
 
-          {/* History Navigation Buttons - Prominent */}
-          <div className="flex items-center gap-1 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg border-2 border-blue-200 dark:border-blue-700 p-1 shadow-sm">
+          {/* History Navigation Buttons - Clear and Prominent */}
+          <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm p-1">
             <button
               onClick={handleUndo}
               disabled={!history.canUndo}
-              className={`p-2.5 rounded-md transition-all ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all text-sm font-medium ${
                 history.canUndo
-                  ? 'text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/50 hover:scale-105 active:scale-95'
+                  ? 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400'
                   : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
               }`}
-              title="Revenir en arrière (Ctrl+Z)"
+              title="Annuler (Ctrl+Z)"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
               </svg>
+              <span className="hidden sm:inline">Annuler</span>
             </button>
-            <div className="w-px h-6 bg-blue-300 dark:bg-blue-600"></div>
+            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600"></div>
             <button
               onClick={handleRedo}
               disabled={!history.canRedo}
-              className={`p-2.5 rounded-md transition-all ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all text-sm font-medium ${
                 history.canRedo
-                  ? 'text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/50 hover:scale-105 active:scale-95'
+                  ? 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400'
                   : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
               }`}
-              title="Revenir en avant (Ctrl+Shift+Z)"
+              title="Refaire (Ctrl+Shift+Z)"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
               </svg>
+              <span className="hidden sm:inline">Refaire</span>
             </button>
           </div>
 
@@ -469,7 +501,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
 
         {/* Sidebar - Block Palette OU Properties Panel */}
         <div className={`
-          ${sidebarOpen ? 'fixed left-0 top-0 h-full z-50' : 'hidden'}
+          ${sidebarOpen ? 'fixed left-0 top-0 h-screen z-50' : 'hidden'}
           lg:static lg:block lg:h-full
           w-64 lg:w-72 xl:w-80 2xl:w-96
           bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800
@@ -479,6 +511,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           shadow-lg lg:shadow-none
           flex-shrink-0
           flex flex-col
+          min-h-0
+          max-h-full
         `}>
           {/* Afficher le panneau de paramètres si un bloc est sélectionné, sinon la palette de blocs */}
           {selectedBlock ? (
@@ -538,7 +572,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
               </div>
 
               {/* Properties Content */}
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-4 min-h-0" style={{ maxHeight: '100%' }}>
                 {propertiesTab === 'layout' ? (
                   selectedBlockData ? (
                     <BlockLayoutPanel
@@ -944,7 +978,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           onDragEnd={handleDragEnd}
         >
               <SortableContext items={history.state.map((b: Block) => b.id)} strategy={verticalListSortingStrategy}>
-                <div className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 max-w-full">
+                <div className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 max-w-full min-h-0">
                   {history.state.length === 0 ? (
                     <div className="text-center py-12 lg:py-20">
                       <div className="max-w-md mx-auto">

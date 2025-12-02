@@ -8,6 +8,7 @@ import api from '@/lib/api'
 import PageLoader from '@/components/PageLoader'
 import billingService from '@/services/billing.service'
 import analyticsService, { UsageStats } from '@/services/analytics.service'
+import { generateInsights, detectBehavioralPatterns, Insight, BehavioralPattern } from '@/lib/ai-insights'
 
 interface DetailedStats {
   overview: {
@@ -121,6 +122,9 @@ export default function StatsPage() {
   const [stats, setStats] = useState<DetailedStats | null>(null)
   const [billingStats, setBillingStats] = useState<any>(null)
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null)
+  const [activeTab, setActiveTab] = useState<'overview' | 'actions' | 'users' | 'tenants' | 'ctas' | 'docs' | 'features' | 'insights'>('overview')
+  const [insights, setInsights] = useState<Insight[]>([])
+  const [patterns, setPatterns] = useState<BehavioralPattern[]>([])
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -160,6 +164,11 @@ export default function StatsPage() {
       
       if (usageData) {
         setUsageStats(usageData)
+        // Générer les insights IA maison
+        const generatedInsights = generateInsights(usageData)
+        const detectedPatterns = detectBehavioralPatterns(usageData)
+        setInsights(generatedInsights)
+        setPatterns(detectedPatterns)
       }
       
       // Fonction pour normaliser les données du backend vers la structure attendue
@@ -362,9 +371,39 @@ export default function StatsPage() {
   return (
     <AdminLayout 
       title="Statistiques Détaillées" 
-      subtitle="Analyses et métriques de la plateforme avec monitoring complet"
+      subtitle="Analyses et métriques de la plateforme avec monitoring complet et IA maison"
     >
       <div className="space-y-6">
+        {/* Onglets de navigation */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="flex flex-wrap -mb-px overflow-x-auto">
+              {[
+                { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
+                { id: 'actions', label: 'Actions', icon: '⚡' },
+                { id: 'users', label: 'Utilisateurs', icon: '👥' },
+                { id: 'tenants', label: 'Tenants', icon: '🏢' },
+                { id: 'ctas', label: 'CTAs', icon: '🎯' },
+                { id: 'docs', label: 'Documentation', icon: '📚' },
+                { id: 'features', label: 'Fonctionnalités', icon: '🚀' },
+                { id: 'insights', label: 'Insights IA', icon: '🤖' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <span className="mr-2">{tab.icon}</span>
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
         {/* Cartes Statistiques Billing - Même style que /admin/billing */}
         {billingStats && (
           <>
@@ -1248,187 +1287,696 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Statistiques d'Utilisation des Fonctionnalités */}
-        {usageStats && (
-          <>
-            {/* Résumé des Actions */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                <svg className="h-6 w-6 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Statistiques d'Utilisation
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-indigo-50 rounded-lg">
-                  <p className="text-2xl font-bold text-indigo-600">{formatNumber(usageStats.summary.total_actions)}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Actions</p>
-                </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <p className="text-2xl font-bold text-blue-600">{formatNumber(usageStats.summary.actions_today)}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Aujourd'hui</p>
-                </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <p className="text-2xl font-bold text-green-600">{formatNumber(usageStats.summary.actions_this_week)}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Cette Semaine</p>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <p className="text-2xl font-bold text-purple-600">{formatNumber(usageStats.summary.actions_this_month)}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Ce Mois</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions les Plus Utilisées */}
-            {usageStats.most_used_actions && usageStats.most_used_actions.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Actions les Plus Utilisées</h3>
-                <div className="space-y-3">
-                  {usageStats.most_used_actions.slice(0, 15).map((action, index) => (
-                    <div key={index}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {action.action_name || action.action_type}
-                        </span>
-                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(action.count)}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-indigo-500 h-2 rounded-full"
-                          style={{
-                            width: `${(action.count / Math.max(...usageStats.most_used_actions.map(a => a.count), 1)) * 100}%`
-                          }}
-                        />
-                      </div>
+        {/* Contenu des onglets */}
+        <div className="space-y-6">
+            {/* Onglet: Vue d'ensemble */}
+            {activeTab === 'overview' && (
+              <>
+                {/* Résumé des Actions */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                    <svg className="h-6 w-6 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Résumé des Actions
+                  </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                      <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{formatNumber(usageStats.summary.total_actions)}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Actions</p>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Fonctionnalités les Plus Utilisées */}
-            {usageStats.feature_usage_stats && usageStats.feature_usage_stats.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Fonctionnalités les Plus Utilisées</h3>
-                <div className="space-y-3">
-                  {usageStats.feature_usage_stats.map((feature, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900 dark:text-gray-100">{feature.feature_name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{feature.tenant_count} tenant{feature.tenant_count > 1 ? 's' : ''}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-indigo-600">{formatNumber(feature.total_usage)}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">utilisations</p>
-                      </div>
+                    <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatNumber(usageStats.summary.actions_today)}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Aujourd'hui</p>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Timeline des Actions (30 derniers jours) */}
-            {usageStats.actions_timeline && usageStats.actions_timeline.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Timeline des Actions (30 derniers jours)</h3>
-                <div className="overflow-x-auto">
-                  <div className="flex items-end justify-between space-x-1 h-48" style={{ minWidth: 'max-content' }}>
-                    {usageStats.actions_timeline.map((day, index) => {
-                      const maxCount = Math.max(...usageStats.actions_timeline.map(d => d.count))
-                      const height = maxCount > 0 ? (day.count / maxCount) * 100 : 0
-                      return (
-                        <div key={index} className="flex-1 flex flex-col items-center min-w-[30px]">
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-t relative" style={{ height: `${Math.max(height, 5)}%` }}>
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t"></div>
-                          </div>
-                          <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-2 text-center transform -rotate-45 origin-top-left whitespace-nowrap">
-                            {day.label}
-                          </p>
-                          <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">{day.count}</p>
-                        </div>
-                      )
-                    })}
+                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatNumber(usageStats.summary.actions_this_week)}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Cette Semaine</p>
+                    </div>
+                    <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                      <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{formatNumber(usageStats.summary.actions_this_month)}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Ce Mois</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {/* CTAs les Plus Cliqués */}
-            {usageStats.most_clicked_ctas && usageStats.most_clicked_ctas.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">CTAs et Boutons les Plus Cliqués</h3>
-                <div className="space-y-3">
-                  {usageStats.most_clicked_ctas.map((cta, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900 dark:text-gray-100">{cta.action_name}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          {cta.resource_type && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{cta.resource_type}</span>
-                          )}
-                          {cta.user__email && (
-                            <span className="text-xs text-blue-600 dark:text-blue-400">par {cta.user__email}</span>
-                          )}
-                          {cta.tenant__name && (
-                            <span className="text-xs text-purple-600 dark:text-purple-400">({cta.tenant__name})</span>
-                          )}
+                {/* Actions par catégorie */}
+                {usageStats.actions_by_category && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Actions par Catégorie</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {Object.entries(usageStats.actions_by_category).map(([category, count]) => (
+                        <div key={category} className="text-center p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatNumber(count as number)}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 capitalize">{category.replace('_', ' ')}</p>
                         </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Statistiques anonymes vs authentifiés */}
+                {usageStats.user_type_stats && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Utilisateurs Anonymes vs Authentifiés</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{formatNumber(usageStats.user_type_stats.anonymous)}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Anonymes</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                          {usageStats.summary.total_actions > 0 
+                            ? `${((usageStats.user_type_stats.anonymous / usageStats.summary.total_actions) * 100).toFixed(1)}%`
+                            : '0%'}
+                        </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-green-600">{formatNumber(cta.count)}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">clics</p>
+                      <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatNumber(usageStats.user_type_stats.authenticated)}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Authentifiés</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                          {usageStats.summary.total_actions > 0 
+                            ? `${((usageStats.user_type_stats.authenticated / usageStats.summary.total_actions) * 100).toFixed(1)}%`
+                            : '0%'}
+                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
+                )}
+
+                {/* Timeline des Actions */}
+                {usageStats.actions_timeline && usageStats.actions_timeline.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Timeline des Actions (30 derniers jours)</h3>
+                    <div className="overflow-x-auto">
+                      <div className="flex items-end justify-between space-x-1 h-48" style={{ minWidth: 'max-content' }}>
+                        {usageStats.actions_timeline.map((day, index) => {
+                          const maxCount = Math.max(...usageStats.actions_timeline.map(d => d.count))
+                          const height = maxCount > 0 ? (day.count / maxCount) * 100 : 0
+                          return (
+                            <div key={index} className="flex-1 flex flex-col items-center min-w-[30px]">
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-t relative" style={{ height: `${Math.max(height, 5)}%` }}>
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t"></div>
+                              </div>
+                              <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-2 text-center transform -rotate-45 origin-top-left whitespace-nowrap">
+                                {day.label}
+                              </p>
+                              <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">{day.count}</p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
-            {/* Boutons par Utilisateur */}
-            {usageStats.buttons_by_user && usageStats.buttons_by_user.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Boutons Cliqués par Utilisateur</h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-900">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Utilisateur</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bouton</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Clics</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {usageStats.buttons_by_user.map((item, index) => (
-                        <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-900">
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {item.user__first_name && item.user__last_name
-                                  ? `${item.user__first_name} ${item.user__last_name}`
-                                  : item.user__email}
-                              </span>
-                              <span className="text-xs text-gray-500 dark:text-gray-400">{item.user__email}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="text-sm text-gray-900 dark:text-gray-100">{item.action_name}</span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{item.resource_type || 'button'}</span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <span className="text-sm font-bold text-green-600">{formatNumber(item.count)}</span>
-                          </td>
-                        </tr>
+            {/* Onglet: Actions */}
+            {activeTab === 'actions' && (
+              <>
+                {usageStats.most_used_actions && usageStats.most_used_actions.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Actions les Plus Utilisées</h3>
+                    <div className="space-y-3">
+                      {usageStats.most_used_actions.map((action, index) => (
+                        <div key={index}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {action.action_name || action.action_type}
+                            </span>
+                            <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(action.count)}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div
+                              className="bg-indigo-500 h-2 rounded-full"
+                              style={{
+                                width: `${(action.count / Math.max(...usageStats.most_used_actions.map(a => a.count), 1)) * 100}%`
+                              }}
+                            />
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
+                    </div>
+                  </div>
+                )}
+
+                {usageStats.actions_by_resource && usageStats.actions_by_resource.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Actions par Type de Ressource</h3>
+                    <div className="space-y-3">
+                      {usageStats.actions_by_resource.map((resource, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">{resource.resource_type}</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(resource.count)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions par heure */}
+                {usageStats.actions_by_hour && usageStats.actions_by_hour.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Actions par Heure de la Journée</h3>
+                    <div className="overflow-x-auto">
+                      <div className="flex items-end justify-between space-x-1 h-48">
+                        {usageStats.actions_by_hour.map((hour, index) => {
+                          const maxCount = Math.max(...usageStats.actions_by_hour.map(h => h.count))
+                          const height = maxCount > 0 ? (hour.count / maxCount) * 100 : 0
+                          return (
+                            <div key={index} className="flex-1 flex flex-col items-center min-w-[30px]">
+                              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-t relative" style={{ height: `${Math.max(height, 5)}%` }}>
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t"></div>
+                              </div>
+                              <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-2">{hour.label}</p>
+                              <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">{hour.count}</p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions par jour de la semaine */}
+                {usageStats.actions_by_day_of_week && usageStats.actions_by_day_of_week.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Actions par Jour de la Semaine</h3>
+                    <div className="space-y-3">
+                      {usageStats.actions_by_day_of_week.map((day, index) => {
+                        const maxCount = Math.max(...usageStats.actions_by_day_of_week.map(d => d.count))
+                        const width = maxCount > 0 ? (day.count / maxCount) * 100 : 0
+                        return (
+                          <div key={index}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{day.label}</span>
+                              <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(day.count)}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                              <div
+                                className="bg-green-500 h-2 rounded-full"
+                                style={{ width: `${width}%` }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Top liens cliqués */}
+                {usageStats.top_links && usageStats.top_links.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Liens les Plus Cliqués</h3>
+                    <div className="space-y-3">
+                      {usageStats.top_links.map((link, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{link.action_name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{link['metadata__url'] || 'URL non disponible'}</p>
+                          </div>
+                          <div className="text-right ml-4">
+                            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatNumber(link.count)}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">clics</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+
+            {/* Onglet: Utilisateurs */}
+            {activeTab === 'users' && (
+              <>
+                {usageStats.actions_by_user && usageStats.actions_by_user.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Utilisateurs les Plus Actifs</h3>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-900">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Utilisateur</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tenant</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pages vues</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Clics boutons</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Créations</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dernière action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {usageStats.actions_by_user.map((user, index) => (
+                            <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {user.user__first_name && user.user__last_name
+                                      ? `${user.user__first_name} ${user.user__last_name}`
+                                      : user.user__email}
+                                  </span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">{user.user__email}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="text-sm text-gray-900 dark:text-gray-100">{user.tenant__name || 'N/A'}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm font-bold text-indigo-600">{formatNumber(user.total_actions)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm text-gray-900 dark:text-gray-100">{formatNumber(user.page_views)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm text-gray-900 dark:text-gray-100">{formatNumber(user.button_clicks)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm text-gray-900 dark:text-gray-100">{formatNumber(user.page_creates + user.block_actions)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {user.last_action ? formatDay(user.last_action) : 'N/A'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {usageStats.buttons_by_user && usageStats.buttons_by_user.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Boutons Cliqués par Utilisateur</h3>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-900">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Utilisateur</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Bouton</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Clics</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {usageStats.buttons_by_user.map((item, index) => (
+                            <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {item.user__first_name && item.user__last_name
+                                      ? `${item.user__first_name} ${item.user__last_name}`
+                                      : item.user__email}
+                                  </span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">{item.user__email}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="text-sm text-gray-900 dark:text-gray-100">{item.action_name}</span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{item.resource_type || 'button'}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm font-bold text-green-600">{formatNumber(item.count)}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Onglet: Tenants */}
+            {activeTab === 'tenants' && (
+              <>
+                {usageStats.actions_by_tenant && usageStats.actions_by_tenant.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tenants les Plus Actifs</h3>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-900">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tenant</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Actions</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Utilisateurs uniques</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pages vues</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Clics boutons</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Créations</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dernière action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                          {usageStats.actions_by_tenant.map((tenant, index) => (
+                            <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-900">
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{tenant.tenant__name}</span>
+                                  {tenant.tenant__email && (
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">{tenant.tenant__email}</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm font-bold text-indigo-600">{formatNumber(tenant.total_actions)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm text-gray-900 dark:text-gray-100">{formatNumber(tenant.unique_users)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm text-gray-900 dark:text-gray-100">{formatNumber(tenant.page_views)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm text-gray-900 dark:text-gray-100">{formatNumber(tenant.button_clicks)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm text-gray-900 dark:text-gray-100">{formatNumber(tenant.page_creates + tenant.block_actions)}</span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {tenant.last_action ? formatDay(tenant.last_action) : 'N/A'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Statistiques site public vs tenants */}
+                {usageStats.public_site_stats && usageStats.tenant_site_stats && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Site Public (VTCBuilder)</h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Total Actions</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(usageStats.public_site_stats.total_actions)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Pages vues</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(usageStats.public_site_stats.page_views)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Clics boutons</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(usageStats.public_site_stats.button_clicks)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Clics liens</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(usageStats.public_site_stats.link_clicks)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Sites Tenants</h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Total Actions</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(usageStats.tenant_site_stats.total_actions)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Tenants uniques</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(usageStats.tenant_site_stats.unique_tenants)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Pages vues</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(usageStats.tenant_site_stats.page_views)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Clics boutons</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatNumber(usageStats.tenant_site_stats.button_clicks)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Onglet: CTAs */}
+            {activeTab === 'ctas' && (
+              <>
+                {usageStats.most_clicked_ctas && usageStats.most_clicked_ctas.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">CTAs et Boutons les Plus Cliqués</h3>
+                    <div className="space-y-3">
+                      {usageStats.most_clicked_ctas.map((cta, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900 dark:text-gray-100 text-lg">{cta.action_name}</p>
+                            <div className="flex items-center gap-3 mt-2 flex-wrap">
+                              {cta.resource_type && (
+                                <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded capitalize">
+                                  {cta.resource_type}
+                                </span>
+                              )}
+                              {cta.user__email && (
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  👤 {cta.user__email}
+                                </span>
+                              )}
+                              {cta.tenant__name && (
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  🏢 {cta.tenant__name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right ml-4">
+                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatNumber(cta.count)}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">clics</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Onglet: Documentation */}
+            {activeTab === 'docs' && (
+              <>
+                {usageStats.docs_stats && (
+                  <>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Statistiques Documentation</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatNumber(usageStats.docs_stats.total_views)}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total vues</p>
+                        </div>
+                        <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                          <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatNumber(usageStats.docs_stats.unique_users)}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Utilisateurs uniques</p>
+                        </div>
+                        <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                            {usageStats.public_site_stats?.page_views 
+                              ? `${((usageStats.docs_stats.total_views / usageStats.public_site_stats.page_views) * 100).toFixed(1)}%`
+                              : '0%'}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">% des visites</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {usageStats.docs_stats.views_by_day && usageStats.docs_stats.views_by_day.length > 0 && (
+                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Vues Documentation (30 derniers jours)</h3>
+                        <div className="overflow-x-auto">
+                          <div className="flex items-end justify-between space-x-1 h-48">
+                            {usageStats.docs_stats.views_by_day.map((day, index) => {
+                              const maxCount = Math.max(...usageStats.docs_stats.views_by_day.map(d => d.count))
+                              const height = maxCount > 0 ? (day.count / maxCount) * 100 : 0
+                              return (
+                                <div key={index} className="flex-1 flex flex-col items-center min-w-[30px]">
+                                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-t relative" style={{ height: `${Math.max(height, 5)}%` }}>
+                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t"></div>
+                                  </div>
+                                  <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-2 text-center transform -rotate-45 origin-top-left whitespace-nowrap">
+                                    {day.label}
+                                  </p>
+                                  <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">{day.count}</p>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {usageStats.docs_stats.most_viewed_docs && usageStats.docs_stats.most_viewed_docs.length > 0 && (
+                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Pages Documentation les Plus Consultées</h3>
+                        <div className="space-y-3">
+                          {usageStats.docs_stats.most_viewed_docs.map((doc, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                  Page #{doc.resource_id}
+                                </p>
+                                {doc.metadata?.path && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{doc.metadata.path}</p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatNumber(doc.count)}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">vues</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+
+            {/* Onglet: Fonctionnalités */}
+            {activeTab === 'features' && (
+              <>
+                {usageStats.feature_usage_stats && usageStats.feature_usage_stats.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Fonctionnalités les Plus Utilisées</h3>
+                    <div className="space-y-3">
+                      {usageStats.feature_usage_stats.map((feature, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900 dark:text-gray-100 text-lg">{feature.feature_name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Utilisée par {feature.tenant_count} tenant{feature.tenant_count > 1 ? 's' : ''}
+                            </p>
+                          </div>
+                          <div className="text-right ml-4">
+                            <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{formatNumber(feature.total_usage)}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">utilisations</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Onglet: Insights IA */}
+            {activeTab === 'insights' && (
+              <>
+                {insights.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                      <span className="mr-2">🤖</span>
+                      Insights Automatiques (IA Maison)
+                    </h3>
+                    <div className="space-y-4">
+                      {insights.map((insight, index) => (
+                        <div
+                          key={index}
+                          className={`p-4 rounded-lg border-l-4 ${
+                            insight.severity === 'high'
+                              ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
+                              : insight.severity === 'medium'
+                              ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500'
+                              : 'bg-blue-50 dark:bg-blue-900/20 border-blue-500'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{insight.title}</h4>
+                              <p className="text-sm text-gray-700 dark:text-gray-300">{insight.description}</p>
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  insight.type === 'trend'
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                    : insight.type === 'warning'
+                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                                    : insight.type === 'recommendation'
+                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                                }`}>
+                                  {insight.type === 'trend' ? 'Tendance' : 
+                                   insight.type === 'warning' ? 'Alerte' :
+                                   insight.type === 'recommendation' ? 'Recommandation' : 'Opportunité'}
+                                </span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{insight.category}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {patterns.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mt-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                      <span className="mr-2">🔍</span>
+                      Patterns Comportementaux Détectés
+                    </h3>
+                    <div className="space-y-4">
+                      {patterns.map((pattern, index) => (
+                        <div
+                          key={index}
+                          className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">{pattern.pattern}</h4>
+                              <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">{pattern.description}</p>
+                              {pattern.recommendation && (
+                                <p className="text-sm text-blue-700 dark:text-blue-300 italic mt-2">
+                                  💡 {pattern.recommendation}
+                                </p>
+                              )}
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  Confiance: {Math.round(pattern.confidence * 100)}%
+                                </span>
+                                {pattern.users_affected && (
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    • {pattern.users_affected} utilisateur{pattern.users_affected > 1 ? 's' : ''} concerné{pattern.users_affected > 1 ? 's' : ''}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {insights.length === 0 && patterns.length === 0 && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div className="text-center py-12">
+                      <p className="text-gray-500 dark:text-gray-400">Aucun insight disponible pour le moment.</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Les insights seront générés automatiquement lorsque suffisamment de données seront disponibles.</p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {!usageStats && activeTab !== 'overview' && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <div className="text-center py-12">
+                  <p className="text-gray-500 dark:text-gray-400">Chargement des statistiques d'utilisation...</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Les données analytics seront disponibles une fois que des actions auront été enregistrées.</p>
                 </div>
               </div>
             )}
-          </>
-        )}
+          </div>
       </div>
     </AdminLayout>
   )
