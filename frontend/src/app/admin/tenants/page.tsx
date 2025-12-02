@@ -10,6 +10,7 @@ import PageLoader from '@/components/shared/PageLoader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import ActionsDropdown, { ActionItem } from '@/components/shared/ActionsDropdown'
 import toast from 'react-hot-toast'
+import { useNavigationLoading } from '@/hooks/useNavigationLoading'
 
 export default function TenantsPage() {
   const router = useRouter()
@@ -17,7 +18,7 @@ export default function TenantsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [actionLoading, setActionLoading] = useState<{ [key: number]: string }>({})
-  const [navigating, setNavigating] = useState(false)
+  const { isNavigating, navigate } = useNavigationLoading()
   const [sortField, setSortField] = useState<'name' | 'plan' | 'status' | 'email' | 'created_at' | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
@@ -251,13 +252,13 @@ export default function TenantsPage() {
     )
   }
 
-  if (loading || navigating) {
+  if (loading || isNavigating) {
     return (
       <AdminLayout
         title="Gestion des Tenants"
         subtitle="Gérez tous vos clients et leurs sites"
       >
-        <PageLoader text={navigating ? "Chargement des détails..." : "Chargement des tenants..."} />
+        <PageLoader text={isNavigating ? "Chargement..." : "Chargement des tenants..."} />
       </AdminLayout>
     )
   }
@@ -268,8 +269,9 @@ export default function TenantsPage() {
       subtitle="Gérez tous vos clients et leurs sites"
       headerActions={
         <button
-          onClick={() => router.push('/admin/tenants/new')}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+          onClick={() => navigate('/admin/tenants/new')}
+          disabled={isNavigating}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -362,8 +364,7 @@ export default function TenantsPage() {
                         if ((e.target as HTMLElement).closest('button')) {
                           return
                         }
-                        setNavigating(true)
-                        router.push(`/admin/tenants/${tenant.id}`)
+                        navigate(`/admin/tenants/${tenant.id}`)
                       }}
                     >
                       <td className="px-3 sm:px-6 py-4 min-w-[200px]">
@@ -412,8 +413,7 @@ export default function TenantsPage() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                setNavigating(true)
-                                router.push(`/admin/tenants/${tenant.id}`)
+                                navigate(`/admin/tenants/${tenant.id}`)
                               }}
                               className="text-blue-600 hover:text-blue-900 p-1 sm:p-0"
                               title="Voir détails"
@@ -501,8 +501,7 @@ export default function TenantsPage() {
                                     </svg>
                                   ),
                                   onClick: () => {
-                                    setNavigating(true)
-                                    router.push(`/admin/tenants/${tenant.id}`)
+                                    navigate(`/admin/tenants/${tenant.id}`)
                                   },
                                 },
                                 ...(!tenant.deleted_at ? [

@@ -6,6 +6,7 @@ import authService from '@/services/auth.service'
 import api from '@/lib/api'
 import AdminLayout from '@/components/admin/AdminLayout'
 import PageLoader from '@/components/shared/PageLoader'
+import { useNavigationLoading } from '@/hooks/useNavigationLoading'
 
 interface DashboardStats {
   total_tenants: number
@@ -63,6 +64,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [detailedStats, setDetailedStats] = useState<DetailedStatsSummary | null>(null)
   const [loading, setLoading] = useState(true)
+  const { isNavigating, navigate } = useNavigationLoading()
 
   useEffect(() => {
     if (!authService.isSuperAdmin()) {
@@ -237,7 +239,7 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Résumé des Statistiques</h2>
               <button
-                onClick={() => router.push('/admin/stats')}
+                onClick={() => navigate('/admin/stats')}
                 className="text-sm text-blue-600 hover:text-blue-800 font-medium"
               >
                 Voir toutes les statistiques →
@@ -311,7 +313,7 @@ export default function AdminDashboard() {
                     Alertes ({(detailedStats.alerts?.length || 0) + (detailedStats.trials_expiring_soon_list?.length || 0)})
                   </h3>
                   <button
-                    onClick={() => router.push('/admin/stats')}
+                    onClick={() => navigate('/admin/stats')}
                     className="text-xs text-blue-600 hover:text-blue-800"
                   >
                     Voir détails →
@@ -345,7 +347,7 @@ export default function AdminDashboard() {
                               </div>
                             </div>
                             <button
-                              onClick={() => router.push(`/admin/tenants/${trial.tenant_id}`)}
+                              onClick={() => navigate(`/admin/tenants/${trial.tenant_id}`)}
                               className="text-xs text-blue-600 hover:text-blue-800 ml-4"
                             >
                               Voir →
@@ -384,7 +386,7 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Actions Rapides</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <button
-              onClick={() => router.push('/admin/tenants')}
+              onClick={() => navigate('/admin/tenants')}
               className="card hover:shadow-lg transition-shadow duration-200 cursor-pointer"
             >
               <div className="flex items-center">
@@ -401,7 +403,7 @@ export default function AdminDashboard() {
             </button>
 
             <button
-              onClick={() => router.push('/admin/tenants/new')}
+              onClick={() => navigate('/admin/tenants/new')}
               className="card hover:shadow-lg transition-shadow duration-200 cursor-pointer"
             >
               <div className="flex items-center">
@@ -435,7 +437,7 @@ export default function AdminDashboard() {
             </button>
 
             <button
-              onClick={() => router.push('/admin/homepage')}
+              onClick={() => navigate('/admin/homepage')}
               className="card hover:shadow-lg transition-shadow duration-200 cursor-pointer"
             >
               <div className="flex items-center">

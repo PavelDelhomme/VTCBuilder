@@ -7,11 +7,13 @@ import AdminLayout from '@/components/admin/AdminLayout'
 import projectService, { Project } from '@/services/project.service'
 import toast from 'react-hot-toast'
 import PageLoader from '@/components/shared/PageLoader'
+import { useNavigationLoading } from '@/hooks/useNavigationLoading'
 
 export default function ProjectsManagement() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const { isNavigating, navigate } = useNavigationLoading()
 
   useEffect(() => {
     // Allow both super admin and tenant admin to access projects
@@ -40,7 +42,7 @@ export default function ProjectsManagement() {
         status: 'active',
       })
       toast.success('Projet créé avec succès !')
-      router.push(`/admin/projects/${project.id}`)
+      navigate(`/admin/projects/${project.id}`)
     } catch (error: any) {
       console.error('Erreur création projet:', error)
       toast.error('Erreur lors de la création du projet')
@@ -61,10 +63,10 @@ export default function ProjectsManagement() {
     }
   }
 
-  if (loading) {
+  if (loading || isNavigating) {
     return (
       <AdminLayout title="Projets" subtitle="Gestion des projets et sites">
-        <PageLoader text="Chargement des projets..." />
+        <PageLoader text={isNavigating ? "Chargement..." : "Chargement des projets..."} />
       </AdminLayout>
     )
   }
@@ -163,10 +165,18 @@ export default function ProjectsManagement() {
 
                 <div className="flex gap-2">
                   <button
-                    onClick={() => router.push(`/admin/projects/${project.id}`)}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                    onClick={() => navigate(`/admin/projects/${project.id}`)}
+                    disabled={isNavigating}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    📁 Ouvrir
+                    {isNavigating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Chargement...</span>
+                      </>
+                    ) : (
+                      <>📁 Ouvrir</>
+                    )}
                   </button>
                   <button
                     onClick={() => handleDelete(project.id)}

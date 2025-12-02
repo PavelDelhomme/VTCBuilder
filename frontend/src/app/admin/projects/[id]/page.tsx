@@ -10,6 +10,7 @@ import toast from 'react-hot-toast'
 import PageLoader from '@/components/shared/PageLoader'
 import BlockPreview from '@/components/editor/BlockPreview'
 import blocksService from '@/services/blocks.service'
+import { useNavigationLoading } from '@/hooks/useNavigationLoading'
 
 export default function ProjectDetailPage() {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function ProjectDetailPage() {
   const projectId = parseInt(params?.id as string)
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
+  const { isNavigating, navigate } = useNavigationLoading()
   const [publicPages, setPublicPages] = useState<any[]>([])
   const [tenantPages, setTenantPages] = useState<any[]>([])
   const [previewPage, setPreviewPage] = useState<{ slug: string; blocks: any[]; title: string } | null>(null)
@@ -182,10 +184,10 @@ export default function ProjectDetailPage() {
     }
   }
 
-  if (loading || !project) {
+  if (loading || isNavigating || !project) {
     return (
       <AdminLayout title="Projet" subtitle="Chargement...">
-        <PageLoader text="Chargement du projet..." />
+        <PageLoader text={isNavigating ? "Chargement..." : "Chargement du projet..."} />
       </AdminLayout>
     )
   }
@@ -196,10 +198,18 @@ export default function ProjectDetailPage() {
       subtitle={`Gérer les pages du projet ${project.slug}`}
       headerActions={
         <button
-          onClick={() => router.push('/admin/projects')}
-          className="px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+          onClick={() => navigate('/admin/projects')}
+          disabled={isNavigating}
+          className="px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          ← Retour
+          {isNavigating ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 dark:border-gray-300"></div>
+              <span>Chargement...</span>
+            </>
+          ) : (
+            <>← Retour</>
+          )}
         </button>
       }
     >
