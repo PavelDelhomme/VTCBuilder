@@ -25,7 +25,7 @@ init-public-pages: ## Initialiser toutes les pages publiques (home, pricing, doc
 	  printf "  ou\n" && \
 	  printf "  cd backend-django && python manage.py init_public_site_pages\n")
 
-generate-homepage: ## Générer la page d'accueil avec des blocs correspondant au design actuel
+generate-homepage: ## Générer la page d'accueil avec des blocs correspondant au design actuel (sauvegarde automatique avant)
 	@printf "$(GREEN)🚀 Génération de la page d'accueil avec blocs...$(NC)\n"
 	@bash scripts/backend/generate_homepage.sh || \
 	 (printf "$(YELLOW)⚠️  Impossible d'exécuter la commande dans le conteneur.$(NC)\n" && \
@@ -33,6 +33,22 @@ generate-homepage: ## Générer la page d'accueil avec des blocs correspondant a
 	  printf "  docker exec $(BACKEND_CONTAINER) python manage.py generate_homepage_from_backup\n" && \
 	  printf "  ou\n" && \
 	  printf "  cd backend-django && python manage.py generate_homepage_from_backup\n")
+
+restore-homepage: ## Restaurer la page d'accueil depuis un backup
+	@printf "$(GREEN)🔄 Restauration de la page d'accueil depuis un backup...$(NC)\n"
+	@bash scripts/backend/restore_homepage.sh || \
+	 (printf "$(YELLOW)⚠️  Impossible d'exécuter la commande dans le conteneur.$(NC)\n" && \
+	  printf "$(BLUE)Exécutez manuellement :$(NC)\n" && \
+	  printf "  docker exec $(BACKEND_CONTAINER) python manage.py restore_homepage_backup\n" && \
+	  printf "  ou\n" && \
+	  printf "  cd backend-django && python manage.py restore_homepage_backup\n")
+
+list-homepage-backups: ## Lister tous les backups de la page d'accueil
+	@printf "$(GREEN)📦 Liste des backups de la page d'accueil...$(NC)\n"
+	@docker exec $(BACKEND_CONTAINER) python manage.py restore_homepage_backup --list || \
+	 (printf "$(YELLOW)⚠️  Impossible d'exécuter la commande dans le conteneur.$(NC)\n" && \
+	  printf "$(BLUE)Exécutez manuellement :$(NC)\n" && \
+	  printf "  docker exec $(BACKEND_CONTAINER) python manage.py restore_homepage_backup --list\n")
 
 generate-public-pages: ## Générer les pages publiques dans l'éditeur pour les tenants
 	@printf "$(GREEN)🚀 Génération des pages publiques dans l'éditeur...$(NC)\n"

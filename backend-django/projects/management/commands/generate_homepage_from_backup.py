@@ -3,11 +3,19 @@ Management command to generate the homepage with blocks matching the current des
 """
 from django.core.management.base import BaseCommand
 from settings_app.models import SystemSettings
+from .backup_homepage import Command as BackupCommand
 import json
 
 
 class Command(BaseCommand):
     help = 'Generate homepage blocks matching the current VTCBuilder landing page design'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--no-backup',
+            action='store_true',
+            help='Skip backup before generating (not recommended)',
+        )
 
     def handle(self, *args, **options):
         try:
@@ -15,6 +23,16 @@ class Command(BaseCommand):
             if not settings:
                 self.stdout.write(self.style.ERROR('❌ SystemSettings not found'))
                 return
+            
+            # Backup current homepage before generating new one
+            if not options['no_backup']:
+                self.stdout.write(self.style.WARNING('💾 Création d\'une sauvegarde avant génération...'))
+                backup_cmd = BackupCommand()
+                backup_file = backup_cmd.handle()
+                if backup_file:
+                    self.stdout.write(self.style.SUCCESS('✅ Sauvegarde créée avec succès\n'))
+                else:
+                    self.stdout.write(self.style.WARNING('⚠️  Échec de la sauvegarde, mais continuation...\n'))
             
             # Generate blocks matching the current design
             blocks = [
@@ -338,6 +356,10 @@ class Command(BaseCommand):
                     f'\n✅ Page d\'accueil générée avec {len(blocks)} blocs principaux !\n'
                     f'   Statut: Brouillon (draft)\n'
                     f'   Pour publier, allez dans /admin/pages-public/home/edit et changez le statut à "Publié"\n'
+                    f'\n💡 Pour restaurer la version précédente:\n'
+                    f'   make restore-homepage\n'
+                    f'   ou\n'
+                    f'   docker exec vtcbuilder-backend python manage.py restore_homepage_backup\n'
                 )
             )
         except Exception as e:
