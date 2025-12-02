@@ -24,6 +24,17 @@ if ! curl -s http://localhost:9494 > /dev/null; then
     exit 1
 fi
 
+# Vérifier que le backend est accessible
+if ! curl -s http://localhost:9495/api/ > /dev/null; then
+    echo -e "${YELLOW}⚠️  Le backend n'est pas accessible sur http://localhost:9495${NC}"
+    echo -e "${YELLOW}💡 Attente de 5 secondes pour que le backend démarre...${NC}"
+    sleep 5
+    if ! curl -s http://localhost:9495/api/ > /dev/null; then
+        echo -e "${RED}❌ Le backend n'est toujours pas accessible${NC}"
+        exit 1
+    fi
+fi
+
 # Arrêter le conteneur Playwright s'il existe déjà
 if docker ps -a | grep -q vtcbuilder-playwright; then
     echo -e "${YELLOW}🛑 Arrêt du conteneur Playwright existant...${NC}"

@@ -39,7 +39,7 @@ class UserActionViewSet(viewsets.ModelViewSet):
             return queryset
         
         # Tenant admin can see actions from their tenant
-        if hasattr(user, 'tenant'):
+        if hasattr(user, 'tenant') and user.tenant is not None:
             queryset = queryset.filter(tenant=user.tenant)
         else:
             queryset = queryset.filter(user=user)
@@ -52,7 +52,7 @@ class UserActionViewSet(viewsets.ModelViewSet):
         if request.user.is_authenticated:
             if not request.data.get('user'):
                 request.data['user'] = request.user.id
-            if not request.data.get('tenant') and hasattr(request.user, 'tenant'):
+            if not request.data.get('tenant') and hasattr(request.user, 'tenant') and request.user.tenant is not None:
                 request.data['tenant'] = request.user.tenant.id
         
         # Détecter le tenant depuis le domaine si non fourni
@@ -116,7 +116,7 @@ class UserActionViewSet(viewsets.ModelViewSet):
         # Filter based on user role
         if user.is_super_admin():
             queryset = UserAction.objects.all()
-        elif hasattr(user, 'tenant'):
+        elif hasattr(user, 'tenant') and user.tenant is not None:
             queryset = UserAction.objects.filter(tenant=user.tenant)
         else:
             queryset = UserAction.objects.filter(user=user)
@@ -185,7 +185,7 @@ class FeatureUsageViewSet(viewsets.ModelViewSet):
         if user.is_super_admin():
             return FeatureUsage.objects.all()
         
-        if hasattr(user, 'tenant'):
+        if hasattr(user, 'tenant') and user.tenant is not None:
             return FeatureUsage.objects.filter(tenant=user.tenant)
         
         return FeatureUsage.objects.none()
@@ -206,7 +206,7 @@ class FeatureUsageViewSet(viewsets.ModelViewSet):
                 tenant = Tenant.objects.get(id=tenant_id)
             except Tenant.DoesNotExist:
                 return Response({'error': 'Tenant not found'}, status=status.HTTP_404_NOT_FOUND)
-        elif hasattr(request.user, 'tenant'):
+        elif hasattr(request.user, 'tenant') and request.user.tenant is not None:
             tenant = request.user.tenant
         else:
             return Response({'error': 'Tenant is required'}, status=status.HTTP_400_BAD_REQUEST)
