@@ -183,6 +183,7 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
               </div>
             </div>
           </header>
+          )}
 
           {/* Content - Utilise tout l'espace disponible avec scroll */}
           <main className="flex-1 w-full min-w-0 overflow-hidden flex flex-col">
