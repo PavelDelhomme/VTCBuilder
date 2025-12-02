@@ -213,15 +213,15 @@ export default function AdminTemplatesPage() {
       price: 0,
       is_active: true,
       preview_image: null as File | null,
-    html_content: '',
-    css_content: '',
-    variables: {},
-  })
-  setActiveTab('info')
-  setHtmlFile(null)
-  setCssFile(null)
-  setDetectedVariables([])
-}
+      html_content: '',
+      css_content: '',
+      variables: {},
+    })
+    setActiveTab('info')
+    setHtmlFile(null)
+    setCssFile(null)
+    setDetectedVariables([])
+  }
 
   const handleHtmlFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -952,7 +952,6 @@ export default function AdminTemplatesPage() {
         </div>
       </div>
       </div>
-    </AdminLayout>
     </AdminLayout>
   )
 }
