@@ -113,7 +113,7 @@ services:
       - /app/.next
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://api.localhost
+      - NEXT_PUBLIC_API_URL=http://localhost:9495
     networks:
       - vtcbuilder_network
     labels:

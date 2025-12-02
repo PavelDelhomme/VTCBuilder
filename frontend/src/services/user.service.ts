@@ -93,8 +93,13 @@ class UserService {
       const response = await api.get(`/users/impersonation-status/`);
       return response.data;
     } catch (error: any) {
-      // If endpoint doesn't exist (404), return default status
-      if (error.response?.status === 404) {
+      // If endpoint doesn't exist (404), network error, or blocked, return default status
+      const isExpectedError = error.response?.status === 404 || 
+                             error.code === 'ERR_NETWORK' || 
+                             error.code === 'ERR_BLOCKED_BY_CLIENT' ||
+                             error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||
+                             error.message?.includes('blocked by client')
+      if (isExpectedError) {
         return { is_impersonating: false, impersonating: false };
       }
       throw error;

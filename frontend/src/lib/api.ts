@@ -67,6 +67,8 @@ const SILENT_ERROR_ENDPOINTS = [
   '/billing/unpaid-items/',
   '/templates/',
   '/pricing-plans/', // Peut être en erreur temporaire
+  '/users/impersonation-status/', // Endpoint optionnel
+  '/dashboard/', // Peut être en erreur temporaire
 ];
 
 // Intercepteur pour gérer les erreurs
@@ -78,7 +80,13 @@ api.interceptors.response.use(
     
     // ERR_BLOCKED_BY_CLIENT est généralement causé par un bloqueur de publicité
     // Ne pas logger ces erreurs comme des erreurs critiques pour certains endpoints
-    const silentEndpoints = ['/tenants/features/', '/auth/login/']
+    const silentEndpoints = [
+      '/tenants/features/', 
+      '/auth/login/',
+      '/users/impersonation-status/',
+      '/dashboard/',
+      '/analytics/usage-stats/',
+    ]
     const isSilentEndpoint = silentEndpoints.some(endpoint => url.includes(endpoint))
     
     // Gérer les erreurs bloquées par le client (bloqueur de pub)

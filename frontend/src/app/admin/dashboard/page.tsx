@@ -118,15 +118,22 @@ export default function AdminDashboard() {
         console.warn('Erreur chargement stats détaillées:', error)
         // Continue without detailed stats
       }
-    } catch (error) {
-      console.error('Erreur chargement dashboard:', error)
-          setStats({
-            total_tenants: 0,
-            active_tenants: 0,
-            trial_tenants: 0,
-            total_users: 0,
-            monthly_revenue: 0,
-          })
+    } catch (error: any) {
+      // Ne pas logger les erreurs réseau ou bloquées (bloqueur de pub)
+      const isExpectedError = error.code === 'ERR_NETWORK' || 
+                             error.code === 'ERR_BLOCKED_BY_CLIENT' ||
+                             error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||
+                             error.message?.includes('blocked by client')
+      if (!isExpectedError) {
+        console.error('Erreur chargement dashboard:', error)
+      }
+      setStats({
+        total_tenants: 0,
+        active_tenants: 0,
+        trial_tenants: 0,
+        total_users: 0,
+        monthly_revenue: 0,
+      })
     } finally {
       setLoading(false)
     }
