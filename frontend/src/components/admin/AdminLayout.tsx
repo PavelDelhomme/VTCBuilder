@@ -125,24 +125,25 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
           {/* Desktop Header avec hamburger pour ouvrir/fermer */}
           <header className="hidden lg:block bg-white dark:bg-gray-800 shadow dark:shadow-gray-900/50 flex-shrink-0">
             <div className="w-full py-4 px-4 sm:px-6 lg:px-8">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                <div className="flex items-center space-x-4 min-w-0 flex-1">
-                  <button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-2 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
-                    aria-label="Toggle menu"
-                    title={sidebarOpen ? "Fermer le menu" : "Ouvrir le menu"}
-                  >
-                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                  </button>
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
-                    {subtitle && <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">{subtitle}</p>}
+              <div className="flex flex-col gap-4">
+                {/* First row: Title and theme toggle */}
+                <div className="flex items-center justify-between gap-4 min-w-0">
+                  <div className="flex items-center space-x-4 min-w-0 flex-1">
+                    <button
+                      onClick={() => setSidebarOpen(!sidebarOpen)}
+                      className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-2 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+                      aria-label="Toggle menu"
+                      title={sidebarOpen ? "Fermer le menu" : "Ouvrir le menu"}
+                    >
+                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <h1 className="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
+                      {subtitle && <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">{subtitle}</p>}
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 flex-shrink-0 w-full sm:w-auto">
                   {/* Dark Mode Toggle */}
                   <button
                     onClick={toggleTheme}
@@ -160,8 +161,13 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
                       </svg>
                     )}
                   </button>
-                  {headerActions && <div className="w-full sm:w-auto min-w-0">{headerActions}</div>}
                 </div>
+                {/* Second row: Header actions - can wrap to multiple lines */}
+                {headerActions && (
+                  <div className="w-full min-w-0">
+                    {headerActions}
+                  </div>
+                )}
               </div>
             </div>
           </header>

@@ -179,10 +179,10 @@ export default function EditPublicPage() {
       title={`Éditer ${PAGE_TITLES[pageSlug] || pageSlug}`}
       subtitle={`Créez et personnalisez la page ${pageSlug === 'home' ? 'd\'accueil' : pageSlug} avec l'éditeur de blocs complet`}
       headerActions={
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-wrap items-start sm:items-center w-full">
+        <div className="flex flex-row gap-2 sm:gap-3 flex-wrap items-center w-full">
           {/* Page Selector - Isolated for better readability */}
           {availablePages.length > 1 && (
-            <div className="flex items-center gap-2 pr-0 sm:pr-3 border-0 sm:border-r border-gray-300 dark:border-gray-600 w-full sm:w-auto">
+            <div className="flex items-center gap-2 pr-2 sm:pr-3 border-r border-gray-300 dark:border-gray-600">
               <label className="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
                 Page:
               </label>
@@ -191,7 +191,7 @@ export default function EditPublicPage() {
                 onChange={(e) => {
                   router.push(`/admin/pages-public/${e.target.value}/edit`)
                 }}
-                className="flex-1 sm:flex-none px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm font-medium min-w-[180px]"
+                className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm font-medium min-w-[150px] sm:min-w-[180px]"
               >
                 {availablePages.map((page) => (
                   <option key={page.slug} value={page.slug}>
