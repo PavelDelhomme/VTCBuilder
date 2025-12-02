@@ -951,6 +951,7 @@ export default function AdminTemplatesPage() {
           </div>
         </div>
       </div>
+      </div>
     </AdminLayout>
   )
 }
