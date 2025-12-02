@@ -35,6 +35,7 @@ export default function EditPublicPage() {
   const [showPreview, setShowPreview] = useState(true)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const [availablePages, setAvailablePages] = useState<Array<{ slug: string; title: string }>>([])
+  const [headerVisible, setHeaderVisible] = useState(true)
 
   // Sauvegarde automatique
   const { isSaving: isAutoSaving, lastSaved, updateLastSaved } = useAutoSave({
@@ -178,6 +179,7 @@ export default function EditPublicPage() {
     <AdminLayout
       title={`Éditer ${PAGE_TITLES[pageSlug] || pageSlug}`}
       subtitle={`Créez et personnalisez la page ${pageSlug === 'home' ? 'd\'accueil' : pageSlug} avec l'éditeur de blocs complet`}
+      hideHeader={!headerVisible}
       saveStatus={
         isAutoSaving ? (
           <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-xs sm:text-sm whitespace-nowrap">

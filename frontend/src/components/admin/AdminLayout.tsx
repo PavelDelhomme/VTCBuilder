@@ -12,11 +12,12 @@ interface AdminLayoutProps {
   subtitle?: string
   headerActions?: React.ReactNode
   saveStatus?: React.ReactNode
+  hideHeader?: boolean
 }
 
 const SIDEBAR_STATE_KEY = 'vtcbuilder_admin_sidebar_open'
 
-export default function AdminLayout({ children, title, subtitle, headerActions, saveStatus }: AdminLayoutProps) {
+export default function AdminLayout({ children, title, subtitle, headerActions, saveStatus, hideHeader = false }: AdminLayoutProps) {
   const { resolvedTheme, toggleTheme } = useTheme()
   
   // Fonction pour charger l'état sauvegardé depuis localStorage
@@ -124,6 +125,7 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
           sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'
         }`}>
           {/* Desktop Header avec hamburger pour ouvrir/fermer */}
+          {!hideHeader && (
           <header className="hidden lg:block bg-white dark:bg-gray-800 shadow dark:shadow-gray-900/50 flex-shrink-0">
             <div className="w-full py-4 px-4 sm:px-6 lg:px-8">
               <div className="flex flex-col gap-4">
