@@ -193,6 +193,11 @@ test-frontend: ## Exécuter les tests frontend
 	@cd frontend && npm test -- --passWithNoTests
 	@printf "$(GREEN)✅ Tests frontend terminés !$(NC)\n"
 
+test-e2e: ## Exécuter les tests E2E Playwright
+	@printf "$(GREEN)🧪 Exécution des tests E2E Playwright...$(NC)\n"
+	@bash scripts/frontend/run_playwright_tests.sh
+	@printf "$(GREEN)✅ Tests E2E terminés !$(NC)\n"
+
 check-errors: ## Vérifier les erreurs dans les logs backend
 	@printf "$(BLUE)🔍 Vérification des erreurs...$(NC)\n"
 	@cd backend-django && $(MAKE) check-errors

@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.40.0-focal
+    container_name: vtcbuilder-playwright
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - ./playwright-report:/app/playwright-report
+    environment:
+      - PLAYWRIGHT_BASE_URL=http://frontend:3000
+      - CI=true
+    networks:
+      - vtcbuilder_network
+    depends_on:
+      - frontend
+    command: npx playwright test --reporter=html,json,list
+
+networks:
+  vtcbuilder_network:
+    external: true
+
