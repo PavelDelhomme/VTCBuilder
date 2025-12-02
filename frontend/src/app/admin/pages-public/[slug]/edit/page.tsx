@@ -394,6 +394,21 @@ export default function EditPublicPage() {
         </div>
       }
     >
+      {/* Bouton flottant pour réafficher la barre quand elle est masquée */}
+      {!headerVisible && (
+        <button
+          onClick={() => setHeaderVisible(true)}
+          className="fixed top-4 right-4 z-50 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg transition-all flex items-center gap-2 group"
+          title="Afficher la barre supérieure"
+        >
+          <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+          <span className="hidden sm:inline">Afficher Barre</span>
+          <span className="sm:hidden">↑</span>
+        </button>
+      )}
+
       <div className="flex flex-col h-full min-h-0 overflow-hidden">
         {/* SEO Settings Bar */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4 flex gap-3 sm:gap-4 items-center flex-wrap flex-shrink-0">
