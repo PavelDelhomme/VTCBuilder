@@ -506,13 +506,12 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           w-64 lg:w-72 xl:w-80 2xl:w-96
           bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800
           border-r border-gray-200 dark:border-gray-700 
-          overflow-hidden
           transition-transform duration-300 ease-in-out
           shadow-lg lg:shadow-none
           flex-shrink-0
           flex flex-col
           min-h-0
-          max-h-full
+          h-full
         `}>
           {/* Afficher le panneau de paramètres si un bloc est sélectionné, sinon la palette de blocs */}
           {selectedBlock ? (
@@ -668,7 +667,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             /* Block Palette */
             <>
               {/* Mobile: Close button */}
-              <div className="flex items-center justify-between mb-5 lg:hidden pb-3 border-b border-gray-200 dark:border-gray-700 p-4">
+              <div className="flex items-center justify-between lg:hidden pb-3 border-b border-gray-200 dark:border-gray-700 p-4 flex-shrink-0">
                 <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Blocs disponibles</h3>
                 <button
                   onClick={() => setSidebarOpen(false)}
@@ -679,7 +678,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   </svg>
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 min-h-0" style={{ scrollBehavior: 'smooth' }}>
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 min-h-0" style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch' }}>
                 {/* Header avec recherche et filtres */}
                 <div className="sticky top-0 bg-gradient-to-b from-gray-50 via-gray-50 to-transparent dark:from-gray-900 dark:via-gray-900 dark:to-transparent pb-4 z-10 mb-4">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3">Blocs disponibles</h3>
