@@ -1,56 +1,43 @@
 # Page snapshot
 
 ```yaml
-- generic [active] [ref=e1]:
-  - generic [ref=e3]:
-    - generic [ref=e4]:
-      - heading "172" [level=2] [ref=e5]
-      - paragraph [ref=e6]: Connexion à votre espace d'administration
-      - paragraph [ref=e7]:
-        - text: "Sous-domaine:"
-        - code [ref=e8]: 172.20.0.5
-    - generic [ref=e9]:
-      - generic [ref=e10]:
-        - generic [ref=e11]:
-          - generic [ref=e12]: Email
-          - textbox "Email" [ref=e13]:
-            - /placeholder: votre@email.com
-            - text: admin@vtcbuilder.com
-        - generic [ref=e14]:
-          - generic [ref=e15]: Mot de passe
-          - generic [ref=e16]:
-            - textbox "Mot de passe" [ref=e17]:
-              - /placeholder: ••••••••
-              - text: admin123
-            - button "Afficher le mot de passe" [ref=e18] [cursor=pointer]:
-              - img [ref=e19]
-      - generic [ref=e22]:
-        - link "Créer un compte" [ref=e24] [cursor=pointer]:
-          - /url: /register
-        - link "Mot de passe oublié ?" [ref=e26] [cursor=pointer]:
-          - /url: /forgot-password
-      - button "Se connecter" [ref=e27] [cursor=pointer]
-    - button "Configurer un domaine personnalisé" [ref=e29] [cursor=pointer]:
-      - img [ref=e30]
-      - text: Configurer un domaine personnalisé
-    - generic [ref=e32]:
-      - generic [ref=e37]: Comptes de test
-      - generic [ref=e38]:
-        - paragraph [ref=e39]: "Comptes de test :"
-        - generic [ref=e40]:
-          - paragraph [ref=e41]:
-            - strong [ref=e42]: "Super Admin:"
-            - code [ref=e43]: admin@vtcbuilder.com
-            - text: /
-            - code [ref=e44]: admin123
-          - paragraph [ref=e45]:
-            - strong [ref=e46]: "Tenant Test:"
-            - code [ref=e47]: test@delhomme.ovh
-            - text: /
-            - code [ref=e48]: admin123
-        - paragraph [ref=e49]:
-          - text: Le tenant de test est
-          - strong [ref=e50]: ma-societe-vtc
-          - text: (Ma Société VTC)
-  - alert [ref=e51]
+- generic [active]:
+  - alert [ref=e1]
+  - dialog [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - heading "Build Error" [level=1] [ref=e7]
+        - paragraph [ref=e8]: Failed to compile
+        - generic [ref=e9]:
+          - text: Next.js (14.2.33) is outdated
+          - link "(learn more)" [ref=e11] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - link "./src/app/admin/blocks/call-to-actions/page.tsx" [ref=e14] [cursor=pointer]:
+            - text: ./src/app/admin/blocks/call-to-actions/page.tsx
+            - img [ref=e15]
+          - generic [ref=e19]:
+            - generic [ref=e20]: "Error:"
+            - text: x
+            - generic [ref=e21]: "Unexpected token `AdminLayout`. Expected jsx identifier ,-["
+            - text: /app/src/app/admin/blocks/call-to-actions/page.tsx
+            - generic [ref=e22]: :203:1]
+            - text: "203"
+            - generic [ref=e23]: "| }"
+            - text: "204"
+            - generic [ref=e24]: "|"
+            - text: "205"
+            - generic [ref=e25]: "| return ("
+            - text: "206"
+            - generic [ref=e26]: "| <AdminLayout :"
+            - generic [ref=e27]: ^^^^^^^^^^^
+            - text: "207"
+            - generic [ref=e28]: "| title=\"Gestion des Call-to-Actions\""
+            - text: "208"
+            - generic [ref=e29]: "| subtitle=\"Créez et gérez les call-to-actions réutilisables pour vos blocs\""
+            - text: "209"
+            - generic [ref=e30]: "| headerActions={ `---- Caused by: Syntax Error"
+        - contentinfo [ref=e31]:
+          - paragraph [ref=e32]: This error occurred during the build process and can only be dismissed by fixing the error.
 ```
