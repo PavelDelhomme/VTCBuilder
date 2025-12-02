@@ -500,19 +500,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         )}
 
         {/* Sidebar - Block Palette OU Properties Panel */}
-        <div className={`
-          ${sidebarOpen ? 'fixed left-0 top-0 h-screen z-50' : 'hidden'}
-          lg:static lg:block
-          w-64 lg:w-72 xl:w-80 2xl:w-96
-          bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800
-          border-r border-gray-200 dark:border-gray-700 
-          transition-transform duration-300 ease-in-out
-          shadow-lg lg:shadow-none
-          flex-shrink-0
-          flex flex-col
-          ${sidebarOpen ? 'h-screen' : ''}
-          lg:h-full
-        `}>
+        <div className={`${sidebarOpen ? 'fixed left-0 top-0 h-screen z-50' : 'hidden'} lg:static lg:block w-64 lg:w-72 xl:w-80 2xl:w-96 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out shadow-lg lg:shadow-none flex-shrink-0 flex flex-col lg:h-full`}>
           {/* Afficher le panneau de paramètres si un bloc est sélectionné, sinon la palette de blocs */}
           {selectedBlock ? (
             /* Properties Panel dans la sidebar */
@@ -965,9 +953,10 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             ))}
           </div>
         )}
+                </div>
               </div>
             </>
-        )}
+          )}
       </div>
 
       {/* Main Editor Area */}

@@ -8,6 +8,10 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'VTCBuilder - Le WordPress des Chauffeurs VTC',
   description: 'Créez votre site VTC professionnel en 2 minutes',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export const viewport: Viewport = {
