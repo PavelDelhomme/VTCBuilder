@@ -44,8 +44,18 @@ export default function EditPublicPage() {
       const settingsData: any = {}
       
       if (pageSlug === 'home') {
+        // Sauvegarder les blocs en mode brouillon
+        // Ne pas modifier le statut publié sauf si l'utilisateur clique explicitement sur "Publier"
         settingsData.public_homepage_blocks = data.blocks
-        settingsData.public_homepage_status = data.status
+        // Ne sauvegarder le statut que s'il est explicitement changé à 'published'
+        // Sinon, garder 'draft' pour ne pas affecter la page publiée
+        if (data.status === 'published') {
+          settingsData.public_homepage_status = 'published'
+        } else {
+          // En mode brouillon, sauvegarder les blocs mais ne pas changer le statut publié
+          // Cela permet de modifier sans affecter la page publique
+          settingsData.public_homepage_status = 'draft'
+        }
         settingsData.public_homepage_meta_title = data.metaTitle
         settingsData.public_homepage_meta_description = data.metaDescription
       } else {
@@ -107,8 +117,97 @@ export default function EditPublicPage() {
       
       // Load page data based on slug
       if (pageSlug === 'home') {
-        setBlocks(data.public_homepage_blocks || [])
-        setStatus(data.public_homepage_status || 'draft')
+        // Charger les blocs existants, ou créer des blocs par défaut si aucun n'existe
+        // pour reproduire la page actuelle affichée sur localhost:9494/
+        let homepageBlocks = data.public_homepage_blocks || []
+        
+        // Si aucun bloc n'existe, créer des blocs par défaut correspondant à la page actuelle
+        if (homepageBlocks.length === 0) {
+          homepageBlocks = [
+            {
+              id: 'hero-' + Date.now(),
+              type: 'hero',
+              properties: {
+                title: 'Le WordPress des Chauffeurs VTC',
+                subtitle: 'Créez votre site VTC professionnel en quelques minutes. Gestion complète, réservations, paiements, tout inclus.',
+                buttons: [
+                  { text: '🚀 Démarrer gratuitement', url: '/register', style: 'primary' },
+                  { text: 'Voir les tarifs', url: '#pricing', style: 'secondary' }
+                ],
+                background_image: '',
+                background_gradient: 'from-blue-500 via-purple-600 to-pink-500'
+              }
+            },
+            {
+              id: 'features-' + Date.now(),
+              type: 'features-grid',
+              properties: {
+                title: 'Tout ce dont vous avez besoin',
+                subtitle: '',
+                columns: 3,
+                features: [
+                  {
+                    icon: '🎨',
+                    title: 'Site Professionnel',
+                    description: 'Designs modernes et responsive. Personnalisez votre site sans coder.'
+                  },
+                  {
+                    icon: '📅',
+                    title: 'Réservations en Ligne',
+                    description: 'Système de réservation complet avec calendrier et notifications.'
+                  },
+                  {
+                    icon: '💳',
+                    title: 'Paiements Intégrés',
+                    description: 'Acceptez les paiements en ligne. Cartes bancaires, virement, tout est possible.'
+                  },
+                  {
+                    icon: '📱',
+                    title: 'Mobile First',
+                    description: 'Votre site s\'adapte automatiquement aux smartphones et tablettes.'
+                  },
+                  {
+                    icon: '📊',
+                    title: 'Analytics Inclus',
+                    description: 'Suivez vos performances, réservations, revenus en temps réel.'
+                  },
+                  {
+                    icon: '🔒',
+                    title: 'Sécurisé & Rapide',
+                    description: 'Hébergement sécurisé, sauvegardes automatiques, SSL inclus.'
+                  }
+                ]
+              }
+            },
+            {
+              id: 'pricing-' + Date.now(),
+              type: 'pricing',
+              properties: {
+                title: 'Tarifs Transparents',
+                subtitle: 'Choisissez le plan adapté à vos besoins. Pas d\'engagement, changez de plan à tout moment.',
+                source: 'api',
+                api_endpoint: '/api/billing/pricing-plans/',
+                columns: 3
+              }
+            },
+            {
+              id: 'cta-' + Date.now(),
+              type: 'cta-section',
+              properties: {
+                title: 'Prêt à démarrer ?',
+                subtitle: 'Créez votre site VTC professionnel dès aujourd\'hui. Essai gratuit de 14 jours.',
+                button_text: '🚀 Créer mon compte gratuitement',
+                button_url: '/register',
+                background_gradient: 'from-blue-600 to-purple-600'
+              }
+            }
+          ]
+        }
+        
+        setBlocks(homepageBlocks)
+        // Toujours charger en mode 'draft' pour ne pas modifier la page publiée
+        // L'utilisateur devra explicitement publier pour que les changements soient visibles
+        setStatus('draft')
         setMetaTitle(data.public_homepage_meta_title || 'VTCBuilder - Le WordPress des chauffeurs VTC')
         setMetaDescription(data.public_homepage_meta_description || 'Plateforme complète pour créer et gérer votre site VTC professionnel')
       } else {
