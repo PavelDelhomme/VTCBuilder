@@ -2449,16 +2449,48 @@ function BlockRenderer({
         <div className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Titre de la section
+              Source des plans
             </label>
-            <input
-              type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+            <select
+              value={block.data.source || 'manual'}
+              onChange={(e) => onUpdate({ data: { ...block.data, source: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              placeholder="Nos tarifs"
-            />
+            >
+              <option value="manual">Manuel (saisie)</option>
+              <option value="dynamic">API (chargement automatique)</option>
+              <option value="api">API (chargement automatique)</option>
+            </select>
           </div>
+          {block.data.source === 'dynamic' || block.data.source === 'api' ? (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Endpoint API
+              </label>
+              <input
+                type="text"
+                value={block.data.api_endpoint || '/api/billing/pricing-plans/'}
+                onChange={(e) => onUpdate({ data: { ...block.data, api_endpoint: e.target.value } })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                placeholder="/api/billing/pricing-plans/"
+              />
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                Les plans seront chargés automatiquement depuis l'API
+              </p>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Titre de la section
+                </label>
+                <input
+                  type="text"
+                  value={block.data.title || ''}
+                  onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Nos tarifs"
+                />
+              </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Forfaits ({plans.length})
@@ -2542,6 +2574,8 @@ function BlockRenderer({
               )}
             </div>
           </div>
+            </>
+          )}
         </div>
       )
     case 'timeline':
@@ -3629,29 +3663,68 @@ function BlockRenderer({
               placeholder="https://example.com/image.jpg"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Texte bouton
-              </label>
-              <input
-                type="text"
-                value={block.data.button_text || ''}
-                onChange={(e) => onUpdate({ data: { ...block.data, button_text: e.target.value } })}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                placeholder="En savoir plus"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                URL bouton
-              </label>
-              <UrlInputWithSuggestions
-                value={block.data.button_url || ''}
-                onChange={(url) => onUpdate({ data: { ...block.data, button_url: url } })}
-                placeholder="URL"
-                className="text-xs"
-              />
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Boutons
+            </label>
+            <div className="space-y-2">
+              {(block.data.buttons || (block.data.button_text ? [{ text: block.data.button_text, url: block.data.button_url, style: 'primary' }] : [])).map((btn: any, index: number) => (
+                <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={btn.text || ''}
+                      onChange={(e) => {
+                        const buttons = block.data.buttons || []
+                        buttons[index] = { ...btn, text: e.target.value }
+                        onUpdate({ data: { ...block.data, buttons } })
+                      }}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                      placeholder="Texte du bouton"
+                    />
+                    <select
+                      value={btn.style || 'primary'}
+                      onChange={(e) => {
+                        const buttons = block.data.buttons || []
+                        buttons[index] = { ...btn, style: e.target.value }
+                        onUpdate({ data: { ...block.data, buttons } })
+                      }}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                    >
+                      <option value="primary">Principal</option>
+                      <option value="secondary">Secondaire</option>
+                    </select>
+                  </div>
+                  <PageSelector
+                    value={btn.url || ''}
+                    onChange={(url) => {
+                      const buttons = block.data.buttons || []
+                      buttons[index] = { ...btn, url }
+                      onUpdate({ data: { ...block.data, buttons } })
+                    }}
+                    placeholder="URL du bouton..."
+                    className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                  />
+                  <button
+                    onClick={() => {
+                      const buttons = block.data.buttons || []
+                      onUpdate({ data: { ...block.data, buttons: buttons.filter((_: any, i: number) => i !== index) } })
+                    }}
+                    className="mt-1 text-xs text-red-600 hover:text-red-800"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={() => {
+                  const buttons = block.data.buttons || []
+                  onUpdate({ data: { ...block.data, buttons: [...(buttons || []), { text: '', url: '', style: 'primary' }] } })
+                }}
+                className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                + Ajouter un bouton
+              </button>
             </div>
           </div>
           <div className="flex items-center gap-2">

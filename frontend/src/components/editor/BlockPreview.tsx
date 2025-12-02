@@ -1223,9 +1223,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
         const [loading, setLoading] = useState(false)
         
         useEffect(() => {
-          if (block.data.source === 'dynamic' && block.data.api_endpoint) {
+          if (block.data.source === 'dynamic' || block.data.source === 'api') {
             setLoading(true)
-            fetch(block.data.api_endpoint)
+            const apiUrl = block.data.api_endpoint || '/api/billing/pricing-plans/'
+            // Use absolute URL for API calls
+            const fullUrl = apiUrl.startsWith('http') ? apiUrl : `${window.location.origin}${apiUrl}`
+            fetch(fullUrl)
               .then(res => res.json())
               .then(data => {
                 const plansData = Array.isArray(data) ? data : (data.results || data.plans || [])
@@ -2488,11 +2491,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       return (
         <div style={wrapperStyles} className="mb-6">
           <div 
-            className="p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+            className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow"
             style={contentStyles}
           >
             {block.data.icon && (
-              <div className="text-4xl mb-4">{block.data.icon}</div>
+              <div className="text-5xl mb-4">{block.data.icon}</div>
             )}
             {block.data.title && (
               <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
@@ -2500,14 +2503,14 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               </h3>
             )}
             {block.data.description && (
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-gray-600 dark:text-gray-400">
                 {block.data.description}
               </p>
             )}
             {block.data.link_url && block.data.link_text && (
               <a 
                 href={block.data.link_url}
-                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                className="text-blue-600 dark:text-blue-400 hover:underline font-medium mt-4 inline-block"
               >
                 {block.data.link_text} →
               </a>
