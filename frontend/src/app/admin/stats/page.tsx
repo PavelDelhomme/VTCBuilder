@@ -373,11 +373,37 @@ export default function StatsPage() {
       title="Statistiques Détaillées" 
       subtitle="Analyses et métriques de la plateforme avec monitoring complet et IA maison"
     >
-      <div className="space-y-6">
+      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
         {/* Onglets de navigation */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="flex flex-wrap -mb-px overflow-x-auto">
+        <div className="flex-shrink-0 mb-4 border-b border-gray-200 dark:border-gray-700">
+          {/* Mobile: Menu déroulant */}
+          <div className="lg:hidden mb-4">
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value as any)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            >
+              {[
+                { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
+                { id: 'actions', label: 'Actions', icon: '⚡' },
+                { id: 'users', label: 'Utilisateurs', icon: '👥' },
+                { id: 'tenants', label: 'Tenants', icon: '🏢' },
+                { id: 'ctas', label: 'CTAs', icon: '🎯' },
+                { id: 'docs', label: 'Documentation', icon: '📚' },
+                { id: 'features', label: 'Fonctionnalités', icon: '🚀' },
+                { id: 'insights', label: 'Insights IA', icon: '🤖' },
+              ].map((tab) => (
+                <option key={tab.id} value={tab.id}>
+                  {tab.icon} {tab.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          {/* Desktop: Onglets horizontaux */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+            <div className="border-b border-gray-200 dark:border-gray-700">
+              <nav className="hidden lg:flex flex-wrap -mb-px overflow-x-auto">
               {[
                 { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
                 { id: 'actions', label: 'Actions', icon: '⚡' },
@@ -401,9 +427,13 @@ export default function StatsPage() {
                   {tab.label}
                 </button>
               ))}
-            </nav>
+              </nav>
+            </div>
           </div>
         </div>
+
+        {/* Content Area - Scrollable */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
         {/* Cartes Statistiques Billing - Même style que /admin/billing */}
         {billingStats && (
           <>
@@ -1976,7 +2006,7 @@ export default function StatsPage() {
                 </div>
               </div>
             )}
-          </div>
+        </div>
       </div>
     </AdminLayout>
   )

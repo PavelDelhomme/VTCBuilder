@@ -126,6 +126,8 @@ export default function SettingsPage() {
       title="Paramètres"
       subtitle="Configuration de la plateforme VTCBuilder"
     >
+      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto pb-6">
       <div className="space-y-6">
         {/* Tabs */}
         <div className="border-b border-gray-200">
@@ -896,6 +898,8 @@ export default function SettingsPage() {
           >
             {saving ? 'Sauvegarde...' : 'Enregistrer les paramètres'}
           </button>
+        </div>
+      </div>
         </div>
       </div>
     </AdminLayout>

@@ -87,6 +87,8 @@ export default function ProjectsManagement() {
         )
       }
     >
+      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto pb-6">
       <div className="space-y-6">
         {/* Info Banner */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -194,6 +196,8 @@ export default function ProjectsManagement() {
             </button>
           </div>
         )}
+      </div>
+        </div>
       </div>
     </AdminLayout>
   )

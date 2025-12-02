@@ -9,6 +9,157 @@ import toast from 'react-hot-toast'
 import PageLoader from '@/components/PageLoader'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
+// Composant pour les actions mobiles
+function UserActionsMobile({
+  user,
+  onEdit,
+  onImpersonate,
+  onPasswordReset,
+  onActivate,
+  onDeactivate,
+  onSuspend,
+  onDelete,
+}: {
+  user: User
+  onEdit: () => void
+  onImpersonate: () => void
+  onPasswordReset: () => void
+  onActivate: () => void
+  onDeactivate: () => void
+  onSuspend: () => void
+  onDelete: () => void
+}) {
+  const [showMenu, setShowMenu] = useState(false)
+
+  return (
+    <div className="relative">
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          setShowMenu(!showMenu)
+        }}
+        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        title="Actions"
+      >
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+        </svg>
+      </button>
+      {showMenu && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setShowMenu(false)}
+          />
+          <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
+            <div className="py-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit()
+                  setShowMenu(false)
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Modifier
+              </button>
+              {user.role !== 'super-admin' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onImpersonate()
+                    setShowMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Impersonner
+                </button>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onPasswordReset()
+                  setShowMenu(false)
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+                Réinitialiser mot de passe
+              </button>
+              {user.status === 'active' ? (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDeactivate()
+                      setShowMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Désactiver
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onSuspend()
+                      setShowMenu(false)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                    Suspendre
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onActivate()
+                    setShowMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                  </svg>
+                  Activer
+                </button>
+              )}
+              {user.role !== 'super-admin' && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete()
+                    setShowMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Supprimer
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 export default function UsersPage() {
   const router = useRouter()
@@ -209,6 +360,8 @@ export default function UsersPage() {
         </button>
       }
     >
+      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto pb-6">
           <div className="mb-6">
             <input
               type="text"
@@ -290,6 +443,21 @@ export default function UsersPage() {
                       </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white dark:bg-gray-800 z-10 min-w-[160px] shadow-[-2px_0_4px_rgba(0,0,0,0.1)]">
                         <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap" onClick={(e) => e.stopPropagation()}>
+                          {/* Mobile: Bouton Actions avec popup */}
+                          <div className="sm:hidden relative">
+                            <UserActionsMobile
+                              user={user}
+                              onEdit={() => router.push(`/admin/users/${user.id}`)}
+                              onImpersonate={() => handleImpersonate(user.id, user.email)}
+                              onPasswordReset={() => handlePasswordReset(user.id, user.email)}
+                              onActivate={() => handleActivate(user.id)}
+                              onDeactivate={() => handleDeactivate(user.id)}
+                              onSuspend={() => handleSuspend(user.id)}
+                              onDelete={() => handleDelete(user.id, user.email, user.name, user.role)}
+                            />
+                          </div>
+                          {/* Desktop: Boutons individuels */}
+                          <div className="hidden sm:flex justify-end items-center gap-1 sm:gap-2 flex-nowrap">
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
@@ -383,6 +551,7 @@ export default function UsersPage() {
                               </svg>
                             </button>
                           )}
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -392,6 +561,8 @@ export default function UsersPage() {
               </table>
             </div>
           </div>
+        </div>
+      </div>
     </AdminLayout>
   )
 }

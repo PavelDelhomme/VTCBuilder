@@ -290,6 +290,7 @@ export default function AdminBlocksPage() {
         </button>
       }
     >
+      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
       {/* Form */}
       {showForm && (
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 mb-6">
@@ -856,6 +857,7 @@ export default function AdminBlocksPage() {
         )}
         actionsSticky={true}
       />
+      </div>
     </AdminLayout>
   )
 }
