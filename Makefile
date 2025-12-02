@@ -25,6 +25,15 @@ init-public-pages: ## Initialiser toutes les pages publiques (home, pricing, doc
 	  printf "  ou\n" && \
 	  printf "  cd backend-django && python manage.py init_public_site_pages\n")
 
+generate-homepage: ## Générer la page d'accueil avec des blocs correspondant au design actuel
+	@printf "$(GREEN)🚀 Génération de la page d'accueil avec blocs...$(NC)\n"
+	@bash scripts/backend/generate_homepage.sh || \
+	 (printf "$(YELLOW)⚠️  Impossible d'exécuter la commande dans le conteneur.$(NC)\n" && \
+	  printf "$(BLUE)Exécutez manuellement :$(NC)\n" && \
+	  printf "  docker exec $(BACKEND_CONTAINER) python manage.py generate_homepage_from_backup\n" && \
+	  printf "  ou\n" && \
+	  printf "  cd backend-django && python manage.py generate_homepage_from_backup\n")
+
 generate-public-pages: ## Générer les pages publiques dans l'éditeur pour les tenants
 	@printf "$(GREEN)🚀 Génération des pages publiques dans l'éditeur...$(NC)\n"
 	@docker exec $(BACKEND_CONTAINER) python manage.py generate_public_pages || \
