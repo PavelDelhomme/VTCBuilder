@@ -756,183 +756,183 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                 <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-5 lg:p-6 pt-0 sm:pt-0 lg:pt-0">
                   {/* Affichage des blocs - Recherche ou groupé par catégorie */}
                   {(() => {
-          // Filtrer les blocs selon la recherche et la catégorie
-          const filteredBlockTypes = blockTypes.filter((bt: BlockType) => {
-            const matchesCategory = categoryFilter === 'all' || bt.category === categoryFilter
-            const matchesSearch = !searchQuery || 
-              bt.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              bt.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              (bt.description && bt.description.toLowerCase().includes(searchQuery.toLowerCase()))
-            return matchesCategory && matchesSearch
-          })
+                    // Filtrer les blocs selon la recherche et la catégorie
+                    const filteredBlockTypes = blockTypes.filter((bt: BlockType) => {
+                      const matchesCategory = categoryFilter === 'all' || bt.category === categoryFilter
+                      const matchesSearch = !searchQuery || 
+                        bt.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        bt.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        (bt.description && bt.description.toLowerCase().includes(searchQuery.toLowerCase()))
+                      return matchesCategory && matchesSearch
+                    })
 
-          // Si recherche active, afficher tous les résultats sans groupement
-          if (searchQuery) {
-            const sortedBlocks = filteredBlockTypes.sort((a: BlockType, b: BlockType) => {
-              // Trier par pertinence (nom qui commence par la recherche en premier)
-              const aStarts = a.name.toLowerCase().startsWith(searchQuery.toLowerCase()) || 
-                             a.label.toLowerCase().startsWith(searchQuery.toLowerCase())
-              const bStarts = b.name.toLowerCase().startsWith(searchQuery.toLowerCase()) || 
-                             b.label.toLowerCase().startsWith(searchQuery.toLowerCase())
-              if (aStarts && !bStarts) return -1
-              if (!aStarts && bStarts) return 1
-              return (a.order || 0) - (b.order || 0)
-            })
+                    // Si recherche active, afficher tous les résultats sans groupement
+                    if (searchQuery) {
+                      const sortedBlocks = filteredBlockTypes.sort((a: BlockType, b: BlockType) => {
+                        // Trier par pertinence (nom qui commence par la recherche en premier)
+                        const aStarts = a.name.toLowerCase().startsWith(searchQuery.toLowerCase()) || 
+                                       a.label.toLowerCase().startsWith(searchQuery.toLowerCase())
+                        const bStarts = b.name.toLowerCase().startsWith(searchQuery.toLowerCase()) || 
+                                       b.label.toLowerCase().startsWith(searchQuery.toLowerCase())
+                        if (aStarts && !bStarts) return -1
+                        if (!aStarts && bStarts) return 1
+                        return (a.order || 0) - (b.order || 0)
+                      })
 
-            if (sortedBlocks.length === 0) {
-              return (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Aucun bloc trouvé</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Essayez avec d'autres mots-clés</p>
-                </div>
-              )
-            }
-
-            return (
-              <div className="space-y-2">
-                {sortedBlocks.map((blockType: BlockType) => {
-                  const isPremium = !!(blockType.available_plans && blockType.available_plans.length > 0)
-                  const canUse = canUseBlockType(blockType.name, isPremium)
-                  
-                  return (
-                    <button
-                      key={blockType.id}
-                      onClick={() => {
-                        if (canUse) {
-                          addBlock(blockType)
-                          setSidebarOpen(false)
-                        }
-                      }}
-                      disabled={!canUse}
-                      className={`w-full p-3 rounded-lg border transition-all text-left group ${
-                        canUse
-                          ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-md hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-[0.98]'
-                          : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-xl shadow-sm">
-                          {blockType.icon}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
-                            {blockType.label}
-                          </div>
-                          {blockType.description && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                              {blockType.description}
+                      if (sortedBlocks.length === 0) {
+                        return (
+                          <div className="text-center py-12">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                              </svg>
                             </div>
-                          )}
-                        </div>
-                        <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            )
-          }
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Aucun bloc trouvé</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Essayez avec d'autres mots-clés</p>
+                          </div>
+                        )
+                      }
 
-          // Sinon, afficher groupé par catégorie
-          return ['layout', 'content', 'media', 'custom']
-            .filter(category => categoryFilter === 'all' || category === categoryFilter)
-            .map((category) => {
-              const categoryBlocks = filteredBlockTypes
-                .filter((bt: BlockType) => bt.category === category)
-                .sort((a: BlockType, b: BlockType) => (a.order || 999) - (b.order || 999))
-              if (categoryBlocks.length === 0) return null
-          
-          const categoryLabels: { [key: string]: string } = {
-            content: 'Contenu',
-            layout: 'Mise en page',
-            media: 'Médias',
-            custom: 'Personnalisé'
-          }
-          
-          return (
-            <div key={category} className="mb-6">
-              <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3 px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-md inline-block">
-                {categoryLabels[category] || category}
-              </h4>
-              <div className="space-y-2.5">
-                {categoryBlocks.map((blockType: BlockType) => {
-                  const isPremium = !!(blockType.available_plans && blockType.available_plans.length > 0)
-                  const canUse = canUseBlockType(blockType.name, isPremium)
-                  
-                  return (
-                  <button
-                    key={`${blockType.name}-${blockType.id}`}
-                      onClick={() => {
-                        if (canUse) {
-                          addBlock(blockType)
-                          setSidebarOpen(false)
-                        }
-                      }}
-                      disabled={!canUse}
-                      className={`w-full px-3 sm:px-4 py-3 text-left bg-white dark:bg-gray-800 border-2 rounded-xl transition-all duration-200 flex items-center gap-3 ${
-                        canUse
-                          ? 'border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-md cursor-pointer group'
-                          : 'border-gray-100 dark:border-gray-800 opacity-60 cursor-not-allowed'
-                      }`}
-                      title={!canUse && isPremium ? 'Bloc premium - Nécessite un abonnement supérieur' : ''}
-                    >
-                      <div className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br flex items-center justify-center border transition-all ${
-                        canUse
-                          ? 'from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 border-gray-200 dark:border-gray-600 group-hover:from-blue-100 group-hover:to-blue-200 dark:group-hover:from-blue-900/30 dark:group-hover:to-blue-800/30'
-                          : 'from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-gray-100 dark:border-gray-700'
-                      }`}>
-                        <span className="text-xl sm:text-2xl">{blockType.icon || '📦'}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className={`text-sm sm:text-base font-semibold truncate transition-colors ${
-                            canUse ? 'text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-400' : 'text-gray-400 dark:text-gray-500'
-                          }`}>
-                            {blockType.label}
-                          </div>
-                          {isPremium && (
-                            <span className="px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full flex-shrink-0">
-                              ⭐ Premium
-                            </span>
-                          )}
+                      return (
+                        <div className="space-y-2">
+                          {sortedBlocks.map((blockType: BlockType) => {
+                            const isPremium = !!(blockType.available_plans && blockType.available_plans.length > 0)
+                            const canUse = canUseBlockType(blockType.name, isPremium)
+                            
+                            return (
+                              <button
+                                key={blockType.id}
+                                onClick={() => {
+                                  if (canUse) {
+                                    addBlock(blockType)
+                                    setSidebarOpen(false)
+                                  }
+                                }}
+                                disabled={!canUse}
+                                className={`w-full p-3 rounded-lg border transition-all text-left group ${
+                                  canUse
+                                    ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-md hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-[0.98]'
+                                    : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-xl shadow-sm">
+                                    {blockType.icon}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
+                                      {blockType.label}
+                                    </div>
+                                    {blockType.description && (
+                                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                        {blockType.description}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                  </svg>
+                                </div>
+                              </button>
+                            )
+                          })}
                         </div>
-                      {blockType.description && (
-                          <div className={`text-xs line-clamp-1 hidden sm:block mt-0.5 ${
-                            canUse ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'
-                          }`}>
-                            {blockType.description}
+                      )
+                    }
+
+                    // Sinon, afficher groupé par catégorie
+                    return ['layout', 'content', 'media', 'custom']
+                      .filter(category => categoryFilter === 'all' || category === categoryFilter)
+                      .map((category) => {
+                        const categoryBlocks = filteredBlockTypes
+                          .filter((bt: BlockType) => bt.category === category)
+                          .sort((a: BlockType, b: BlockType) => (a.order || 999) - (b.order || 999))
+                        if (categoryBlocks.length === 0) return null
+                    
+                        const categoryLabels: { [key: string]: string } = {
+                          content: 'Contenu',
+                          layout: 'Mise en page',
+                          media: 'Médias',
+                          custom: 'Personnalisé'
+                        }
+                        
+                        return (
+                          <div key={category} className="mb-6">
+                            <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3 px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-md inline-block">
+                              {categoryLabels[category] || category}
+                            </h4>
+                            <div className="space-y-2.5">
+                              {categoryBlocks.map((blockType: BlockType) => {
+                                const isPremium = !!(blockType.available_plans && blockType.available_plans.length > 0)
+                                const canUse = canUseBlockType(blockType.name, isPremium)
+                                
+                                return (
+                                  <button
+                                    key={`${blockType.name}-${blockType.id}`}
+                                    onClick={() => {
+                                      if (canUse) {
+                                        addBlock(blockType)
+                                        setSidebarOpen(false)
+                                      }
+                                    }}
+                                    disabled={!canUse}
+                                    className={`w-full px-3 sm:px-4 py-3 text-left bg-white dark:bg-gray-800 border-2 rounded-xl transition-all duration-200 flex items-center gap-3 ${
+                                      canUse
+                                        ? 'border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-md cursor-pointer group'
+                                        : 'border-gray-100 dark:border-gray-800 opacity-60 cursor-not-allowed'
+                                    }`}
+                                    title={!canUse && isPremium ? 'Bloc premium - Nécessite un abonnement supérieur' : ''}
+                                  >
+                                    <div className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br flex items-center justify-center border transition-all ${
+                                      canUse
+                                        ? 'from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 border-gray-200 dark:border-gray-600 group-hover:from-blue-100 group-hover:to-blue-200 dark:group-hover:from-blue-900/30 dark:group-hover:to-blue-800/30'
+                                        : 'from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-gray-100 dark:border-gray-700'
+                                    }`}>
+                                      <span className="text-xl sm:text-2xl">{blockType.icon || '📦'}</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <div className={`text-sm sm:text-base font-semibold truncate transition-colors ${
+                                          canUse ? 'text-gray-900 dark:text-gray-100 group-hover:text-blue-700 dark:group-hover:text-blue-400' : 'text-gray-400 dark:text-gray-500'
+                                        }`}>
+                                          {blockType.label}
+                                        </div>
+                                        {isPremium && (
+                                          <span className="px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full flex-shrink-0">
+                                            ⭐ Premium
+                                          </span>
+                                        )}
+                                      </div>
+                                      {blockType.description && (
+                                        <div className={`text-xs line-clamp-1 hidden sm:block mt-0.5 ${
+                                          canUse ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'
+                                        }`}>
+                                          {blockType.description}
+                                        </div>
+                                      )}
+                                      {!canUse && isPremium && (
+                                        <div className="text-xs text-orange-600 dark:text-orange-400 mt-1 hidden sm:block">
+                                          Nécessite un abonnement premium
+                                        </div>
+                                      )}
+                                    </div>
+                                    {canUse ? (
+                                      <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                      </svg>
+                                    ) : (
+                                      <svg className="w-5 h-5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
                           </div>
-                        )}
-                        {!canUse && isPremium && (
-                          <div className="text-xs text-orange-600 dark:text-orange-400 mt-1 hidden sm:block">
-                            Nécessite un abonnement premium
-                    </div>
-                        )}
-                      </div>
-                      {canUse ? (
-                        <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5 text-gray-300 dark:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                      )}
-                  </button>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })
-        })()}
+                        )
+                      })
+                    })()}
         
         {/* Fallback if no categories */}
         {blockTypes.length > 0 && !blockTypes.some((bt: BlockType) => bt.category) && (
