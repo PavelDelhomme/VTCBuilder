@@ -419,7 +419,7 @@ export default function BillingPage() {
       title="Facturation"
       subtitle="Gestion complète de la facturation et des paiements"
     >
-      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
+      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
       {/* Tabs */}
       <div className="flex-shrink-0 mb-4 border-b border-gray-200 dark:border-gray-700">
         {/* Mobile: Menu déroulant */}
@@ -544,7 +544,7 @@ export default function BillingPage() {
       </div>
 
       {/* Content Area - Scrollable */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         {/* Overview Tab - Dashboard Complet */}
         {activeTab === 'overview' && stats && (
           <div className="space-y-6 pb-6">
