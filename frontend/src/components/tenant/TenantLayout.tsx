@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Sidebar from './Sidebar'
-import ImpersonationBanner from './ImpersonationBanner'
+import ImpersonationBanner from '@/components/admin/ImpersonationBanner'
 import { useTheme } from '@/contexts/ThemeContext'
 
 interface TenantLayoutProps {

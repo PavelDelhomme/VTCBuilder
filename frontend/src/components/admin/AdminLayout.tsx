@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import AdminSidebar from './AdminSidebar'
-import MobileHeader from './MobileHeader'
+import MobileHeader from '@/components/shared/MobileHeader'
 import ImpersonationBanner from './ImpersonationBanner'
 import { useTheme } from '@/contexts/ThemeContext'
 

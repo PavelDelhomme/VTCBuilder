@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminSidebar from './AdminSidebar'
+import AdminSidebar from '@/components/admin/AdminSidebar'
 import { useTheme } from '@/contexts/ThemeContext'
 
 interface MobileHeaderProps {
