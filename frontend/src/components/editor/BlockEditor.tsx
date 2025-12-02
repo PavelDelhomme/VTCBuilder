@@ -954,7 +954,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             ))}
           </div>
         )}
-                  </div>
                 </div>
               </div>
             </>
