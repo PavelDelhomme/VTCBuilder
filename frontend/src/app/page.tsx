@@ -282,6 +282,7 @@ export default function HomePage() {
   }
   
   // Si on utilise les blocs et que la page est publiée, afficher avec BlockPreview
+  // La page d'accueil peut être administrée via /admin/pages-public/home/edit
   if (useBlocks && homepageStatus === 'published' && homepageBlocks.length > 0) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900">
@@ -293,6 +294,7 @@ export default function HomePage() {
   }
   
   // Sinon, utiliser l'ancienne version (backup)
+  // Backup disponible dans: frontend/src/app/_backup/PublicHomePageContent.backup.tsx
   return <PublicHomePageContent pricingPlans={pricingPlans} loading={loading} />
 }
 
