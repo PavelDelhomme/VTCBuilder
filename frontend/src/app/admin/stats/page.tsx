@@ -373,9 +373,10 @@ export default function StatsPage() {
       title="Statistiques Détaillées" 
       subtitle="Analyses et métriques de la plateforme avec monitoring complet et IA maison"
     >
-      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
-        {/* Onglets de navigation */}
-        <div className="flex-shrink-0 mb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex-1 min-h-0 overflow-y-auto pb-6">
+        <div className="w-full min-h-0 flex flex-col">
+          {/* Onglets de navigation */}
+          <div className="flex-shrink-0 mb-4 border-b border-gray-200 dark:border-gray-700">
           {/* Mobile: Menu déroulant */}
           <div className="lg:hidden mb-4">
             <select
@@ -434,7 +435,7 @@ export default function StatsPage() {
 
         {/* Content Area - Scrollable */}
         <div className="flex-1 min-h-0 overflow-y-auto">
-        {/* Cartes Statistiques Billing - Même style que /admin/billing */}
+          {/* Cartes Statistiques Billing - Même style que /admin/billing */}
         {billingStats && (
           <>
             {/* Première rangée - Cartes principales avec gradients */}
@@ -2006,6 +2007,8 @@ export default function StatsPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
         </div>
       </div>
     </AdminLayout>

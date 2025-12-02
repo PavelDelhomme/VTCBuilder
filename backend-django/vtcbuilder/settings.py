@@ -101,6 +101,17 @@ DATABASES = {
         'PORT': config('DB_PORT', default='5432'),
         'OPTIONS': {
             'sslmode': 'disable',
+        },
+        'TEST': {
+            'NAME': config('TEST_DB_NAME', default='vtcbuilder_test'),
+            'ENGINE': 'django_tenants.postgresql_backend',
+            'USER': config('DB_USER', default='vtcbuilder_user'),
+            'PASSWORD': config('DB_PASSWORD', default='vtcbuilder_password'),
+            'HOST': config('DB_HOST', default='postgres'),
+            'PORT': config('DB_PORT', default='5432'),
+            'OPTIONS': {
+                'sslmode': 'disable',
+            }
         }
     }
 }
