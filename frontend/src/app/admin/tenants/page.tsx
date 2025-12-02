@@ -499,7 +499,7 @@ export default function TenantsPage() {
                         <SortIcon field="created_at" />
                       </div>
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[160px]">
+                    <th className="px-2 sm:px-3 lg:px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[120px]">
                       Actions
                     </th>
                   </tr>
