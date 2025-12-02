@@ -7,6 +7,7 @@ import AdminLayout from '@/components/admin/AdminLayout'
 import templateService, { Template } from '@/services/template.service'
 import toast from 'react-hot-toast'
 import PageLoader from '@/components/shared/PageLoader'
+import ActionsDropdown, { ActionItem } from '@/components/shared/ActionsDropdown'
 
 export default function AdminTemplatesPage() {
   const router = useRouter()
@@ -183,7 +184,13 @@ export default function AdminTemplatesPage() {
   }
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer le template "${name}" ?`)) return
+    const confirmMessage = `⚠️ SUPPRESSION ⚠️\n\nVous êtes sur le point de supprimer définitivement le template "${name}".\n\nCette action est IRRÉVERSIBLE.\n\nTapez "SUPPRIMER" pour confirmer :`
+    
+    const userInput = prompt(confirmMessage)
+    if (userInput !== 'SUPPRIMER') {
+      return
+    }
+    
     try {
       await templateService.delete(id)
       toast.success('Template supprimé avec succès !')
@@ -194,6 +201,9 @@ export default function AdminTemplatesPage() {
   }
 
   const handleToggleActive = async (template: Template) => {
+    const action = template.is_active ? 'désactiver' : 'activer'
+    if (!confirm(`Êtes-vous sûr de vouloir ${action} le template "${template.name}" ?`)) return
+    
     try {
       await templateService.update(template.id, { is_active: !template.is_active })
       toast.success(`Template ${!template.is_active ? 'activé' : 'désactivé'} avec succès !`)
@@ -843,7 +853,7 @@ export default function AdminTemplatesPage() {
                   <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[80px] hidden md:table-cell text-center">
                     Utilisations
                   </th>
-                  <th className="px-3 sm:px-4 lg:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[140px]">
+                  <th className="px-2 sm:px-3 lg:px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[120px]">
                     Actions
                   </th>
                 </tr>
@@ -907,40 +917,94 @@ export default function AdminTemplatesPage() {
                       <td className="px-3 sm:px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 min-w-[80px] hidden md:table-cell text-center">
                         {template.usage_count || 0}
                       </td>
-                      <td className="px-3 sm:px-4 lg:px-6 py-4 text-right text-sm font-medium min-w-[140px]">
-                        <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap">
-                          {template.preview_image && (
-                            <a
-                              href={template.preview_image}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                      <td className="px-2 sm:px-3 lg:px-4 py-4 text-right text-sm font-medium min-w-[120px]">
+                        <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap" onClick={(e) => e.stopPropagation()}>
+                          {/* Desktop: Boutons individuels */}
+                          <div className="hidden sm:flex justify-end items-center gap-1 sm:gap-2 flex-nowrap">
+                            {template.preview_image && (
+                              <a
+                                href={template.preview_image}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1.5 sm:p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                title="Aperçu"
+                              >
+                                <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </a>
+                            )}
+                            <button
+                              onClick={() => handleEdit(template)}
                               className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1.5 sm:p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                              title="Aperçu"
+                              title="Modifier"
                             >
                               <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
-                            </a>
-                          )}
-                          <button
-                            onClick={() => handleEdit(template)}
-                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1.5 sm:p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                            title="Modifier"
-                          >
-                            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDelete(template.id, template.name)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                            title="Supprimer"
-                          >
-                            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                            </button>
+                            <button
+                              onClick={() => handleDelete(template.id, template.name)}
+                              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              title="Supprimer"
+                            >
+                              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                          {/* Mobile: Menu dropdown avec trois points */}
+                          <div className="sm:hidden">
+                            <ActionsDropdown
+                              actions={[
+                                ...(template.preview_image ? [{
+                                  label: 'Aperçu',
+                                  icon: (
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                  ),
+                                  onClick: () => {
+                                    if (template.preview_image) {
+                                      window.open(template.preview_image, '_blank')
+                                    }
+                                  },
+                                }] : []),
+                                {
+                                  label: 'Modifier',
+                                  icon: (
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                  ),
+                                  onClick: () => handleEdit(template),
+                                },
+                                {
+                                  label: template.is_active ? 'Désactiver' : 'Activer',
+                                  icon: (
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={template.is_active ? "M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" : "M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" } />
+                                    </svg>
+                                  ),
+                                  onClick: () => handleToggleActive(template),
+                                  variant: template.is_active ? 'warning' : 'success',
+                                  divider: true,
+                                },
+                                {
+                                  label: 'Supprimer',
+                                  icon: (
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  ),
+                                  onClick: () => handleDelete(template.id, template.name),
+                                  variant: 'danger',
+                                },
+                              ]}
+                            />
+                          </div>
                         </div>
                       </td>
                     </tr>

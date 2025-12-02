@@ -392,7 +392,7 @@ export default function UsersPage() {
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[110px] hidden lg:table-cell">
                       Créé le
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[160px]">
+                    <th className="px-2 sm:px-3 lg:px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[120px]">
                       Actions
                     </th>
                   </tr>
@@ -441,7 +441,7 @@ export default function UsersPage() {
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell min-w-[110px]">
                         {new Date(user.created_at).toLocaleDateString('fr-FR')}
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium min-w-[160px]">
+                      <td className="px-2 sm:px-3 lg:px-4 py-4 whitespace-nowrap text-right text-sm font-medium min-w-[120px]">
                         <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap" onClick={(e) => e.stopPropagation()}>
                           {/* Mobile: Bouton Actions avec popup */}
                           <div className="sm:hidden relative">
