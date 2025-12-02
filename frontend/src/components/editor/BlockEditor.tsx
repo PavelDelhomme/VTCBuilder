@@ -755,7 +755,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                 {/* Liste des blocs - Scrollable en dessous des filtres */}
                 <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-5 lg:p-6 pt-0 sm:pt-0 lg:pt-0">
                   {/* Affichage des blocs - Recherche ou groupé par catégorie */}
-        {(() => {
+                  {(() => {
           // Filtrer les blocs selon la recherche et la catégorie
           const filteredBlockTypes = blockTypes.filter((bt: BlockType) => {
             const matchesCategory = categoryFilter === 'all' || bt.category === categoryFilter
