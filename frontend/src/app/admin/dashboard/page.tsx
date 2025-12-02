@@ -152,7 +152,7 @@ export default function AdminDashboard() {
       title="Dashboard Super Admin"
       subtitle="Gestion complète de la plateforme VTCBuilder"
     >
-      <div className="flex-1 min-h-0 overflow-y-auto pb-6">
+      <div className="w-full">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5 mb-6">
           <div className="card h-full flex items-center">

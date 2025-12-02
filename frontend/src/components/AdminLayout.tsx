@@ -167,8 +167,8 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
           </header>
 
           {/* Content - Utilise tout l'espace disponible avec scroll */}
-          <main className="flex-1 w-full min-w-0 overflow-hidden flex flex-col h-full">
-            <div className="w-full min-w-0 flex-1 overflow-hidden h-full py-4 sm:py-6">
+          <main className="flex-1 w-full min-w-0 overflow-hidden flex flex-col">
+            <div className="w-full min-w-0 flex-1 min-h-0 overflow-y-auto py-4 sm:py-6">
               {children}
             </div>
           </main>
