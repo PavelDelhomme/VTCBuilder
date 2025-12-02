@@ -16,6 +16,15 @@ NC = \033[0m # No Color
 
 ##@ Pages Publiques
 
+init-public-pages: ## Initialiser toutes les pages publiques (home, pricing, docs, contact, faq, etc.) et les ajouter au projet système
+	@printf "$(GREEN)🚀 Initialisation des pages publiques du site VTCBuilder...$(NC)\n"
+	@bash scripts/backend/init_public_pages.sh || \
+	 (printf "$(YELLOW)⚠️  Impossible d'exécuter la commande dans le conteneur.$(NC)\n" && \
+	  printf "$(BLUE)Exécutez manuellement :$(NC)\n" && \
+	  printf "  docker exec $(BACKEND_CONTAINER) python manage.py init_public_site_pages\n" && \
+	  printf "  ou\n" && \
+	  printf "  cd backend-django && python manage.py init_public_site_pages\n")
+
 generate-public-pages: ## Générer les pages publiques dans l'éditeur pour les tenants
 	@printf "$(GREEN)🚀 Génération des pages publiques dans l'éditeur...$(NC)\n"
 	@docker exec $(BACKEND_CONTAINER) python manage.py generate_public_pages || \
