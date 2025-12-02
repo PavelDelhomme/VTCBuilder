@@ -572,7 +572,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
               </div>
 
               {/* Properties Content */}
-              <div className="flex-1 overflow-y-auto p-4 min-h-0" style={{ maxHeight: '100%' }}>
+              <div className="flex-1 overflow-y-auto p-4 min-h-0" style={{ maxHeight: '100%', WebkitOverflowScrolling: 'touch' }}>
+                <div className="min-h-full">
                 {propertiesTab === 'layout' ? (
                   selectedBlockData ? (
                     <BlockLayoutPanel
@@ -644,6 +645,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                     )}
                   </>
                 ) : null}
+                </div>
               </div>
 
               {/* Bouton retour aux blocs */}
@@ -5661,7 +5663,7 @@ function BlockLayoutPanel({
   allBlocks?: Block[]
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 min-h-0">
       {/* Configuration spécifique pour les conteneurs flex et grille */}
       {(block.type === 'grid-container' || block.type === 'flex-container' || block.type === 'columns') && (
         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
