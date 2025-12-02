@@ -8,6 +8,7 @@ import userService, { User } from '@/services/user.service'
 import toast from 'react-hot-toast'
 import PageLoader from '@/components/shared/PageLoader'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
+import { useNavigationLoading } from '@/hooks/useNavigationLoading'
 
 // Composant pour les actions mobiles
 function UserActionsMobile({
@@ -165,6 +166,7 @@ export default function UsersPage() {
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const { isNavigating, navigate } = useNavigationLoading()
   const [search, setSearch] = useState('')
   const [actionLoading, setActionLoading] = useState<{ [key: number]: string }>({})
 
@@ -414,7 +416,7 @@ export default function UsersPage() {
                         if ((e.target as HTMLElement).closest('button')) {
                           return
                         }
-                        router.push(`/admin/users/${user.id}`)
+                        navigate(`/admin/users/${user.id}`)
                       }}
                     >
                       <td className="px-3 sm:px-6 py-4 min-w-[200px]">
@@ -447,7 +449,7 @@ export default function UsersPage() {
                           <div className="sm:hidden relative">
                             <UserActionsMobile
                               user={user}
-                              onEdit={() => router.push(`/admin/users/${user.id}`)}
+                              onEdit={() => navigate(`/admin/users/${user.id}`)}
                               onImpersonate={() => handleImpersonate(user.id, user.email)}
                               onPasswordReset={() => handlePasswordReset(user.id, user.email)}
                               onActivate={() => handleActivate(user.id)}
@@ -461,7 +463,7 @@ export default function UsersPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              router.push(`/admin/users/${user.id}`)
+                              navigate(`/admin/users/${user.id}`)
                             }}
                             className="text-indigo-600 hover:text-indigo-900 p-1 sm:p-0"
                             title="Modifier l'utilisateur"

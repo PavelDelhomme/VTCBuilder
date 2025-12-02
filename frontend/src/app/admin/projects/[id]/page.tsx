@@ -307,7 +307,7 @@ export default function ProjectDetailPage() {
                   loadProject()
                   
                   // Naviguer vers l'éditeur de la nouvelle page
-                  router.push(`/admin/pages-public/${newSlug}/edit`)
+                  navigate(`/admin/pages-public/${newSlug}/edit`)
                 } catch (error: any) {
                   console.error('Erreur création nouvelle page:', error)
                   toast.error(error.response?.data?.error || 'Erreur lors de la création de la nouvelle page')
@@ -370,7 +370,7 @@ export default function ProjectDetailPage() {
                     <button
                       onClick={() => {
                         if (page.page_type === 'public') {
-                          router.push(`/admin/pages-public/${page.page_slug}/edit`)
+                          navigate(`/admin/pages-public/${page.page_slug}/edit`)
                         } else {
                           // TODO: Navigate to tenant page editor
                         }
@@ -489,7 +489,7 @@ export default function ProjectDetailPage() {
                   if (previewPage) {
                     const page = project?.pages?.find((p: ProjectPage) => p.page_slug === previewPage.slug)
                     if (page && page.page_type === 'public') {
-                      router.push(`/admin/pages-public/${previewPage.slug}/edit`)
+                      navigate(`/admin/pages-public/${previewPage.slug}/edit`)
                     }
                   }
                 }}
