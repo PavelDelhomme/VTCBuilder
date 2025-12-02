@@ -1,0 +1,43 @@
+# Page snapshot
+
+```yaml
+- generic [active]:
+  - alert [ref=e1]
+  - dialog [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - heading "Build Error" [level=1] [ref=e7]
+        - paragraph [ref=e8]: Failed to compile
+        - generic [ref=e9]:
+          - text: Next.js (14.2.33) is outdated
+          - link "(learn more)" [ref=e11] [cursor=pointer]:
+            - /url: https://nextjs.org/docs/messages/version-staleness
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - link "./src/app/admin/blocks/call-to-actions/page.tsx" [ref=e14] [cursor=pointer]:
+            - text: ./src/app/admin/blocks/call-to-actions/page.tsx
+            - img [ref=e15]
+          - generic [ref=e19]:
+            - generic [ref=e20]: "Error:"
+            - text: x
+            - generic [ref=e21]: "Unexpected token `AdminLayout`. Expected jsx identifier ,-["
+            - text: /app/src/app/admin/blocks/call-to-actions/page.tsx
+            - generic [ref=e22]: :203:1]
+            - text: "203"
+            - generic [ref=e23]: "| }"
+            - text: "204"
+            - generic [ref=e24]: "|"
+            - text: "205"
+            - generic [ref=e25]: "| return ("
+            - text: "206"
+            - generic [ref=e26]: "| <AdminLayout :"
+            - generic [ref=e27]: ^^^^^^^^^^^
+            - text: "207"
+            - generic [ref=e28]: "| title=\"Gestion des Call-to-Actions\""
+            - text: "208"
+            - generic [ref=e29]: "| subtitle=\"Créez et gérez les call-to-actions réutilisables pour vos blocs\""
+            - text: "209"
+            - generic [ref=e30]: "| headerActions={ `---- Caused by: Syntax Error"
+        - contentinfo [ref=e31]:
+          - paragraph [ref=e32]: This error occurred during the build process and can only be dismissed by fixing the error.
+```
