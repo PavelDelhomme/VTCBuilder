@@ -54,7 +54,7 @@ export default function ActionsDropdown({ actions, isLoading = false, buttonClas
             className="fixed inset-0 z-40"
             onClick={() => setShowMenu(false)}
           />
-          <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
+          <div className="absolute right-0 mt-2 w-64 min-w-[200px] max-w-[280px] rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50">
             <div className="py-1">
               {actions.map((action, index) => (
                 <div key={index}>
@@ -70,10 +70,11 @@ export default function ActionsDropdown({ actions, isLoading = false, buttonClas
                       }
                     }}
                     disabled={action.disabled || isLoading}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${getVariantClass(action.variant)}`}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${getVariantClass(action.variant)}`}
+                    title={action.label}
                   >
-                    {action.icon}
-                    {action.label}
+                    <span className="flex-shrink-0">{action.icon}</span>
+                    <span className="truncate">{action.label}</span>
                   </button>
                 </div>
               ))}

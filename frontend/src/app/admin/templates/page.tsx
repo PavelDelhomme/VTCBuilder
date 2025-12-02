@@ -853,7 +853,7 @@ export default function AdminTemplatesPage() {
                   <th className="px-3 sm:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[80px] hidden md:table-cell text-center">
                     Utilisations
                   </th>
-                  <th className="px-2 sm:px-3 lg:px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[120px]">
+                  <th className="px-2 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider min-w-[100px]">
                     Actions
                   </th>
                 </tr>
@@ -917,7 +917,7 @@ export default function AdminTemplatesPage() {
                       <td className="px-3 sm:px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 min-w-[80px] hidden md:table-cell text-center">
                         {template.usage_count || 0}
                       </td>
-                      <td className="px-2 sm:px-3 lg:px-4 py-4 text-right text-sm font-medium min-w-[120px]">
+                      <td className="px-2 py-4 text-right text-sm font-medium min-w-[100px]">
                         <div className="flex justify-end items-center gap-1 sm:gap-2 flex-nowrap" onClick={(e) => e.stopPropagation()}>
                           {/* Desktop: Boutons individuels */}
                           <div className="hidden sm:flex justify-end items-center gap-1 sm:gap-2 flex-nowrap">
