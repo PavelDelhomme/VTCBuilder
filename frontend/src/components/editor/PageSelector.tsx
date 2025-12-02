@@ -28,8 +28,12 @@ export default function PageSelector({ value, onChange, placeholder = 'Sélectio
       setLoading(true)
       
       // Charger les pages du tenant (via l'API /pages/)
-      const tenantPages = await pageService.getAll({ status: 'published' })
-      setPages(tenantPages || [])
+      try {
+        const tenantPages = await pageService.getAll({ status: 'published' })
+        setPages(tenantPages || [])
+      } catch (error) {
+        console.warn('Impossible de charger les pages du tenant:', error)
+      }
 
       // Charger aussi les pages publiques depuis system-settings
       try {
@@ -42,7 +46,7 @@ export default function PageSelector({ value, onChange, placeholder = 'Sélectio
           publicPagesList.push({ slug: 'home', title: 'Page d\'accueil' })
         }
 
-        // Autres pages publiques
+        // Autres pages publiques (seulement celles actives)
         const otherPages = data.public_pages || {}
         Object.entries(otherPages).forEach(([slug, pageData]: [string, any]) => {
           if (pageData.is_active !== false) {
@@ -51,6 +55,13 @@ export default function PageSelector({ value, onChange, placeholder = 'Sélectio
               title: pageData.title || slug.charAt(0).toUpperCase() + slug.slice(1),
             })
           }
+        })
+
+        // Trier par ordre si disponible
+        publicPagesList.sort((a, b) => {
+          const aOrder = otherPages[a.slug]?.order || 999
+          const bOrder = otherPages[b.slug]?.order || 999
+          return aOrder - bOrder
         })
 
         setPublicPages(publicPagesList)
