@@ -3,16 +3,16 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import tenantService, { Tenant } from '@/services/tenant.service'
 import userService, { User } from '@/services/user.service'
-import ResponsiveTable from '@/components/ResponsiveTable'
+import ResponsiveTable from '@/components/shared/ResponsiveTable'
 import toast from 'react-hot-toast'
 import TenantBillingTab from './TenantBillingTab'
 import TenantSiteTab from './TenantSiteTab'
 import TenantSettingsTab from './TenantSettingsTab'
-import PageLoader from '@/components/PageLoader'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import PageLoader from '@/components/shared/PageLoader'
+import LoadingSpinner from '@/components/shared/LoadingSpinner'
 
 function AdminDebugSection({ tenantId }: { tenantId: number }) {
   const [adminInfo, setAdminInfo] = useState<any>(null)

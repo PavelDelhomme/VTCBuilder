@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import billingService from '@/services/billing.service'
-import ResponsiveTable from '@/components/ResponsiveTable'
+import ResponsiveTable from '@/components/shared/ResponsiveTable'
 import toast from 'react-hot-toast'
-import PageLoader from '@/components/PageLoader'
+import PageLoader from '@/components/shared/PageLoader'
 
 interface InvoiceTemplate {
   id: number

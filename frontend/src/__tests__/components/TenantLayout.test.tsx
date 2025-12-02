@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import TenantLayout from '@/components/TenantLayout'
+import TenantLayout from '@/components/tenant/TenantLayout'
 
 // Mock Sidebar and ImpersonationBanner
 jest.mock('@/components/Sidebar', () => {

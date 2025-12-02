@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import tenantService, { Tenant } from '@/services/tenant.service'
-import PageLoader from '@/components/PageLoader'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import PageLoader from '@/components/shared/PageLoader'
+import LoadingSpinner from '@/components/shared/LoadingSpinner'
 
 export default function TenantsPage() {
   const router = useRouter()

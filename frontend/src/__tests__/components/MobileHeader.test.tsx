@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import MobileHeader from '@/components/MobileHeader'
+import MobileHeader from '@/components/shared/MobileHeader'
 
 describe('MobileHeader', () => {
   it('should render with title', () => {

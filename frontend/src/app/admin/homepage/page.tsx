@@ -3,13 +3,13 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
 import BlockEditor, { Block } from '@/components/editor/BlockEditor'
 import BlockPreview from '@/components/editor/BlockPreview'
 import blocksService, { BlockType } from '@/services/blocks.service'
-import PageLoader from '@/components/PageLoader'
+import PageLoader from '@/components/shared/PageLoader'
 import { useAutoSave } from '@/hooks/useAutoSave'
 
 interface PublicHomepageData {

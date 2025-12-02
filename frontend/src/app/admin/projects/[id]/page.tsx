@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import projectService, { Project, ProjectPage } from '@/services/project.service'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
-import PageLoader from '@/components/PageLoader'
+import PageLoader from '@/components/shared/PageLoader'
 import BlockPreview from '@/components/editor/BlockPreview'
 import blocksService from '@/services/blocks.service'
 

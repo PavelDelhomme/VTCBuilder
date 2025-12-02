@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
-import PageLoader from '@/components/PageLoader'
+import PageLoader from '@/components/shared/PageLoader'
 
 interface PublicPage {
   id: string

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import TenantLayout from '@/components/TenantLayout'
+import TenantLayout from '@/components/tenant/TenantLayout'
 import bookingService, { Booking } from '@/services/booking.service'
 import toast from 'react-hot-toast'
 

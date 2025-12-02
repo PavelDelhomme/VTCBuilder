@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import TenantLayout from '@/components/TenantLayout'
-import ResponsiveTable from '@/components/ResponsiveTable'
+import TenantLayout from '@/components/tenant/TenantLayout'
+import ResponsiveTable from '@/components/shared/ResponsiveTable'
 import serviceService, { Service } from '@/services/service.service'
 import toast from 'react-hot-toast'
 

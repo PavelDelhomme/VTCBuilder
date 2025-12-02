@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import PublicLayout from '@/components/PublicLayout'
+import PublicLayout from '@/components/public/PublicLayout'
 
 interface FAQItem {
   question: string

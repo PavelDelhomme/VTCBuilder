@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import ResponsiveTable from '@/components/ResponsiveTable'
+import ResponsiveTable from '@/components/shared/ResponsiveTable'
 
 describe('ResponsiveTable', () => {
   it('should render headers', () => {

@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import billingService, { PricingPlan } from '@/services/billing.service'
-import DataTable, { Column, Filter } from '@/components/DataTable'
+import DataTable, { Column, Filter } from '@/components/shared/DataTable'
 import toast from 'react-hot-toast'
-import PageLoader from '@/components/PageLoader'
+import PageLoader from '@/components/shared/PageLoader'
 
 export default function AdminBlocksPage() {
   const router = useRouter()

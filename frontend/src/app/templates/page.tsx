@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import PublicLayout from '@/components/PublicLayout'
+import PublicLayout from '@/components/public/PublicLayout'
 import templateService from '@/services/template.service'
 import type { Template } from '@/services/template.service'
 import Link from 'next/link'

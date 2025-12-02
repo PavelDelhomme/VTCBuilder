@@ -12,8 +12,8 @@ import {
 import authService from '@/services/auth.service'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
-import PublicHeader from '@/components/PublicHeader'
-import PublicFooter from '@/components/PublicFooter'
+import PublicHeader from '@/components/public/PublicHeader'
+import PublicFooter from '@/components/public/PublicFooter'
 import { useTheme } from '@/contexts/ThemeContext'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || '')

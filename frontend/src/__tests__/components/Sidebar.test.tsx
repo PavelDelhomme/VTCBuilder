@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { useRouter, usePathname } from 'next/navigation'
-import Sidebar from '@/components/Sidebar'
+import Sidebar from '@/components/tenant/Sidebar'
 import authService from '@/services/auth.service'
 import tenantService from '@/services/tenant.service'
 

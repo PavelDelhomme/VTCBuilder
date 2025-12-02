@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import PublicLayout from '@/components/PublicLayout'
+import PublicLayout from '@/components/public/PublicLayout'
 
 // Mock PublicHeader and PublicFooter
 jest.mock('@/components/PublicHeader', () => {

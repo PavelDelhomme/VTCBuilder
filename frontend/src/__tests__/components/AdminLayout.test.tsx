@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 
 // Mock AdminSidebar
 jest.mock('@/components/AdminSidebar', () => {

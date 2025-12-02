@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import serviceService from '@/services/service.service'
 import toast from 'react-hot-toast'
-import TenantLayout from '@/components/TenantLayout'
+import TenantLayout from '@/components/tenant/TenantLayout'
 
 const serviceSchema = z.object({
   name: z.string().min(1, 'Nom requis'),

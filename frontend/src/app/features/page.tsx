@@ -1,6 +1,6 @@
 'use client'
 
-import PublicLayout from '@/components/PublicLayout'
+import PublicLayout from '@/components/public/PublicLayout'
 
 export default function FeaturesPage() {
   return (

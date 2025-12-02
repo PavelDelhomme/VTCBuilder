@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import authService from '@/services/auth.service'
-import TenantLayout from '@/components/TenantLayout'
+import TenantLayout from '@/components/tenant/TenantLayout'
 import projectService, { Project, ProjectPage } from '@/services/project.service'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
-import PageLoader from '@/components/PageLoader'
+import PageLoader from '@/components/shared/PageLoader'
 
 export default function ProjectDetailPage() {
   const router = useRouter()

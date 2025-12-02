@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import TenantLayout from '@/components/TenantLayout'
+import TenantLayout from '@/components/tenant/TenantLayout'
 import pageService, { Page } from '@/services/page.service'
 import BlockEditor, { Block } from '@/components/editor/BlockEditor'
 import BlockPreview from '@/components/editor/BlockPreview'

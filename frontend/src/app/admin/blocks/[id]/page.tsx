@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import billingService, { PricingPlan } from '@/services/billing.service'
 import { callToActionService, CallToAction } from '@/services/blocks.service'
 import toast from 'react-hot-toast'
-import PageLoader from '@/components/PageLoader'
+import PageLoader from '@/components/shared/PageLoader'
 
 export default function EditBlockPage() {
   const router = useRouter()

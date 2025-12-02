@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import billingService, { Subscription, Invoice, Payment, PricingPlan } from '@/services/billing.service'
-import ResponsiveTable from '@/components/ResponsiveTable'
+import ResponsiveTable from '@/components/shared/ResponsiveTable'
 import toast from 'react-hot-toast'
 
 interface TenantBillingTabProps {

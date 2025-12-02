@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import billingService, { Subscription, Invoice, Payment } from '@/services/billing.service'
-import ResponsiveTable from '@/components/ResponsiveTable'
+import ResponsiveTable from '@/components/shared/ResponsiveTable'
 import toast from 'react-hot-toast'
 
 export default function SubscriptionDetailPage() {

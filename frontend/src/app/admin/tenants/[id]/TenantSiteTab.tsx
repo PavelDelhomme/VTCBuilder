@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import pageService, { Page } from '@/services/page.service'
 import projectService, { Project } from '@/services/project.service'
-import ResponsiveTable from '@/components/ResponsiveTable'
+import ResponsiveTable from '@/components/shared/ResponsiveTable'
 import toast from 'react-hot-toast'
 import { getTenantSlug } from '@/lib/tenant-utils'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import LoadingSpinner from '@/components/shared/LoadingSpinner'
 
 interface TenantSiteTabProps {
   tenantId: number

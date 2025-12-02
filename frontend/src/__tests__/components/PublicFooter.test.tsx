@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import PublicFooter from '@/components/PublicFooter'
+import PublicFooter from '@/components/public/PublicFooter'
 
 describe('PublicFooter', () => {
   it('should render VTCBuilder branding', () => {

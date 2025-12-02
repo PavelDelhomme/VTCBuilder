@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import ImpersonationBanner from '@/components/ImpersonationBanner'
+import ImpersonationBanner from '@/components/admin/ImpersonationBanner'
 
 // Mock authService
 jest.mock('@/services/auth.service', () => ({

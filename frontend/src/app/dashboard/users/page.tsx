@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import TenantLayout from '@/components/TenantLayout'
-import ResponsiveTable from '@/components/ResponsiveTable'
+import TenantLayout from '@/components/tenant/TenantLayout'
+import ResponsiveTable from '@/components/shared/ResponsiveTable'
 import userService, { User } from '@/services/user.service'
 import toast from 'react-hot-toast'
-import PageLoader from '@/components/PageLoader'
+import PageLoader from '@/components/shared/PageLoader'
 
 export default function TenantUsersPage() {
   const router = useRouter()

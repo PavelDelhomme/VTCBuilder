@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { useRouter, usePathname } from 'next/navigation'
-import AdminSidebar from '@/components/AdminSidebar'
+import AdminSidebar from '@/components/admin/AdminSidebar'
 import authService from '@/services/auth.service'
 
 // Mock Next.js router

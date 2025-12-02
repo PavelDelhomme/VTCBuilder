@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import billingService from '@/services/billing.service'
-import ResponsiveTable from '@/components/ResponsiveTable'
+import ResponsiveTable from '@/components/shared/ResponsiveTable'
 import toast from 'react-hot-toast'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import LoadingSpinner from '@/components/shared/LoadingSpinner'
 
 interface InvoiceTemplate {
   id: number

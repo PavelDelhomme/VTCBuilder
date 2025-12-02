@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminSidebar from '@/components/AdminSidebar'
+import AdminSidebar from '@/components/admin/AdminSidebar'
 import tenantService, { Tenant } from '@/services/tenant.service'
 
 export default function NewTenantPage() {

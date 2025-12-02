@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import userService, { User } from '@/services/user.service'
 import toast from 'react-hot-toast'
-import PageLoader from '@/components/PageLoader'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import PageLoader from '@/components/shared/PageLoader'
+import LoadingSpinner from '@/components/shared/LoadingSpinner'
 
 // Composant pour les actions mobiles
 function UserActionsMobile({

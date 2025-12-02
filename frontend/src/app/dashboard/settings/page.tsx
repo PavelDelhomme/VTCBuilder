@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import TenantLayout from '@/components/TenantLayout'
+import TenantLayout from '@/components/tenant/TenantLayout'
 import tenantService from '@/services/tenant.service'
 import authService from '@/services/auth.service'
 import toast from 'react-hot-toast'

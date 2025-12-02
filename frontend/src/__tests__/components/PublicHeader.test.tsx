@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import PublicHeader from '@/components/PublicHeader'
+import PublicHeader from '@/components/public/PublicHeader'
 import authService from '@/services/auth.service'
 
 // Mock auth service

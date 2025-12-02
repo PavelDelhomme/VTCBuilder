@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
 import api from '@/lib/api'
-import AdminLayout from '@/components/AdminLayout'
-import PageLoader from '@/components/PageLoader'
+import AdminLayout from '@/components/admin/AdminLayout'
+import PageLoader from '@/components/shared/PageLoader'
 
 interface DashboardStats {
   total_tenants: number
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
       title="Dashboard Super Admin"
       subtitle="Gestion complète de la plateforme VTCBuilder"
     >
-      <div className="w-full">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-5 mb-6">
           <div className="card h-full flex items-center">
@@ -233,7 +233,7 @@ export default function AdminDashboard() {
 
         {/* Résumé Statistiques Détaillées */}
         {detailedStats && (
-          <div className="mt-0">
+          <div className="mt-0 px-0">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Résumé des Statistiques</h2>
               <button
@@ -380,7 +380,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Quick Actions */}
-        <div className="mt-6 lg:mt-8">
+        <div className="mt-6 lg:mt-8 px-0">
           <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Actions Rapides</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <button

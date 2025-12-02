@@ -3,16 +3,16 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import billingService, { Subscription, Invoice, Payment, PricingPlan, PaymentMethod } from '@/services/billing.service'
 import tenantService, { Tenant } from '@/services/tenant.service'
-import ResponsiveTable from '@/components/ResponsiveTable'
+import ResponsiveTable from '@/components/shared/ResponsiveTable'
 import CreateSubscriptionModal from './CreateSubscriptionModal'
 import InvoicesTab from './InvoicesTab'
 import InvoiceTemplatesTab from './InvoiceTemplatesTab'
 import toast from 'react-hot-toast'
-import PageLoader from '@/components/PageLoader'
-import FeaturesListEditor from '@/components/FeaturesListEditor'
+import PageLoader from '@/components/shared/PageLoader'
+import FeaturesListEditor from '@/components/shared/FeaturesListEditor'
 
 function SubscriptionRow({
   subscription,

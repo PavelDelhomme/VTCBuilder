@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import authService from '@/services/auth.service'
 import { isTenantSubdomain } from '@/lib/tenant-utils'
-import PageLoader from '@/components/PageLoader'
+import PageLoader from '@/components/shared/PageLoader'
 
 export default function DashboardLayout({
   children,

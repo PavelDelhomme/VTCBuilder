@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import authService from '@/services/auth.service'
-import AdminLayout from '@/components/AdminLayout'
+import AdminLayout from '@/components/admin/AdminLayout'
 import userService, { User } from '@/services/user.service'
 import tenantService from '@/services/tenant.service'
 import { toast } from 'react-hot-toast'
-import PageLoader from '@/components/PageLoader'
-import LoadingSpinner from '@/components/LoadingSpinner'
+import PageLoader from '@/components/shared/PageLoader'
+import LoadingSpinner from '@/components/shared/LoadingSpinner'
 
 export default function EditUserPage() {
   const router = useRouter()

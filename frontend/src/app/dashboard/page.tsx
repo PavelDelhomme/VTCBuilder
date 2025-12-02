@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
-import TenantLayout from '@/components/TenantLayout'
-import PageLoader from '@/components/PageLoader'
+import TenantLayout from '@/components/tenant/TenantLayout'
+import PageLoader from '@/components/shared/PageLoader'
 
 export default function TenantDashboard() {
   const router = useRouter()
