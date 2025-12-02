@@ -11,11 +11,12 @@ interface AdminLayoutProps {
   title: string
   subtitle?: string
   headerActions?: React.ReactNode
+  saveStatus?: React.ReactNode
 }
 
 const SIDEBAR_STATE_KEY = 'vtcbuilder_admin_sidebar_open'
 
-export default function AdminLayout({ children, title, subtitle, headerActions }: AdminLayoutProps) {
+export default function AdminLayout({ children, title, subtitle, headerActions, saveStatus }: AdminLayoutProps) {
   const { resolvedTheme, toggleTheme } = useTheme()
   
   // Fonction pour charger l'état sauvegardé depuis localStorage
@@ -139,9 +140,16 @@ export default function AdminLayout({ children, title, subtitle, headerActions }
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                       </svg>
                     </button>
-                    <div className="min-w-0 flex-1">
-                      <h1 className="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
-                      {subtitle && <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">{subtitle}</p>}
+                    <div className="min-w-0 flex-1 flex items-center gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h1 className="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
+                        {subtitle && <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">{subtitle}</p>}
+                      </div>
+                      {saveStatus && (
+                        <div className="flex-shrink-0">
+                          {saveStatus}
+                        </div>
+                      )}
                     </div>
                   </div>
                   {/* Dark Mode Toggle */}

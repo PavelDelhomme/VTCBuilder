@@ -144,17 +144,19 @@ export default function ProjectDetailPage() {
         
         // Vérifier si c'est la homepage
         if (page.page_slug === 'home') {
+          const homepageBlocks = settings.public_homepage_blocks
           pageData = {
             title: 'Page d\'accueil',
-            blocks: settings.public_homepage_blocks || [],
+            blocks: Array.isArray(homepageBlocks) ? homepageBlocks : [],
           }
         } else {
           // Chercher dans public_pages
           const publicPages = settings.public_pages || {}
           if (publicPages[page.page_slug]) {
+            const pageBlocks = publicPages[page.page_slug].blocks
             pageData = {
               title: publicPages[page.page_slug].title || page.page_slug,
-              blocks: publicPages[page.page_slug].blocks || [],
+              blocks: Array.isArray(pageBlocks) ? pageBlocks : [],
             }
           }
         }

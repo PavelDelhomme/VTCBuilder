@@ -52,8 +52,10 @@ class UserActionViewSet(viewsets.ModelViewSet):
         if request.user.is_authenticated:
             if not request.data.get('user'):
                 request.data['user'] = request.user.id
-            if not request.data.get('tenant') and hasattr(request.user, 'tenant') and request.user.tenant is not None:
-                request.data['tenant'] = request.user.tenant.id
+            # Vérifier que tenant existe et n'est pas None avant d'accéder à .id
+            if not request.data.get('tenant'):
+                if hasattr(request.user, 'tenant') and request.user.tenant is not None:
+                    request.data['tenant'] = request.user.tenant.id
         
         # Détecter le tenant depuis le domaine si non fourni
         if not request.data.get('tenant'):

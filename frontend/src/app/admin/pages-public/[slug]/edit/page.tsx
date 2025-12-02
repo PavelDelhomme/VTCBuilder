@@ -178,6 +178,23 @@ export default function EditPublicPage() {
     <AdminLayout
       title={`Éditer ${PAGE_TITLES[pageSlug] || pageSlug}`}
       subtitle={`Créez et personnalisez la page ${pageSlug === 'home' ? 'd\'accueil' : pageSlug} avec l'éditeur de blocs complet`}
+      saveStatus={
+        isAutoSaving ? (
+          <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-xs sm:text-sm whitespace-nowrap">
+            <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent flex-shrink-0"></div>
+            <span className="hidden sm:inline">Sauvegarde...</span>
+            <span className="sm:hidden">...</span>
+          </div>
+        ) : lastSaved ? (
+          <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-xs sm:text-sm whitespace-nowrap">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="hidden sm:inline">Sauvegardé {lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+            <span className="sm:hidden">{lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        ) : null
+      }
       headerActions={
         <div className="flex flex-row gap-2 sm:gap-3 flex-wrap items-center w-full">
           {/* Page Selector - Isolated for better readability */}
@@ -319,23 +336,6 @@ export default function EditPublicPage() {
             <span className="hidden sm:inline">Nouvelle page</span>
             <span className="sm:hidden">+ Page</span>
           </button>
-
-          {/* Auto-save indicator */}
-          {isAutoSaving ? (
-            <div className="flex items-center gap-2 px-2 sm:px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm whitespace-nowrap">
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent flex-shrink-0"></div>
-              <span className="hidden sm:inline">Sauvegarde...</span>
-              <span className="sm:hidden">...</span>
-            </div>
-          ) : lastSaved ? (
-            <div className="flex items-center gap-2 px-2 sm:px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-sm whitespace-nowrap">
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="hidden sm:inline">Sauvegardé {lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-              <span className="sm:hidden">{lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-          ) : null}
 
           {/* Save Button */}
           <button
