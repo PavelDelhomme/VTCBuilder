@@ -2142,7 +2142,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       return (
         <div
           style={{
-            ...contentStyles,
+            // Copier contentStyles sans les propriétés de padding pour éviter les conflits
+            ...Object.fromEntries(
+              Object.entries(contentStyles).filter(([key]) => 
+                !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'].includes(key)
+              )
+            ),
             background: block.data.background_gradient || 'linear-gradient(to right, #2563eb, #9333ea)',
             // Ne pas utiliser padding shorthand si on a des propriétés individuelles
             ...(block.styles?.padding && !block.styles?.padding_top && !block.styles?.padding_bottom && !block.styles?.padding_left && !block.styles?.padding_right
