@@ -4206,9 +4206,13 @@ function BlockRenderer({
                       const buttons = safeBlock.data.buttons || []
                       onUpdate({ data: { ...block.data, buttons: buttons.filter((_: any, i: number) => i !== index) } })
                     }}
-                    className="mt-1 text-xs text-red-600 hover:text-red-800"
+                    className="mt-2 w-full px-3 py-1.5 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                    title="Supprimer ce bouton"
                   >
-                    Supprimer
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Supprimer ce bouton
                   </button>
                 </div>
               ))}
@@ -4709,10 +4713,13 @@ function BlockRenderer({
                         const newLinks = headerLinks.filter((_: any, i: number) => i !== index)
                         onUpdate({ data: { ...block.data, links: newLinks } })
                       }}
-                      className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                      className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
                       title="Supprimer ce lien"
                     >
-                      ×
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Supprimer
                     </button>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -4945,9 +4952,12 @@ function BlockRenderer({
                             }
                             onUpdate({ data: { ...block.data, columns: newColumns } })
                           }}
-                          className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                          className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center justify-center"
+                          title="Supprimer ce lien"
                         >
-                          ×
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         </button>
                       </div>
                     ))}
