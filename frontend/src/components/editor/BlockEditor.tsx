@@ -1746,7 +1746,8 @@ function BlockPickerModal({
               </p>
             </div>
           ) : (
-          {Object.entries(groupedBlocks).map(([category, blocks]) => (
+            <>
+              {Object.entries(groupedBlocks).map(([category, blocks]) => (
             <div key={category} className="mb-6">
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3 px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-md inline-block">
                 {category}
@@ -1764,7 +1765,8 @@ function BlockPickerModal({
                 ))}
               </div>
             </div>
-          ))}
+              ))}
+            </>
           )}
         </div>
       </div>
