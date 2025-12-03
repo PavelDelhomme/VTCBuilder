@@ -2852,6 +2852,33 @@ function BlockRenderer({
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id={`form-inscription-captcha-${block.id}`}
+              checked={safeBlock.data.enable_captcha || false}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, enable_captcha: e.target.checked } })}
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor={`form-inscription-captcha-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
+              Activer le captcha
+            </label>
+          </div>
+          {safeBlock.data.enable_captcha && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Thème du captcha
+              </label>
+              <select
+                value={safeBlock.data.captcha_theme || 'light'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, captcha_theme: e.target.value } })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              >
+                <option value="light">Clair</option>
+                <option value="dark">Sombre</option>
+              </select>
+            </div>
+          )}
         </div>
       )
     case 'testimonials':
@@ -3490,6 +3517,33 @@ function BlockRenderer({
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id={`booking-captcha-${block.id}`}
+              checked={safeBlock.data.enable_captcha || false}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, enable_captcha: e.target.checked } })}
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor={`booking-captcha-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
+              Activer le captcha
+            </label>
+          </div>
+          {safeBlock.data.enable_captcha && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Thème du captcha
+              </label>
+              <select
+                value={safeBlock.data.captcha_theme || 'light'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, captcha_theme: e.target.value } })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              >
+                <option value="light">Clair</option>
+                <option value="dark">Sombre</option>
+              </select>
+            </div>
+          )}
         </div>
       )
     case 'pricing-table':
@@ -4083,6 +4137,33 @@ function BlockRenderer({
               )}
             </div>
           </div>
+          <div className="flex items-center gap-2 mt-3">
+            <input
+              type="checkbox"
+              id={`form-captcha-${block.id}`}
+              checked={safeBlock.data.enable_captcha || false}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, enable_captcha: e.target.checked } })}
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label htmlFor={`form-captcha-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
+              Activer le captcha
+            </label>
+          </div>
+          {safeBlock.data.enable_captcha && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Thème du captcha
+              </label>
+              <select
+                value={safeBlock.data.captcha_theme || 'light'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, captcha_theme: e.target.value } })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              >
+                <option value="light">Clair</option>
+                <option value="dark">Sombre</option>
+              </select>
+            </div>
+          )}
         </div>
       )
     case 'columns':
@@ -6447,6 +6528,9 @@ function BlockRenderer({
     
     case 'availability-calendar':
       return <AvailabilityCalendarConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'captcha':
+      return <CaptchaConfig block={safeBlock} onUpdate={onUpdate} />
 
     default:
       return (

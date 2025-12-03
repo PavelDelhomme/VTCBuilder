@@ -7,6 +7,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Block } from './BlockEditor'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import { renderBlockFromTemplate } from '@/lib/block-renderer'
+import Captcha from '@/components/shared/Captcha'
 
 interface BlockPreviewProps {
   blocks: Block[]
@@ -454,7 +455,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
     'dropdown', 'categories', 'author-box', 'related-posts', 'table-of-contents',
     'reading-time', 'share-buttons', 'flexbox', 'grid', 'stack', 'inline', 'group',
     'wrapper', 'image-slider', 'lightbox', 'vimeo-embed', 'counter', 'card-grid',
-    'logo-carousel', 'progress-circle', 'route-calculator', 'fare-calculator', 'availability-calendar'
+    'logo-carousel', 'progress-circle', 'route-calculator', 'fare-calculator', 'availability-calendar',
+    'captcha'
   ]
   
   // Si le bloc a un rendu hardcodé, utiliser directement le switch case
@@ -1411,6 +1413,16 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                 />
               </div>
             )}
+            {block.data.enable_captcha && (
+              <div className="mt-4">
+                <Captcha
+                  onVerify={(isValid) => {
+                    // La validation est gérée par le composant Captcha lui-même
+                  }}
+                  theme={block.data.captcha_theme || 'light'}
+                />
+              </div>
+            )}
             <button
               type="submit"
               className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
@@ -1809,6 +1821,16 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                 />
               </div>
             )}
+            {block.data.enable_captcha && (
+              <div className="mt-4">
+                <Captcha
+                  onVerify={(isValid) => {
+                    // La validation est gérée par le composant Captcha lui-même
+                  }}
+                  theme={block.data.captcha_theme || 'light'}
+                />
+              </div>
+            )}
             <button
               type="submit"
               className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
@@ -2151,6 +2173,16 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                   <textarea className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" rows={4} disabled />
                 </div>
               </>
+            )}
+            {block.data.enable_captcha && (
+              <div className="mt-4">
+                <Captcha
+                  onVerify={(isValid) => {
+                    // La validation est gérée par le composant Captcha lui-même
+                  }}
+                  theme={block.data.captcha_theme || 'light'}
+                />
+              </div>
             )}
             <button
               type="submit"
@@ -3897,6 +3929,19 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               </button>
             )}
           </div>
+        </div>
+      )
+
+    case 'captcha':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <Captcha
+            onVerify={(isValid) => {
+              // La validation est gérée par le composant Captcha lui-même
+            }}
+            theme={block.data.theme || 'light'}
+            className={block.data.className || ''}
+          />
         </div>
       )
 
