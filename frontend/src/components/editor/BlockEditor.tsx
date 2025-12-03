@@ -1557,7 +1557,10 @@ function ContainerChildrenRenderer({
                     .map((bt) => (
                       <button
                         key={bt.name}
-                        onClick={() => handleAddBlock(bt)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleAddBlock(bt)
+                        }}
                         className="p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2"
                       >
                         <span className="text-xl">{bt.icon || '📦'}</span>
@@ -1585,12 +1588,10 @@ function BlockRenderer({
   onUpdate: (updates: Partial<Block>) => void
 }) {
   // S'assurer que block.data existe pour éviter les erreurs
-  if (!block.data) {
-    block = { ...block, data: {} }
-  }
+  const safeBlock = { ...block, data: block.data || {} }
   
   // Render based on block type
-  switch (block.type) {
+  switch (safeBlock.type) {
     case 'container':
       return (
         <div className="space-y-3">
@@ -1610,8 +1611,8 @@ function BlockRenderer({
               Direction
             </label>
             <select
-              value={block.data?.direction || 'row'}
-              onChange={(e) => onUpdate({ data: { ...block.data, direction: e.target.value } })}
+              value={safeBlock.data?.direction || 'row'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, direction: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
               <option value="row">Horizontal (row)</option>
@@ -1623,8 +1624,8 @@ function BlockRenderer({
               Wrap
             </label>
             <select
-              value={block.data?.wrap || 'nowrap'}
-              onChange={(e) => onUpdate({ data: { ...block.data, wrap: e.target.value } })}
+              value={safeBlock.data?.wrap || 'nowrap'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, wrap: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
               <option value="nowrap">Pas de retour à la ligne</option>
@@ -1637,8 +1638,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data?.gap || '1rem'}
-              onChange={(e) => onUpdate({ data: { ...block.data, gap: e.target.value } })}
+              value={safeBlock.data?.gap || '1rem'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, gap: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="1rem"
             />
@@ -1655,8 +1656,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data?.columns || 'repeat(3, 1fr)'}
-              onChange={(e) => onUpdate({ data: { ...block.data, columns: e.target.value } })}
+              value={safeBlock.data?.columns || 'repeat(3, 1fr)'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, columns: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="repeat(3, 1fr)"
             />
@@ -1670,8 +1671,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data?.rows || 'auto'}
-              onChange={(e) => onUpdate({ data: { ...block.data, rows: e.target.value } })}
+              value={safeBlock.data?.rows || 'auto'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, rows: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="auto ou repeat(2, 1fr)"
             />
@@ -1685,8 +1686,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data?.gap || '1rem'}
-              onChange={(e) => onUpdate({ data: { ...block.data, gap: e.target.value } })}
+              value={safeBlock.data?.gap || '1rem'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, gap: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="1rem"
             />
@@ -1754,8 +1755,8 @@ function BlockRenderer({
                 Alignement
               </label>
               <select
-                value={block.data.align || 'left'}
-                onChange={(e) => onUpdate({ data: { ...block.data, align: e.target.value } })}
+                value={safeBlock.data.align || 'left'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, align: e.target.value } })}
                 className="w-full text-sm p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value="left">Gauche</option>
@@ -1771,14 +1772,14 @@ function BlockRenderer({
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                value={block.data.color || '#000000'}
-                onChange={(e) => onUpdate({ data: { ...block.data, color: e.target.value } })}
+                value={safeBlock.data.color || '#000000'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, color: e.target.value } })}
                 className="w-12 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
               />
               <input
                 type="text"
-                value={block.data.color || '#000000'}
-                onChange={(e) => onUpdate({ data: { ...block.data, color: e.target.value } })}
+                value={safeBlock.data.color || '#000000'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, color: e.target.value } })}
                 className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 placeholder="#000000"
               />
@@ -1823,7 +1824,7 @@ function BlockRenderer({
               Navigation vers une page
             </label>
             <PageSelector
-              value={block.data.url || ''}
+              value={safeBlock.data.url || ''}
               onChange={(url) => onUpdate({ data: { ...block.data, url } })}
               placeholder="Sélectionner une page..."
               className="text-sm"
@@ -1854,8 +1855,8 @@ function BlockRenderer({
                 Taille
               </label>
               <select
-                value={block.data.size || 'md'}
-                onChange={(e) => onUpdate({ data: { ...block.data, size: e.target.value } })}
+                value={safeBlock.data.size || 'md'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, size: e.target.value } })}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="xs">Très petit</option>
@@ -1873,14 +1874,14 @@ function BlockRenderer({
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                value={block.data.bg_color || '#3b82f6'}
-                onChange={(e) => onUpdate({ data: { ...block.data, bg_color: e.target.value } })}
+                value={safeBlock.data.bg_color || '#3b82f6'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, bg_color: e.target.value } })}
                 className="w-12 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
               />
               <input
                 type="text"
-                value={block.data.bg_color || '#3b82f6'}
-                onChange={(e) => onUpdate({ data: { ...block.data, bg_color: e.target.value } })}
+                value={safeBlock.data.bg_color || '#3b82f6'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, bg_color: e.target.value } })}
                 className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 placeholder="#3b82f6"
               />
@@ -1893,14 +1894,14 @@ function BlockRenderer({
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                value={block.data.text_color || '#ffffff'}
-                onChange={(e) => onUpdate({ data: { ...block.data, text_color: e.target.value } })}
+                value={safeBlock.data.text_color || '#ffffff'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, text_color: e.target.value } })}
                 className="w-12 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
               />
               <input
                 type="text"
-                value={block.data.text_color || '#ffffff'}
-                onChange={(e) => onUpdate({ data: { ...block.data, text_color: e.target.value } })}
+                value={safeBlock.data.text_color || '#ffffff'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, text_color: e.target.value } })}
                 className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 placeholder="#ffffff"
               />
@@ -1911,7 +1912,7 @@ function BlockRenderer({
               type="checkbox"
               id={`button-full-width-${block.id}`}
               checked={block.data.full_width || false}
-              onChange={(e) => onUpdate({ data: { ...block.data, full_width: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, full_width: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
             <label htmlFor={`button-full-width-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -1946,8 +1947,8 @@ function BlockRenderer({
               Direction
             </label>
             <select
-              value={block.data.direction || 'vertical'}
-              onChange={(e) => onUpdate({ data: { ...block.data, direction: e.target.value } })}
+              value={safeBlock.data.direction || 'vertical'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, direction: e.target.value } })}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="vertical">Vertical (hauteur)</option>
@@ -1962,8 +1963,8 @@ function BlockRenderer({
                 </label>
                 <input
                   type="number"
-                  value={block.data.width || 40}
-                  onChange={(e) => onUpdate({ data: { ...block.data, width: parseInt(e.target.value) || 40 } })}
+                  value={safeBlock.data.width || 40}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, width: parseInt(e.target.value) || 40 } })}
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Largeur en pixels..."
                   min={10}
@@ -2001,8 +2002,8 @@ function BlockRenderer({
               Direction
             </label>
             <select
-              value={block.data.direction || 'horizontal'}
-              onChange={(e) => onUpdate({ data: { ...block.data, direction: e.target.value } })}
+              value={safeBlock.data.direction || 'horizontal'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, direction: e.target.value } })}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="horizontal">Horizontal (ligne)</option>
@@ -2030,8 +2031,8 @@ function BlockRenderer({
                 Largeur
               </label>
               <select
-                value={block.data.width || 'full'}
-                onChange={(e) => onUpdate({ data: { ...block.data, width: e.target.value } })}
+                value={safeBlock.data.width || 'full'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, width: e.target.value } })}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="full">100%</option>
@@ -2047,8 +2048,8 @@ function BlockRenderer({
               </label>
               <input
                 type="number"
-                value={block.data.height || 100}
-                onChange={(e) => onUpdate({ data: { ...block.data, height: parseInt(e.target.value) || 100 } })}
+                value={safeBlock.data.height || 100}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, height: parseInt(e.target.value) || 100 } })}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Hauteur en pixels..."
                 min={20}
@@ -2069,8 +2070,8 @@ function BlockRenderer({
               Type d'alerte
             </label>
             <select
-              value={block.data.variant || 'info'}
-              onChange={(e) => onUpdate({ data: { ...block.data, variant: e.target.value } })}
+              value={safeBlock.data.variant || 'info'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, variant: e.target.value } })}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="info">Information (Bleu)</option>
@@ -2085,8 +2086,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Titre de l'alerte..."
             />
@@ -2096,8 +2097,8 @@ function BlockRenderer({
               Message
             </label>
             <textarea
-              value={block.data.message || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, message: e.target.value } })}
+              value={safeBlock.data.message || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, message: e.target.value } })}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Message de l'alerte..."
               rows={4}
@@ -2108,7 +2109,7 @@ function BlockRenderer({
               type="checkbox"
               id={`alert-dismissible-${block.id}`}
               checked={block.data.dismissible || false}
-              onChange={(e) => onUpdate({ data: { ...block.data, dismissible: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, dismissible: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
             <label htmlFor={`alert-dismissible-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -2153,8 +2154,8 @@ function BlockRenderer({
               Langage de programmation
             </label>
             <select
-              value={block.data.language || 'plaintext'}
-              onChange={(e) => onUpdate({ data: { ...block.data, language: e.target.value } })}
+              value={safeBlock.data.language || 'plaintext'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, language: e.target.value } })}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               {commonLanguages.map((lang) => (
@@ -2169,8 +2170,8 @@ function BlockRenderer({
               Code source
             </label>
             <textarea
-              value={block.data.code || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, code: e.target.value } })}
+              value={safeBlock.data.code || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, code: e.target.value } })}
               className="w-full p-3 font-mono text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y"
               placeholder="Entrez votre code ici..."
               rows={10}
@@ -2183,7 +2184,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`code-line-numbers-${block.id}`}
                 checked={block.data.showLineNumbers || false}
-                onChange={(e) => onUpdate({ data: { ...block.data, showLineNumbers: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, showLineNumbers: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`code-line-numbers-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -2195,7 +2196,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`code-copy-button-${block.id}`}
                 checked={block.data.showCopyButton !== false}
-                onChange={(e) => onUpdate({ data: { ...block.data, showCopyButton: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, showCopyButton: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`code-copy-button-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -2315,7 +2316,7 @@ function BlockRenderer({
               type="checkbox"
               id={`table-header-${block.id}`}
               checked={block.data.has_header || false}
-              onChange={(e) => onUpdate({ data: { ...block.data, has_header: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, has_header: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
             <label htmlFor={`table-header-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -2327,7 +2328,7 @@ function BlockRenderer({
               type="checkbox"
               id={`table-bordered-${block.id}`}
               checked={block.data.bordered !== false}
-              onChange={(e) => onUpdate({ data: { ...block.data, bordered: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, bordered: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
             <label htmlFor={`table-bordered-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -2347,7 +2348,7 @@ function BlockRenderer({
             <input
               type="number"
               value={rowCount}
-              onChange={(e) => onUpdate({ data: { ...block.data, rows_count: parseInt(e.target.value) || 2 } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, rows_count: parseInt(e.target.value) || 2 } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               min={1}
               max={10}
@@ -2397,8 +2398,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Inscrivez-vous à notre newsletter"
             />
@@ -2408,8 +2409,8 @@ function BlockRenderer({
               Description
             </label>
             <textarea
-              value={block.data.description || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, description: e.target.value } })}
+              value={safeBlock.data.description || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, description: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               rows={2}
               placeholder="Recevez nos dernières actualités..."
@@ -2421,8 +2422,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.button_text || 'S\'inscrire'}
-              onChange={(e) => onUpdate({ data: { ...block.data, button_text: e.target.value } })}
+              value={safeBlock.data.button_text || 'S\'inscrire'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_text: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
@@ -2437,8 +2438,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.placeholder || 'Rechercher...'}
-              onChange={(e) => onUpdate({ data: { ...block.data, placeholder: e.target.value } })}
+              value={safeBlock.data.placeholder || 'Rechercher...'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, placeholder: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
@@ -2448,8 +2449,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.button_text || 'Rechercher'}
-              onChange={(e) => onUpdate({ data: { ...block.data, button_text: e.target.value } })}
+              value={safeBlock.data.button_text || 'Rechercher'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_text: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
@@ -2464,8 +2465,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Créer un compte"
             />
@@ -2476,7 +2477,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`form-inscription-name-${block.id}`}
                 checked={block.data.show_name !== false}
-                onChange={(e) => onUpdate({ data: { ...block.data, show_name: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_name: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`form-inscription-name-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -2488,7 +2489,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`form-inscription-email-${block.id}`}
                 checked={block.data.show_email !== false}
-                onChange={(e) => onUpdate({ data: { ...block.data, show_email: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_email: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`form-inscription-email-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -2500,7 +2501,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`form-inscription-password-${block.id}`}
                 checked={block.data.show_password !== false}
-                onChange={(e) => onUpdate({ data: { ...block.data, show_password: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_password: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`form-inscription-password-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -2512,7 +2513,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`form-inscription-phone-${block.id}`}
                 checked={block.data.show_phone || false}
-                onChange={(e) => onUpdate({ data: { ...block.data, show_phone: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_phone: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`form-inscription-phone-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -2526,8 +2527,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.button_text || 'S\'inscrire'}
-              onChange={(e) => onUpdate({ data: { ...block.data, button_text: e.target.value } })}
+              value={safeBlock.data.button_text || 'S\'inscrire'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_text: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
@@ -2543,8 +2544,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Témoignages de nos clients"
             />
@@ -2631,8 +2632,8 @@ function BlockRenderer({
               Source des plans
             </label>
             <select
-              value={block.data.source || 'manual'}
-              onChange={(e) => onUpdate({ data: { ...block.data, source: e.target.value } })}
+              value={safeBlock.data.source || 'manual'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, source: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             >
               <option value="manual">Manuel (saisie)</option>
@@ -2647,8 +2648,8 @@ function BlockRenderer({
               </label>
               <input
                 type="text"
-                value={block.data.api_endpoint || '/api/billing/pricing-plans/'}
-                onChange={(e) => onUpdate({ data: { ...block.data, api_endpoint: e.target.value } })}
+                value={safeBlock.data.api_endpoint || '/api/billing/pricing-plans/'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, api_endpoint: e.target.value } })}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 placeholder="/api/billing/pricing-plans/"
               />
@@ -2664,8 +2665,8 @@ function BlockRenderer({
                 </label>
                 <input
                   type="text"
-                  value={block.data.title || ''}
-                  onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+                  value={safeBlock.data.title || ''}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
                   className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                   placeholder="Nos tarifs"
                 />
@@ -2767,8 +2768,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Notre histoire"
             />
@@ -2845,8 +2846,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Questions fréquentes"
             />
@@ -2912,8 +2913,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Nos statistiques"
             />
@@ -2990,8 +2991,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Suivez-nous"
             />
@@ -3066,8 +3067,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Réservez votre course"
             />
@@ -3078,7 +3079,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`booking-pickup-${block.id}`}
                 checked={block.data.show_pickup !== false}
-                onChange={(e) => onUpdate({ data: { ...block.data, show_pickup: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_pickup: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`booking-pickup-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -3090,7 +3091,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`booking-dropoff-${block.id}`}
                 checked={block.data.show_dropoff !== false}
-                onChange={(e) => onUpdate({ data: { ...block.data, show_dropoff: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_dropoff: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`booking-dropoff-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -3102,7 +3103,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`booking-date-${block.id}`}
                 checked={block.data.show_date !== false}
-                onChange={(e) => onUpdate({ data: { ...block.data, show_date: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_date: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`booking-date-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -3114,7 +3115,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`booking-passengers-${block.id}`}
                 checked={block.data.show_passengers || false}
-                onChange={(e) => onUpdate({ data: { ...block.data, show_passengers: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_passengers: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`booking-passengers-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -3126,7 +3127,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`booking-vehicle-${block.id}`}
                 checked={block.data.show_vehicle || false}
-                onChange={(e) => onUpdate({ data: { ...block.data, show_vehicle: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_vehicle: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`booking-vehicle-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -3138,7 +3139,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`booking-phone-${block.id}`}
                 checked={block.data.show_phone !== false}
-                onChange={(e) => onUpdate({ data: { ...block.data, show_phone: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_phone: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`booking-phone-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -3150,7 +3151,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`booking-notes-${block.id}`}
                 checked={block.data.show_notes || false}
-                onChange={(e) => onUpdate({ data: { ...block.data, show_notes: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_notes: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`booking-notes-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -3164,8 +3165,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.button_text || 'Réserver'}
-              onChange={(e) => onUpdate({ data: { ...block.data, button_text: e.target.value } })}
+              value={safeBlock.data.button_text || 'Réserver'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_text: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
@@ -3181,8 +3182,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Nos tarifs"
             />
@@ -3261,8 +3262,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Zones de service"
             />
@@ -3339,8 +3340,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Notre flotte"
             />
@@ -3428,8 +3429,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Contactez-nous"
             />
@@ -3519,8 +3520,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Notre zone de service"
             />
@@ -3531,8 +3532,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.address || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, address: e.target.value } })}
+              value={safeBlock.data.address || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, address: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Ex: Paris, France ou 48.8566, 2.3522"
             />
@@ -3543,8 +3544,8 @@ function BlockRenderer({
             </label>
             <input
               type="number"
-              value={block.data.height || 400}
-              onChange={(e) => onUpdate({ data: { ...block.data, height: parseInt(e.target.value) || 400 } })}
+              value={safeBlock.data.height || 400}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, height: parseInt(e.target.value) || 400 } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               min={200}
               max={800}
@@ -3555,7 +3556,7 @@ function BlockRenderer({
               type="checkbox"
               id={`map-zoom-${block.id}`}
               checked={block.data.show_controls || false}
-              onChange={(e) => onUpdate({ data: { ...block.data, show_controls: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_controls: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
             <label htmlFor={`map-zoom-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -3574,8 +3575,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Certifications et badges"
             />
@@ -3663,8 +3664,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Formulaire de contact"
             />
@@ -3675,8 +3676,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.submit_text || 'Envoyer'}
-              onChange={(e) => onUpdate({ data: { ...block.data, submit_text: e.target.value } })}
+              value={safeBlock.data.submit_text || 'Envoyer'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, submit_text: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
@@ -3775,7 +3776,7 @@ function BlockRenderer({
             <input
               type="number"
               value={columnCount}
-              onChange={(e) => onUpdate({ data: { ...block.data, columns_count: parseInt(e.target.value) || 2 } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, columns_count: parseInt(e.target.value) || 2 } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               min={2}
               max={6}
@@ -3812,8 +3813,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Titre Hero"
             />
@@ -3823,8 +3824,8 @@ function BlockRenderer({
               Sous-titre
             </label>
             <textarea
-              value={block.data.subtitle || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, subtitle: e.target.value } })}
+              value={safeBlock.data.subtitle || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, subtitle: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Sous-titre"
               rows={2}
@@ -3836,8 +3837,8 @@ function BlockRenderer({
             </label>
             <input
               type="url"
-              value={block.data.background_image || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, background_image: e.target.value } })}
+              value={safeBlock.data.background_image || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_image: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="https://example.com/image.jpg"
             />
@@ -3911,7 +3912,7 @@ function BlockRenderer({
               type="checkbox"
               id={`hero-overlay-${block.id}`}
               checked={block.data.overlay || false}
-              onChange={(e) => onUpdate({ data: { ...block.data, overlay: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, overlay: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
             <label htmlFor={`hero-overlay-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -3929,8 +3930,8 @@ function BlockRenderer({
             </label>
             <input
               type="url"
-              value={block.data.url || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, url: e.target.value } })}
+              value={safeBlock.data.url || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, url: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="https://example.com/image.jpg"
             />
@@ -3941,8 +3942,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.alt || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, alt: e.target.value } })}
+              value={safeBlock.data.alt || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, alt: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Description de l'image"
             />
@@ -3953,8 +3954,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.caption || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, caption: e.target.value } })}
+              value={safeBlock.data.caption || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, caption: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Légende (optionnel)"
             />
@@ -3966,8 +3967,8 @@ function BlockRenderer({
               </label>
               <input
                 type="number"
-                value={block.data.width || 100}
-                onChange={(e) => onUpdate({ data: { ...block.data, width: parseInt(e.target.value) || 100 } })}
+                value={safeBlock.data.width || 100}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, width: parseInt(e.target.value) || 100 } })}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 min={10}
                 max={100}
@@ -3978,8 +3979,8 @@ function BlockRenderer({
                 Alignement
               </label>
               <select
-                value={block.data.align || 'center'}
-                onChange={(e) => onUpdate({ data: { ...block.data, align: e.target.value } })}
+                value={safeBlock.data.align || 'center'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, align: e.target.value } })}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value="left">Gauche</option>
@@ -3999,8 +4000,8 @@ function BlockRenderer({
             </label>
             <input
               type="url"
-              value={block.data.url || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, url: e.target.value } })}
+              value={safeBlock.data.url || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, url: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="https://www.youtube.com/watch?v=..."
             />
@@ -4011,8 +4012,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Titre (optionnel)"
             />
@@ -4024,8 +4025,8 @@ function BlockRenderer({
               </label>
               <input
                 type="number"
-                value={block.data.width || 100}
-                onChange={(e) => onUpdate({ data: { ...block.data, width: parseInt(e.target.value) || 100 } })}
+                value={safeBlock.data.width || 100}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, width: parseInt(e.target.value) || 100 } })}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 min={50}
                 max={100}
@@ -4037,8 +4038,8 @@ function BlockRenderer({
               </label>
               <input
                 type="number"
-                value={block.data.height || 400}
-                onChange={(e) => onUpdate({ data: { ...block.data, height: parseInt(e.target.value) || 400 } })}
+                value={safeBlock.data.height || 400}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, height: parseInt(e.target.value) || 400 } })}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 min={200}
                 max={800}
@@ -4050,7 +4051,7 @@ function BlockRenderer({
               type="checkbox"
               id={`video-autoplay-${block.id}`}
               checked={block.data.autoplay || false}
-              onChange={(e) => onUpdate({ data: { ...block.data, autoplay: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, autoplay: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
             <label htmlFor={`video-autoplay-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -4069,8 +4070,8 @@ function BlockRenderer({
             </label>
             <input
               type="number"
-              value={block.data.columns || 3}
-              onChange={(e) => onUpdate({ data: { ...block.data, columns: parseInt(e.target.value) || 3 } })}
+              value={safeBlock.data.columns || 3}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, columns: parseInt(e.target.value) || 3 } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               min={1}
               max={6}
@@ -4125,8 +4126,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Titre de la bannière"
             />
@@ -4137,8 +4138,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.subtitle || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, subtitle: e.target.value } })}
+              value={safeBlock.data.subtitle || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, subtitle: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Sous-titre"
             />
@@ -4149,8 +4150,8 @@ function BlockRenderer({
             </label>
             <input
               type="url"
-              value={block.data.background_image || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, background_image: e.target.value } })}
+              value={safeBlock.data.background_image || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_image: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="https://example.com/image.jpg"
             />
@@ -4162,8 +4163,8 @@ function BlockRenderer({
               </label>
               <input
                 type="number"
-                value={block.data.min_height || 400}
-                onChange={(e) => onUpdate({ data: { ...block.data, min_height: parseInt(e.target.value) || 400 } })}
+                value={safeBlock.data.min_height || 400}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, min_height: parseInt(e.target.value) || 400 } })}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 min={200}
                 max={1000}
@@ -4174,8 +4175,8 @@ function BlockRenderer({
                 Alignement du texte
               </label>
               <select
-                value={block.data.text_align || 'center'}
-                onChange={(e) => onUpdate({ data: { ...block.data, text_align: e.target.value } })}
+                value={safeBlock.data.text_align || 'center'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, text_align: e.target.value } })}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value="left">Gauche</option>
@@ -4189,7 +4190,7 @@ function BlockRenderer({
               type="checkbox"
               id={`banner-overlay-${block.id}`}
               checked={block.data.overlay || false}
-              onChange={(e) => onUpdate({ data: { ...block.data, overlay: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, overlay: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
             <label htmlFor={`banner-overlay-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -4204,8 +4205,8 @@ function BlockRenderer({
                 </label>
                 <input
                   type="text"
-                  value={block.data.button_text || ''}
-                  onChange={(e) => onUpdate({ data: { ...block.data, button_text: e.target.value } })}
+                  value={safeBlock.data.button_text || ''}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_text: e.target.value } })}
                   className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 />
               </div>
@@ -4214,7 +4215,7 @@ function BlockRenderer({
                   URL bouton
                 </label>
                 <UrlInputWithSuggestions
-                  value={block.data.button_url || ''}
+                  value={safeBlock.data.button_url || ''}
                   onChange={(url) => onUpdate({ data: { ...block.data, button_url: url } })}
                   placeholder="URL"
                   className="text-xs"
@@ -4234,8 +4235,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.logo_text || 'VTCBuilder'}
-              onChange={(e) => onUpdate({ data: { ...block.data, logo_text: e.target.value } })}
+              value={safeBlock.data.logo_text || 'VTCBuilder'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, logo_text: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="VTCBuilder"
             />
@@ -4246,8 +4247,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.logo_url || '/'}
-              onChange={(e) => onUpdate({ data: { ...block.data, logo_url: e.target.value } })}
+              value={safeBlock.data.logo_url || '/'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, logo_url: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="/"
             />
@@ -4258,8 +4259,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.logo_image || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, logo_image: e.target.value } })}
+              value={safeBlock.data.logo_image || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, logo_image: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="https://..."
             />
@@ -4270,8 +4271,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.badge || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, badge: e.target.value } })}
+              value={safeBlock.data.badge || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, badge: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="Beta"
             />
@@ -4283,7 +4284,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               checked={block.data.sticky !== false}
-              onChange={(e) => onUpdate({ data: { ...block.data, sticky: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, sticky: e.target.checked } })}
               className="w-4 h-4"
             />
           </div>
@@ -4294,7 +4295,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               checked={block.data.show_theme_toggle !== false}
-              onChange={(e) => onUpdate({ data: { ...block.data, show_theme_toggle: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_theme_toggle: e.target.checked } })}
               className="w-4 h-4"
             />
           </div>
@@ -4356,7 +4357,7 @@ function BlockRenderer({
             <div className="space-y-2">
               <input
                 type="text"
-                value={block.data.cta_button?.text || ''}
+                value={safeBlock.data.cta_button?.text || ''}
                 onChange={(e) => onUpdate({ 
                   data: { 
                     ...block.data, 
@@ -4371,7 +4372,7 @@ function BlockRenderer({
               />
               <input
                 type="text"
-                value={block.data.cta_button?.url || ''}
+                value={safeBlock.data.cta_button?.url || ''}
                 onChange={(e) => onUpdate({ 
                   data: { 
                     ...block.data, 
@@ -4385,7 +4386,7 @@ function BlockRenderer({
                 placeholder="URL du bouton"
               />
               <select
-                value={block.data.cta_button?.style || 'primary'}
+                value={safeBlock.data.cta_button?.style || 'primary'}
                 onChange={(e) => onUpdate({ 
                   data: { 
                     ...block.data, 
@@ -4420,8 +4421,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.copyright || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, copyright: e.target.value } })}
+              value={safeBlock.data.copyright || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, copyright: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="© 2024 Votre Entreprise. Tous droits réservés."
             />
@@ -4532,8 +4533,8 @@ function BlockRenderer({
             </label>
             <input
               type="url"
-              value={block.data.background_image || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, background_image: e.target.value } })}
+              value={safeBlock.data.background_image || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_image: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="https://example.com/image.jpg"
             />
@@ -4544,8 +4545,8 @@ function BlockRenderer({
                 Position de l'image
               </label>
               <select
-                value={block.data.background_position || 'center'}
-                onChange={(e) => onUpdate({ data: { ...block.data, background_position: e.target.value } })}
+                value={safeBlock.data.background_position || 'center'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_position: e.target.value } })}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value="center">Centre</option>
@@ -4560,8 +4561,8 @@ function BlockRenderer({
                 Taille de l'image
               </label>
               <select
-                value={block.data.background_size || 'cover'}
-                onChange={(e) => onUpdate({ data: { ...block.data, background_size: e.target.value } })}
+                value={safeBlock.data.background_size || 'cover'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_size: e.target.value } })}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value="cover">Couvrir</option>
@@ -4575,7 +4576,7 @@ function BlockRenderer({
               type="checkbox"
               id={`section-overlay-${block.id}`}
               checked={block.data.overlay || false}
-              onChange={(e) => onUpdate({ data: { ...block.data, overlay: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, overlay: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
             <label htmlFor={`section-overlay-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -4660,8 +4661,8 @@ function BlockRenderer({
               </label>
               <input
                 type="number"
-                value={block.data.autoplay_speed || 3000}
-                onChange={(e) => onUpdate({ data: { ...block.data, autoplay_speed: parseInt(e.target.value) || 3000 } })}
+                value={safeBlock.data.autoplay_speed || 3000}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, autoplay_speed: parseInt(e.target.value) || 3000 } })}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 min={1000}
                 max={10000}
@@ -4672,7 +4673,7 @@ function BlockRenderer({
                 type="checkbox"
                 id={`carousel-autoplay-${block.id}`}
                 checked={block.data.autoplay !== false}
-                onChange={(e) => onUpdate({ data: { ...block.data, autoplay: e.target.checked } })}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, autoplay: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
               <label htmlFor={`carousel-autoplay-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
@@ -4691,8 +4692,8 @@ function BlockRenderer({
             </label>
             <input
               type="datetime-local"
-              value={block.data.target_date || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, target_date: e.target.value } })}
+              value={safeBlock.data.target_date || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, target_date: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
@@ -4702,8 +4703,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Offre se termine dans..."
             />
@@ -4719,8 +4720,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.label || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, label: e.target.value } })}
+              value={safeBlock.data.label || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, label: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Compétence"
             />
@@ -4731,8 +4732,8 @@ function BlockRenderer({
             </label>
             <input
               type="number"
-              value={block.data.percentage || 0}
-              onChange={(e) => onUpdate({ data: { ...block.data, percentage: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) } })}
+              value={safeBlock.data.percentage || 0}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, percentage: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               min={0}
               max={100}
@@ -4744,8 +4745,8 @@ function BlockRenderer({
             </label>
             <input
               type="color"
-              value={block.data.color || '#3B82F6'}
-              onChange={(e) => onUpdate({ data: { ...block.data, color: e.target.value } })}
+              value={safeBlock.data.color || '#3B82F6'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, color: e.target.value } })}
               className="w-full h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
             />
           </div>
@@ -4760,8 +4761,8 @@ function BlockRenderer({
               Citation
             </label>
             <textarea
-              value={block.data.text || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, text: e.target.value } })}
+              value={safeBlock.data.text || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, text: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Votre citation..."
               rows={3}
@@ -4773,8 +4774,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.author || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, author: e.target.value } })}
+              value={safeBlock.data.author || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, author: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Nom de l'auteur"
             />
@@ -4785,8 +4786,8 @@ function BlockRenderer({
             </label>
             <input
               type="color"
-              value={block.data.color || '#3B82F6'}
-              onChange={(e) => onUpdate({ data: { ...block.data, color: e.target.value } })}
+              value={safeBlock.data.color || '#3B82F6'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, color: e.target.value } })}
               className="w-full h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
             />
           </div>
@@ -4802,8 +4803,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.icon || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, icon: e.target.value } })}
+              value={safeBlock.data.icon || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, icon: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="🎯 ou ⚡"
             />
@@ -4814,8 +4815,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Titre de la boîte"
             />
@@ -4825,8 +4826,8 @@ function BlockRenderer({
               Description
             </label>
             <textarea
-              value={block.data.description || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, description: e.target.value } })}
+              value={safeBlock.data.description || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, description: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Description..."
               rows={3}
@@ -4838,8 +4839,8 @@ function BlockRenderer({
             </label>
             <input
               type="color"
-              value={block.data.border_color || '#E5E7EB'}
-              onChange={(e) => onUpdate({ data: { ...block.data, border_color: e.target.value } })}
+              value={safeBlock.data.border_color || '#E5E7EB'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, border_color: e.target.value } })}
               className="w-full h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
             />
           </div>
@@ -4855,8 +4856,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.icon || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, icon: e.target.value } })}
+              value={safeBlock.data.icon || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, icon: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="✨"
             />
@@ -4867,8 +4868,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Titre de la fonctionnalité"
             />
@@ -4878,8 +4879,8 @@ function BlockRenderer({
               Description
             </label>
             <textarea
-              value={block.data.description || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, description: e.target.value } })}
+              value={safeBlock.data.description || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, description: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Description de la fonctionnalité..."
               rows={3}
@@ -4891,8 +4892,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.link_text || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, link_text: e.target.value } })}
+              value={safeBlock.data.link_text || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, link_text: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="En savoir plus"
             />
@@ -4902,7 +4903,7 @@ function BlockRenderer({
               URL du lien
             </label>
             <UrlInputWithSuggestions
-              value={block.data.link_url || ''}
+              value={safeBlock.data.link_url || ''}
               onChange={(url) => onUpdate({ data: { ...block.data, link_url: url } })}
               placeholder="URL ou sélectionner une page..."
               className="text-xs"
@@ -4920,8 +4921,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.url || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, url: e.target.value } })}
+              value={safeBlock.data.url || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, url: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="https://www.youtube.com/watch?v=..."
             />
@@ -4942,8 +4943,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.name || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, name: e.target.value } })}
+              value={safeBlock.data.name || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, name: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Jean Dupont"
             />
@@ -4954,8 +4955,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.role || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, role: e.target.value } })}
+              value={safeBlock.data.role || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, role: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Développeur"
             />
@@ -4966,8 +4967,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.avatar || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, avatar: e.target.value } })}
+              value={safeBlock.data.avatar || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, avatar: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="https://..."
             />
@@ -4977,8 +4978,8 @@ function BlockRenderer({
               Biographie
             </label>
             <textarea
-              value={block.data.bio || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, bio: e.target.value } })}
+              value={safeBlock.data.bio || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, bio: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Biographie..."
               rows={3}
@@ -5046,8 +5047,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               placeholder="Nos partenaires"
             />
@@ -5058,8 +5059,8 @@ function BlockRenderer({
             </label>
             <input
               type="number"
-              value={block.data.columns || 4}
-              onChange={(e) => onUpdate({ data: { ...block.data, columns: Math.max(1, Math.min(6, parseInt(e.target.value) || 4)) } })}
+              value={safeBlock.data.columns || 4}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, columns: Math.max(1, Math.min(6, parseInt(e.target.value) || 4)) } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               min={1}
               max={6}
@@ -5126,8 +5127,8 @@ function BlockRenderer({
               Nombre de colonnes
             </label>
             <select
-              value={block.data.columns || 3}
-              onChange={(e) => onUpdate({ data: { ...block.data, columns: parseInt(e.target.value) } })}
+              value={safeBlock.data.columns || 3}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, columns: parseInt(e.target.value) } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
               <option value={1}>1 colonne</option>
@@ -5294,8 +5295,8 @@ function BlockRenderer({
             </label>
             <input
               type="number"
-              value={block.data.rating || 5}
-              onChange={(e) => onUpdate({ data: { ...block.data, rating: Math.max(1, Math.min(5, parseInt(e.target.value) || 5)) } })}
+              value={safeBlock.data.rating || 5}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, rating: Math.max(1, Math.min(5, parseInt(e.target.value) || 5)) } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               min={1}
               max={5}
@@ -5306,8 +5307,8 @@ function BlockRenderer({
               Taille
             </label>
             <select
-              value={block.data.size || 'medium'}
-              onChange={(e) => onUpdate({ data: { ...block.data, size: e.target.value } })}
+              value={safeBlock.data.size || 'medium'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, size: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
               <option value="small">Petit</option>
@@ -5322,14 +5323,14 @@ function BlockRenderer({
             <input
               type="checkbox"
               checked={block.data.show_text !== false}
-              onChange={(e) => onUpdate({ data: { ...block.data, show_text: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_text: e.target.checked } })}
               className="w-4 h-4"
             />
             {block.data.show_text !== false && (
               <input
                 type="text"
-                value={block.data.text || ''}
-                onChange={(e) => onUpdate({ data: { ...block.data, text: e.target.value } })}
+                value={safeBlock.data.text || ''}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, text: e.target.value } })}
                 className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
                 placeholder="Texte (ex: '4.5 sur 5')"
               />
@@ -5417,8 +5418,8 @@ function BlockRenderer({
               Style
             </label>
             <select
-              value={block.data.style || 'rounded'}
-              onChange={(e) => onUpdate({ data: { ...block.data, style: e.target.value } })}
+              value={safeBlock.data.style || 'rounded'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, style: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
               <option value="rounded">Arrondi</option>
@@ -5438,8 +5439,8 @@ function BlockRenderer({
             </label>
             <input
               type="number"
-              value={block.data.percentage || 75}
-              onChange={(e) => onUpdate({ data: { ...block.data, percentage: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) } })}
+              value={safeBlock.data.percentage || 75}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, percentage: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               min={0}
               max={100}
@@ -5450,8 +5451,8 @@ function BlockRenderer({
               Taille
             </label>
             <select
-              value={block.data.size || 'medium'}
-              onChange={(e) => onUpdate({ data: { ...block.data, size: e.target.value } })}
+              value={safeBlock.data.size || 'medium'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, size: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
               <option value="small">Petit (100px)</option>
@@ -5465,8 +5466,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.text || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, text: e.target.value } })}
+              value={safeBlock.data.text || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, text: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="Texte sous le cercle"
             />
@@ -5483,8 +5484,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.placeholder || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, placeholder: e.target.value } })}
+              value={safeBlock.data.placeholder || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, placeholder: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="Rechercher..."
             />
@@ -5495,8 +5496,8 @@ function BlockRenderer({
             </label>
             <input
               type="url"
-              value={block.data.action || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, action: e.target.value } })}
+              value={safeBlock.data.action || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, action: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="/search"
             />
@@ -5508,7 +5509,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               checked={block.data.show_button !== false}
-              onChange={(e) => onUpdate({ data: { ...block.data, show_button: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_button: e.target.checked } })}
               className="w-4 h-4"
             />
           </div>
@@ -5524,8 +5525,8 @@ function BlockRenderer({
             </label>
             <input
               type="url"
-              value={block.data.src || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, src: e.target.value } })}
+              value={safeBlock.data.src || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, src: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="https://..."
             />
@@ -5536,8 +5537,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="Titre de l'audio"
             />
@@ -5551,7 +5552,7 @@ function BlockRenderer({
                 <input
                   type="checkbox"
                   checked={block.data.controls !== false}
-                  onChange={(e) => onUpdate({ data: { ...block.data, controls: e.target.checked } })}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, controls: e.target.checked } })}
                   className="w-4 h-4"
                 />
                 Afficher les contrôles
@@ -5560,7 +5561,7 @@ function BlockRenderer({
                 <input
                   type="checkbox"
                   checked={block.data.autoplay === true}
-                  onChange={(e) => onUpdate({ data: { ...block.data, autoplay: e.target.checked } })}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, autoplay: e.target.checked } })}
                   className="w-4 h-4"
                 />
                 Lecture automatique
@@ -5569,7 +5570,7 @@ function BlockRenderer({
                 <input
                   type="checkbox"
                   checked={block.data.loop === true}
-                  onChange={(e) => onUpdate({ data: { ...block.data, loop: e.target.checked } })}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, loop: e.target.checked } })}
                   className="w-4 h-4"
                 />
                 Répéter
@@ -5594,8 +5595,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="Titre"
             />
@@ -5605,8 +5606,8 @@ function BlockRenderer({
               Contenu
             </label>
             <textarea
-              value={block.data.content || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, content: e.target.value } })}
+              value={safeBlock.data.content || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, content: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="Contenu de la modal"
               rows={4}
@@ -5618,8 +5619,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.trigger_text || 'Ouvrir'}
-              onChange={(e) => onUpdate({ data: { ...block.data, trigger_text: e.target.value } })}
+              value={safeBlock.data.trigger_text || 'Ouvrir'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, trigger_text: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="Ouvrir"
             />
@@ -5629,8 +5630,8 @@ function BlockRenderer({
               Taille
             </label>
             <select
-              value={block.data.size || 'medium'}
-              onChange={(e) => onUpdate({ data: { ...block.data, size: e.target.value } })}
+              value={safeBlock.data.size || 'medium'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, size: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
               <option value="small">Petit</option>
@@ -5656,8 +5657,8 @@ function BlockRenderer({
               Type de graphique
             </label>
             <select
-              value={block.data.chart_type || 'line'}
-              onChange={(e) => onUpdate({ data: { ...block.data, chart_type: e.target.value } })}
+              value={safeBlock.data.chart_type || 'line'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, chart_type: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
               <option value="line">Ligne</option>
@@ -5673,8 +5674,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, title: e.target.value } })}
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="Titre du graphique"
             />
@@ -5684,7 +5685,7 @@ function BlockRenderer({
               Données (JSON)
             </label>
             <textarea
-              value={block.data.data || '{"labels": ["Jan", "Feb", "Mar"], "datasets": [{"label": "Ventes", "data": [10, 20, 30]}]}'}
+              value={safeBlock.data.data || '{"labels": ["Jan", "Feb", "Mar"], "datasets": [{"label": "Ventes", "data": [10, 20, 30]}]}'}
               onChange={(e) => {
                 try {
                   JSON.parse(e.target.value)
@@ -5716,8 +5717,8 @@ function BlockRenderer({
               Type de calendrier
             </label>
             <select
-              value={block.data.calendar_type || 'month'}
-              onChange={(e) => onUpdate({ data: { ...block.data, calendar_type: e.target.value } })}
+              value={safeBlock.data.calendar_type || 'month'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, calendar_type: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
               <option value="month">Mensuel</option>
@@ -5733,7 +5734,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               checked={block.data.show_events !== false}
-              onChange={(e) => onUpdate({ data: { ...block.data, show_events: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_events: e.target.checked } })}
               className="w-4 h-4"
             />
           </div>
@@ -5742,7 +5743,7 @@ function BlockRenderer({
               Événements (JSON)
             </label>
             <textarea
-              value={block.data.events || '[]'}
+              value={safeBlock.data.events || '[]'}
               onChange={(e) => {
                 try {
                   JSON.parse(e.target.value)
@@ -5770,7 +5771,7 @@ function BlockRenderer({
             <input
               type="number"
               value={totalPages}
-              onChange={(e) => onUpdate({ data: { ...block.data, total_pages: Math.max(1, parseInt(e.target.value) || 1) } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, total_pages: Math.max(1, parseInt(e.target.value) || 1) } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               min={1}
             />
@@ -5781,8 +5782,8 @@ function BlockRenderer({
             </label>
             <input
               type="number"
-              value={block.data.current_page || 1}
-              onChange={(e) => onUpdate({ data: { ...block.data, current_page: Math.max(1, Math.min(totalPages, parseInt(e.target.value) || 1)) } })}
+              value={safeBlock.data.current_page || 1}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, current_page: Math.max(1, Math.min(totalPages, parseInt(e.target.value) || 1)) } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               min={1}
               max={totalPages}
@@ -5795,7 +5796,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               checked={block.data.show_arrows !== false}
-              onChange={(e) => onUpdate({ data: { ...block.data, show_arrows: e.target.checked } })}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_arrows: e.target.checked } })}
               className="w-4 h-4"
             />
           </div>
@@ -5811,8 +5812,8 @@ function BlockRenderer({
               Type de liste
             </label>
             <select
-              value={block.data.list_type || 'unordered'}
-              onChange={(e) => onUpdate({ data: { ...block.data, list_type: e.target.value } })}
+              value={safeBlock.data.list_type || 'unordered'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, list_type: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
               <option value="unordered">Non ordonnée (puces)</option>
@@ -5847,8 +5848,8 @@ function BlockRenderer({
             </label>
             <input
               type="text"
-              value={block.data.text || ''}
-              onChange={(e) => onUpdate({ data: { ...block.data, text: e.target.value } })}
+              value={safeBlock.data.text || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, text: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
               placeholder="Texte du lien"
             />
@@ -5859,7 +5860,7 @@ function BlockRenderer({
             </label>
             <div className="space-y-2">
               <PageSelector
-                value={block.data.url || ''}
+                value={safeBlock.data.url || ''}
                 onChange={(url) => onUpdate({ data: { ...block.data, url } })}
                 placeholder="Sélectionner une page..."
                 className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -5874,8 +5875,8 @@ function BlockRenderer({
               Ouvrir dans
             </label>
             <select
-              value={block.data.target || '_self'}
-              onChange={(e) => onUpdate({ data: { ...block.data, target: e.target.value } })}
+              value={safeBlock.data.target || '_self'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, target: e.target.value } })}
               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
             >
               <option value="_self">Même onglet</option>
@@ -5938,8 +5939,8 @@ function BlockLayoutPanel({
                   </label>
                   <input
                     type="text"
-                    value={block.data?.columns || 'repeat(3, 1fr)'}
-                    onChange={(e) => onUpdate({ data: { ...block.data, columns: e.target.value } })}
+                    value={safeBlock.data?.columns || 'repeat(3, 1fr)'}
+                    onChange={(e) => onUpdate({ data: { ...safeBlock.data, columns: e.target.value } })}
                     className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="repeat(3, 1fr)"
                   />
@@ -5953,8 +5954,8 @@ function BlockLayoutPanel({
                   </label>
                   <input
                     type="text"
-                    value={block.data?.rows || 'auto'}
-                    onChange={(e) => onUpdate({ data: { ...block.data, rows: e.target.value } })}
+                    value={safeBlock.data?.rows || 'auto'}
+                    onChange={(e) => onUpdate({ data: { ...safeBlock.data, rows: e.target.value } })}
                     className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="auto ou repeat(2, 1fr)"
                   />
@@ -5968,8 +5969,8 @@ function BlockLayoutPanel({
                   </label>
                   <input
                     type="text"
-                    value={block.data?.gap || '1rem'}
-                    onChange={(e) => onUpdate({ data: { ...block.data, gap: e.target.value } })}
+                    value={safeBlock.data?.gap || '1rem'}
+                    onChange={(e) => onUpdate({ data: { ...safeBlock.data, gap: e.target.value } })}
                     className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="1rem"
                   />
@@ -5986,8 +5987,8 @@ function BlockLayoutPanel({
                     Direction
                   </label>
                   <select
-                    value={block.data?.direction || 'row'}
-                    onChange={(e) => onUpdate({ data: { ...block.data, direction: e.target.value } })}
+                    value={safeBlock.data?.direction || 'row'}
+                    onChange={(e) => onUpdate({ data: { ...safeBlock.data, direction: e.target.value } })}
                     className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="row">Horizontal (row)</option>
@@ -5999,8 +6000,8 @@ function BlockLayoutPanel({
                     Wrap
                   </label>
                   <select
-                    value={block.data?.wrap || 'nowrap'}
-                    onChange={(e) => onUpdate({ data: { ...block.data, wrap: e.target.value } })}
+                    value={safeBlock.data?.wrap || 'nowrap'}
+                    onChange={(e) => onUpdate({ data: { ...safeBlock.data, wrap: e.target.value } })}
                     className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="nowrap">Pas de retour à la ligne</option>
@@ -6013,8 +6014,8 @@ function BlockLayoutPanel({
                   </label>
                   <input
                     type="text"
-                    value={block.data?.gap || '1rem'}
-                    onChange={(e) => onUpdate({ data: { ...block.data, gap: e.target.value } })}
+                    value={safeBlock.data?.gap || '1rem'}
+                    onChange={(e) => onUpdate({ data: { ...safeBlock.data, gap: e.target.value } })}
                     className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="1rem"
                   />
@@ -6031,8 +6032,8 @@ function BlockLayoutPanel({
                     type="number"
                     min="1"
                     max="12"
-                    value={block.data?.columns_count || 2}
-                    onChange={(e) => onUpdate({ data: { ...block.data, columns_count: parseInt(e.target.value) || 2 } })}
+                    value={safeBlock.data?.columns_count || 2}
+                    onChange={(e) => onUpdate({ data: { ...safeBlock.data, columns_count: parseInt(e.target.value) || 2 } })}
                     className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -6889,7 +6890,7 @@ function BlockPropertiesPanel({
                 {schemaObj.type === 'text' && (
                 <input
                   type="text"
-                  value={block.data[key] || ''}
+                  value={safeBlock.data[key] || ''}
                   onChange={(e) =>
                     onUpdate({
                       data: { ...block.data, [key]: e.target.value },
@@ -6900,7 +6901,7 @@ function BlockPropertiesPanel({
               )}
                 {schemaObj.type === 'textarea' && (
                 <textarea
-                  value={block.data[key] || ''}
+                  value={safeBlock.data[key] || ''}
                   onChange={(e) =>
                     onUpdate({
                       data: { ...block.data, [key]: e.target.value },
@@ -6913,7 +6914,7 @@ function BlockPropertiesPanel({
                 {schemaObj.type === 'number' && (
                 <input
                   type="number"
-                  value={block.data[key] || ''}
+                  value={safeBlock.data[key] || ''}
                   onChange={(e) =>
                     onUpdate({
                       data: { ...block.data, [key]: parseFloat(e.target.value) || 0 },
@@ -6925,7 +6926,7 @@ function BlockPropertiesPanel({
                 {(schemaObj.type === 'url' || 
                   (schemaObj.type === 'text' && (key.toLowerCase().includes('url') || key.toLowerCase().includes('link') || key.toLowerCase().includes('href')))) && (
                   <UrlInputWithSuggestions
-                    value={block.data[key] || ''}
+                    value={safeBlock.data[key] || ''}
                     onChange={(url) =>
                       onUpdate({
                         data: { ...block.data, [key]: url },
