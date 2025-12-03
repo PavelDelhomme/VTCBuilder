@@ -6310,6 +6310,9 @@ function BlockLayoutPanel({
   onUpdate: (updates: Partial<Block>) => void
   allBlocks?: Block[]
 }) {
+  // S'assurer que block.data existe pour éviter les erreurs
+  const safeBlock = { ...block, data: block.data || {} }
+  
   return (
     <div className="space-y-4 min-h-0">
       {/* Configuration spécifique pour les conteneurs flex et grille */}

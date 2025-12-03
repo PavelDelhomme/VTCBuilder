@@ -122,10 +122,37 @@ export default function EditPublicPage() {
         let homepageBlocks = data.public_homepage_blocks || []
         
         // Si aucun bloc n'existe, créer des blocs par défaut correspondant à la page actuelle
-        // Structure complète : Header (via composant), Hero, Features, Pricing, CTA, Footer (via composant)
+        // Structure complète : Header, Hero, Features, Pricing, CTA, Footer
         if (homepageBlocks.length === 0) {
           const now = Date.now()
           homepageBlocks = [
+            // Header - Reproduit exactement PublicHeader
+            {
+              id: `header-${now}`,
+              type: 'header',
+              data: {
+                logo_text: 'VTCBuilder',
+                logo_badge: 'Beta',
+                show_theme_toggle: true,
+                links: [
+                  { label: 'Tarifs', url: '/#pricing' },
+                  { label: 'Fonctionnalités', url: '/features' },
+                  { label: 'Templates', url: '/templates' }
+                ],
+                cta_button: {
+                  text: 'Créer un compte',
+                  url: '/register',
+                  style: 'primary'
+                }
+              },
+              styles: {
+                position: 'sticky',
+                top: '0',
+                z_index: '50',
+                backgroundColor: 'bg-white/95 dark:bg-gray-900/90',
+                backdrop_blur: true
+              }
+            },
             {
               id: `hero-${now}`,
               type: 'hero',
@@ -217,6 +244,50 @@ export default function EditPublicPage() {
               styles: {
                 padding: 'py-20',
                 textAlign: 'center'
+              }
+            },
+            // Footer - Reproduit exactement PublicFooter
+            {
+              id: `footer-${now}`,
+              type: 'footer',
+              data: {
+                columns: [
+                  {
+                    title: 'VTCBuilder',
+                    links: [],
+                    description: 'La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.'
+                  },
+                  {
+                    title: 'Produit',
+                    links: [
+                      { label: 'Tarifs', url: '/#pricing' },
+                      { label: 'Fonctionnalités', url: '/features' },
+                      { label: 'Templates', url: '/templates' }
+                    ]
+                  },
+                  {
+                    title: 'Support',
+                    links: [
+                      { label: 'Documentation', url: '/docs' },
+                      { label: 'Contact', url: '/contact' },
+                      { label: 'FAQ', url: '/faq' }
+                    ]
+                  },
+                  {
+                    title: 'Légal',
+                    links: [
+                      { label: 'CGV', url: '/legal/terms' },
+                      { label: 'Confidentialité', url: '/legal/privacy' }
+                    ]
+                  }
+                ],
+                copyright: `© ${new Date().getFullYear()} VTCBuilder. Tous droits réservés.`,
+                additional_text: 'vtcbuilder.com - Développé avec ❤️ en France'
+              },
+              styles: {
+                backgroundColor: 'bg-gray-900',
+                color: 'text-white',
+                padding: 'py-12'
               }
             }
           ]
