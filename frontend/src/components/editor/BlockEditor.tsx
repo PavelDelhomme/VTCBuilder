@@ -85,7 +85,8 @@ interface BlockEditorProps {
   availableBlockTypes?: BlockType[]
   onBlockSelect?: (blockId: string | null) => void
   selectedBlockId?: string | null
-  onBlocksPaletteToggle?: (isOpen: boolean) => void // Callback pour informer le parent de l'état de la palette
+  showBlocksPalette?: boolean // Afficher ou non la sidebar de blocs (désactivée si popup externe)
+  showOnlyPalette?: boolean // Afficher uniquement la palette (pour popup)
 }
 
 export default function BlockEditor({ blocks, onChange, availableBlockTypes, onBlockSelect, selectedBlockId: externalSelectedBlockId, showBlocksPalette = true, showOnlyPalette = false }: BlockEditorProps) {
@@ -1311,6 +1312,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                         </p>
                       </div>
                 </div>
+                  )
               ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-12 gap-4 lg:gap-6 auto-rows-min">
                       {history.state
