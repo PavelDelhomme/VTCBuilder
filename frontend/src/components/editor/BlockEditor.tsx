@@ -1457,6 +1457,7 @@ const SortableBlock = React.memo(function SortableBlock({
             blockTypes={blockTypes}
             onAddChild={(childBlock) => {
               const newChildren = [...(block.children || []), childBlock]
+              console.log('Ajout enfant au conteneur:', block.id, childBlock, newChildren)
               onUpdate({ children: newChildren })
             }}
             onUpdateChild={(childId, updates) => {
