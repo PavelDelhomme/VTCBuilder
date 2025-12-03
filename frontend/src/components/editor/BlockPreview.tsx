@@ -290,12 +290,18 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       if (rendered) {
         // Apply wrapper styles
         // IMPORTANT: Ne jamais utiliser padding shorthand ici pour éviter les conflits
-        const hasIndividualPadding = block.styles?.padding_top || block.styles?.padding_bottom || 
+        const hasIndividualPadding = !!(block.styles?.padding_top || block.styles?.padding_bottom || 
                                       block.styles?.padding_left || block.styles?.padding_right ||
                                       block.styles?.padding_vertical || block.styles?.padding_horizontal ||
                                       block.styles?.paddingTop || block.styles?.paddingBottom ||
                                       block.styles?.paddingLeft || block.styles?.paddingRight ||
-                                      block.styles?.paddingVertical || block.styles?.paddingHorizontal
+                                      block.styles?.paddingVertical || block.styles?.paddingHorizontal)
+        
+        // Calculer les valeurs de padding individuelles
+        const paddingTop = block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical
+        const paddingBottom = block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom
+        const paddingLeft = block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft
+        const paddingRight = block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight
         
         const wrapperStyles: React.CSSProperties = {
           position: block.position?.type || block.styles?.position || 'static',
@@ -311,10 +317,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
           marginRight: block.styles?.margin_horizontal || block.styles?.margin_right || block.styles?.marginRight,
           // Padding - Utiliser uniquement les propriétés individuelles pour éviter les conflits
           ...(hasIndividualPadding ? {
-            paddingTop: block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical,
-            paddingBottom: block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom,
-            paddingLeft: block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft,
-            paddingRight: block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight,
+            ...(paddingTop !== undefined && paddingTop !== null && paddingTop !== '' ? { paddingTop } : {}),
+            ...(paddingBottom !== undefined && paddingBottom !== null && paddingBottom !== '' ? { paddingBottom } : {}),
+            ...(paddingLeft !== undefined && paddingLeft !== null && paddingLeft !== '' ? { paddingLeft } : {}),
+            ...(paddingRight !== undefined && paddingRight !== null && paddingRight !== '' ? { paddingRight } : {}),
           } : block.styles?.padding ? {
             padding: block.styles.padding
           } : {}),
@@ -369,12 +375,18 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
   // Fallback to original switch-based rendering
   // Styles du wrapper (container) - position, margin, padding du container
   // IMPORTANT: Ne jamais utiliser padding shorthand ici pour éviter les conflits avec les propriétés individuelles
-  const hasIndividualPadding = block.styles?.padding_top || block.styles?.padding_bottom || 
+  const hasIndividualPadding = !!(block.styles?.padding_top || block.styles?.padding_bottom || 
                                 block.styles?.padding_left || block.styles?.padding_right ||
                                 block.styles?.padding_vertical || block.styles?.padding_horizontal ||
                                 block.styles?.paddingTop || block.styles?.paddingBottom ||
                                 block.styles?.paddingLeft || block.styles?.paddingRight ||
-                                block.styles?.paddingVertical || block.styles?.paddingHorizontal
+                                block.styles?.paddingVertical || block.styles?.paddingHorizontal)
+  
+  // Calculer les valeurs de padding individuelles
+  const paddingTop = block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical
+  const paddingBottom = block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom
+  const paddingLeft = block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft
+  const paddingRight = block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight
   
   const wrapperStyles: React.CSSProperties = {
     // Position
@@ -406,10 +418,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
     // Padding du wrapper - Utiliser uniquement les propriétés individuelles pour éviter les conflits
     // Ne jamais utiliser padding shorthand si on a des propriétés individuelles
     ...(hasIndividualPadding ? {
-      paddingTop: block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical,
-      paddingBottom: block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom,
-      paddingLeft: block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft,
-      paddingRight: block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight,
+      ...(paddingTop !== undefined && paddingTop !== null && paddingTop !== '' ? { paddingTop } : {}),
+      ...(paddingBottom !== undefined && paddingBottom !== null && paddingBottom !== '' ? { paddingBottom } : {}),
+      ...(paddingLeft !== undefined && paddingLeft !== null && paddingLeft !== '' ? { paddingLeft } : {}),
+      ...(paddingRight !== undefined && paddingRight !== null && paddingRight !== '' ? { paddingRight } : {}),
     } : block.styles?.padding ? {
       padding: block.styles.padding
     } : {}),
