@@ -26,13 +26,27 @@ class SuppressExpected401LogFilter(logging.Filter):
         Filter out 401 logs for expected endpoints
         """
         # Check if this is an Unauthorized log
-        if 'Unauthorized' in str(record.getMessage()):
-            message = str(record.getMessage())
+        message = str(record.getMessage())
+        # Also check the pathname and args if available
+        pathname = getattr(record, 'pathname', '')
+        args = getattr(record, 'args', ())
+        
+        # Check message content
+        if 'Unauthorized' in message:
             # Check if message contains any silent endpoint
             for endpoint in SILENT_401_ENDPOINTS:
-                if endpoint in message:
+                if endpoint in message or endpoint in pathname:
                     # Suppress this log
                     return False
+        
+        # Check args (sometimes the endpoint is in args)
+        if args:
+            for arg in args:
+                if isinstance(arg, str):
+                    for endpoint in SILENT_401_ENDPOINTS:
+                        if endpoint in arg and 'Unauthorized' in message:
+                            return False
+        
         return True
 
 
