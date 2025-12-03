@@ -1570,11 +1570,10 @@ function ContainerChildrenRenderer({
       data: {},
       layout: block.type === 'grid-container' ? undefined : 12,
     }
-    // Utiliser setTimeout pour éviter setState pendant le rendu
-    setTimeout(() => {
-      onAddChild(newChild)
-      setShowAddMenu(false)
-    }, 0)
+    // Ajouter le bloc immédiatement
+    onAddChild(newChild)
+    // Fermer la popup après l'ajout
+    setShowAddMenu(false)
   }, [block.type, onAddChild])
 
   const containerStyle: React.CSSProperties = {
@@ -1670,7 +1669,7 @@ function ContainerChildrenRenderer({
           blockTypes={blockTypes.filter((bt) => bt.name !== 'container' && bt.name !== 'flex-container' && bt.name !== 'grid-container')}
           onSelect={(blockType) => {
             handleAddBlock(blockType)
-            setShowAddMenu(false)
+            // setShowAddMenu(false) est déjà appelé dans handleAddBlock
           }}
           onClose={() => setShowAddMenu(false)}
         />
@@ -1830,7 +1829,7 @@ function BlockPickerModal({
                     blockType={bt}
                     onSelect={() => {
                       onSelect(bt)
-                      onClose()
+                      // Ne pas fermer ici, laisser onSelect gérer la fermeture
                     }}
                   />
                 ))}
