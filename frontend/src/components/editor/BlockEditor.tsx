@@ -92,6 +92,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const [selectedBlock, setSelectedBlock] = useState<string | null>(externalSelectedBlockId || null)
   
   const [sidebarOpen, setSidebarOpen] = useState(true) // Ouvrir par défaut sur desktop
+  const [blocksPaletteOpen, setBlocksPaletteOpen] = useState(true) // Palette de blocs ouverte par défaut
   const [propertiesTab, setPropertiesTab] = useState<'content' | 'layout' | 'style'>('layout') // Layout en premier
   const [categoryFilter, setCategoryFilter] = useState<string>('all') // Filtre par catégorie
   const [searchQuery, setSearchQuery] = useState<string>('') // Recherche par nom
@@ -757,7 +758,23 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         )}
 
         {/* Sidebar - Block Palette OU Properties Panel */}
-        <div className={`${sidebarOpen ? 'fixed left-0 top-0 h-screen z-50' : 'hidden'} lg:static lg:block w-64 lg:w-72 xl:w-80 2xl:w-96 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out shadow-lg lg:shadow-none flex-shrink-0 flex flex-col lg:h-full`}>
+        <div className={`${sidebarOpen ? 'fixed left-0 top-0 h-screen z-50' : 'hidden'} lg:static lg:block w-64 lg:w-72 xl:w-80 2xl:w-96 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out shadow-lg lg:shadow-none flex-shrink-0 flex flex-col lg:h-full relative`}>
+          {/* Bouton pour masquer/afficher la palette de blocs - Minimaliste */}
+          {!selectedBlock && (
+            <button
+              onClick={() => setBlocksPaletteOpen(!blocksPaletteOpen)}
+              className="absolute top-2 right-2 z-50 p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors shadow-sm"
+              title={blocksPaletteOpen ? "Masquer les blocs disponibles" : "Afficher les blocs disponibles"}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {blocksPaletteOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          )}
           {/* Afficher le panneau de paramètres si un bloc est sélectionné, sinon la palette de blocs */}
           {selectedBlock ? (
             /* Properties Panel dans la sidebar */
@@ -942,7 +959,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   </svg>
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto min-h-0 flex flex-col" style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch', maxHeight: '100%' }}>
+              <div className={`flex-1 overflow-y-auto min-h-0 flex flex-col ${!blocksPaletteOpen ? 'hidden' : ''}`} style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch', maxHeight: '100%' }}>
                 {/* Header avec recherche et filtres - Fixe en haut */}
                 <div className="flex-shrink-0 p-4 sm:p-5 lg:p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3">Blocs disponibles</h3>
@@ -1612,7 +1629,7 @@ const SortableBlock = React.memo(function SortableBlock({
       )}
       {/* Block Header - Modern Design */}
       <div
-        className={`flex items-center justify-between ${getPadding()} transition-colors ${
+        className={`flex items-center justify-between ${getPadding()} transition-colors cursor-grab active:cursor-grabbing ${
           isSelected 
             ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-b border-blue-200 dark:border-blue-700' 
             : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-800'
@@ -1623,6 +1640,7 @@ const SortableBlock = React.memo(function SortableBlock({
           // Ne pas ouvrir les paramètres si on drag
           if (!isDragging) {
             e.stopPropagation()
+            handleBlockClick(e as any)
           }
         }}
       >
