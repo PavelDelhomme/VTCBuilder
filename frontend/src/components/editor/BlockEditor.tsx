@@ -1718,7 +1718,7 @@ function BlockRenderer({
         </div>
       )
     case 'heading':
-      const headingLevel = block.data.level || 'h2'
+      const headingLevel = safeBlock.data.level || 'h2'
       const HeadingTag = headingLevel as keyof JSX.IntrinsicElements
       return (
         <div className="space-y-3">
