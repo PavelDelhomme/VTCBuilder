@@ -356,7 +356,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     // Gérer le drop d'un type de bloc dans un conteneur (nouveau bloc depuis la palette)
     if (active.data.current?.type === 'block-type' && over.data.current?.type === 'container') {
       const blockType = active.data.current.blockType as BlockType
-      const containerId = over.data.current.containerId as string
       
       const newChild: Block = {
         id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -392,9 +391,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     }
 
     // Gérer le déplacement d'un bloc existant dans un conteneur
-    if (active.data.current?.type === 'block' && over.data.current?.type === 'container') {
+    if (active.data.current?.type === 'block' && (over.data.current?.type === 'container' || isContainerDropZone)) {
       const blockId = active.id as string
-      const containerId = over.data.current.containerId as string
       
       // Ne pas permettre de déplacer un bloc dans lui-même
       if (blockId === containerId) return
@@ -1657,6 +1655,7 @@ const SortableBlock = React.memo(function SortableBlock({
           <ContainerChildrenRenderer
             block={block}
             blockTypes={blockTypes}
+            allBlocks={history.state} // Passer tous les blocs pour permettre de choisir un bloc existant
             onAddChild={(childBlock) => {
               const newChildren = [...(block.children || []), childBlock]
               console.log('Ajout enfant au conteneur:', block.id, childBlock, newChildren)
@@ -1755,6 +1754,7 @@ function ContainerChildrenRenderer({
   onUpdateChild,
   onDeleteChild,
   onSelectChild,
+  allBlocks, // Tous les blocs de l'éditeur pour permettre de choisir un bloc existant
 }: {
   block: Block
   blockTypes: BlockType[]
@@ -1762,6 +1762,7 @@ function ContainerChildrenRenderer({
   onUpdateChild: (childId: string, updates: Partial<Block>) => void
   onDeleteChild: (childId: string) => void
   onSelectChild: (childId: string) => void
+  allBlocks?: Block[] // Tous les blocs disponibles dans l'éditeur
 }) {
   const children = block.children || []
   const [showAddMenu, setShowAddMenu] = useState(false)
@@ -1778,6 +1779,16 @@ function ContainerChildrenRenderer({
     // Fermer la popup après l'ajout
     setShowAddMenu(false)
   }, [block.type, onAddChild])
+
+  const handleAddExistingBlock = useCallback((existingBlock: Block) => {
+    // Créer une copie du bloc existant avec un nouvel ID
+    const copiedBlock: Block = {
+      ...existingBlock,
+      id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    }
+    onAddChild(copiedBlock)
+    setShowAddMenu(false)
+  }, [onAddChild])
 
   const containerStyle: React.CSSProperties = {
     minHeight: '120px',
@@ -1887,11 +1898,15 @@ function ContainerChildrenRenderer({
       {showAddMenu && (
         <BlockPickerModal
           blockTypes={blockTypes.filter((bt) => bt.name !== 'container' && bt.name !== 'flex-container' && bt.name !== 'grid-container')}
-          onSelect={(blockType) => {
+          existingBlocks={allBlocks?.filter(b => b.id !== block.id && !isBlockInContainer(b, block.id)) || []}
+          onSelectNew={(blockType) => {
             handleAddBlock(blockType)
-            // setShowAddMenu(false) est déjà appelé dans handleAddBlock
+          }}
+          onSelectExisting={(existingBlock) => {
+            handleAddExistingBlock(existingBlock)
           }}
           onClose={() => setShowAddMenu(false)}
+          blockTypesForExisting={blockTypes}
         />
       )}
     </div>
@@ -1916,6 +1931,8 @@ function ContainerDropZone({
       type: 'container',
       containerId,
     },
+    // Accepter à la fois les block-type (nouveaux blocs) et les block (blocs existants)
+    accepts: ['block-type', 'block'],
   })
 
   return (
@@ -1936,17 +1953,35 @@ function ContainerDropZone({
   )
 }
 
-// Block Picker Modal - Popup pour choisir un bloc
+// Fonction utilitaire pour vérifier si un bloc est dans un conteneur
+function isBlockInContainer(block: Block, containerId: string): boolean {
+  if (block.id === containerId) return true
+  if (block.children) {
+    for (const child of block.children) {
+      if (isBlockInContainer(child, containerId)) return true
+    }
+  }
+  return false
+}
+
+// Block Picker Modal - Popup pour choisir un bloc (nouveau ou existant)
 function BlockPickerModal({
   blockTypes,
-  onSelect,
+  existingBlocks = [],
+  onSelectNew,
+  onSelectExisting,
   onClose,
+  blockTypesForExisting = [],
 }: {
   blockTypes: BlockType[]
-  onSelect: (blockType: BlockType) => void
+  existingBlocks?: Block[]
+  onSelectNew?: (blockType: BlockType) => void
+  onSelectExisting?: (block: Block) => void
   onClose: () => void
+  blockTypesForExisting?: BlockType[]
 }) {
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeTab, setActiveTab] = useState<'new' | 'existing'>('new')
   
   // Filtrer les blocs selon la recherche
   const filteredBlockTypes = useMemo(() => {
@@ -2002,6 +2037,32 @@ function BlockPickerModal({
           </button>
         </div>
 
+        {/* Onglets pour choisir entre nouveaux blocs et blocs existants */}
+        {existingBlocks.length > 0 && (
+          <div className="flex border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6">
+            <button
+              onClick={() => setActiveTab('new')}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'new'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              ✨ Nouveaux blocs ({blockTypes.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('existing')}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'existing'
+                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              📋 Blocs existants ({existingBlocks.length})
+            </button>
+          </div>
+        )}
+
         {/* Barre de recherche */}
         <div className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
           <div className="relative">
@@ -2033,38 +2094,101 @@ function BlockPickerModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {Object.keys(groupedBlocks).length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-4xl mb-4">🔍</div>
-              <p className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Aucun bloc trouvé
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Essayez avec d'autres mots-clés
-              </p>
-            </div>
-          ) : (
-            <>
-              {Object.entries(groupedBlocks).map(([category, blocks]) => (
-            <div key={category} className="mb-6">
-              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3 px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-md inline-block">
-                {category}
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {blocks.map((bt) => (
-                  <DraggableBlockItem
-                    key={bt.name}
-                    blockType={bt}
-                    onSelect={() => {
-                      onSelect(bt)
-                      // Ne pas fermer ici, laisser onSelect gérer la fermeture
-                    }}
-                  />
-                ))}
+          {activeTab === 'new' ? (
+            // Onglet nouveaux blocs
+            Object.keys(groupedBlocks).length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-4">🔍</div>
+                <p className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  Aucun bloc trouvé
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Essayez avec d'autres mots-clés
+                </p>
               </div>
-            </div>
-              ))}
-            </>
+            ) : (
+              <>
+                {Object.entries(groupedBlocks).map(([category, blocks]) => (
+                  <div key={category} className="mb-6">
+                    <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3 px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-md inline-block">
+                      {category}
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {blocks.map((bt) => (
+                        <DraggableBlockItem
+                          key={bt.name}
+                          blockType={bt}
+                          onSelect={() => {
+                            if (onSelectNew) onSelectNew(bt)
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )
+          ) : (
+            // Onglet blocs existants
+            existingBlocks.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-4">📦</div>
+                <p className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  Aucun bloc existant disponible
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Créez d'abord des blocs dans l'éditeur
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {existingBlocks.map((existingBlock) => {
+                  const blockType = blockTypesForExisting.find(bt => bt.name === existingBlock.type)
+                  return (
+                    <button
+                      key={existingBlock.id}
+                      onClick={() => {
+                        if (onSelectExisting) {
+                          onSelectExisting(existingBlock)
+                          onClose() // Fermer le modal après sélection
+                        }
+                      }}
+                      className="w-full p-4 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-600 hover:shadow-lg transition-all text-left"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center text-2xl">
+                          {blockType?.icon || '📦'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                              {blockType?.label || existingBlock.type}
+                            </span>
+                            <span className="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full font-medium">
+                              Existant
+                            </span>
+                          </div>
+                          {blockType?.description && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">
+                              {blockType.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                            <span>ID: {existingBlock.id.substring(0, 8)}...</span>
+                            {existingBlock.data && Object.keys(existingBlock.data).length > 0 && (
+                              <span>• {Object.keys(existingBlock.data).length} propriété(s)</span>
+                            )}
+                          </div>
+                        </div>
+                        <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )
           )}
         </div>
       </div>
@@ -2094,6 +2218,16 @@ function DraggableBlockItem({
       }
     : undefined
 
+  const categoryColors: Record<string, string> = {
+    'layout': 'from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30',
+    'content': 'from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30',
+    'media': 'from-green-100 to-green-200 dark:from-green-900/30 dark:to-green-800/30',
+    'forms': 'from-yellow-100 to-yellow-200 dark:from-yellow-900/30 dark:to-yellow-800/30',
+    'custom': 'from-pink-100 to-pink-200 dark:from-pink-900/30 dark:to-pink-800/30',
+  }
+
+  const categoryColor = categoryColors[blockType.category || 'custom'] || 'from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800'
+
   return (
     <div
       ref={setNodeRef}
@@ -2104,17 +2238,36 @@ function DraggableBlockItem({
       className={`p-4 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-600 hover:shadow-lg transition-all cursor-move ${
         isDragging ? 'opacity-50' : ''
       }`}
+      title={`${blockType.label || blockType.name} - ${blockType.description || 'Cliquez pour ajouter'}`}
     >
       <div className="text-center">
-        <div className="text-3xl mb-2">{blockType.icon || '📦'}</div>
-        <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+        <div className={`w-16 h-16 mx-auto mb-3 rounded-xl bg-gradient-to-br ${categoryColor} flex items-center justify-center text-3xl shadow-sm`}>
+          {blockType.icon || '📦'}
+        </div>
+        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
           {blockType.label || blockType.name}
         </div>
         {blockType.description && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+          <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2">
             {blockType.description}
           </div>
         )}
+        <div className="flex items-center justify-center gap-2 mt-2">
+          <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+            blockType.category === 'layout' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300' :
+            blockType.category === 'content' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+            blockType.category === 'media' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+            blockType.category === 'forms' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+            'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+          }`}>
+            {blockType.category || 'custom'}
+          </span>
+          {blockType.is_premium && (
+            <span className="px-2 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full font-medium">
+              ⭐ Premium
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )
