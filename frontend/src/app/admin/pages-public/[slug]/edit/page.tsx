@@ -122,12 +122,14 @@ export default function EditPublicPage() {
         let homepageBlocks = data.public_homepage_blocks || []
         
         // Si aucun bloc n'existe, créer des blocs par défaut correspondant à la page actuelle
+        // Structure complète : Header (via composant), Hero, Features, Pricing, CTA, Footer (via composant)
         if (homepageBlocks.length === 0) {
+          const now = Date.now()
           homepageBlocks = [
             {
-              id: 'hero-' + Date.now(),
+              id: `hero-${now}`,
               type: 'hero',
-              properties: {
+              data: {
                 title: 'Le WordPress des Chauffeurs VTC',
                 subtitle: 'Créez votre site VTC professionnel en quelques minutes. Gestion complète, réservations, paiements, tout inclus.',
                 buttons: [
@@ -136,12 +138,16 @@ export default function EditPublicPage() {
                 ],
                 background_image: '',
                 background_gradient: 'from-blue-500 via-purple-600 to-pink-500'
+              },
+              styles: {
+                padding: 'py-20 lg:py-32',
+                textAlign: 'center'
               }
             },
             {
-              id: 'features-' + Date.now(),
+              id: `features-${now}`,
               type: 'features-grid',
-              properties: {
+              data: {
                 title: 'Tout ce dont vous avez besoin',
                 subtitle: '',
                 columns: 3,
@@ -177,31 +183,56 @@ export default function EditPublicPage() {
                     description: 'Hébergement sécurisé, sauvegardes automatiques, SSL inclus.'
                   }
                 ]
+              },
+              styles: {
+                padding: 'py-20',
+                backgroundColor: 'bg-white dark:bg-gray-800'
               }
             },
             {
-              id: 'pricing-' + Date.now(),
+              id: `pricing-${now}`,
               type: 'pricing',
-              properties: {
+              data: {
                 title: 'Tarifs Transparents',
                 subtitle: 'Choisissez le plan adapté à vos besoins. Pas d\'engagement, changez de plan à tout moment.',
                 source: 'api',
                 api_endpoint: '/api/billing/pricing-plans/',
                 columns: 3
+              },
+              styles: {
+                padding: 'py-20',
+                backgroundColor: 'bg-gray-50 dark:bg-gray-900'
               }
             },
             {
-              id: 'cta-' + Date.now(),
+              id: `cta-${now}`,
               type: 'cta-section',
-              properties: {
+              data: {
                 title: 'Prêt à démarrer ?',
                 subtitle: 'Créez votre site VTC professionnel dès aujourd\'hui. Essai gratuit de 14 jours.',
                 button_text: '🚀 Créer mon compte gratuitement',
                 button_url: '/register',
                 background_gradient: 'from-blue-600 to-purple-600'
+              },
+              styles: {
+                padding: 'py-20',
+                textAlign: 'center'
               }
             }
           ]
+        } else {
+          // Si des blocs existent, s'assurer qu'ils ont la structure correcte (data au lieu de properties)
+          homepageBlocks = homepageBlocks.map((block: any) => {
+            // Convertir l'ancienne structure (properties) vers la nouvelle (data)
+            if (block.properties && !block.data) {
+              return {
+                ...block,
+                data: block.properties,
+                styles: block.styles || {}
+              }
+            }
+            return block
+          })
         }
         
         setBlocks(homepageBlocks)
@@ -213,7 +244,133 @@ export default function EditPublicPage() {
       } else {
         // Load other public pages
         const publicPages = data.public_pages || {}
-        const pageData = publicPages[pageSlug] || {}
+        let pageData = publicPages[pageSlug] || {}
+        
+        // Si la page n'existe pas, créer une structure par défaut selon le type de page
+        if (!pageData.blocks || pageData.blocks.length === 0) {
+          const now = Date.now()
+          
+          if (pageSlug === 'docs') {
+            // Page de documentation avec structure par défaut
+            pageData = {
+              ...pageData,
+              blocks: [
+                {
+                  id: `docs-hero-${now}`,
+                  type: 'heading',
+                  data: {
+                    text: 'Documentation VTCBuilder',
+                    level: 1
+                  },
+                  styles: {
+                    padding: 'py-8',
+                    textAlign: 'center'
+                  }
+                },
+                {
+                  id: `docs-intro-${now}`,
+                  type: 'text',
+                  data: {
+                    content: 'Bienvenue dans la documentation de VTCBuilder. Découvrez comment utiliser toutes les fonctionnalités de la plateforme pour créer et gérer votre site VTC professionnel.'
+                  },
+                  styles: {
+                    padding: 'pb-6'
+                  }
+                },
+                {
+                  id: `docs-content-${now}`,
+                  type: 'rich-text',
+                  data: {
+                    content: '<h2>Guide de démarrage</h2><p>Commencez par créer votre compte et configurer votre premier site.</p><h2>Fonctionnalités</h2><p>Explorez toutes les fonctionnalités disponibles pour votre site VTC.</p>'
+                  },
+                  styles: {
+                    padding: 'py-6'
+                  }
+                }
+              ]
+            }
+          } else if (pageSlug === 'contact') {
+            // Page de contact avec formulaire
+            pageData = {
+              ...pageData,
+              blocks: [
+                {
+                  id: `contact-hero-${now}`,
+                  type: 'heading',
+                  data: {
+                    text: 'Contactez-nous',
+                    level: 1
+                  },
+                  styles: {
+                    padding: 'py-8',
+                    textAlign: 'center'
+                  }
+                },
+                {
+                  id: `contact-form-${now}`,
+                  type: 'contact-form',
+                  data: {
+                    title: 'Envoyez-nous un message',
+                    fields: ['name', 'email', 'message']
+                  },
+                  styles: {
+                    padding: 'py-6'
+                  }
+                }
+              ]
+            }
+          } else {
+            // Pages génériques avec structure de base
+            pageData = {
+              ...pageData,
+              blocks: [
+                {
+                  id: `page-heading-${now}`,
+                  type: 'heading',
+                  data: {
+                    text: PAGE_TITLES[pageSlug] || pageSlug.charAt(0).toUpperCase() + pageSlug.slice(1),
+                    level: 1
+                  },
+                  styles: {
+                    padding: 'py-8',
+                    textAlign: 'center'
+                  }
+                },
+                {
+                  id: `page-content-${now}`,
+                  type: 'text',
+                  data: {
+                    content: `Contenu de la page ${PAGE_TITLES[pageSlug] || pageSlug}.`
+                  },
+                  styles: {
+                    padding: 'py-6'
+                  }
+                }
+              ]
+            }
+          }
+          
+          // Sauvegarder la structure par défaut
+          try {
+            const updatedPages = { ...publicPages, [pageSlug]: pageData }
+            await api.patch('/system-settings/', { public_pages: updatedPages })
+          } catch (error) {
+            console.error('Erreur sauvegarde structure par défaut:', error)
+          }
+        } else {
+          // Convertir l'ancienne structure si nécessaire
+          pageData.blocks = pageData.blocks.map((block: any) => {
+            if (block.properties && !block.data) {
+              return {
+                ...block,
+                data: block.properties,
+                styles: block.styles || {}
+              }
+            }
+            return block
+          })
+        }
+        
         setBlocks(pageData.blocks || [])
         setMetaTitle(pageData.meta_title || `${PAGE_TITLES[pageSlug] || pageSlug} - VTCBuilder`)
         setMetaDescription(pageData.meta_description || '')
