@@ -965,42 +965,13 @@ export default function EditPublicPage() {
       </div>
 
       {/* Popup Blocs Disponibles */}
-      {blocksPaletteOpen && (
-        <>
-          {/* Overlay */}
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40"
-            onClick={() => setBlocksPaletteOpen(false)}
-          />
-          {/* Popup */}
-          <div className="fixed top-20 left-1/2 -translate-x-1/2 w-[90vw] max-w-4xl h-[80vh] max-h-[800px] bg-white dark:bg-gray-800 rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Blocs disponibles</h2>
-              <button
-                onClick={() => setBlocksPaletteOpen(false)}
-                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            {/* Contenu - Utiliser BlockEditor pour afficher la palette */}
-            <div className="flex-1 overflow-hidden">
-              <BlockEditor 
-                blocks={blocks}
-                onChange={setBlocks}
-                availableBlockTypes={blockTypes.length > 0 ? blockTypes : undefined}
-                selectedBlockId={null}
-                onBlockSelect={() => {}}
-                showBlocksPalette={true}
-                showOnlyPalette={true}
-              />
-            </div>
-          </div>
-        </>
-      )}
+      <BlocksPalettePopup
+        isOpen={blocksPaletteOpen}
+        onClose={() => setBlocksPaletteOpen(false)}
+        onAddBlock={handleAddBlock}
+        currentBlocks={blocks}
+        blockTypes={blockTypes}
+      />
     </AdminLayout>
   )
 }
