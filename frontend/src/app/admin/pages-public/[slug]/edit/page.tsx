@@ -754,7 +754,72 @@ export default function EditPublicPage() {
                     previewMode === 'mobile' ? 'max-w-[375px] mx-auto' : 
                     'w-full'
                   }`}>
-                    <BlockPreview blocks={blocks} blockTypes={blockTypes} />
+                    {/* Inclure le header et footer dans la prévisualisation pour correspondre au site public */}
+                    <div className="min-h-screen bg-white dark:bg-gray-900">
+                      {pageSlug === 'home' && (
+                        <>
+                          {/* Import dynamique pour éviter les erreurs SSR */}
+                          {typeof window !== 'undefined' && (
+                            <>
+                              <div className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                                  <div className="flex items-center justify-between">
+                                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">VTCBuilder</h1>
+                                    <div className="flex items-center space-x-4">
+                                      <a href="/register" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">S'inscrire</a>
+                                      <a href="/login" className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Se connecter</a>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </>
+                      )}
+                      <BlockPreview blocks={blocks} blockTypes={blockTypes} />
+                      {pageSlug === 'home' && (
+                        <>
+                          {typeof window !== 'undefined' && (
+                            <footer className="bg-gray-900 text-white py-12 mt-20">
+                              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                                  <div>
+                                    <h3 className="text-xl font-bold mb-4">VTCBuilder</h3>
+                                    <p className="text-gray-400">
+                                      La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold mb-4">Produit</h4>
+                                    <ul className="space-y-2 text-gray-400">
+                                      <li><a href="/#pricing" className="hover:text-white">Tarifs</a></li>
+                                      <li><a href="/features" className="hover:text-white">Fonctionnalités</a></li>
+                                    </ul>
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold mb-4">Support</h4>
+                                    <ul className="space-y-2 text-gray-400">
+                                      <li><a href="/docs" className="hover:text-white">Documentation</a></li>
+                                      <li><a href="/contact" className="hover:text-white">Contact</a></li>
+                                    </ul>
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold mb-4">Légal</h4>
+                                    <ul className="space-y-2 text-gray-400">
+                                      <li><a href="/legal/terms" className="hover:text-white">CGV</a></li>
+                                      <li><a href="/legal/privacy" className="hover:text-white">Confidentialité</a></li>
+                                    </ul>
+                                  </div>
+                                </div>
+                                <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                                  <p>&copy; {new Date().getFullYear()} VTCBuilder. Tous droits réservés.</p>
+                                </div>
+                              </div>
+                            </footer>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
