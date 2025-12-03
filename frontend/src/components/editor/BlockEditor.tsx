@@ -673,8 +673,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
               </div>
 
               {/* Properties Content */}
-              <div className="flex-1 overflow-y-auto p-2 sm:p-3 min-h-0 pb-4" style={{ maxHeight: '100%', WebkitOverflowScrolling: 'touch' }}>
-                <div className="min-h-full">
+              <div className="flex-1 overflow-y-auto p-2 sm:p-3 min-h-0 pb-4" style={{ maxHeight: '100%', WebkitOverflowScrolling: 'touch', overflowX: 'hidden' }}>
+                <div className="min-h-full pb-4">
                 {propertiesTab === 'layout' ? (
                   selectedBlockData ? (
                     <BlockLayoutPanel
@@ -6728,7 +6728,7 @@ function BlockStylePanel({
   ]
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5 pb-4">
       {/* Couleur de fond */}
       <div>
         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -7259,6 +7259,9 @@ function BlockPropertiesPanel({
   blockType?: BlockType
   onUpdate: (updates: Partial<Block>) => void
 }) {
+  // S'assurer que block.data existe pour éviter les erreurs
+  const safeBlock = { ...block, data: block.data || {} }
+  
   if (!blockType) {
     return <div className="text-sm text-gray-500 dark:text-gray-400">Type de bloc non trouvé</div>
   }
