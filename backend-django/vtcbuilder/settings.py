@@ -175,6 +175,7 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ],
     'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',
+    'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',
 }
 
 # JWT Settings

@@ -3,15 +3,26 @@ Exception handlers for DRF to ensure CORS headers are always included
 """
 from rest_framework.views import exception_handler
 from rest_framework.response import Response
+from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, PermissionDenied
 from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
+# Endpoints that are expected to return 401 when not authenticated
+# These are called by the frontend even when user is not logged in
+SILENT_401_ENDPOINTS = [
+    '/api/users/impersonation-status',
+    '/api/system-settings',
+    '/api/pricing-plans',
+    '/api/blocks/types',
+]
+
 
 def custom_exception_handler(exc, context):
     """
     Custom exception handler that ensures CORS headers are always present
+    and suppresses logging of expected 401 errors
     """
     # Call REST framework's default exception handler first
     response = exception_handler(exc, context)
@@ -24,8 +35,17 @@ def custom_exception_handler(exc, context):
             'message': str(exc) if settings.DEBUG else 'An error occurred'
         }, status=500)
     
-    # Add CORS headers to error responses
+    # Suppress logging of expected 401 errors
     request = context.get('request')
+    if request and response and response.status_code == 401:
+        path = request.path.rstrip('/')
+        for endpoint in SILENT_401_ENDPOINTS:
+            if path == endpoint or path == endpoint + '/':
+                # Don't log this as an error - it's expected behavior
+                # The frontend handles these gracefully
+                pass  # Just don't log it
+    
+    # Add CORS headers to error responses
     if request:
         origin = request.META.get('HTTP_ORIGIN')
         if origin:

@@ -247,6 +247,15 @@ class MediaViewSet(viewsets.ModelViewSet):
         
         user = request.user
         
+        # Check authentication first
+        if not user or not user.is_authenticated:
+            error_response = Response(
+                {'error': 'Authentication required'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            add_cors_headers(error_response, request)
+            return error_response
+        
         if hasattr(user, 'tenant') and user.tenant:
             try:
                 # Remove tenant from request.data if present (will be set from user context)
@@ -254,13 +263,29 @@ class MediaViewSet(viewsets.ModelViewSet):
                 if 'tenant' in data:
                     del data['tenant']
                 
+                # Ensure 'file' is present in the request
+                if 'file' not in data and 'file' not in request.FILES:
+                    logger.warning(f"Media upload: No file provided in request. Keys: {list(data.keys())}, FILES: {list(request.FILES.keys())}")
+                    error_response = Response(
+                        {'error': 'Aucun fichier fourni. Veuillez sélectionner un fichier à téléverser.', 'details': {'file': ['Ce champ est requis.']}},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                    add_cors_headers(error_response, request)
+                    return error_response
+                
+                # Use request.FILES if file is not in data
+                if 'file' not in data and 'file' in request.FILES:
+                    data['file'] = request.FILES['file']
+                
                 serializer = MediaUploadSerializer(data=data)
                 if not serializer.is_valid():
-                    logger.error(f"Serializer validation errors: {serializer.errors}")
-                    return Response(
+                    logger.warning(f"Serializer validation errors: {serializer.errors}")
+                    error_response = Response(
                         {'error': 'Erreur de validation', 'details': serializer.errors},
                         status=status.HTTP_400_BAD_REQUEST
                     )
+                    add_cors_headers(error_response, request)
+                    return error_response
                 
                 validated_data = serializer.validated_data
                 

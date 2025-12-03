@@ -64,6 +64,20 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
     
     def process_response(self, request, response):
         """Ajouter les headers CORS à toutes les réponses"""
+        # Supprimer les logs "Unauthorized" pour les endpoints attendus
+        if response.status_code == 401:
+            silent_endpoints = [
+                '/api/users/impersonation-status',
+                '/api/system-settings',
+                '/api/pricing-plans',
+                '/api/blocks/types',
+            ]
+            path = request.path.rstrip('/')
+            for endpoint in silent_endpoints:
+                if path == endpoint or path == endpoint + '/':
+                    # Ne pas logger cette erreur - c'est attendu
+                    return self._add_cors_headers(response, request)
+        
         return self._add_cors_headers(response, request)
     
     def process_exception(self, request, exception):
