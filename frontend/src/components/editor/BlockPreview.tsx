@@ -3095,7 +3095,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       )
     }
 
-    case 'card':
+    case 'card': {
       const cards = block.data.cards || []
       const cardColumns = block.data.columns || 3
       const gridColsClass = cardColumns === 1 ? 'md:grid-cols-1' : cardColumns === 2 ? 'md:grid-cols-2' : cardColumns === 3 ? 'md:grid-cols-3' : 'md:grid-cols-4'
