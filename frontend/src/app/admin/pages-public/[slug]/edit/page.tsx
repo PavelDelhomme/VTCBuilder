@@ -39,58 +39,53 @@ export default function EditPublicPage() {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [inspectorMode, setInspectorMode] = useState(false)
 
+  // Fonction de sauvegarde (mémorisée pour éviter les re-renders)
+  const handleSave = useCallback(async (data: { blocks: Block[]; metaTitle: string; metaDescription: string; status: 'draft' | 'published' }) => {
+    const settingsData: any = {}
+    
+    if (pageSlug === 'home') {
+      // Sauvegarder les blocs en mode brouillon
+      // Ne pas modifier le statut publié sauf si l'utilisateur clique explicitement sur "Publier"
+      settingsData.public_homepage_blocks = data.blocks
+      // Ne sauvegarder le statut que s'il est explicitement changé à 'published'
+      // Sinon, garder 'draft' pour ne pas affecter la page publiée
+      if (data.status === 'published') {
+        settingsData.public_homepage_status = 'published'
+      } else {
+        // En mode brouillon, sauvegarder les blocs mais ne pas changer le statut publié
+        // Cela permet de modifier sans affecter la page publique
+        settingsData.public_homepage_status = 'draft'
+      }
+      settingsData.public_homepage_meta_title = data.metaTitle
+      settingsData.public_homepage_meta_description = data.metaDescription
+    } else {
+      const currentSettings = await api.get('/system-settings/')
+      const publicPages = currentSettings.data.public_pages || {}
+      
+      publicPages[pageSlug] = {
+        ...publicPages[pageSlug],
+        title: PAGE_TITLES[pageSlug] || pageSlug,
+        blocks: data.blocks,
+        meta_title: data.metaTitle,
+        meta_description: data.metaDescription,
+        is_active: publicPages[pageSlug]?.is_active !== false,
+      }
+      
+      settingsData.public_pages = publicPages
+    }
+    
+    await api.patch('/system-settings/', settingsData)
+  }, [pageSlug])
+
   // Sauvegarde automatique
   const { isSaving: isAutoSaving, lastSaved, updateLastSaved } = useAutoSave({
     data: { blocks, metaTitle, metaDescription, status },
-    onSave: async (data) => {
-      const settingsData: any = {}
-      
-      if (pageSlug === 'home') {
-        // Sauvegarder les blocs en mode brouillon
-        // Ne pas modifier le statut publié sauf si l'utilisateur clique explicitement sur "Publier"
-        settingsData.public_homepage_blocks = data.blocks
-        // Ne sauvegarder le statut que s'il est explicitement changé à 'published'
-        // Sinon, garder 'draft' pour ne pas affecter la page publiée
-        if (data.status === 'published') {
-          settingsData.public_homepage_status = 'published'
-        } else {
-          // En mode brouillon, sauvegarder les blocs mais ne pas changer le statut publié
-          // Cela permet de modifier sans affecter la page publique
-          settingsData.public_homepage_status = 'draft'
-        }
-        settingsData.public_homepage_meta_title = data.metaTitle
-        settingsData.public_homepage_meta_description = data.metaDescription
-      } else {
-        const currentSettings = await api.get('/system-settings/')
-        const publicPages = currentSettings.data.public_pages || {}
-        
-        publicPages[pageSlug] = {
-          ...publicPages[pageSlug],
-          title: PAGE_TITLES[pageSlug] || pageSlug,
-          blocks: data.blocks,
-          meta_title: data.metaTitle,
-          meta_description: data.metaDescription,
-          is_active: publicPages[pageSlug]?.is_active !== false,
-        }
-        
-        settingsData.public_pages = publicPages
-      }
-      
-      await api.patch('/system-settings/', settingsData)
-    },
+    onSave: handleSave,
     debounceMs: 2000,
     enabled: true,
   })
 
-  useEffect(() => {
-    if (!authService.isSuperAdmin()) {
-      router.push('/dashboard')
-      return
-    }
-    loadData()
-  }, [router, pageSlug])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -508,7 +503,15 @@ export default function EditPublicPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [pageSlug])
+
+  useEffect(() => {
+    if (!authService.isSuperAdmin()) {
+      router.push('/dashboard')
+      return
+    }
+    loadData()
+  }, [router, pageSlug, loadData])
 
   const handleSave = useCallback(async () => {
     setSaving(true)
