@@ -1690,3 +1690,990 @@ export function CaptchaConfig({ block, onUpdate }: { block: Block; onUpdate: (up
   )
 }
 
+// Form Multi-step
+export function FormMultiStepConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const steps = safeBlock.data.steps || [{ title: 'Étape 1', fields: [] }]
+  
+  const addStep = () => {
+    onUpdate({ data: { ...safeBlock.data, steps: [...steps, { title: `Étape ${steps.length + 1}`, fields: [] }] } })
+  }
+  
+  const updateStep = (index: number, field: string, value: any) => {
+    const newSteps = [...steps]
+    newSteps[index] = { ...newSteps[index], [field]: value }
+    onUpdate({ data: { ...safeBlock.data, steps: newSteps } })
+  }
+  
+  const removeStep = (index: number) => {
+    if (steps.length > 1) {
+      const newSteps = steps.filter((_: any, i: number) => i !== index)
+      onUpdate({ data: { ...safeBlock.data, steps: newSteps } })
+    }
+  }
+  
+  const addField = (stepIndex: number) => {
+    const newSteps = [...steps]
+    if (!newSteps[stepIndex].fields) newSteps[stepIndex].fields = []
+    newSteps[stepIndex].fields.push({ name: '', type: 'text', label: '', required: false })
+    onUpdate({ data: { ...safeBlock.data, steps: newSteps } })
+  }
+  
+  const updateField = (stepIndex: number, fieldIndex: number, field: string, value: any) => {
+    const newSteps = [...steps]
+    newSteps[stepIndex].fields[fieldIndex] = { ...newSteps[stepIndex].fields[fieldIndex], [field]: value }
+    onUpdate({ data: { ...safeBlock.data, steps: newSteps } })
+  }
+  
+  const removeField = (stepIndex: number, fieldIndex: number) => {
+    const newSteps = [...steps]
+    newSteps[stepIndex].fields = newSteps[stepIndex].fields.filter((_: any, i: number) => i !== fieldIndex)
+    onUpdate({ data: { ...safeBlock.data, steps: newSteps } })
+  }
+  
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre du formulaire
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Formulaire multi-étapes"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Étapes ({steps.length})
+        </label>
+        <div className="space-y-3 max-h-96 overflow-y-auto">
+          {steps.map((step: any, stepIndex: number) => (
+            <div key={stepIndex} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <input
+                  type="text"
+                  value={step.title || ''}
+                  onChange={(e) => updateStep(stepIndex, 'title', e.target.value)}
+                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                  placeholder="Titre de l'étape"
+                />
+                {steps.length > 1 && (
+                  <button
+                    onClick={() => removeStep(stepIndex)}
+                    className="ml-2 px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                    title="Supprimer cette étape"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs text-gray-600 dark:text-gray-400">Champs:</label>
+                {(step.fields || []).map((field: any, fieldIndex: number) => (
+                  <div key={fieldIndex} className="p-2 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={field.label || ''}
+                        onChange={(e) => updateField(stepIndex, fieldIndex, 'label', e.target.value)}
+                        className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                        placeholder="Label"
+                      />
+                      <select
+                        value={field.type || 'text'}
+                        onChange={(e) => updateField(stepIndex, fieldIndex, 'type', e.target.value)}
+                        className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                      >
+                        <option value="text">Texte</option>
+                        <option value="email">Email</option>
+                        <option value="tel">Téléphone</option>
+                        <option value="number">Nombre</option>
+                        <option value="textarea">Zone de texte</option>
+                        <option value="select">Sélection</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={field.required || false}
+                          onChange={(e) => updateField(stepIndex, fieldIndex, 'required', e.target.checked)}
+                          className="w-3 h-3"
+                        />
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Requis</span>
+                      </label>
+                      <button
+                        onClick={() => removeField(stepIndex, fieldIndex)}
+                        className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                        title="Supprimer ce champ"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => addField(stepIndex)}
+                  className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  + Ajouter un champ
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={addStep}
+          className="mt-2 w-full px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          + Ajouter une étape
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Form Conditional
+export function FormConditionalConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const fields = safeBlock.data.fields || []
+  
+  const addField = () => {
+    onUpdate({ data: { ...safeBlock.data, fields: [...fields, { name: '', type: 'text', label: '', required: false, conditions: [] }] } })
+  }
+  
+  const updateField = (index: number, field: string, value: any) => {
+    const newFields = [...fields]
+    newFields[index] = { ...newFields[index], [field]: value }
+    onUpdate({ data: { ...safeBlock.data, fields: newFields } })
+  }
+  
+  const removeField = (index: number) => {
+    onUpdate({ data: { ...safeBlock.data, fields: fields.filter((_: any, i: number) => i !== index) } })
+  }
+  
+  const addCondition = (fieldIndex: number) => {
+    const newFields = [...fields]
+    if (!newFields[fieldIndex].conditions) newFields[fieldIndex].conditions = []
+    newFields[fieldIndex].conditions.push({ field: '', operator: 'equals', value: '' })
+    onUpdate({ data: { ...safeBlock.data, fields: newFields } })
+  }
+  
+  const updateCondition = (fieldIndex: number, conditionIndex: number, field: string, value: any) => {
+    const newFields = [...fields]
+    newFields[fieldIndex].conditions[conditionIndex] = { ...newFields[fieldIndex].conditions[conditionIndex], [field]: value }
+    onUpdate({ data: { ...safeBlock.data, fields: newFields } })
+  }
+  
+  const removeCondition = (fieldIndex: number, conditionIndex: number) => {
+    const newFields = [...fields]
+    newFields[fieldIndex].conditions = newFields[fieldIndex].conditions.filter((_: any, i: number) => i !== conditionIndex)
+    onUpdate({ data: { ...safeBlock.data, fields: newFields } })
+  }
+  
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre du formulaire
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Formulaire conditionnel"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Champs ({fields.length})
+        </label>
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {fields.map((field: any, index: number) => (
+            <div key={index} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <input
+                  type="text"
+                  value={field.label || ''}
+                  onChange={(e) => updateField(index, 'label', e.target.value)}
+                  className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                  placeholder="Label"
+                />
+                <select
+                  value={field.type || 'text'}
+                  onChange={(e) => updateField(index, 'type', e.target.value)}
+                  className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                >
+                  <option value="text">Texte</option>
+                  <option value="email">Email</option>
+                  <option value="select">Sélection</option>
+                  <option value="checkbox">Case à cocher</option>
+                  <option value="radio">Bouton radio</option>
+                </select>
+              </div>
+              <div className="mb-2">
+                <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Conditions d'affichage:</label>
+                {(field.conditions || []).map((condition: any, condIndex: number) => (
+                  <div key={condIndex} className="p-2 bg-gray-50 dark:bg-gray-900 rounded mb-1 flex items-center gap-2">
+                    <select
+                      value={condition.field || ''}
+                      onChange={(e) => updateCondition(index, condIndex, 'field', e.target.value)}
+                      className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                    >
+                      <option value="">Sélectionner un champ</option>
+                      {fields.filter((f: any, i: number) => i < index).map((f: any, i: number) => (
+                        <option key={i} value={f.name || f.label}>{f.label || f.name}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={condition.operator || 'equals'}
+                      onChange={(e) => updateCondition(index, condIndex, 'operator', e.target.value)}
+                      className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                    >
+                      <option value="equals">Égal à</option>
+                      <option value="not_equals">Différent de</option>
+                      <option value="contains">Contient</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={condition.value || ''}
+                      onChange={(e) => updateCondition(index, condIndex, 'value', e.target.value)}
+                      className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                      placeholder="Valeur"
+                    />
+                    <button
+                      onClick={() => removeCondition(index, condIndex)}
+                      className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => addCondition(index)}
+                  className="w-full px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+                >
+                  + Ajouter condition
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    checked={field.required || false}
+                    onChange={(e) => updateField(index, 'required', e.target.checked)}
+                    className="w-3 h-3"
+                  />
+                  <span className="text-xs text-gray-600 dark:text-gray-400">Requis</span>
+                </label>
+                <button
+                  onClick={() => removeField(index)}
+                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                  title="Supprimer ce champ"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={addField}
+          className="mt-2 w-full px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          + Ajouter un champ
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Form Calculator
+export function FormCalculatorConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const fields = safeBlock.data.fields || []
+  
+  const addField = () => {
+    onUpdate({ data: { ...safeBlock.data, fields: [...fields, { name: '', label: '', type: 'number', default_value: 0 }] } })
+  }
+  
+  const updateField = (index: number, field: string, value: any) => {
+    const newFields = [...fields]
+    newFields[index] = { ...newFields[index], [field]: value }
+    onUpdate({ data: { ...safeBlock.data, fields: newFields } })
+  }
+  
+  const removeField = (index: number) => {
+    onUpdate({ data: { ...safeBlock.data, fields: fields.filter((_: any, i: number) => i !== index) } })
+  }
+  
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Calculateur"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Formule de calcul
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.formula || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, formula: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-mono"
+          placeholder="field1 * field2 + field3"
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Utilisez les noms des champs (ex: field1, field2) et les opérateurs +, -, *, /
+        </p>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Champs ({fields.length})
+        </label>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {fields.map((field: any, index: number) => (
+            <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <input
+                  type="text"
+                  value={field.name || ''}
+                  onChange={(e) => updateField(index, 'name', e.target.value)}
+                  className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                  placeholder="Nom (pour formule)"
+                />
+                <input
+                  type="text"
+                  value={field.label || ''}
+                  onChange={(e) => updateField(index, 'label', e.target.value)}
+                  className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                  placeholder="Label"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <input
+                  type="number"
+                  value={field.default_value || 0}
+                  onChange={(e) => updateField(index, 'default_value', parseFloat(e.target.value) || 0)}
+                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                  placeholder="Valeur par défaut"
+                />
+                <button
+                  onClick={() => removeField(index)}
+                  className="ml-2 px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                  title="Supprimer ce champ"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={addField}
+          className="mt-2 w-full px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          + Ajouter un champ
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Form File Upload
+export function FormFileUploadConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const allowedTypes = safeBlock.data.allowed_types || ['image/jpeg', 'image/png', 'application/pdf']
+  const typeOptions = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+  
+  const toggleType = (type: string) => {
+    const currentTypes = allowedTypes || []
+    const newTypes = currentTypes.includes(type)
+      ? currentTypes.filter((t: string) => t !== type)
+      : [...currentTypes, type]
+    onUpdate({ data: { ...safeBlock.data, allowed_types: newTypes } })
+  }
+  
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Upload de fichiers"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Taille maximale (MB)
+        </label>
+        <input
+          type="number"
+          value={safeBlock.data.max_file_size || 10}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, max_file_size: parseInt(e.target.value) || 10 } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          min={1}
+          max={100}
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Types de fichiers autorisés
+        </label>
+        <div className="space-y-1 max-h-32 overflow-y-auto">
+          {typeOptions.map((type) => (
+            <label key={type} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={allowedTypes.includes(type)}
+                onChange={() => toggleType(type)}
+                className="w-3 h-3"
+              />
+              <span className="text-xs text-gray-700 dark:text-gray-300">{type}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id={`form-file-upload-multiple-${block.id}`}
+          checked={safeBlock.data.multiple || false}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, multiple: e.target.checked } })}
+          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+        />
+        <label htmlFor={`form-file-upload-multiple-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
+          Permettre plusieurs fichiers
+        </label>
+      </div>
+    </div>
+  )
+}
+
+// Form Payment
+export function FormPaymentConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const paymentMethods = safeBlock.data.payment_methods || ['stripe', 'paypal']
+  const availableMethods = ['stripe', 'paypal', 'bank_transfer', 'check']
+  
+  const toggleMethod = (method: string) => {
+    const currentMethods = paymentMethods || []
+    const newMethods = currentMethods.includes(method)
+      ? currentMethods.filter((m: string) => m !== method)
+      : [...currentMethods, method]
+    onUpdate({ data: { ...safeBlock.data, payment_methods: newMethods } })
+  }
+  
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Paiement"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Montant (€)
+        </label>
+        <input
+          type="number"
+          value={safeBlock.data.amount || 0}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, amount: parseFloat(e.target.value) || 0 } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          step="0.01"
+          min={0}
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Devise
+        </label>
+        <select
+          value={safeBlock.data.currency || 'EUR'}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, currency: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        >
+          <option value="EUR">EUR (€)</option>
+          <option value="USD">USD ($)</option>
+          <option value="GBP">GBP (£)</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Méthodes de paiement
+        </label>
+        <div className="space-y-1">
+          {availableMethods.map((method) => (
+            <label key={method} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={paymentMethods.includes(method)}
+                onChange={() => toggleMethod(method)}
+                className="w-3 h-3"
+              />
+              <span className="text-xs text-gray-700 dark:text-gray-300 capitalize">{method.replace('_', ' ')}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
+        ⚠️ Assurez-vous d'avoir configuré les clés API de paiement dans les paramètres du site.
+      </div>
+    </div>
+  )
+}
+
+// Form Quiz
+export function FormQuizConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const questions = safeBlock.data.questions || []
+  
+  const addQuestion = () => {
+    onUpdate({ data: { ...safeBlock.data, questions: [...questions, { question: '', type: 'single', answers: ['', ''], correct_answer: 0 }] } })
+  }
+  
+  const updateQuestion = (index: number, field: string, value: any) => {
+    const newQuestions = [...questions]
+    newQuestions[index] = { ...newQuestions[index], [field]: value }
+    onUpdate({ data: { ...safeBlock.data, questions: newQuestions } })
+  }
+  
+  const removeQuestion = (index: number) => {
+    onUpdate({ data: { ...safeBlock.data, questions: questions.filter((_: any, i: number) => i !== index) } })
+  }
+  
+  const addAnswer = (questionIndex: number) => {
+    const newQuestions = [...questions]
+    newQuestions[questionIndex].answers = [...(newQuestions[questionIndex].answers || []), '']
+    onUpdate({ data: { ...safeBlock.data, questions: newQuestions } })
+  }
+  
+  const updateAnswer = (questionIndex: number, answerIndex: number, value: string) => {
+    const newQuestions = [...questions]
+    newQuestions[questionIndex].answers[answerIndex] = value
+    onUpdate({ data: { ...safeBlock.data, questions: newQuestions } })
+  }
+  
+  const removeAnswer = (questionIndex: number, answerIndex: number) => {
+    const newQuestions = [...questions]
+    newQuestions[questionIndex].answers = newQuestions[questionIndex].answers.filter((_: string, i: number) => i !== answerIndex)
+    onUpdate({ data: { ...safeBlock.data, questions: newQuestions } })
+  }
+  
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre du quiz
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Quiz"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Questions ({questions.length})
+        </label>
+        <div className="space-y-3 max-h-96 overflow-y-auto">
+          {questions.map((q: any, qIndex: number) => (
+            <div key={qIndex} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <input
+                  type="text"
+                  value={q.question || ''}
+                  onChange={(e) => updateQuestion(qIndex, 'question', e.target.value)}
+                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                  placeholder="Question"
+                />
+                <button
+                  onClick={() => removeQuestion(qIndex)}
+                  className="ml-2 px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                  title="Supprimer cette question"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+              <div className="mb-2">
+                <select
+                  value={q.type || 'single'}
+                  onChange={(e) => updateQuestion(qIndex, 'type', e.target.value)}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                >
+                  <option value="single">Choix unique</option>
+                  <option value="multiple">Choix multiples</option>
+                  <option value="text">Réponse texte</option>
+                </select>
+              </div>
+              {q.type !== 'text' && (
+                <div className="space-y-1 mb-2">
+                  <label className="text-xs text-gray-600 dark:text-gray-400">Réponses:</label>
+                  {(q.answers || []).map((answer: string, aIndex: number) => (
+                    <div key={aIndex} className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name={`correct-${qIndex}`}
+                        checked={q.correct_answer === aIndex}
+                        onChange={() => updateQuestion(qIndex, 'correct_answer', aIndex)}
+                        className="w-3 h-3"
+                      />
+                      <input
+                        type="text"
+                        value={answer}
+                        onChange={(e) => updateAnswer(qIndex, aIndex, e.target.value)}
+                        className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                        placeholder="Réponse"
+                      />
+                      {(q.answers || []).length > 2 && (
+                        <button
+                          onClick={() => removeAnswer(qIndex, aIndex)}
+                          className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => addAnswer(qIndex)}
+                    className="w-full px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+                  >
+                    + Ajouter réponse
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={addQuestion}
+          className="mt-2 w-full px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          + Ajouter une question
+        </button>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id={`form-quiz-show-results-${block.id}`}
+          checked={safeBlock.data.show_results !== false}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_results: e.target.checked } })}
+          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+        />
+        <label htmlFor={`form-quiz-show-results-${block.id}`} className="text-xs text-gray-700 dark:text-gray-300">
+          Afficher les résultats à la fin
+        </label>
+      </div>
+    </div>
+  )
+}
+
+// Form Survey
+export function FormSurveyConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const questions = safeBlock.data.questions || []
+  
+  const addQuestion = () => {
+    onUpdate({ data: { ...safeBlock.data, questions: [...questions, { question: '', type: 'text', required: false }] } })
+  }
+  
+  const updateQuestion = (index: number, field: string, value: any) => {
+    const newQuestions = [...questions]
+    newQuestions[index] = { ...newQuestions[index], [field]: value }
+    onUpdate({ data: { ...safeBlock.data, questions: newQuestions } })
+  }
+  
+  const removeQuestion = (index: number) => {
+    onUpdate({ data: { ...safeBlock.data, questions: questions.filter((_: any, i: number) => i !== index) } })
+  }
+  
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre du sondage
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Sondage"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Description
+        </label>
+        <textarea
+          value={safeBlock.data.description || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, description: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          rows={2}
+          placeholder="Description du sondage"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Questions ({questions.length})
+        </label>
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {questions.map((q: any, index: number) => (
+            <div key={index} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <input
+                type="text"
+                value={q.question || ''}
+                onChange={(e) => updateQuestion(index, 'question', e.target.value)}
+                className="w-full mb-2 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="Question"
+              />
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <select
+                  value={q.type || 'text'}
+                  onChange={(e) => updateQuestion(index, 'type', e.target.value)}
+                  className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                >
+                  <option value="text">Texte</option>
+                  <option value="textarea">Zone de texte</option>
+                  <option value="radio">Bouton radio</option>
+                  <option value="checkbox">Case à cocher</option>
+                  <option value="scale">Échelle (1-10)</option>
+                  <option value="rating">Note (étoiles)</option>
+                </select>
+                <label className="flex items-center gap-1">
+                  <input
+                    type="checkbox"
+                    checked={q.required || false}
+                    onChange={(e) => updateQuestion(index, 'required', e.target.checked)}
+                    className="w-3 h-3"
+                  />
+                  <span className="text-xs text-gray-600 dark:text-gray-400">Requis</span>
+                </label>
+              </div>
+              <button
+                onClick={() => removeQuestion(index)}
+                className="w-full px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                title="Supprimer cette question"
+              >
+                Supprimer
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={addQuestion}
+          className="mt-2 w-full px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          + Ajouter une question
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Form Poll
+export function FormPollConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const options = safeBlock.data.options || ['Option 1', 'Option 2']
+  
+  const addOption = () => {
+    onUpdate({ data: { ...safeBlock.data, options: [...options, `Option ${options.length + 1}`] } })
+  }
+  
+  const updateOption = (index: number, value: string) => {
+    const newOptions = [...options]
+    newOptions[index] = value
+    onUpdate({ data: { ...safeBlock.data, options: newOptions } })
+  }
+  
+  const removeOption = (index: number) => {
+    if (options.length > 2) {
+      onUpdate({ data: { ...safeBlock.data, options: options.filter((_: string, i: number) => i !== index) } })
+    }
+  }
+  
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Question
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.question || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, question: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Quelle est votre opinion ?"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Options ({options.length})
+        </label>
+        <div className="space-y-2">
+          {options.map((option: string, index: number) => (
+            <div key={index} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={option}
+                onChange={(e) => updateOption(index, e.target.value)}
+                className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder={`Option ${index + 1}`}
+              />
+              {options.length > 2 && (
+                <button
+                  onClick={() => removeOption(index)}
+                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                  title="Supprimer cette option"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={addOption}
+          className="mt-2 w-full px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          + Ajouter une option
+        </button>
+      </div>
+      <div className="space-y-2">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={safeBlock.data.allow_multiple || false}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, allow_multiple: e.target.checked } })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">Permettre choix multiples</span>
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={safeBlock.data.show_results !== false}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_results: e.target.checked } })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">Afficher les résultats</span>
+        </label>
+      </div>
+    </div>
+  )
+}
+
+// Form RSVP
+export function FormRSVPConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre de l'événement
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.event_title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, event_title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Événement"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Date de l'événement
+        </label>
+        <input
+          type="date"
+          value={safeBlock.data.event_date || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, event_date: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Lieu
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.event_location || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, event_location: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Adresse ou lieu"
+        />
+      </div>
+      <div className="space-y-2">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={safeBlock.data.show_guests !== false}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_guests: e.target.checked } })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">Demander nombre d'invités</span>
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={safeBlock.data.show_dietary || false}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_dietary: e.target.checked } })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">Demander restrictions alimentaires</span>
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={safeBlock.data.show_message !== false}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_message: e.target.checked } })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">Demander message</span>
+        </label>
+      </div>
+    </div>
+  )
+}
+

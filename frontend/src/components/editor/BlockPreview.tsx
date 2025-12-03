@@ -3998,6 +3998,783 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
         </div>
       )
 
+    case 'form-multi-step': {
+      const steps = block.data.steps || []
+      const [currentStep, setCurrentStep] = useState(0)
+      
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            {block.data.title && (
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{block.data.title}</h3>
+            )}
+            {steps.length > 0 && (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  {steps.map((step: any, index: number) => (
+                    <div key={index} className="flex items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        index === currentStep ? 'bg-blue-600 text-white' : 
+                        index < currentStep ? 'bg-green-500 text-white' : 
+                        'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                      }`}>
+                        {index + 1}
+                      </div>
+                      {index < steps.length - 1 && (
+                        <div className={`w-12 h-1 mx-2 ${
+                          index < currentStep ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'
+                        }`} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {steps[currentStep] && (
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                      {steps[currentStep].title || `Étape ${currentStep + 1}`}
+                    </h4>
+                    {(steps[currentStep].fields || []).map((field: any, fIndex: number) => (
+                      <div key={fIndex}>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {field.label || 'Champ'}
+                          {field.required && <span className="text-red-500 ml-1">*</span>}
+                        </label>
+                        {field.type === 'textarea' ? (
+                          <textarea
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            rows={3}
+                            disabled
+                          />
+                        ) : (
+                          <input
+                            type={field.type || 'text'}
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            disabled
+                          />
+                        )}
+                      </div>
+                    ))}
+                    <div className="flex justify-between mt-6">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+                        disabled={currentStep === 0}
+                        className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Précédent
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
+                        disabled={currentStep === steps.length - 1}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {currentStep === steps.length - 1 ? 'Envoyer' : 'Suivant'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </form>
+        </div>
+      )
+    }
+    
+    case 'form-conditional': {
+      const fields = block.data.fields || []
+      const [formData, setFormData] = useState<Record<string, any>>({})
+      
+      const shouldShowField = (field: any) => {
+        if (!field.conditions || field.conditions.length === 0) return true
+        return field.conditions.some((condition: any) => {
+          const fieldValue = formData[condition.field]
+          if (condition.operator === 'equals') return fieldValue === condition.value
+          if (condition.operator === 'not_equals') return fieldValue !== condition.value
+          if (condition.operator === 'contains') return String(fieldValue || '').includes(condition.value)
+          return true
+        })
+      }
+      
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            {block.data.title && (
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{block.data.title}</h3>
+            )}
+            <div className="space-y-4">
+              {fields.map((field: any, index: number) => {
+                if (!shouldShowField(field)) return null
+                return (
+                  <div key={index}>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      {field.label || 'Champ'}
+                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                    </label>
+                    {field.type === 'select' ? (
+                      <select
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        disabled
+                      >
+                        <option>Sélectionner...</option>
+                      </select>
+                    ) : field.type === 'checkbox' ? (
+                      <label className="flex items-center gap-2">
+                        <input type="checkbox" disabled className="w-4 h-4" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Case à cocher</span>
+                      </label>
+                    ) : field.type === 'radio' ? (
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2">
+                          <input type="radio" name={`radio-${index}`} disabled className="w-4 h-4" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Option 1</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input type="radio" name={`radio-${index}`} disabled className="w-4 h-4" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Option 2</span>
+                        </label>
+                      </div>
+                    ) : (
+                      <input
+                        type={field.type || 'text'}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        disabled
+                      />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <button
+              type="submit"
+              className="mt-6 w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              disabled
+            >
+              Envoyer
+            </button>
+          </form>
+        </div>
+      )
+    }
+    
+    case 'form-calculator': {
+      const fields = block.data.fields || []
+      const [values, setValues] = useState<Record<string, number>>({})
+      const [result, setResult] = useState<number | null>(null)
+      
+      const calculate = () => {
+        if (!block.data.formula) return
+        try {
+          let formula = block.data.formula
+          fields.forEach((field: any) => {
+            const value = values[field.name] || field.default_value || 0
+            formula = formula.replace(new RegExp(field.name, 'g'), String(value))
+          })
+          // Évaluer la formule de manière sécurisée
+          const calculated = Function(`"use strict"; return (${formula})`)()
+          setResult(calculated)
+        } catch (e) {
+          console.error('Erreur calcul:', e)
+        }
+      }
+      
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            {block.data.title && (
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{block.data.title}</h3>
+            )}
+            <div className="space-y-4">
+              {fields.map((field: any, index: number) => (
+                <div key={index}>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    {field.label || field.name}
+                  </label>
+                  <input
+                    type="number"
+                    value={values[field.name] || field.default_value || 0}
+                    onChange={(e) => {
+                      const newValues = { ...values, [field.name]: parseFloat(e.target.value) || 0 }
+                      setValues(newValues)
+                      calculate()
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    step="0.01"
+                  />
+                </div>
+              ))}
+            </div>
+            {result !== null && (
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Résultat:</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{result.toFixed(2)}</p>
+              </div>
+            )}
+          </form>
+        </div>
+      )
+    }
+    
+    case 'form-file-upload': {
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            {block.data.title && (
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{block.data.title}</h3>
+            )}
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+              <svg className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Glissez vos fichiers ici ou cliquez pour sélectionner
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                Taille max: {block.data.max_file_size || 10} MB
+              </p>
+              {block.data.allowed_types && (
+                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                  Types: {block.data.allowed_types.join(', ')}
+                </p>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="mt-4 w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              disabled
+            >
+              Téléverser
+            </button>
+          </form>
+        </div>
+      )
+    }
+    
+    case 'form-payment': {
+      const paymentMethods = block.data.payment_methods || ['stripe']
+      const amount = block.data.amount || 0
+      const currency = block.data.currency || 'EUR'
+      
+      const formatAmount = (amt: number, curr: string) => {
+        return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: curr }).format(amt)
+      }
+      
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            {block.data.title && (
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{block.data.title}</h3>
+            )}
+            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <p className="text-sm text-gray-700 dark:text-gray-300">Montant à payer:</p>
+              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                {formatAmount(amount, currency)}
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Nom sur la carte
+                </label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  placeholder="Jean Dupont"
+                  disabled
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Numéro de carte
+                </label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  placeholder="1234 5678 9012 3456"
+                  disabled
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Date d'expiration
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    placeholder="MM/AA"
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    CVV
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    placeholder="123"
+                    disabled
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="mt-6">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Méthodes de paiement:</p>
+              <div className="flex gap-4">
+                {paymentMethods.includes('stripe') && (
+                  <div className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">💳 Stripe</span>
+                  </div>
+                )}
+                {paymentMethods.includes('paypal') && (
+                  <div className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">🅿️ PayPal</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="mt-6 w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              disabled
+            >
+              Payer {formatAmount(amount, currency)}
+            </button>
+          </form>
+        </div>
+      )
+    }
+    
+    case 'form-quiz': {
+      const questions = block.data.questions || []
+      const [currentQuestion, setCurrentQuestion] = useState(0)
+      const [answers, setAnswers] = useState<Record<number, any>>({})
+      const [showResults, setShowResults] = useState(false)
+      const [score, setScore] = useState(0)
+      
+      const handleAnswer = (questionIndex: number, answerIndex: number) => {
+        const newAnswers = { ...answers, [questionIndex]: answerIndex }
+        setAnswers(newAnswers)
+      }
+      
+      const submitQuiz = () => {
+        let correct = 0
+        questions.forEach((q: any, index: number) => {
+          if (answers[index] === q.correct_answer) correct++
+        })
+        setScore(correct)
+        setShowResults(true)
+      }
+      
+      if (showResults && block.data.show_results !== false) {
+        return (
+          <div style={wrapperStyles} className="mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Résultats</h3>
+              <p className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                {score} / {questions.length}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {Math.round((score / questions.length) * 100)}% de bonnes réponses
+              </p>
+            </div>
+          </div>
+        )
+      }
+      
+      if (questions.length === 0) {
+        return (
+          <div style={wrapperStyles} className="mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
+              <p className="text-gray-600 dark:text-gray-400">Aucune question configurée</p>
+            </div>
+          </div>
+        )
+      }
+      
+      const question = questions[currentQuestion]
+      
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            {block.data.title && (
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{block.data.title}</h3>
+            )}
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Question {currentQuestion + 1} sur {questions.length}
+              </p>
+            </div>
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {question.question || 'Question'}
+              </h4>
+              {question.type === 'text' ? (
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  disabled
+                />
+              ) : (
+                <div className="space-y-2">
+                  {(question.answers || []).map((answer: string, aIndex: number) => (
+                    <label
+                      key={aIndex}
+                      className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                        answers[currentQuestion] === aIndex
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700'
+                      }`}
+                    >
+                      <input
+                        type={question.type === 'multiple' ? 'checkbox' : 'radio'}
+                        name={`question-${currentQuestion}`}
+                        checked={answers[currentQuestion] === aIndex}
+                        onChange={() => handleAnswer(currentQuestion, aIndex)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{answer}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-between mt-6">
+              <button
+                type="button"
+                onClick={() => setCurrentQuestion(Math.max(0, currentQuestion - 1))}
+                disabled={currentQuestion === 0}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Précédent
+              </button>
+              {currentQuestion < questions.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={() => setCurrentQuestion(currentQuestion + 1)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Suivant
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={submitQuiz}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Terminer
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      )
+    }
+    
+    case 'form-survey': {
+      const questions = block.data.questions || []
+      
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            {block.data.title && (
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{block.data.title}</h3>
+            )}
+            {block.data.description && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">{block.data.description}</p>
+            )}
+            <div className="space-y-6">
+              {questions.map((q: any, index: number) => (
+                <div key={index}>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {q.question || 'Question'}
+                    {q.required && <span className="text-red-500 ml-1">*</span>}
+                  </label>
+                  {q.type === 'textarea' ? (
+                    <textarea
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      rows={4}
+                      disabled
+                    />
+                  ) : q.type === 'radio' ? (
+                    <div className="space-y-2">
+                      {['Option 1', 'Option 2', 'Option 3'].map((opt, oIndex) => (
+                        <label key={oIndex} className="flex items-center gap-2">
+                          <input type="radio" name={`survey-${index}`} disabled className="w-4 h-4" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : q.type === 'checkbox' ? (
+                    <div className="space-y-2">
+                      {['Option 1', 'Option 2', 'Option 3'].map((opt, oIndex) => (
+                        <label key={oIndex} className="flex items-center gap-2">
+                          <input type="checkbox" disabled className="w-4 h-4" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : q.type === 'scale' ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">1</span>
+                      <input type="range" min="1" max="10" defaultValue="5" disabled className="flex-1" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">10</span>
+                    </div>
+                  ) : q.type === 'rating' ? (
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button key={star} type="button" disabled className="text-2xl text-gray-300 dark:text-gray-600">
+                          ⭐
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <input
+                      type={q.type || 'text'}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                      disabled
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            <button
+              type="submit"
+              className="mt-6 w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              disabled
+            >
+              Envoyer le sondage
+            </button>
+          </form>
+        </div>
+      )
+    }
+    
+    case 'form-poll': {
+      const options = block.data.options || []
+      const [selected, setSelected] = useState<number[]>([])
+      const [voted, setVoted] = useState(false)
+      const [results, setResults] = useState<Record<number, number>>({})
+      
+      const handleVote = () => {
+        if (selected.length === 0) return
+        const newResults: Record<number, number> = {}
+        options.forEach((_: string, index: number) => {
+          newResults[index] = selected.includes(index) ? 50 : Math.random() * 30
+        })
+        setResults(newResults)
+        setVoted(true)
+      }
+      
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              {block.data.question || 'Question'}
+            </h3>
+            {!voted ? (
+              <div className="space-y-3">
+                {options.map((option: string, index: number) => (
+                  <label
+                    key={index}
+                    className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                      selected.includes(index)
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700'
+                    }`}
+                  >
+                    <input
+                      type={block.data.allow_multiple ? 'checkbox' : 'radio'}
+                      name="poll"
+                      checked={selected.includes(index)}
+                      onChange={(e) => {
+                        if (block.data.allow_multiple) {
+                          setSelected(e.target.checked
+                            ? [...selected, index]
+                            : selected.filter(i => i !== index)
+                          )
+                        } else {
+                          setSelected([index])
+                        }
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300 flex-1">{option}</span>
+                  </label>
+                ))}
+                <button
+                  type="button"
+                  onClick={handleVote}
+                  disabled={selected.length === 0}
+                  className="w-full mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Voter
+                </button>
+              </div>
+            ) : block.data.show_results !== false ? (
+              <div className="space-y-3">
+                {options.map((option: string, index: number) => {
+                  const percentage = results[index] || 0
+                  return (
+                    <div key={index}>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{percentage.toFixed(0)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Merci pour votre vote !</p>
+              </div>
+            )}
+          </form>
+        </div>
+      )
+    }
+    
+    case 'form-rsvp': {
+      const [response, setResponse] = useState<'yes' | 'no' | null>(null)
+      
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              {block.data.event_title || 'Événement'}
+            </h3>
+            {block.data.event_date && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                📅 {new Date(block.data.event_date).toLocaleDateString('fr-FR', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </p>
+            )}
+            {block.data.event_location && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                📍 {block.data.event_location}
+              </p>
+            )}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Nom complet <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  disabled
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  disabled
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Confirmez votre présence <span className="text-red-500">*</span>
+                </label>
+                <div className="flex gap-4">
+                  <label className={`flex-1 p-4 border-2 rounded-lg cursor-pointer text-center transition-colors ${
+                    response === 'yes'
+                      ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-700'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="rsvp"
+                      checked={response === 'yes'}
+                      onChange={() => setResponse('yes')}
+                      className="sr-only"
+                    />
+                    <span className="text-lg">✅</span>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-1">Je serai présent(e)</p>
+                  </label>
+                  <label className={`flex-1 p-4 border-2 rounded-lg cursor-pointer text-center transition-colors ${
+                    response === 'no'
+                      ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-red-300 dark:hover:border-red-700'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="rsvp"
+                      checked={response === 'no'}
+                      onChange={() => setResponse('no')}
+                      className="sr-only"
+                    />
+                    <span className="text-lg">❌</span>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-1">Je ne pourrai pas venir</p>
+                  </label>
+                </div>
+              </div>
+              {block.data.show_guests && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Nombre d'invités
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    disabled
+                  />
+                </div>
+              )}
+              {block.data.show_dietary && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Restrictions alimentaires
+                  </label>
+                  <textarea
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    rows={2}
+                    placeholder="Végétarien, allergies, etc."
+                    disabled
+                  />
+                </div>
+              )}
+              {block.data.show_message && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Message (optionnel)
+                  </label>
+                  <textarea
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    rows={3}
+                    disabled
+                  />
+                </div>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="mt-6 w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              disabled
+            >
+              Confirmer
+            </button>
+          </form>
+        </div>
+      )
+    }
+
     case 'captcha':
       return (
         <div style={wrapperStyles} className="mb-6">

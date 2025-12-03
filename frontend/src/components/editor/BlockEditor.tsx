@@ -34,6 +34,15 @@ import {
   FareCalculatorConfig,
   AvailabilityCalendarConfig,
   CaptchaConfig,
+  FormMultiStepConfig,
+  FormConditionalConfig,
+  FormCalculatorConfig,
+  FormFileUploadConfig,
+  FormPaymentConfig,
+  FormQuizConfig,
+  FormSurveyConfig,
+  FormPollConfig,
+  FormRSVPConfig,
 } from './blocks-implementations'
 import { CSS } from '@dnd-kit/utilities'
 import blocksService, { BlockType } from '@/services/blocks.service'
@@ -7040,6 +7049,33 @@ function BlockRenderer({
     
     case 'captcha':
       return <CaptchaConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'form-multi-step':
+      return <FormMultiStepConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'form-conditional':
+      return <FormConditionalConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'form-calculator':
+      return <FormCalculatorConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'form-file-upload':
+      return <FormFileUploadConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'form-payment':
+      return <FormPaymentConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'form-quiz':
+      return <FormQuizConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'form-survey':
+      return <FormSurveyConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'form-poll':
+      return <FormPollConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'form-rsvp':
+      return <FormRSVPConfig block={safeBlock} onUpdate={onUpdate} />
 
     default:
       return (

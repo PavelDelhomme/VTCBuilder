@@ -1121,5 +1121,93 @@
     "category": "layout",
     "description": "Enveloppe générique pour contenir des éléments",
     "order": 2
+  },
+  {
+    "name": "form-multi-step",
+    "label": "Formulaire Multi-étapes",
+    "icon": "📋",
+    "category": "forms",
+    "description": "Formulaire avec plusieurs étapes pour une meilleure expérience utilisateur",
+    "order": 104,
+    "is_active": true,
+    "is_premium": true
+  },
+  {
+    "name": "form-conditional",
+    "label": "Formulaire Conditionnel",
+    "icon": "🔀",
+    "category": "forms",
+    "description": "Formulaire avec champs conditionnels qui apparaissent selon les réponses",
+    "order": 105,
+    "is_active": true,
+    "is_premium": true
+  },
+  {
+    "name": "form-calculator",
+    "label": "Formulaire Calculateur",
+    "icon": "🧮",
+    "category": "forms",
+    "description": "Formulaire avec calcul automatique basé sur les entrées",
+    "order": 106,
+    "is_active": true,
+    "is_premium": true
+  },
+  {
+    "name": "form-file-upload",
+    "label": "Upload de Fichiers",
+    "icon": "📎",
+    "category": "forms",
+    "description": "Formulaire avec upload de fichiers (images, documents, etc.)",
+    "order": 107,
+    "is_active": true,
+    "is_premium": true
+  },
+  {
+    "name": "form-payment",
+    "label": "Formulaire Paiement",
+    "icon": "💳",
+    "category": "forms",
+    "description": "Formulaire de paiement sécurisé avec intégration Stripe/PayPal",
+    "order": 108,
+    "is_active": true,
+    "is_premium": true
+  },
+  {
+    "name": "form-quiz",
+    "label": "Formulaire Quiz",
+    "icon": "❓",
+    "category": "forms",
+    "description": "Quiz interactif avec questions et réponses multiples",
+    "order": 109,
+    "is_active": true,
+    "is_premium": true
+  },
+  {
+    "name": "form-survey",
+    "label": "Formulaire Sondage",
+    "icon": "📊",
+    "category": "forms",
+    "description": "Sondage détaillé avec différents types de questions",
+    "order": 110,
+    "is_active": true,
+    "is_premium": true
+  },
+  {
+    "name": "form-poll",
+    "label": "Sondage Rapide",
+    "icon": "📈",
+    "category": "forms",
+    "description": "Sondage rapide avec une seule question et plusieurs options",
+    "order": 111,
+    "is_active": true
+  },
+  {
+    "name": "form-rsvp",
+    "label": "Formulaire RSVP",
+    "icon": "✉️",
+    "category": "forms",
+    "description": "Formulaire de confirmation de présence à un événement",
+    "order": 112,
+    "is_active": true
   }
 ]
