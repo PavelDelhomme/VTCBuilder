@@ -325,6 +325,29 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     })
   }, [])
 
+  // Vérifier si un type de bloc est un conteneur (défini avant handleDragEnd car utilisé dedans)
+  const isContainerType = useCallback((blockTypeName: string): boolean => {
+    const containerTypes = ['container', 'grid-container', 'flex-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
+    return containerTypes.includes(blockTypeName)
+  }, [])
+
+  // Vérifier si un conteneur existe dans les blocs (défini avant handleDragEnd car utilisé dedans)
+  const hasContainer = useCallback((blocks: Block[]): boolean => {
+    const containerTypes = ['container', 'grid-container', 'flex-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
+    for (const block of blocks) {
+      if (containerTypes.includes(block.type)) {
+        return true
+      }
+      // Vérifier récursivement dans les enfants
+      if (block.children && block.children.length > 0) {
+        if (hasContainer(block.children)) {
+          return true
+        }
+      }
+    }
+    return false
+  }, [])
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
 
@@ -447,29 +470,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       }
     }
   }, [history, trackBlockAction, findBlockInTree, removeBlockFromTree, addBlockToContainer, isContainerType])
-
-  // Vérifier si un conteneur existe dans les blocs
-  const hasContainer = useCallback((blocks: Block[]): boolean => {
-    const containerTypes = ['container', 'grid-container', 'flex-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
-    for (const block of blocks) {
-      if (containerTypes.includes(block.type)) {
-        return true
-      }
-      // Vérifier récursivement dans les enfants
-      if (block.children && block.children.length > 0) {
-        if (hasContainer(block.children)) {
-          return true
-        }
-      }
-    }
-    return false
-  }, [])
-
-  // Vérifier si un type de bloc est un conteneur
-  const isContainerType = useCallback((blockTypeName: string): boolean => {
-    const containerTypes = ['container', 'grid-container', 'flex-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
-    return containerTypes.includes(blockTypeName)
-  }, [])
 
   const addBlock = useCallback((blockType: BlockType) => {
     // Si ce n'est pas un conteneur et qu'aucun conteneur n'existe, empêcher l'ajout
