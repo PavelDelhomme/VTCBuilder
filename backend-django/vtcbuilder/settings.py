@@ -324,11 +324,19 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'WARNING',
             'propagate': False,
+            'filters': ['suppress_expected_401'],
         },
         'rest_framework': {
             'handlers': ['console'],
             'level': 'WARNING',
             'propagate': False,
+            'filters': ['suppress_expected_401'],
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+            'filters': ['suppress_expected_401'],
         },
     },
 }

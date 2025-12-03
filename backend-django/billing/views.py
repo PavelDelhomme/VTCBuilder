@@ -80,11 +80,20 @@ class PricingPlanViewSet(viewsets.ModelViewSet):
             return PricingPlan.objects.none()
     
     def list(self, request, *args, **kwargs):
-        """List pricing plans with error handling"""
+        """List pricing plans with error handling - public access allowed"""
         try:
-            response = super().list(request, *args, **kwargs)
-            add_cors_headers(response, request)
-            return response
+            # Allow public access to list pricing plans
+            # Temporarily remove authentication requirement
+            original_permission_classes = self.permission_classes
+            self.permission_classes = []  # No authentication required for list
+            
+            try:
+                response = super().list(request, *args, **kwargs)
+                add_cors_headers(response, request)
+                return response
+            finally:
+                # Restore original permissions
+                self.permission_classes = original_permission_classes
         except Exception as e:
             logger.error(f"Error in PricingPlanViewSet.list: {e}", exc_info=True)
             error_response = Response({

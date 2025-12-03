@@ -76,7 +76,9 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
             for endpoint in silent_endpoints:
                 if path == endpoint or path == endpoint + '/':
                     # Ne pas logger cette erreur - c'est attendu
-                    return self._add_cors_headers(response, request)
+                    # Marquer la réponse pour supprimer le log
+                    response._suppress_logging = True
+                    break
         
         return self._add_cors_headers(response, request)
     

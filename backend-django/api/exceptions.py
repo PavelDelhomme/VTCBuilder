@@ -43,7 +43,9 @@ def custom_exception_handler(exc, context):
             if path == endpoint or path == endpoint + '/':
                 # Don't log this as an error - it's expected behavior
                 # The frontend handles these gracefully
-                pass  # Just don't log it
+                # Set a flag on the response to prevent logging
+                response._suppress_logging = True
+                break
     
     # Add CORS headers to error responses
     if request:
