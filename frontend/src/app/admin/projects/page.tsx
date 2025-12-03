@@ -16,18 +16,41 @@ export default function ProjectsManagement() {
   const { isNavigating, navigate } = useNavigationLoading()
 
   useEffect(() => {
+    // Vérifier l'authentification avant de charger
+    if (!authService.isAuthenticated()) {
+      router.push('/login')
+      return
+    }
     // Allow both super admin and tenant admin to access projects
     loadProjects()
   }, [router])
 
   const loadProjects = async () => {
+    // Ne pas charger si pas authentifié
+    if (!authService.isAuthenticated()) {
+      return
+    }
+    
     try {
       setLoading(true)
       const data = await projectService.getAll()
       setProjects(data)
     } catch (error: any) {
-      console.error('Erreur chargement projets:', error)
-      toast.error('Erreur lors du chargement des projets')
+      // Gérer les erreurs d'authentification
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('refresh_token')
+        localStorage.removeItem('user')
+        router.push('/login')
+        return
+      }
+      
+      const isExpectedError = error.code === 'ERR_NETWORK' || 
+                             error.code === 'ERR_BLOCKED_BY_CLIENT'
+      if (!isExpectedError) {
+        console.error('Erreur chargement projets:', error)
+        toast.error('Erreur lors du chargement des projets')
+      }
     } finally {
       setLoading(false)
     }

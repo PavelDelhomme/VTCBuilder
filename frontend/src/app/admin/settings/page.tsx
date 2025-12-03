@@ -20,6 +20,12 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'email' | 'security' | 'billing' | 'notifications' | 'maintenance' | 'payment'>('general')
 
   useEffect(() => {
+    // Vérifier l'authentification avant de charger
+    if (!authService.isAuthenticated()) {
+      router.push('/login')
+      return
+    }
+    
     if (!authService.isSuperAdmin()) {
       router.push('/dashboard')
       return
@@ -28,11 +34,25 @@ export default function SettingsPage() {
   }, [router])
 
   const loadSettings = async () => {
+    // Ne pas charger si pas authentifié
+    if (!authService.isAuthenticated()) {
+      return
+    }
+    
     try {
       setLoading(true)
       const data = await settingsService.getSettings()
       setSettings(data)
     } catch (error: any) {
+      // Gérer les erreurs d'authentification
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('refresh_token')
+        localStorage.removeItem('user')
+        router.push('/login')
+        return
+      }
+      
       // Si 404, créer avec valeurs par défaut (silencieux)
       if (error.response?.status === 404) {
         const defaultSettings = {
@@ -52,8 +72,7 @@ export default function SettingsPage() {
         }
       } else {
         // Ne logger que les erreurs non attendues (pas les 401 - non authentifié)
-        const isExpectedError = error.response?.status === 401 ||
-                               error.code === 'ERR_NETWORK' || 
+        const isExpectedError = error.code === 'ERR_NETWORK' || 
                                error.code === 'ERR_BLOCKED_BY_CLIENT'
         if (!isExpectedError) {
           console.error('Erreur chargement paramètres:', error)

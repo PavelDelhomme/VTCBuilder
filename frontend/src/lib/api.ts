@@ -126,8 +126,9 @@ api.interceptors.response.use(
     
     if (status === 401) {
       // Pour les endpoints silencieux avec 401, ne pas logger (c'est normal si non connecté)
+      // Ces erreurs sont attendues et gérées gracieusement dans les composants
       if (isSilentError) {
-        // Ne rien logger, c'est attendu
+        // Ne rien logger, c'est attendu - rejeter silencieusement
         return Promise.reject(error);
       }
       
@@ -149,6 +150,7 @@ api.interceptors.response.use(
         }
       }
       // Si pas de token et page publique, c'est normal, ne pas rediriger
+      // Ne pas logger les erreurs 401 - elles sont gérées gracieusement
     } else if (!isSilentError && status) {
       // Ne logger que les erreurs non attendues
       // (Les erreurs attendues sont gérées gracieusement dans les composants)

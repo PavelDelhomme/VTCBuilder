@@ -14,10 +14,22 @@ export default function ImpersonationBanner() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    checkImpersonationStatus()
+    // Ne vérifier l'impersonnification que si l'utilisateur est authentifié
+    if (authService.isAuthenticated()) {
+      checkImpersonationStatus()
+    } else {
+      setLoading(false)
+    }
   }, [])
 
   const checkImpersonationStatus = async () => {
+    // Ne pas faire de requête si pas authentifié
+    if (!authService.isAuthenticated()) {
+      setIsImpersonating(false)
+      setLoading(false)
+      return
+    }
+    
     try {
       const status = await userService.getImpersonationStatus()
       setIsImpersonating(status.is_impersonating || status.impersonating || false)
