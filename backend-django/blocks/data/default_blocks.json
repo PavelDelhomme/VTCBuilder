@@ -1209,5 +1209,104 @@
     "description": "Formulaire de confirmation de présence à un événement",
     "order": 112,
     "is_active": true
+  },
+  {
+    "name": "driver-profile",
+    "label": "Profil Chauffeur",
+    "icon": "👤",
+    "category": "custom",
+    "description": "Profil chauffeur VTC avec photo, nom, note et informations",
+    "order": 113,
+    "is_active": true
+  },
+  {
+    "name": "email-button",
+    "label": "Bouton Email",
+    "icon": "📧",
+    "category": "custom",
+    "description": "Bouton de contact par email",
+    "order": 114,
+    "is_active": true
+  },
+  {
+    "name": "sms-button",
+    "label": "Bouton SMS",
+    "icon": "💬",
+    "category": "custom",
+    "description": "Bouton d'envoi de SMS",
+    "order": 115,
+    "is_active": true
+  },
+  {
+    "name": "product-gallery",
+    "label": "Galerie Produit",
+    "icon": "🖼️",
+    "category": "custom",
+    "description": "Galerie d'images pour un produit e-commerce",
+    "order": 116,
+    "is_active": true
+  },
+  {
+    "name": "product-details",
+    "label": "Détails Produit",
+    "icon": "📋",
+    "category": "custom",
+    "description": "Page de détails produit avec description, prix, options",
+    "order": 117,
+    "is_active": true
+  },
+  {
+    "name": "add-to-cart",
+    "label": "Ajouter au Panier",
+    "icon": "🛒",
+    "category": "custom",
+    "description": "Bouton pour ajouter un produit au panier",
+    "order": 118,
+    "is_active": true
+  },
+  {
+    "name": "buy-now",
+    "label": "Acheter Maintenant",
+    "icon": "💳",
+    "category": "custom",
+    "description": "Bouton pour acheter directement un produit",
+    "order": 119,
+    "is_active": true
+  },
+  {
+    "name": "vehicle-comparison",
+    "label": "Comparaison Véhicules",
+    "icon": "🚗",
+    "category": "custom",
+    "description": "Tableau de comparaison de véhicules VTC",
+    "order": 120,
+    "is_active": true
+  },
+  {
+    "name": "service-packages",
+    "label": "Forfaits Service",
+    "icon": "📦",
+    "category": "custom",
+    "description": "Affichage des forfaits de service VTC",
+    "order": 121,
+    "is_active": true
+  },
+  {
+    "name": "trust-badges",
+    "label": "Badges de Confiance",
+    "icon": "✅",
+    "category": "custom",
+    "description": "Badges de confiance et sécurité",
+    "order": 122,
+    "is_active": true
+  },
+  {
+    "name": "payment-methods",
+    "label": "Méthodes de Paiement",
+    "icon": "💳",
+    "category": "custom",
+    "description": "Affichage des méthodes de paiement acceptées",
+    "order": 123,
+    "is_active": true
   }
 ]
