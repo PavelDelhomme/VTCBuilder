@@ -1379,18 +1379,6 @@ const SortableBlock = React.memo(function SortableBlock({
 
       {/* Block Content - Simple and Clean */}
       <div className={`${isSmall ? 'p-2 sm:p-3' : 'p-4 sm:p-6'} bg-white dark:bg-gray-800 min-h-[120px]`}>
-        {/* Simple indicator when selected */}
-        {isSelected && (
-          <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-xs text-blue-700 dark:text-blue-300">
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Bloc sélectionné - Configurez dans le panneau de droite</span>
-            </div>
-          </div>
-        )}
-        
         {/* Conteneur avec enfants */}
         {(block.type === 'container' || block.type === 'flex-container' || block.type === 'grid-container') ? (
           <ContainerChildrenRenderer
