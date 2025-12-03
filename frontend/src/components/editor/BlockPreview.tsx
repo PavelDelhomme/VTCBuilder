@@ -2266,7 +2266,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       return (
         <div
           style={{
-            ...wrapperStyles,
+            // Copier wrapperStyles sans les propriétés de padding pour éviter les conflits
+            ...Object.fromEntries(
+              Object.entries(wrapperStyles).filter(([key]) => 
+                !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'].includes(key)
+              )
+            ),
             backgroundImage: block.data.background_image ? `url(${block.data.background_image})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
