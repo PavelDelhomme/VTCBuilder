@@ -326,19 +326,26 @@ LOGGING = {
         },
         'django.request': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'ERROR',  # Only log errors, not warnings (401 is a warning)
             'propagate': False,
             'filters': ['suppress_expected_401'],
         },
         'rest_framework': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'ERROR',  # Only log errors, not warnings (401 is a warning)
             'propagate': False,
             'filters': ['suppress_expected_401'],
         },
         'django.server': {
             'handlers': ['console'],
             'level': 'INFO',
+            'propagate': False,
+            'filters': ['suppress_expected_401'],
+        },
+        # Suppress logs from django.utils.log for 401 errors
+        'django.utils.log': {
+            'handlers': ['console'],
+            'level': 'ERROR',
             'propagate': False,
             'filters': ['suppress_expected_401'],
         },
