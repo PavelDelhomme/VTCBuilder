@@ -504,6 +504,33 @@
     "order": 64
   },
   {
+    "name": "route-calculator",
+    "label": "Calculateur d'itinéraire",
+    "icon": "🗺️",
+    "category": "custom",
+    "description": "Calculateur d'itinéraire VTC avec carte interactive (Premium)",
+    "order": 65,
+    "is_active": true
+  },
+  {
+    "name": "fare-calculator",
+    "label": "Calculateur de tarif",
+    "icon": "💰",
+    "category": "custom",
+    "description": "Calculateur de tarif VTC avec règles personnalisées (Premium)",
+    "order": 66,
+    "is_active": true
+  },
+  {
+    "name": "availability-calendar",
+    "label": "Calendrier disponibilité",
+    "icon": "📅",
+    "category": "custom",
+    "description": "Calendrier de disponibilité VTC avec réservation (Premium)",
+    "order": 67,
+    "is_active": true
+  },
+  {
     "name": "pricing",
     "label": "Tarifs",
     "icon": "💳",

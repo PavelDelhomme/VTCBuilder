@@ -454,7 +454,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
     'dropdown', 'categories', 'author-box', 'related-posts', 'table-of-contents',
     'reading-time', 'share-buttons', 'flexbox', 'grid', 'stack', 'inline', 'group',
     'wrapper', 'image-slider', 'lightbox', 'vimeo-embed', 'counter', 'card-grid',
-    'logo-carousel', 'progress-circle'
+    'logo-carousel', 'progress-circle', 'route-calculator', 'fare-calculator', 'availability-calendar'
   ]
   
   // Si le bloc a un rendu hardcodé, utiliser directement le switch case
@@ -3684,6 +3684,219 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
           {carouselLogos.length === 0 && (
             <div className="text-center py-8 text-gray-400">Aucun logo</div>
           )}
+        </div>
+      )
+
+    case 'route-calculator':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && (
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              {block.data.title}
+            </h2>
+          )}
+          {block.data?.description && (
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              {block.data.description}
+            </p>
+          )}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Point de départ
+                </label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  placeholder="Adresse de départ"
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Point d'arrivée
+                </label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  placeholder="Adresse de destination"
+                  readOnly
+                />
+              </div>
+              <button
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                disabled
+              >
+                Calculer l'itinéraire
+              </button>
+              {block.data?.show_map !== false && (
+                <div className="mt-4 h-64 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">Carte (nécessite une clé API)</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )
+
+    case 'fare-calculator':
+      const pricingRules = block.data?.pricing_rules || []
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && (
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              {block.data.title}
+            </h2>
+          )}
+          {block.data?.description && (
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              {block.data.description}
+            </p>
+          )}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Distance (km)
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    placeholder="0"
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Durée (min)
+                  </label>
+                  <input
+                    type="number"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    placeholder="0"
+                    readOnly
+                  />
+                </div>
+              </div>
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="space-y-2">
+                  {pricingRules.length > 0 ? (
+                    pricingRules.map((rule: any, index: number) => (
+                      <div key={index} className="flex justify-between items-center text-sm">
+                        <span className="text-gray-700 dark:text-gray-300">{rule.label || 'Tarif'}</span>
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">
+                          {rule.amount || 0} {block.data?.currency || 'EUR'}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                      Aucune règle de tarification configurée
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">Total</span>
+                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    0 {block.data?.currency || 'EUR'}
+                  </span>
+                </div>
+              </div>
+              <button
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                disabled
+              >
+                Calculer le tarif
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+
+    case 'availability-calendar':
+      const availableDays = block.data?.available_days || []
+      const viewMode = block.data?.view_mode || 'month'
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && (
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              {block.data.title}
+            </h2>
+          )}
+          {block.data?.description && (
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              {block.data.description}
+            </p>
+          )}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex gap-2">
+                <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600" disabled>
+                  ←
+                </button>
+                <span className="px-4 py-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                </span>
+                <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600" disabled>
+                  →
+                </button>
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                Mode: {viewMode === 'month' ? 'Mois' : viewMode === 'week' ? 'Semaine' : 'Jour'}
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-2 mb-4">
+              {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
+                <div key={day} className="text-center text-xs font-semibold text-gray-600 dark:text-gray-400 py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-2">
+              {Array.from({ length: 35 }).map((_, index) => {
+                const day = index + 1
+                const isAvailable = availableDays.length === 0 || Math.random() > 0.3
+                return (
+                  <div
+                    key={index}
+                    className={`aspect-square flex items-center justify-center text-sm rounded ${
+                      isAvailable
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
+                    }`}
+                  >
+                    {day <= 31 ? day : ''}
+                  </div>
+                )
+              })}
+            </div>
+            {block.data?.show_time_slots && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Créneaux horaires</p>
+                <div className="flex flex-wrap gap-2">
+                  {['08:00', '10:00', '12:00', '14:00', '16:00', '18:00'].map((time) => (
+                    <button
+                      key={time}
+                      className="px-3 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                      disabled
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {block.data?.allow_booking && (
+              <button
+                className="mt-4 w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                disabled
+              >
+                Réserver
+              </button>
+            )}
+          </div>
         </div>
       )
 

@@ -1335,3 +1335,333 @@ export function LogoCarouselConfig({ block, onUpdate }: { block: Block; onUpdate
   )
 }
 
+// Route Calculator (Calculateur d'itinéraire) - Premium
+export function RouteCalculatorConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Calculateur d'itinéraire"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Description
+        </label>
+        <textarea
+          value={safeBlock.data.description || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, description: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          rows={3}
+          placeholder="Calculez votre itinéraire et obtenez une estimation..."
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          API Key (Google Maps / OpenRouteService)
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.api_key || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, api_key: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-mono"
+          placeholder="Votre clé API"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Service de cartographie
+        </label>
+        <select
+          value={safeBlock.data.map_service || 'google'}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, map_service: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        >
+          <option value="google">Google Maps</option>
+          <option value="openrouteservice">OpenRouteService</option>
+          <option value="mapbox">Mapbox</option>
+        </select>
+      </div>
+      <div>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={safeBlock.data.show_map !== false}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_map: e.target.checked } })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">Afficher la carte</span>
+        </label>
+      </div>
+      <div>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={safeBlock.data.show_alternatives === true}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_alternatives: e.target.checked } })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">Afficher les itinéraires alternatifs</span>
+        </label>
+      </div>
+    </div>
+  )
+}
+
+// Fare Calculator (Calculateur de tarif) - Premium
+export function FareCalculatorConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const pricingRules = safeBlock.data.pricing_rules || [{ 
+    type: 'base', 
+    label: 'Tarif de base', 
+    amount: 0, 
+    unit: 'fixed' 
+  }]
+  
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Estimez votre tarif"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Description
+        </label>
+        <textarea
+          value={safeBlock.data.description || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, description: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          rows={2}
+          placeholder="Calculez le prix de votre trajet..."
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Devise
+        </label>
+        <select
+          value={safeBlock.data.currency || 'EUR'}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, currency: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        >
+          <option value="EUR">€ EUR</option>
+          <option value="USD">$ USD</option>
+          <option value="GBP">£ GBP</option>
+          <option value="CHF">CHF</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Règles de tarification ({pricingRules.length})
+        </label>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {pricingRules.map((rule: any, index: number) => (
+            <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded space-y-2">
+              <select
+                value={rule.type || 'base'}
+                onChange={(e) => {
+                  const newRules = [...pricingRules]
+                  newRules[index] = { ...rule, type: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, pricing_rules: newRules } })
+                }}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+              >
+                <option value="base">Tarif de base</option>
+                <option value="distance">Par distance (km)</option>
+                <option value="time">Par temps (min)</option>
+                <option value="night">Supplément nuit</option>
+                <option value="weekend">Supplément week-end</option>
+                <option value="airport">Supplément aéroport</option>
+              </select>
+              <input
+                type="text"
+                value={rule.label || ''}
+                onChange={(e) => {
+                  const newRules = [...pricingRules]
+                  newRules[index] = { ...rule, label: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, pricing_rules: newRules } })
+                }}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="Libellé"
+              />
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  value={rule.amount || 0}
+                  onChange={(e) => {
+                    const newRules = [...pricingRules]
+                    newRules[index] = { ...rule, amount: parseFloat(e.target.value) || 0 }
+                    onUpdate({ data: { ...safeBlock.data, pricing_rules: newRules } })
+                  }}
+                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                  placeholder="Montant"
+                />
+                <select
+                  value={rule.unit || 'fixed'}
+                  onChange={(e) => {
+                    const newRules = [...pricingRules]
+                    newRules[index] = { ...rule, unit: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, pricing_rules: newRules } })
+                  }}
+                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                >
+                  <option value="fixed">Fixe</option>
+                  <option value="per_km">Par km</option>
+                  <option value="per_min">Par minute</option>
+                </select>
+              </div>
+              <button
+                onClick={() => {
+                  const newRules = pricingRules.filter((_: any, i: number) => i !== index)
+                  onUpdate({ data: { ...safeBlock.data, pricing_rules: newRules } })
+                }}
+                className="w-full px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Supprimer
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => onUpdate({ data: { ...safeBlock.data, pricing_rules: [...pricingRules, { type: 'base', label: '', amount: 0, unit: 'fixed' }] } })}
+          className="mt-2 px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          + Ajouter une règle
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Availability Calendar (Calendrier disponibilité) - Premium
+export function AvailabilityCalendarConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Disponibilités"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Description
+        </label>
+        <textarea
+          value={safeBlock.data.description || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, description: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          rows={2}
+          placeholder="Consultez nos disponibilités..."
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Mode d'affichage
+        </label>
+        <select
+          value={safeBlock.data.view_mode || 'month'}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, view_mode: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        >
+          <option value="month">Mois</option>
+          <option value="week">Semaine</option>
+          <option value="day">Jour</option>
+        </select>
+      </div>
+      <div>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={safeBlock.data.show_time_slots === true}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_time_slots: e.target.checked } })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">Afficher les créneaux horaires</span>
+        </label>
+      </div>
+      <div>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={safeBlock.data.allow_booking === true}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, allow_booking: e.target.checked } })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">Permettre la réservation directe</span>
+        </label>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Jours de la semaine disponibles
+        </label>
+        <div className="space-y-1">
+          {['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'].map((day) => (
+            <label key={day} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={(safeBlock.data.available_days || []).includes(day)}
+                onChange={(e) => {
+                  const currentDays = safeBlock.data.available_days || []
+                  const newDays = e.target.checked
+                    ? [...currentDays, day]
+                    : currentDays.filter((d: string) => d !== day)
+                  onUpdate({ data: { ...safeBlock.data, available_days: newDays } })
+                }}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <span className="text-xs text-gray-700 dark:text-gray-300 capitalize">{day}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Heures d'ouverture (début)
+        </label>
+        <input
+          type="time"
+          value={safeBlock.data.start_time || '08:00'}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, start_time: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Heures de fermeture (fin)
+        </label>
+        <input
+          type="time"
+          value={safeBlock.data.end_time || '22:00'}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, end_time: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        />
+      </div>
+    </div>
+  )
+}
+

@@ -30,6 +30,9 @@ import {
   CounterConfig,
   CardGridConfig,
   LogoCarouselConfig,
+  RouteCalculatorConfig,
+  FareCalculatorConfig,
+  AvailabilityCalendarConfig,
 } from './blocks-implementations'
 import { CSS } from '@dnd-kit/utilities'
 import blocksService, { BlockType } from '@/services/blocks.service'
@@ -6345,6 +6348,15 @@ function BlockRenderer({
     
     case 'logo-carousel':
       return <LogoCarouselConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'route-calculator':
+      return <RouteCalculatorConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'fare-calculator':
+      return <FareCalculatorConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'availability-calendar':
+      return <AvailabilityCalendarConfig block={safeBlock} onUpdate={onUpdate} />
 
     default:
       return (
