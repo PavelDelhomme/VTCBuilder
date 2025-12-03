@@ -99,7 +99,7 @@ class SuppressExpected401LogFilter(logging.Filter):
                     for endpoint in SILENT_401_ENDPOINTS:
                         endpoint_lower = endpoint.lower()
                         if ((endpoint_lower in arg_lower or endpoint in arg) and 
-                            ('unauthorized' in message_lower or '401' in message)):
+                            ('unauthorized' in message_lower or ' 401' in message or '401 ' in message)):
                             return False
         
         return True

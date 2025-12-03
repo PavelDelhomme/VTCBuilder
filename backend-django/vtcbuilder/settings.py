@@ -305,10 +305,9 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'class': 'logging.StreamHandler',
+            '()': 'api.middleware.Suppress401Handler',  # Use custom handler that suppresses 401
             'filters': ['suppress_expected_401'],
             'formatter': 'simple',
-            'stream': 'ext://sys.stdout',
         },
         'null': {
             'class': 'logging.NullHandler',
