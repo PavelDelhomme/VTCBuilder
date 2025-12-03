@@ -759,7 +759,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         )}
 
         {/* Sidebar - Block Palette OU Properties Panel */}
-        <div className={`${sidebarOpen ? 'fixed left-0 top-0 h-screen z-50' : 'hidden'} lg:static lg:block w-64 lg:w-72 xl:w-80 2xl:w-96 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out shadow-lg lg:shadow-none flex-shrink-0 flex flex-col lg:h-full relative`}>
+        <div className={`${sidebarOpen ? 'fixed left-0 top-0 h-screen z-50' : 'hidden'} lg:static lg:block ${blocksPaletteOpen ? 'w-64 lg:w-72 xl:w-80 2xl:w-96' : 'w-0'} bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out shadow-lg lg:shadow-none flex-shrink-0 flex flex-col lg:h-full relative overflow-hidden`}>
           {/* Bouton pour masquer/afficher la palette de blocs - Minimaliste */}
           {!selectedBlock && (
             <button
@@ -1308,7 +1308,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       {/* Main Editor Area */}
         <div className="flex-1 flex min-w-0 w-full h-full border-r border-gray-200 dark:border-gray-700">
           {/* Editor Panel */}
-          <div className="flex-1 flex flex-col min-w-0 h-full transition-all duration-300 w-full">
+          <div className={`flex-1 flex flex-col min-w-0 h-full transition-all duration-300 w-full ${!blocksPaletteOpen ? 'ml-0' : ''}`}>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
