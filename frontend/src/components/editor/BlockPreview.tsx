@@ -3141,6 +3141,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
           </div>
         </div>
       )
+    }
 
     case 'tabs': {
       const tabs = block.data.tabs || []
