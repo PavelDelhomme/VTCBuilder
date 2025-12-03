@@ -380,11 +380,12 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     )
     
     // Pour les changements de style (padding, margin, couleur, etc.), utiliser un debounce
-    // Pour les changements de contenu (texte, etc.), mettre à jour immédiatement
-    const isStyleUpdate = updates.styles !== undefined || 
+    // Pour les changements de contenu (texte, enfants, etc.), mettre à jour immédiatement
+    const isStyleUpdate = (updates.styles !== undefined || 
                          updates.layout !== undefined || 
                          updates.container !== undefined ||
-                         updates.position !== undefined
+                         updates.position !== undefined) &&
+                         updates.children === undefined // Les enfants doivent être mis à jour immédiatement
     
     const updateHistory = () => {
       // Si on a fait undo avant (futur non vide), créer une nouvelle branche
