@@ -33,6 +33,7 @@ import {
   RouteCalculatorConfig,
   FareCalculatorConfig,
   AvailabilityCalendarConfig,
+  CaptchaConfig,
 } from './blocks-implementations'
 import { CSS } from '@dnd-kit/utilities'
 import blocksService, { BlockType } from '@/services/blocks.service'
