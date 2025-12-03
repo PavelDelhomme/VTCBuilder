@@ -1536,71 +1536,61 @@ function ContainerChildrenRenderer({
 
   return (
     <div className="space-y-3">
-      {/* Zone de conteneur avec style approprié */}
-      <div
-        className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50"
-        style={containerStyle}
-      >
-        {children.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <div className="text-2xl mb-2">📦</div>
-            <p className="text-sm font-medium mb-1">Conteneur vide</p>
-            <p className="text-xs">Ajoutez des blocs pour commencer</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {children.map((child) => {
-              const childBlockType = blockTypes.find((bt) => bt.name === child.type)
-              return (
-                <div
-                  key={child.id}
-                  className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer"
-                  onClick={() => onSelectChild(child.id)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{childBlockType?.icon || '📦'}</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {childBlockType?.label || child.type}
-                      </span>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDeleteChild(child.id)
-                      }}
-                      className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                      title="Supprimer"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                  {childBlockType && (
-                    <BlockRenderer 
-                      block={{ ...child, data: child.data || {} }} 
-                      blockType={childBlockType} 
-                      onUpdate={(updates) => onUpdateChild(child.id, updates)} 
-                    />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Zone de drop pour drag & drop */}
+      {/* Zone de conteneur avec style approprié et zone de drop */}
       <ContainerDropZone
         containerId={block.id}
         onDrop={handleAddBlock}
-        className="min-h-[80px] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center transition-colors hover:border-blue-400 dark:hover:border-blue-600 mb-3"
+        className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50 min-h-[120px]"
       >
-        <div className="text-center py-4">
-          <div className="text-2xl mb-2">📦</div>
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Glissez un bloc ici</p>
-          <p className="text-xs text-gray-500 dark:text-gray-500">ou</p>
+        <div style={containerStyle} className="w-full h-full">
+          {children.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <div className="text-2xl mb-2">📦</div>
+              <p className="text-sm font-medium mb-1">Conteneur vide</p>
+              <p className="text-xs">Glissez un bloc ici ou cliquez sur "Ajouter un bloc"</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {children.map((child) => {
+                const childBlockType = blockTypes.find((bt) => bt.name === child.type)
+                return (
+                  <div
+                    key={child.id}
+                    className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer"
+                    onClick={() => onSelectChild(child.id)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{childBlockType?.icon || '📦'}</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {childBlockType?.label || child.type}
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDeleteChild(child.id)
+                        }}
+                        className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                        title="Supprimer"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    {childBlockType && (
+                      <BlockRenderer 
+                        block={{ ...child, data: child.data || {} }} 
+                        blockType={childBlockType} 
+                        onUpdate={(updates) => onUpdateChild(child.id, updates)} 
+                      />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </ContainerDropZone>
 
