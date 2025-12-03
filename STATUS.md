@@ -6,6 +6,53 @@
 
 ## 🚨 PRIORITÉS ACTUELLES - EN COURS DE TRAITEMENT
 
+### 🧩 Implémentation Complète des Blocs - EN COURS (03/12/2025)
+
+**État Actuel** :
+- ✅ 20 nouveaux blocs implémentés selon BLOCKS_ROADMAP.md
+- ✅ Tests Playwright créés pour les nouveaux blocs
+- ⏳ Initialisation des blocs dans la base de données nécessaire
+- ⏳ Vérification complète du fonctionnement
+
+**Blocs Implémentés** :
+1. ✅ Rich Text Editor (WYSIWYG) - Éditeur HTML
+2. ✅ Markdown Editor - Éditeur Markdown
+3. ✅ HTML Raw - Code HTML brut
+4. ✅ Icon - Icône seule (emoji ou Font Awesome)
+5. ✅ Label - Label pour formulaires
+6. ✅ Tooltip - Info-bulle au survol
+7. ✅ Popover - Popover au clic
+8. ✅ Dropdown - Menu déroulant
+9. ✅ Categories - Affichage de catégories
+10. ✅ Author Box - Boîte d'information auteur
+11. ✅ Related Posts - Articles liés
+12. ✅ Table of Contents - Table des matières automatique
+13. ✅ Reading Time - Estimation du temps de lecture
+14. ✅ Share Buttons - Boutons de partage social
+15. ✅ Flexbox - Conteneur flexbox avec propriétés avancées
+16. ✅ Grid - Grille CSS avec propriétés avancées
+17. ✅ Stack - Pile verticale d'éléments
+18. ✅ Inline - Ligne horizontale d'éléments
+19. ✅ Group - Groupe d'éléments
+20. ✅ Wrapper - Enveloppe générique
+
+**Fichiers Créés/Modifiés** :
+- `backend-django/blocks/data/default_blocks.json` : Ajout des définitions des nouveaux blocs
+- `frontend/src/components/editor/blocks-implementations.tsx` : Composants de configuration pour tous les nouveaux blocs
+- `frontend/src/components/editor/BlockEditor.tsx` : Intégration dans le panneau de propriétés
+- `frontend/src/components/editor/BlockPreview.tsx` : Intégration du rendu
+- `frontend/e2e/admin/blocks-new.spec.ts` : Tests Playwright pour les nouveaux blocs
+- `BLOCKS_ROADMAP.md` : Mise à jour pour marquer les blocs comme implémentés
+
+**Prochaines Étapes** :
+1. Initialiser les blocs dans la base de données (`make init-blocks`)
+2. Vérifier que tous les tests passent
+3. Continuer l'implémentation jusqu'à 90% du roadmap
+4. Tests d'intégrité à chaque étape
+5. Mise à jour régulière de STATUS.md
+
+**Branche** : `feature/blocks-implementation-tests`
+
 ### 📋 Tenant de Référence (Reference-Tenant) - Documentation
 
 **Qu'est-ce que le tenant de référence ?**
