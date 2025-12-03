@@ -506,7 +506,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             /* Properties Panel dans la sidebar */
             <>
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div className="flex items-center justify-between p-2 sm:p-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Paramètres du bloc</h3>
                 <button
                   onClick={() => {
@@ -524,7 +524,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
 
               {/* Tabs pour Mise en page, Style et Contenu (ordre optimisé) */}
               <div className="border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <div className="flex gap-2 px-4 overflow-x-auto">
+                <div className="flex gap-2 px-2 sm:px-3 overflow-x-auto">
                   <button
                     onClick={() => setPropertiesTab('layout')}
                     className={`px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
@@ -559,7 +559,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
               </div>
 
               {/* Properties Content */}
-              <div className="flex-1 overflow-y-auto p-4 min-h-0" style={{ maxHeight: '100%', WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex-1 overflow-y-auto p-2 sm:p-3 min-h-0 pb-4" style={{ maxHeight: '100%', WebkitOverflowScrolling: 'touch' }}>
                 <div className="min-h-full">
                 {propertiesTab === 'layout' ? (
                   selectedBlockData ? (
@@ -6145,10 +6145,10 @@ function BlockStylePanel({
   ]
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2.5">
       {/* Couleur de fond */}
       <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Couleur de fond
         </label>
         <div className="flex items-center gap-2 mb-2">
@@ -6185,7 +6185,7 @@ function BlockStylePanel({
 
       {/* Couleur de texte */}
       <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Couleur de texte
         </label>
         <div className="flex items-center gap-2">
@@ -6206,7 +6206,7 @@ function BlockStylePanel({
       </div>
 
       {/* Propriétés avancées - Premium */}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Propriétés avancées</span>
           <span className="px-2 py-0.5 text-[10px] font-bold text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400 rounded">PREMIUM</span>
@@ -6469,7 +6469,7 @@ function BlockStylePanel({
 
       {/* Padding */}
       <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Espacement interne (Padding)
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -6517,7 +6517,7 @@ function BlockStylePanel({
 
       {/* Margin */}
       <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Espacement externe (Margin)
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -6546,7 +6546,7 @@ function BlockStylePanel({
 
       {/* Bordures */}
       <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Bordures
         </label>
         <div className="space-y-2">
@@ -6617,7 +6617,7 @@ function BlockStylePanel({
 
       {/* Ombres */}
       <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Ombres
         </label>
         <select
@@ -6636,7 +6636,7 @@ function BlockStylePanel({
 
       {/* Alignement du texte */}
       <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Alignement du texte
         </label>
         <div className="flex gap-1">
