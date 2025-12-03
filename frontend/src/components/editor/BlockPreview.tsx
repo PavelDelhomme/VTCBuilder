@@ -3050,9 +3050,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
         </div>
       )
 
-    case 'logo-grid':
+    case 'logo-grid': {
       const logos = block.data.logos || []
-      const columns = block.data.columns || 4
+      const logoColumns = block.data.columns || 4
       return (
         <div style={wrapperStyles} className="mb-6">
           {block.data.title && (
@@ -3063,7 +3063,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
           <div 
             className="grid gap-6 items-center justify-items-center"
             style={{
-              gridTemplateColumns: `repeat(${columns}, 1fr)`,
+              gridTemplateColumns: `repeat(${logoColumns}, 1fr)`,
             }}
           >
             {logos.length > 0 ? (
@@ -3093,6 +3093,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
           </div>
         </div>
       )
+    }
 
     case 'card':
       const cards = block.data.cards || []
