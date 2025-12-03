@@ -296,12 +296,11 @@ export default function HomePage() {
   
   // Si on utilise les blocs et que la page est publiée, afficher avec BlockPreview
   // La page d'accueil peut être administrée via /admin/pages-public/home/edit
+  // Les blocs contiennent déjà header et footer, donc pas besoin de PublicHeader/PublicFooter
   if (useBlocks && homepageStatus === 'published' && homepageBlocks.length > 0) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900">
-        <PublicHeader showThemeToggle={true} />
         <BlockPreview blocks={homepageBlocks} blockTypes={[]} />
-        <PublicFooter />
       </div>
     )
   }

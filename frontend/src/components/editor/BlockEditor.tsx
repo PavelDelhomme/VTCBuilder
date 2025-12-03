@@ -4541,6 +4541,86 @@ function BlockRenderer({
           )}
         </div>
       )
+    case 'cta-section':
+      return (
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Titre
+            </label>
+            <input
+              type="text"
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="Prêt à démarrer ?"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Description
+            </label>
+            <textarea
+              value={safeBlock.data.description || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, description: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              rows={3}
+              placeholder="Créez votre site VTC professionnel dès aujourd'hui..."
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Texte du bouton
+            </label>
+            <input
+              type="text"
+              value={safeBlock.data.button_text || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_text: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="🚀 Créer mon compte gratuitement"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              URL du bouton
+            </label>
+            <UrlInputWithSuggestions
+              value={safeBlock.data.button_url || ''}
+              onChange={(url) => onUpdate({ data: { ...safeBlock.data, button_url: url } })}
+              placeholder="/register"
+              className="text-xs"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Style du bouton
+            </label>
+            <select
+              value={safeBlock.data.button_style || 'light'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_style: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            >
+              <option value="light">Clair (blanc sur fond coloré)</option>
+              <option value="dark">Sombre (gris foncé)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Dégradé de fond
+            </label>
+            <input
+              type="text"
+              value={safeBlock.data.background_gradient || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_gradient: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono"
+              placeholder="linear-gradient(to right, #2563eb, #9333ea)"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Exemples: linear-gradient(to right, #2563eb, #9333ea) ou from-blue-600 to-purple-600
+            </p>
+          </div>
+        </div>
+      )
     case 'header':
       const headerLinks = safeBlock.data.links || []
       return (
