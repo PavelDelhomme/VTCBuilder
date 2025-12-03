@@ -306,10 +306,16 @@ export default function EditPublicPage() {
             id: `grid-container-${now}`,
             type: 'grid-container',
             data: {
-              columns: 1,
-              gap: 'gap-4'
+              columns: 1,  // 1 colonne pour empiler verticalement les blocs
+              gap: 'gap-6',  // Espacement entre les blocs
+              template_columns: '1fr',  // Template CSS Grid
+              auto_rows: 'auto'  // Hauteur automatique pour les lignes
             },
-            styles: {},
+            styles: {
+              display: 'grid',
+              gridTemplateColumns: '1fr',
+              gap: '1.5rem'
+            },
             children: [headerBlock, heroBlock, featuresBlock, pricingBlock, ctaBlock, footerBlock]
           }
           
@@ -318,9 +324,14 @@ export default function EditPublicPage() {
             type: 'container',
             data: {
               max_width: 'max-w-7xl',
-              padding: 'px-4 sm:px-6 lg:px-8'
+              padding: 'px-4 sm:px-6 lg:px-8',
+              margin: 'mx-auto'
             },
-            styles: {},
+            styles: {
+              maxWidth: '80rem',  // max-w-7xl
+              margin: '0 auto',
+              padding: '0 1rem'
+            },
             children: [gridContainer]
           }
           

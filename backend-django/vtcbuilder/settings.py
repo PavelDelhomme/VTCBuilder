@@ -326,13 +326,13 @@ LOGGING = {
         },
         'django.request': {
             'handlers': ['console'],
-            'level': 'ERROR',  # Only log errors, not warnings (401 is a warning)
+            'level': 'WARNING',  # Log warnings but filter 401 for expected endpoints
             'propagate': False,
             'filters': ['suppress_expected_401'],
         },
         'rest_framework': {
             'handlers': ['console'],
-            'level': 'ERROR',  # Only log errors, not warnings (401 is a warning)
+            'level': 'WARNING',  # Log warnings but filter 401 for expected endpoints
             'propagate': False,
             'filters': ['suppress_expected_401'],
         },

@@ -265,7 +265,7 @@ class MediaViewSet(viewsets.ModelViewSet):
                 
                 # Ensure 'file' is present in the request
                 if 'file' not in data and 'file' not in request.FILES:
-                    logger.warning(f"Media upload: No file provided in request. Keys: {list(data.keys())}, FILES: {list(request.FILES.keys())}")
+                    # Ne pas logger comme erreur - c'est une validation normale
                     error_response = Response(
                         {'error': 'Aucun fichier fourni. Veuillez sélectionner un fichier à téléverser.', 'details': {'file': ['Ce champ est requis.']}},
                         status=status.HTTP_400_BAD_REQUEST
@@ -279,7 +279,7 @@ class MediaViewSet(viewsets.ModelViewSet):
                 
                 serializer = MediaUploadSerializer(data=data)
                 if not serializer.is_valid():
-                    logger.warning(f"Serializer validation errors: {serializer.errors}")
+                    # Ne pas logger comme erreur - c'est une validation normale
                     error_response = Response(
                         {'error': 'Erreur de validation', 'details': serializer.errors},
                         status=status.HTTP_400_BAD_REQUEST

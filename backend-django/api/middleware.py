@@ -31,11 +31,16 @@ class SuppressExpected401LogFilter(logging.Filter):
         pathname = getattr(record, 'pathname', '')
         args = getattr(record, 'args', ())
         
-        # Check message content
-        if 'Unauthorized' in message:
+        # Check message content - look for "Unauthorized" in various forms
+        message_lower = message.lower()
+        if 'unauthorized' in message_lower or '401' in message:
             # Check if message contains any silent endpoint
             for endpoint in SILENT_401_ENDPOINTS:
-                if endpoint in message or endpoint in pathname:
+                endpoint_lower = endpoint.lower()
+                if (endpoint_lower in message_lower or 
+                    endpoint in message or 
+                    endpoint in pathname or
+                    endpoint_lower in pathname.lower()):
                     # Suppress this log
                     return False
         
@@ -43,8 +48,11 @@ class SuppressExpected401LogFilter(logging.Filter):
         if args:
             for arg in args:
                 if isinstance(arg, str):
+                    arg_lower = arg.lower()
                     for endpoint in SILENT_401_ENDPOINTS:
-                        if endpoint in arg and 'Unauthorized' in message:
+                        endpoint_lower = endpoint.lower()
+                        if ((endpoint_lower in arg_lower or endpoint in arg) and 
+                            ('unauthorized' in message_lower or '401' in message)):
                             return False
         
         return True
