@@ -3213,6 +3213,133 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
         </div>
       )
 
+    case 'image-slider':
+      const sliderImages = block.data?.images || []
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && <h3 className="text-lg font-semibold mb-3">{block.data.title}</h3>}
+          <div className="relative overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800" style={{ height: '400px' }}>
+            {sliderImages.length > 0 ? (
+              <div className="flex h-full">
+                {sliderImages.slice(0, 1).map((img: any, index: number) => (
+                  <img key={index} src={img.url || ''} alt={img.alt || ''} className="w-full h-full object-cover" />
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-400">Aucune image</div>
+            )}
+          </div>
+        </div>
+      )
+
+    case 'lightbox':
+      const lightboxImages = block.data?.images || []
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <div className="grid grid-cols-3 gap-2">
+            {lightboxImages.slice(0, 6).map((img: any, index: number) => (
+              <div key={index} className="aspect-square bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
+                {img.thumbnail || img.url ? (
+                  <img src={img.thumbnail || img.url || ''} alt={img.alt || ''} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Image {index + 1}</div>
+                )}
+              </div>
+            ))}
+          </div>
+          {lightboxImages.length === 0 && (
+            <div className="text-center py-8 text-gray-400">Aucune image dans la lightbox</div>
+          )}
+        </div>
+      )
+
+    case 'vimeo-embed':
+      const vimeoId = block.data?.vimeoId || (block.data?.url ? block.data.url.match(/vimeo\.com\/(\d+)/)?.[1] : '')
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && <h3 className="text-lg font-semibold mb-3">{block.data.title}</h3>}
+          {vimeoId ? (
+            <div className="relative" style={{ paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
+              <iframe
+                src={`https://player.vimeo.com/video/${vimeoId}`}
+                className="absolute top-0 left-0 w-full h-full"
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8 text-center text-gray-400">
+              ID Vimeo requis
+            </div>
+          )}
+        </div>
+      )
+
+    case 'counter':
+      return (
+        <div style={wrapperStyles} className="mb-6 text-center">
+          <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
+            {block.data?.prefix || ''}{block.data?.value || 0}{block.data?.suffix || ''}
+          </div>
+          {block.data?.label && (
+            <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">{block.data.label}</div>
+          )}
+        </div>
+      )
+
+    case 'card-grid':
+      const gridCards = block.data?.cards || []
+      const gridColumns = block.data?.columns || 3
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && <h3 className="text-lg font-semibold mb-4">{block.data.title}</h3>}
+          <div className={`grid grid-cols-1 md:grid-cols-${gridColumns} gap-4`}>
+            {gridCards.map((card: any, index: number) => (
+              <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                {card.image && (
+                  <img src={card.image} alt={card.title || ''} className="w-full h-48 object-cover" />
+                )}
+                <div className="p-4">
+                  {card.title && <h4 className="font-semibold mb-2">{card.title}</h4>}
+                  {card.description && <p className="text-sm text-gray-600 dark:text-gray-400">{card.description}</p>}
+                  {card.link && (
+                    <a href={card.link} className="text-blue-600 dark:text-blue-400 text-sm hover:underline mt-2 inline-block">
+                      En savoir plus →
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          {gridCards.length === 0 && (
+            <div className="text-center py-8 text-gray-400">Aucune carte</div>
+          )}
+        </div>
+      )
+
+    case 'logo-carousel':
+      const carouselLogos = block.data?.logos || []
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && <h3 className="text-lg font-semibold mb-4">{block.data.title}</h3>}
+          <div className="flex gap-4 overflow-x-auto pb-4">
+            {carouselLogos.map((logo: any, index: number) => (
+              <div key={index} className="flex-shrink-0 w-32 h-32 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center p-4">
+                {logo.url ? (
+                  <img src={logo.url} alt={logo.name || ''} className="max-w-full max-h-full object-contain" />
+                ) : (
+                  <div className="text-gray-400 text-xs text-center">{logo.name || `Logo ${index + 1}`}</div>
+                )}
+              </div>
+            ))}
+          </div>
+          {carouselLogos.length === 0 && (
+            <div className="text-center py-8 text-gray-400">Aucun logo</div>
+          )}
+        </div>
+      )
+
     default:
       return (
         <div style={wrapperStyles} className="mb-6 p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-center">

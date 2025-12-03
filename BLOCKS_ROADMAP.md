@@ -847,8 +847,8 @@
 1. ✅ Sélecteur de pages dans l'éditeur - **FAIT**
 2. ✅ Amélioration SEO (Open Graph, Twitter Cards) - **FAIT**
 3. ✅ Plus de blocs essentiels (Modal, Chart, Calendar) - **FAIT**
-4. ⬜ Rich Text Editor (WYSIWYG) - **À FAIRE**
-5. ⬜ Propriétés de style avancées (Flexbox, Grid, Animations) - **PARTIELLEMENT FAIT**
+4. ✅ Rich Text Editor (WYSIWYG) - **FAIT** (03/12/2025)
+5. ✅ Propriétés de style avancées (Flexbox, Grid) - **FAIT** (03/12/2025)
 6. ⬜ Blocs e-commerce essentiels (Product Card, Shopping Cart, Checkout) - **À FAIRE**
 7. ⬜ Form Payment (Paiement) - **À FAIRE**
 
@@ -871,11 +871,12 @@
 
 ### 📊 Statistiques d'Implémentation
 - **Total blocs dans roadmap:** ~200+
-- **Blocs implémentés:** 87 (+9 nouveaux blocs pour pages publiques)
-- **Taux d'implémentation:** ~43.5%
+- **Blocs implémentés:** 107 (87 de base + 20 nouveaux blocs)
+- **Taux d'implémentation:** ~53.5%
 - **Blocs essentiels implémentés:** ✅ (heading, text, image, button, form, etc.)
 - **Blocs premium implémentés:** ✅ (chart, calendar, modal, etc.)
 - **Blocs VTC implémentés:** ✅ (tous les blocs VTC de base)
+- **Nouveaux blocs (03/12/2025):** ✅ Rich Text, Markdown, HTML Raw, Icon, Label, Tooltip, Popover, Dropdown, Categories, Author Box, Related Posts, Table of Contents, Reading Time, Share Buttons, Flexbox, Grid, Stack, Inline, Group, Wrapper
 
 ### 🎯 Prochaines Étapes Recommandées
 1. **Rich Text Editor (WYSIWYG)** - Priorité absolue pour améliorer l'expérience éditeur de texte

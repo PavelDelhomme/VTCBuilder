@@ -24,6 +24,12 @@ import {
   InlineConfig,
   GroupConfig,
   WrapperConfig,
+  ImageSliderConfig,
+  LightboxConfig,
+  VimeoEmbedConfig,
+  CounterConfig,
+  CardGridConfig,
+  LogoCarouselConfig,
 } from './blocks-implementations'
 import { CSS } from '@dnd-kit/utilities'
 import blocksService, { BlockType } from '@/services/blocks.service'
@@ -6235,6 +6241,24 @@ function BlockRenderer({
     
     case 'wrapper':
       return <WrapperConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'image-slider':
+      return <ImageSliderConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'lightbox':
+      return <LightboxConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'vimeo-embed':
+      return <VimeoEmbedConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'counter':
+      return <CounterConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'card-grid':
+      return <CardGridConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'logo-carousel':
+      return <LogoCarouselConfig block={safeBlock} onUpdate={onUpdate} />
 
     default:
       return (

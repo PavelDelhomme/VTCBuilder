@@ -827,3 +827,511 @@ export function WrapperConfig({ block, onUpdate }: { block: Block; onUpdate: (up
   )
 }
 
+// Image Slider
+export function ImageSliderConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const images = safeBlock.data.images || [{ url: '', alt: '', caption: '' }]
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre (optionnel)
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Diaporama"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Images ({images.length})
+        </label>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {images.map((img: any, index: number) => (
+            <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
+              <input
+                type="text"
+                value={img.url || ''}
+                onChange={(e) => {
+                  const newImages = [...images]
+                  newImages[index] = { ...img, url: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, images: newImages } })
+                }}
+                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="URL de l'image"
+              />
+              <input
+                type="text"
+                value={img.alt || ''}
+                onChange={(e) => {
+                  const newImages = [...images]
+                  newImages[index] = { ...img, alt: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, images: newImages } })
+                }}
+                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="Texte alternatif"
+              />
+              <input
+                type="text"
+                value={img.caption || ''}
+                onChange={(e) => {
+                  const newImages = [...images]
+                  newImages[index] = { ...img, caption: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, images: newImages } })
+                }}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="Légende (optionnel)"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => onUpdate({ data: { ...safeBlock.data, images: [...images, { url: '', alt: '', caption: '' }] } })}
+            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            + Ajouter
+          </button>
+          {images.length > 1 && (
+            <button
+              onClick={() => onUpdate({ data: { ...safeBlock.data, images: images.slice(0, -1) } })}
+              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              - Supprimer
+            </button>
+          )}
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Autoplay
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={safeBlock.data.autoplay || false}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, autoplay: e.target.checked } })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">Lecture automatique</span>
+        </label>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Intervalle (secondes)
+        </label>
+        <input
+          type="number"
+          value={safeBlock.data.interval || 5}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, interval: parseInt(e.target.value) || 5 } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          min={1}
+          max={60}
+        />
+      </div>
+    </div>
+  )
+}
+
+// Lightbox
+export function LightboxConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const images = safeBlock.data.images || [{ url: '', alt: '', thumbnail: '' }]
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Images ({images.length})
+        </label>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {images.map((img: any, index: number) => (
+            <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
+              <input
+                type="text"
+                value={img.url || ''}
+                onChange={(e) => {
+                  const newImages = [...images]
+                  newImages[index] = { ...img, url: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, images: newImages } })
+                }}
+                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="URL image complète"
+              />
+              <input
+                type="text"
+                value={img.thumbnail || ''}
+                onChange={(e) => {
+                  const newImages = [...images]
+                  newImages[index] = { ...img, thumbnail: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, images: newImages } })
+                }}
+                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="URL miniature"
+              />
+              <input
+                type="text"
+                value={img.alt || ''}
+                onChange={(e) => {
+                  const newImages = [...images]
+                  newImages[index] = { ...img, alt: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, images: newImages } })
+                }}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="Texte alternatif"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => onUpdate({ data: { ...safeBlock.data, images: [...images, { url: '', alt: '', thumbnail: '' }] } })}
+            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            + Ajouter
+          </button>
+          {images.length > 1 && (
+            <button
+              onClick={() => onUpdate({ data: { ...safeBlock.data, images: images.slice(0, -1) } })}
+              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              - Supprimer
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Vimeo Embed
+export function VimeoEmbedConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          ID ou URL Vimeo
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.vimeoId || safeBlock.data.url || ''}
+          onChange={(e) => {
+            const value = e.target.value
+            // Extraire l'ID depuis l'URL si nécessaire
+            let vimeoId = value
+            if (value.includes('vimeo.com/')) {
+              const match = value.match(/vimeo\.com\/(\d+)/)
+              if (match) vimeoId = match[1]
+            }
+            onUpdate({ data: { ...safeBlock.data, vimeoId, url: value } })
+          }}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="123456789 ou https://vimeo.com/123456789"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre (optionnel)
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Titre de la vidéo"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Hauteur (px)
+        </label>
+        <input
+          type="number"
+          value={safeBlock.data.height || 400}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, height: parseInt(e.target.value) || 400 } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          min={200}
+          max={800}
+        />
+      </div>
+    </div>
+  )
+}
+
+// Counter
+export function CounterConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Valeur finale
+        </label>
+        <input
+          type="number"
+          value={safeBlock.data.value || 0}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, value: parseInt(e.target.value) || 0 } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="100"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Préfixe
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.prefix || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, prefix: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="+"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Suffixe
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.suffix || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, suffix: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="%"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Durée de l'animation (ms)
+        </label>
+        <input
+          type="number"
+          value={safeBlock.data.duration || 2000}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, duration: parseInt(e.target.value) || 2000 } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          min={500}
+          max={10000}
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Label
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.label || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, label: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Clients satisfaits"
+        />
+      </div>
+    </div>
+  )
+}
+
+// Card Grid
+export function CardGridConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const cards = safeBlock.data.cards || [{ title: '', description: '', image: '', link: '' }]
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre de la section
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Nos services"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Colonnes
+        </label>
+        <select
+          value={safeBlock.data.columns || 3}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, columns: parseInt(e.target.value) || 3 } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        >
+          <option value={1}>1</option>
+          <option value={2}>2</option>
+          <option value={3}>3</option>
+          <option value={4}>4</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Cartes ({cards.length})
+        </label>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {cards.map((card: any, index: number) => (
+            <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
+              <input
+                type="text"
+                value={card.title || ''}
+                onChange={(e) => {
+                  const newCards = [...cards]
+                  newCards[index] = { ...card, title: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, cards: newCards } })
+                }}
+                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="Titre"
+              />
+              <textarea
+                value={card.description || ''}
+                onChange={(e) => {
+                  const newCards = [...cards]
+                  newCards[index] = { ...card, description: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, cards: newCards } })
+                }}
+                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                rows={2}
+                placeholder="Description"
+              />
+              <input
+                type="text"
+                value={card.image || ''}
+                onChange={(e) => {
+                  const newCards = [...cards]
+                  newCards[index] = { ...card, image: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, cards: newCards } })
+                }}
+                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="URL image"
+              />
+              <input
+                type="text"
+                value={card.link || ''}
+                onChange={(e) => {
+                  const newCards = [...cards]
+                  newCards[index] = { ...card, link: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, cards: newCards } })
+                }}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="Lien (optionnel)"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => onUpdate({ data: { ...safeBlock.data, cards: [...cards, { title: '', description: '', image: '', link: '' }] } })}
+            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            + Ajouter
+          </button>
+          {cards.length > 1 && (
+            <button
+              onClick={() => onUpdate({ data: { ...safeBlock.data, cards: cards.slice(0, -1) } })}
+              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              - Supprimer
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Logo Carousel
+export function LogoCarouselConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const logos = safeBlock.data.logos || [{ url: '', name: '', link: '' }]
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre de la section
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Nos partenaires"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Logos ({logos.length})
+        </label>
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {logos.map((logo: any, index: number) => (
+            <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
+              <input
+                type="text"
+                value={logo.url || ''}
+                onChange={(e) => {
+                  const newLogos = [...logos]
+                  newLogos[index] = { ...logo, url: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, logos: newLogos } })
+                }}
+                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="URL du logo"
+              />
+              <input
+                type="text"
+                value={logo.name || ''}
+                onChange={(e) => {
+                  const newLogos = [...logos]
+                  newLogos[index] = { ...logo, name: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, logos: newLogos } })
+                }}
+                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="Nom du partenaire"
+              />
+              <input
+                type="text"
+                value={logo.link || ''}
+                onChange={(e) => {
+                  const newLogos = [...logos]
+                  newLogos[index] = { ...logo, link: e.target.value }
+                  onUpdate({ data: { ...safeBlock.data, logos: newLogos } })
+                }}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                placeholder="Lien (optionnel)"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => onUpdate({ data: { ...safeBlock.data, logos: [...logos, { url: '', name: '', link: '' }] } })}
+            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            + Ajouter
+          </button>
+          {logos.length > 1 && (
+            <button
+              onClick={() => onUpdate({ data: { ...safeBlock.data, logos: logos.slice(0, -1) } })}
+              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              - Supprimer
+            </button>
+          )}
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Autoplay
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={safeBlock.data.autoplay !== false}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, autoplay: e.target.checked } })}
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          />
+          <span className="text-xs text-gray-700 dark:text-gray-300">Défilement automatique</span>
+        </label>
+      </div>
+    </div>
+  )
+}
+
