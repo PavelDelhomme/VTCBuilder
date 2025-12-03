@@ -308,6 +308,10 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'filters': ['suppress_expected_401'],
             'formatter': 'simple',
+            'stream': 'ext://sys.stdout',
+        },
+        'null': {
+            'class': 'logging.NullHandler',
         },
     },
     'root': {
