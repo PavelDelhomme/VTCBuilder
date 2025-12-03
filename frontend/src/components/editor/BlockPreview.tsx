@@ -1549,11 +1549,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                   
                   // Déterminer le style du bouton
                   const buttonStyle = plan.button_style || (plan.is_featured ? 'primary' : 'secondary')
-                  const buttonClasses = {
+                  const buttonStylesMap: Record<string, string> = {
                     primary: 'bg-blue-600 text-white hover:bg-blue-700',
-                    secondary: 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600',
+                    secondary: 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600',
                     outline: 'bg-transparent border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900'
-                  }[buttonStyle] || buttonClasses.primary
+                  }
+                  const buttonClasses = buttonStylesMap[buttonStyle] || buttonStylesMap.primary
                   
                   // URL du bouton
                   const buttonUrl = plan.button_url || `/register?plan=${plan.slug || plan.id || index}`
