@@ -36,6 +36,7 @@ import blocksService, { BlockType } from '@/services/blocks.service'
 import { useFeatures } from '@/contexts/FeaturesContext'
 import UrlInputWithSuggestions from './UrlInputWithSuggestions'
 import PageSelector from './PageSelector'
+import ImageSelector from './ImageSelector'
 import { useHistory } from '@/hooks/useHistory'
 import { useBlockTracking } from '@/hooks/useBlockTracking'
 
