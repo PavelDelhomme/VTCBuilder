@@ -61,6 +61,8 @@ api.interceptors.request.use((config) => {
 });
 
 // Liste des endpoints où les erreurs 404/401/500 sont attendues (ne pas les logger)
+// Note: Les endpoints de création/modification (POST, PATCH, DELETE) ne doivent PAS être silencieux
+// car ils indiquent un problème d'authentification qui doit être traité
 const SILENT_ERROR_ENDPOINTS = [
   '/payment-methods/',
   '/system-settings/',
@@ -129,12 +131,22 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       
-      // Ne rediriger vers /login que si on n'est pas sur une page publique
-      // et qu'il y a un token (ce qui signifie qu'il a expiré)
+      // Pour les requêtes POST/PATCH/DELETE, l'erreur 401 indique un problème d'authentification
+      // qui doit être traité (redirection vers login)
+      const isModificationRequest = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(error.config?.method?.toUpperCase() || '');
       const hasToken = localStorage.getItem('token');
-      if (hasToken && !isPublicRoute) {
+      
+      // Rediriger vers /login si :
+      // - C'est une requête de modification ET qu'il y a un token (token expiré)
+      // - OU qu'on n'est pas sur une page publique ET qu'il y a un token
+      if ((isModificationRequest && hasToken) || (hasToken && !isPublicRoute)) {
         localStorage.removeItem('token');
-        window.location.href = '/login';
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        // Ne pas rediriger immédiatement pour les requêtes silencieuses
+        if (!isSilentError) {
+          window.location.href = '/login';
+        }
       }
       // Si pas de token et page publique, c'est normal, ne pas rediriger
     } else if (!isSilentError && status) {

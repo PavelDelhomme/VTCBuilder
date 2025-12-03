@@ -34,6 +34,13 @@ export default function ProjectsManagement() {
   }
 
   const handleCreateProject = async () => {
+    // Vérifier l'authentification avant de créer
+    if (!authService.isAuthenticated()) {
+      toast.error('Vous devez être connecté pour créer un projet')
+      router.push('/login')
+      return
+    }
+
     try {
       // Créer un projet système par défaut pour les pages publiques
       const project = await projectService.create({
@@ -44,8 +51,25 @@ export default function ProjectsManagement() {
       toast.success('Projet créé avec succès !')
       navigate(`/admin/projects/${project.id}`)
     } catch (error: any) {
-      console.error('Erreur création projet:', error)
-      toast.error('Erreur lors de la création du projet')
+      // Gérer les erreurs d'authentification
+      if (error.response?.status === 401) {
+        toast.error('Session expirée. Veuillez vous reconnecter.')
+        localStorage.removeItem('token')
+        router.push('/login')
+        return
+      }
+      
+      // Ne pas logger les erreurs réseau attendues
+      const isExpectedError = error.code === 'ERR_NETWORK' || 
+                             error.code === 'ERR_BLOCKED_BY_CLIENT'
+      if (!isExpectedError) {
+        console.error('Erreur création projet:', error)
+      }
+      
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          'Erreur lors de la création du projet'
+      toast.error(errorMessage)
     }
   }
 
