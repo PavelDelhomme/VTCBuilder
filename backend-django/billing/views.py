@@ -50,7 +50,16 @@ class PricingPlanViewSet(viewsets.ModelViewSet):
     """ViewSet for managing pricing plans"""
     queryset = PricingPlan.objects.all()
     serializer_class = PricingPlanSerializer
-    permission_classes = [IsAuthenticated]
+    # Allow public access to list pricing plans (for public pricing page)
+    permission_classes = []  # No authentication required for listing
+    
+    def get_permissions(self):
+        """
+        Allow public access to list, but require authentication for create/update/delete
+        """
+        if self.action == 'list':
+            return []  # No authentication required
+        return [IsAuthenticated()]  # Authentication required for other actions
 
     def get_queryset(self):
         """Filter plans based on user role"""
