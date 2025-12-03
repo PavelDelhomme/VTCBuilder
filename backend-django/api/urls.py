@@ -37,6 +37,9 @@ try:
     from projects.views import ProjectViewSet
     PROJECTS_AVAILABLE = True
 except (ImportError, RuntimeError) as e:
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.error(f"Failed to import ProjectViewSet: {e}", exc_info=True)
     PROJECTS_AVAILABLE = False
     ProjectViewSet = None
 from .views import DashboardView, DetailedStatsView, block_usage_tracking_view
