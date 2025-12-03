@@ -2059,10 +2059,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       return (
         <div 
           style={{
-            // Copier wrapperStyles sans les propriétés de padding pour éviter les conflits
+            // Copier wrapperStyles sans les propriétés de padding et color pour éviter les conflits
+            // (la couleur doit être appliquée uniquement au contenu, pas au conteneur)
             ...Object.fromEntries(
               Object.entries(wrapperStyles).filter(([key]) => 
-                !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'].includes(key)
+                !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'color'].includes(key)
               )
             ),
             background: heroBg,
