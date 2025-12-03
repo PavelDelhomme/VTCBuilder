@@ -185,12 +185,23 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     setSelectedBlock(null)
   }, [history])
 
-  // Raccourcis clavier pour undo/redo
+  // Raccourcis clavier pour undo/redo et Échap pour désélectionner
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ne pas intercepter si on est dans un input/textarea
       const target = e.target as HTMLElement
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        // Permettre Échap même dans les inputs pour fermer les modals/popups
+        if (e.key === 'Escape') {
+          setSelectedBlock(null)
+        }
+        return
+      }
+
+      // Échap pour désélectionner le bloc
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setSelectedBlock(null)
         return
       }
 
@@ -257,40 +268,70 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     }
   }
 
+  // Fonction récursive pour trouver un bloc dans l'arbre
+  const findBlockInTree = useCallback((blocks: Block[], blockId: string): { block: Block; parent: Block[] | null; index: number } | null => {
+    for (let i = 0; i < blocks.length; i++) {
+      if (blocks[i].id === blockId) {
+        return { block: blocks[i], parent: blocks, index: i }
+      }
+      if (blocks[i].children && blocks[i].children.length > 0) {
+        const found = findBlockInTree(blocks[i].children, blockId)
+        if (found) return found
+      }
+    }
+    return null
+  }, [])
+
+  // Fonction récursive pour retirer un bloc de l'arbre
+  const removeBlockFromTree = useCallback((blocks: Block[], blockId: string): Block[] => {
+    return blocks
+      .filter(block => block.id !== blockId)
+      .map(block => {
+        if (block.children && block.children.length > 0) {
+          return {
+            ...block,
+            children: removeBlockFromTree(block.children, blockId)
+          }
+        }
+        return block
+      })
+  }, [])
+
+  // Fonction récursive pour ajouter un bloc dans un conteneur
+  const addBlockToContainer = useCallback((blocks: Block[], containerId: string, childBlock: Block): Block[] => {
+    return blocks.map(block => {
+      if (block.id === containerId && (block.type === 'container' || block.type === 'flex-container' || block.type === 'grid-container' || block.type === 'flexbox' || block.type === 'grid' || block.type === 'stack' || block.type === 'inline' || block.type === 'group' || block.type === 'wrapper' || block.type === 'section' || block.type === 'rows')) {
+        return {
+          ...block,
+          children: [...(block.children || []), childBlock],
+        }
+      }
+      if (block.children && block.children.length > 0) {
+        return {
+          ...block,
+          children: addBlockToContainer(block.children, containerId, childBlock),
+        }
+      }
+      return block
+    })
+  }, [])
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
 
     if (!over) return
 
-    // Gérer le drop d'un type de bloc dans un conteneur
+    // Gérer le drop d'un type de bloc dans un conteneur (nouveau bloc depuis la palette)
     if (active.data.current?.type === 'block-type' && over.data.current?.type === 'container') {
       const blockType = active.data.current.blockType as BlockType
       const containerId = over.data.current.containerId as string
-      
-      // Trouver le bloc conteneur dans l'arbre
-      const findAndUpdateContainer = (blocks: Block[], containerId: string, newChild: Block): Block[] => {
-        return blocks.map((block) => {
-          if (block.id === containerId && (block.type === 'container' || block.type === 'flex-container' || block.type === 'grid-container')) {
-            return {
-              ...block,
-              children: [...(block.children || []), newChild],
-            }
-          }
-          if (block.children) {
-            return {
-              ...block,
-              children: findAndUpdateContainer(block.children, containerId, newChild),
-            }
-          }
-          return block
-        })
-      }
       
       const newChild: Block = {
         id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: blockType.name,
         data: {},
         layout: 12,
+        children: isContainerType(blockType.name) ? [] : undefined,
       }
       
       // Trouver le conteneur pour déterminer le layout
@@ -312,23 +353,91 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         newChild.layout = undefined
       }
       
-      const newBlocks = findAndUpdateContainer(history.state, containerId, newChild)
+      const newBlocks = addBlockToContainer(history.state, containerId, newChild)
       history.set(newBlocks, true)
       trackBlockAction(blockType.name, 'add')
       return
     }
 
-    // Gérer le réordonnancement normal des blocs
-    if (over && active.id !== over.id) {
-      const oldIndex = history.state.findIndex((b: Block) => b.id === active.id)
-      const newIndex = history.state.findIndex((b: Block) => b.id === over.id)
+    // Gérer le déplacement d'un bloc existant dans un conteneur
+    if (active.data.current?.type === 'block' && over.data.current?.type === 'container') {
+      const blockId = active.id as string
+      const containerId = over.data.current.containerId as string
+      
+      // Ne pas permettre de déplacer un bloc dans lui-même
+      if (blockId === containerId) return
+      
+      // Trouver le bloc à déplacer
+      const blockToMove = findBlockInTree(history.state, blockId)
+      if (!blockToMove) return
+      
+      // Vérifier que le conteneur cible n'est pas un enfant du bloc à déplacer (éviter les boucles)
+      const isDescendant = (blocks: Block[], targetId: string): boolean => {
+        for (const block of blocks) {
+          if (block.id === targetId) return true
+          if (block.children && block.children.length > 0) {
+            if (isDescendant(block.children, targetId)) return true
+          }
+        }
+        return false
+      }
+      
+      if (blockToMove.block.children && isDescendant(blockToMove.block.children, containerId)) {
+        // Ne pas permettre de déplacer un conteneur dans un de ses enfants
+        return
+      }
+      
+      // Retirer le bloc de sa position actuelle
+      let newBlocks = removeBlockFromTree(history.state, blockId)
+      
+      // Ajouter le bloc dans le conteneur cible
+      newBlocks = addBlockToContainer(newBlocks, containerId, blockToMove.block)
+      
+      history.set(newBlocks, true)
+      trackBlockAction(blockToMove.block.type, 'move')
+      return
+    }
 
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newBlocks = arrayMove(history.state, oldIndex, newIndex)
-        history.set(newBlocks, true)
+    // Gérer le réordonnancement normal des blocs (même niveau)
+    if (over && active.id !== over.id) {
+      // Vérifier si les deux blocs sont au même niveau (pas dans des conteneurs différents)
+      const activeBlock = findBlockInTree(history.state, active.id as string)
+      const overBlock = findBlockInTree(history.state, over.id as string)
+      
+      if (activeBlock && overBlock && activeBlock.parent === overBlock.parent) {
+        // Même parent, on peut réordonner
+        const oldIndex = activeBlock.index
+        const newIndex = overBlock.index
+
+        if (oldIndex !== -1 && newIndex !== -1 && activeBlock.parent) {
+          const newChildren = arrayMove(activeBlock.parent, oldIndex, newIndex)
+          // Mettre à jour le parent avec les nouveaux enfants
+          const updateParent = (blocks: Block[]): Block[] => {
+            return blocks.map(block => {
+              if (block.children && block.children === activeBlock.parent) {
+                return { ...block, children: newChildren }
+              }
+              if (block.children) {
+                return { ...block, children: updateParent(block.children) }
+              }
+              return block
+            })
+          }
+          const newBlocks = updateParent(history.state)
+          history.set(newBlocks, true)
+        }
+      } else {
+        // Blocs à des niveaux différents, essayer un réordonnancement simple au niveau racine
+        const oldIndex = history.state.findIndex((b: Block) => b.id === active.id)
+        const newIndex = history.state.findIndex((b: Block) => b.id === over.id)
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newBlocks = arrayMove(history.state, oldIndex, newIndex)
+          history.set(newBlocks, true)
+        }
       }
     }
-  }, [history, trackBlockAction])
+  }, [history, trackBlockAction, findBlockInTree, removeBlockFromTree, addBlockToContainer, isContainerType])
 
   // Vérifier si un conteneur existe dans les blocs
   const hasContainer = useCallback((blocks: Block[]): boolean => {
@@ -1263,7 +1372,13 @@ const SortableBlock = React.memo(function SortableBlock({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: block.id })
+  } = useSortable({ 
+    id: block.id,
+    data: {
+      type: 'block',
+      block: block,
+    }
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -1512,8 +1627,14 @@ const SortableBlock = React.memo(function SortableBlock({
         </div>
         {/* Indicateur clic pour paramètres - visible au survol */}
         <div className="flex items-center gap-1 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
+          <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700" title="Clic droit pour les options du bloc">
             <span className="text-blue-600 dark:text-blue-400">⚙️</span> Clic droit options
+          </div>
+        </div>
+        {/* Aide contextuelle pour drag and drop */}
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700" title="Glissez-déposez ce bloc pour le déplacer ou le mettre dans un conteneur">
+            <span className="text-gray-600 dark:text-gray-400">🖱️</span> Glisser-déposer
           </div>
         </div>
       </div>
@@ -1523,7 +1644,7 @@ const SortableBlock = React.memo(function SortableBlock({
         {/* Conteneur avec enfants */}
         {(block.type === 'container' || block.type === 'flex-container' || block.type === 'grid-container' || 
           block.type === 'flexbox' || block.type === 'grid' || block.type === 'stack' || 
-          block.type === 'inline' || block.type === 'group' || block.type === 'wrapper') ? (
+          block.type === 'inline' || block.type === 'group' || block.type === 'wrapper' || block.type === 'section' || block.type === 'rows') ? (
           <ContainerChildrenRenderer
             block={block}
             blockTypes={blockTypes}
@@ -1678,7 +1799,12 @@ function ContainerChildrenRenderer({
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <div className="text-2xl mb-2">📦</div>
               <p className="text-sm font-medium mb-1">Conteneur vide</p>
-              <p className="text-xs">Glissez un bloc ici ou cliquez sur "Ajouter un bloc"</p>
+              <p className="text-xs mb-2">Glissez un bloc ici ou cliquez sur "Ajouter un bloc"</p>
+              <div className="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-700">
+                <p className="text-xs text-blue-800 dark:text-blue-200">
+                  💡 <strong>Astuce:</strong> Vous pouvez glisser des blocs existants depuis l'éditeur dans ce conteneur
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
@@ -1729,12 +1855,24 @@ function ContainerChildrenRenderer({
       <button
         onClick={() => setShowAddMenu(true)}
         className="w-full px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center justify-center gap-2"
+        title="Cliquez pour ouvrir la liste des blocs disponibles, ou glissez un bloc existant dans la zone ci-dessus"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
         <span className="text-sm font-medium">Ajouter un bloc</span>
       </button>
+      {/* Aide contextuelle */}
+      <div className="p-2 bg-gray-50 dark:bg-gray-800/50 rounded border border-gray-200 dark:border-gray-700">
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          <strong>💡 Comment utiliser:</strong>
+        </p>
+        <ul className="text-xs text-gray-500 dark:text-gray-500 mt-1 space-y-0.5 list-disc list-inside">
+          <li>Cliquez sur "Ajouter un bloc" pour choisir un nouveau bloc</li>
+          <li>Glissez un bloc existant depuis l'éditeur dans la zone ci-dessus</li>
+          <li>Appuyez sur <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Échap</kbd> pour désélectionner</li>
+        </ul>
+      </div>
 
       {/* Popup modale pour la liste des blocs */}
       {showAddMenu && (
@@ -1774,9 +1912,17 @@ function ContainerDropZone({
   return (
     <div
       ref={setNodeRef}
-      className={`${className} ${isOver ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' : ''}`}
+      className={`${className} ${isOver ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 border-solid' : ''} transition-all`}
+      title={isOver ? 'Relâchez pour déposer le bloc ici' : 'Glissez un bloc ici pour l\'ajouter au conteneur'}
     >
       {children}
+      {isOver && (
+        <div className="absolute inset-0 flex items-center justify-center bg-blue-500/10 dark:bg-blue-900/20 rounded-lg pointer-events-none">
+          <div className="bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium">
+            Déposer ici
+          </div>
+        </div>
+      )}
     </div>
   )
 }

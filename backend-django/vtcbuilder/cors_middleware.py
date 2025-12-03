@@ -78,10 +78,6 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
                     # Ne pas logger cette erreur - c'est attendu
                     # Marquer la réponse pour supprimer le log
                     response._suppress_logging = True
-                    # Supprimer aussi le log directement via le logger
-                    import logging
-                    logger = logging.getLogger('django.request')
-                    logger.setLevel(logging.ERROR)  # Temporairement ignorer les warnings
                     break
         
         return self._add_cors_headers(response, request)
