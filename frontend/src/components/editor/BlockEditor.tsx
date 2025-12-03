@@ -88,7 +88,7 @@ interface BlockEditorProps {
   onBlocksPaletteToggle?: (isOpen: boolean) => void // Callback pour informer le parent de l'état de la palette
 }
 
-export default function BlockEditor({ blocks, onChange, availableBlockTypes, onBlockSelect, selectedBlockId: externalSelectedBlockId, onBlocksPaletteToggle }: BlockEditorProps) {
+export default function BlockEditor({ blocks, onChange, availableBlockTypes, onBlockSelect, selectedBlockId: externalSelectedBlockId, showBlocksPalette = true, showOnlyPalette = false }: BlockEditorProps) {
   const [blockTypes, setBlockTypes] = useState<BlockType[]>([])
   const [selectedBlock, setSelectedBlock] = useState<string | null>(externalSelectedBlockId || null)
   
@@ -758,31 +758,11 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           />
         )}
 
-        {/* Sidebar - Block Palette OU Properties Panel */}
-        <div className={`${sidebarOpen ? 'fixed left-0 top-0 h-screen z-50' : 'hidden'} lg:static lg:block ${blocksPaletteOpen ? 'w-64 lg:w-72 xl:w-80 2xl:w-96' : 'w-0 min-w-0'} ${blocksPaletteOpen ? 'border-r' : 'border-r-0'} bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out shadow-lg lg:shadow-none flex-shrink-0 flex flex-col lg:h-full relative overflow-hidden`}>
-          {/* Bouton pour masquer/afficher la palette de blocs - Minimaliste */}
-          {!selectedBlock && (
-            <button
-              onClick={() => {
-                const newState = !blocksPaletteOpen
-                setBlocksPaletteOpen(newState)
-                onBlocksPaletteToggle?.(newState)
-              }}
-              className={`absolute top-2 ${blocksPaletteOpen ? 'right-2' : 'right-2'} z-50 p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-300 shadow-sm`}
-              title={blocksPaletteOpen ? "Masquer les blocs disponibles" : "Afficher les blocs disponibles"}
-              style={!blocksPaletteOpen ? { position: 'fixed', left: '8px' } : {}}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {blocksPaletteOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
-          )}
-          {/* Afficher le panneau de paramètres si un bloc est sélectionné, sinon la palette de blocs */}
-          {selectedBlock ? (
+        {/* Sidebar - Properties Panel uniquement (blocs disponibles dans popup externe) */}
+        {showBlocksPalette && (
+          <div className={`${sidebarOpen ? 'fixed left-0 top-0 h-screen z-50' : 'hidden'} lg:static lg:block w-64 lg:w-72 xl:w-80 2xl:w-96 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out shadow-lg lg:shadow-none flex-shrink-0 flex flex-col lg:h-full relative overflow-hidden`}>
+            {/* Afficher le panneau de paramètres si un bloc est sélectionné, sinon la palette de blocs */}
+            {selectedBlock ? (
             /* Properties Panel dans la sidebar */
             <>
               {/* Header */}

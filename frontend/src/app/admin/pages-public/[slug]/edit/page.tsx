@@ -8,6 +8,7 @@ import api from '@/lib/api'
 import toast from 'react-hot-toast'
 import BlockEditor, { Block } from '@/components/editor/BlockEditor'
 import BlockPreview from '@/components/editor/BlockPreview'
+import BlocksPalettePopup from '@/components/editor/BlocksPalettePopup'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import PageLoader from '@/components/shared/PageLoader'
 import { useAutoSave } from '@/hooks/useAutoSave'
@@ -38,7 +39,7 @@ export default function EditPublicPage() {
   const [headerVisible, setHeaderVisible] = useState(true)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [inspectorMode, setInspectorMode] = useState(false)
-  const [blocksPaletteOpen, setBlocksPaletteOpen] = useState(true) // État de la palette de blocs
+  const [blocksPaletteOpen, setBlocksPaletteOpen] = useState(false) // Popup des blocs disponibles fermée par défaut
 
   // Fonction de sauvegarde (mémorisée pour éviter les re-renders)
   const handleSave = useCallback(async (data: { blocks: Block[]; metaTitle: string; metaDescription: string; status: 'draft' | 'published' }) => {
@@ -514,6 +515,55 @@ export default function EditPublicPage() {
     loadData()
   }, [router, pageSlug, loadData])
 
+  // Fonction pour ajouter un bloc depuis la popup
+  const handleAddBlock = useCallback((blockType: BlockType) => {
+    // Vérifier si c'est un conteneur
+    const isContainerType = (name: string): boolean => {
+      const containerTypes = ['container', 'grid-container', 'flex-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
+      return containerTypes.includes(name)
+    }
+
+    // Vérifier si un conteneur existe
+    const hasContainer = (blocks: Block[]): boolean => {
+      const containerTypes = ['container', 'grid-container', 'flex-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
+      for (const block of blocks) {
+        if (containerTypes.includes(block.type)) {
+          return true
+        }
+        if (block.children && block.children.length > 0) {
+          if (hasContainer(block.children)) {
+            return true
+          }
+        }
+      }
+      return false
+    }
+
+    // Si ce n'est pas un conteneur et qu'aucun conteneur n'existe, empêcher l'ajout
+    if (!isContainerType(blockType.name) && !hasContainer(blocks)) {
+      toast.error('⚠️ Vous devez d\'abord ajouter un conteneur (Container, Grid, Flex, etc.) avant d\'ajouter des blocs de contenu.')
+      return
+    }
+
+    const newBlock: Block = {
+      id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: blockType.name,
+      data: {},
+      styles: blockType.default_styles || {},
+      layout: 12,
+      container: 'container',
+    }
+
+    // Si c'est un conteneur, initialiser avec un tableau d'enfants vide
+    if (isContainerType(blockType.name)) {
+      newBlock.children = []
+    }
+
+    setBlocks([...blocks, newBlock])
+    setSelectedBlockId(newBlock.id)
+    toast.success(`Bloc "${blockType.label || blockType.name}" ajouté`)
+  }, [blocks])
+
   const handleManualSave = useCallback(async () => {
     setSaving(true)
     try {
@@ -740,6 +790,22 @@ export default function EditPublicPage() {
             </svg>
           </button>
 
+          {/* Blocs Disponibles Button */}
+          <button
+            onClick={() => setBlocksPaletteOpen(!blocksPaletteOpen)}
+            className={`px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+              blocksPaletteOpen 
+                ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+            title="Blocs disponibles"
+          >
+            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
+            </svg>
+            <span className="hidden sm:inline">Blocs</span>
+          </button>
+
           {/* Save Button */}
           <button
             onClick={handleManualSave}
@@ -897,6 +963,44 @@ export default function EditPublicPage() {
           )}
         </div>
       </div>
+
+      {/* Popup Blocs Disponibles */}
+      {blocksPaletteOpen && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setBlocksPaletteOpen(false)}
+          />
+          {/* Popup */}
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 w-[90vw] max-w-4xl h-[80vh] max-h-[800px] bg-white dark:bg-gray-800 rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Blocs disponibles</h2>
+              <button
+                onClick={() => setBlocksPaletteOpen(false)}
+                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {/* Contenu - Utiliser BlockEditor pour afficher la palette */}
+            <div className="flex-1 overflow-hidden">
+              <BlockEditor 
+                blocks={blocks}
+                onChange={setBlocks}
+                availableBlockTypes={blockTypes.length > 0 ? blockTypes : undefined}
+                selectedBlockId={null}
+                onBlockSelect={() => {}}
+                showBlocksPalette={true}
+                showOnlyPalette={true}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </AdminLayout>
   )
 }
