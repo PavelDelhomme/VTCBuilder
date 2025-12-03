@@ -1660,10 +1660,27 @@ function BlockPickerModal({
   onSelect: (blockType: BlockType) => void
   onClose: () => void
 }) {
-  // Grouper les blocs par catégorie
+  const [searchQuery, setSearchQuery] = useState('')
+  
+  // Filtrer les blocs selon la recherche
+  const filteredBlockTypes = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return blockTypes
+    }
+    const query = searchQuery.toLowerCase()
+    return blockTypes.filter((bt) => {
+      const name = (bt.name || '').toLowerCase()
+      const label = (bt.label || '').toLowerCase()
+      const description = (bt.description || '').toLowerCase()
+      const category = (bt.category || '').toLowerCase()
+      return name.includes(query) || label.includes(query) || description.includes(query) || category.includes(query)
+    })
+  }, [blockTypes, searchQuery])
+  
+  // Grouper les blocs filtrés par catégorie
   const groupedBlocks = useMemo(() => {
     const groups: Record<string, BlockType[]> = {}
-    blockTypes.forEach((bt) => {
+    filteredBlockTypes.forEach((bt) => {
       const category = bt.category || 'Autres'
       if (!groups[category]) {
         groups[category] = []
@@ -1671,7 +1688,7 @@ function BlockPickerModal({
       groups[category].push(bt)
     })
     return groups
-  }, [blockTypes])
+  }, [filteredBlockTypes])
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -1699,8 +1716,48 @@ function BlockPickerModal({
           </button>
         </div>
 
+        {/* Barre de recherche */}
+        <div className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Rechercher un bloc..."
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              autoFocus
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <svg className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          {Object.keys(groupedBlocks).length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-4">🔍</div>
+              <p className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                Aucun bloc trouvé
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Essayez avec d'autres mots-clés
+              </p>
+            </div>
+          ) : (
           {Object.entries(groupedBlocks).map(([category, blocks]) => (
             <div key={category} className="mb-6">
               <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3 px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-md inline-block">
@@ -1720,6 +1777,7 @@ function BlockPickerModal({
               </div>
             </div>
           ))}
+          )}
         </div>
       </div>
     </div>
