@@ -1703,8 +1703,8 @@ function BlockRenderer({
               Contenu (éditeur simple)
             </label>
         <textarea
-          value={block.data.content || ''}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onUpdate({ data: { ...block.data, content: e.target.value } })}
+          value={safeBlock.data.content || ''}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onUpdate({ data: { ...safeBlock.data, content: e.target.value } })}
               className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder="Entrez votre texte..."
           rows={6}
@@ -1728,7 +1728,7 @@ function BlockRenderer({
             </label>
           <input
             type="text"
-            value={block.data.text || ''}
+            value={safeBlock.data.text || ''}
             onChange={(e) => onUpdate({ data: { ...block.data, text: e.target.value } })}
               className="w-full p-2 sm:p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-lg sm:text-2xl font-bold focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="Titre..."
@@ -1792,19 +1792,19 @@ function BlockRenderer({
         <div className="space-y-2">
           <input
             type="url"
-            value={block.data.src || ''}
+            value={safeBlock.data.src || ''}
             onChange={(e) => onUpdate({ data: { ...block.data, src: e.target.value } })}
             className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             placeholder="URL de l'image..."
           />
           <input
             type="text"
-            value={block.data.alt || ''}
+            value={safeBlock.data.alt || ''}
             onChange={(e) => onUpdate({ data: { ...block.data, alt: e.target.value } })}
             className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
             placeholder="Texte alternatif (alt)..."
           />
-          {!block.data.src && (
+          {!safeBlock.data.src && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">Voir la prévisualisation à droite →</p>
           )}
         </div>
@@ -1814,7 +1814,7 @@ function BlockRenderer({
         <div className="space-y-2">
           <input
             type="text"
-            value={block.data.text || ''}
+            value={safeBlock.data.text || ''}
             onChange={(e) => onUpdate({ data: { ...block.data, text: e.target.value } })}
             className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="Texte du bouton..."
@@ -1839,7 +1839,7 @@ function BlockRenderer({
                 Style
               </label>
           <select
-            value={block.data.style || 'primary'}
+            value={safeBlock.data.style || 'primary'}
             onChange={(e) => onUpdate({ data: { ...block.data, style: e.target.value } })}
                 className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
@@ -1911,7 +1911,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               id={`button-full-width-${block.id}`}
-              checked={block.data.full_width || false}
+              checked={safeBlock.data.full_width || false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, full_width: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
@@ -1919,7 +1919,7 @@ function BlockRenderer({
               Largeur complète
             </label>
           </div>
-          {(!block.data.text || !block.data.url) && (
+          {(!safeBlock.data.text || !safeBlock.data.url) && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">Voir la prévisualisation à droite →</p>
           )}
         </div>
@@ -1929,12 +1929,12 @@ function BlockRenderer({
         <div className="space-y-2">
           <input
             type="url"
-            value={block.data.url || ''}
+            value={safeBlock.data.url || ''}
             onChange={(e) => onUpdate({ data: { ...block.data, url: e.target.value } })}
             className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             placeholder="URL de la vidéo (YouTube, Vimeo)..."
           />
-          {!block.data.url && (
+          {!safeBlock.data.url && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">Voir la prévisualisation à droite →</p>
           )}
         </div>
@@ -1955,7 +1955,7 @@ function BlockRenderer({
               <option value="horizontal">Horizontal (largeur)</option>
             </select>
           </div>
-          {block.data.direction === 'horizontal' ? (
+          {safeBlock.data.direction === 'horizontal' ? (
             <>
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -1971,7 +1971,7 @@ function BlockRenderer({
                   max={200}
                 />
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 italic">Espaceur horizontal de {(block.data.width || 40)}px</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 italic">Espaceur horizontal de {(safeBlock.data.width || 40)}px</p>
             </>
           ) : (
             <>
@@ -1981,7 +1981,7 @@ function BlockRenderer({
                 </label>
           <input
             type="number"
-            value={block.data.height || 40}
+            value={safeBlock.data.height || 40}
             onChange={(e) => onUpdate({ data: { ...block.data, height: parseInt(e.target.value) || 40 } })}
                   className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="Hauteur en pixels..."
@@ -1989,7 +1989,7 @@ function BlockRenderer({
             max={200}
           />
             </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 italic">Espaceur vertical de {(block.data.height || 40)}px</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 italic">Espaceur vertical de {(safeBlock.data.height || 40)}px</p>
             </>
           )}
         </div>
@@ -2015,7 +2015,7 @@ function BlockRenderer({
               Style
             </label>
           <select
-            value={block.data.style || 'solid'}
+            value={safeBlock.data.style || 'solid'}
             onChange={(e) => onUpdate({ data: { ...block.data, style: e.target.value } })}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
@@ -2025,7 +2025,7 @@ function BlockRenderer({
               <option value="double">Double</option>
           </select>
           </div>
-          {block.data.direction === 'horizontal' && (
+          {safeBlock.data.direction === 'horizontal' && (
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Largeur
@@ -2041,7 +2041,7 @@ function BlockRenderer({
               </select>
             </div>
           )}
-          {block.data.direction === 'vertical' && (
+          {safeBlock.data.direction === 'vertical' && (
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Hauteur
@@ -2058,7 +2058,7 @@ function BlockRenderer({
             </div>
           )}
           <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-            Séparateur {block.data.direction === 'horizontal' ? 'horizontal' : 'vertical'} {block.data.style || 'solid'}
+            Séparateur {safeBlock.data.direction === 'horizontal' ? 'horizontal' : 'vertical'} {safeBlock.data.style || 'solid'}
           </p>
         </div>
       )
@@ -2108,7 +2108,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               id={`alert-dismissible-${block.id}`}
-              checked={block.data.dismissible || false}
+              checked={safeBlock.data.dismissible || false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, dismissible: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
@@ -2116,7 +2116,7 @@ function BlockRenderer({
               Permettre la fermeture (bouton X)
             </label>
           </div>
-          {(!block.data.message) && (
+          {(!safeBlock.data.message) && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">Voir la prévisualisation à droite →</p>
           )}
         </div>
@@ -2183,7 +2183,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`code-line-numbers-${block.id}`}
-                checked={block.data.showLineNumbers || false}
+                checked={safeBlock.data.showLineNumbers || false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, showLineNumbers: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -2195,7 +2195,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`code-copy-button-${block.id}`}
-                checked={block.data.showCopyButton !== false}
+                checked={safeBlock.data.showCopyButton !== false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, showCopyButton: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -2204,15 +2204,15 @@ function BlockRenderer({
               </label>
             </div>
           </div>
-          {(!block.data.code) && (
+          {(!safeBlock.data.code) && (
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">Voir la prévisualisation à droite →</p>
           )}
         </div>
       )
     case 'table':
-      const rows = block.data.rows || 3
-      const cols = block.data.columns || 3
-      const tableData = block.data.table_data || Array(rows).fill(null).map(() => Array(cols).fill(''))
+      const rows = safeBlock.data.rows || 3
+      const cols = safeBlock.data.columns || 3
+      const tableData = safeBlock.data.table_data || Array(rows).fill(null).map(() => Array(cols).fill(''))
       
       const updateCell = (rowIndex: number, colIndex: number, value: string) => {
         const newData = [...tableData]
@@ -2315,7 +2315,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               id={`table-header-${block.id}`}
-              checked={block.data.has_header || false}
+              checked={safeBlock.data.has_header || false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, has_header: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
@@ -2327,7 +2327,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               id={`table-bordered-${block.id}`}
-              checked={block.data.bordered !== false}
+              checked={safeBlock.data.bordered !== false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, bordered: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
@@ -2338,7 +2338,7 @@ function BlockRenderer({
         </div>
       )
     case 'rows':
-      const rowCount = block.data.rows_count || 2
+      const rowCount = safeBlock.data.rows_count || 2
       return (
         <div className="space-y-3">
           <div>
@@ -2363,7 +2363,7 @@ function BlockRenderer({
       return (
         <div className="space-y-2">
           <textarea
-            value={block.data.content || ''}
+            value={safeBlock.data.content || ''}
             onChange={(e) => onUpdate({ data: { ...block.data, content: e.target.value } })}
             className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="Entrez votre paragraphe..."
@@ -2379,7 +2379,7 @@ function BlockRenderer({
         <div className="space-y-2">
           <input
             type="text"
-            value={block.data.text || ''}
+            value={safeBlock.data.text || ''}
             onChange={(e) => onUpdate({ data: { ...block.data, text: e.target.value } })}
             className="w-full p-2 sm:p-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="Texte sur une ligne..."
@@ -2476,7 +2476,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`form-inscription-name-${block.id}`}
-                checked={block.data.show_name !== false}
+                checked={safeBlock.data.show_name !== false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_name: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -2488,7 +2488,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`form-inscription-email-${block.id}`}
-                checked={block.data.show_email !== false}
+                checked={safeBlock.data.show_email !== false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_email: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -2500,7 +2500,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`form-inscription-password-${block.id}`}
-                checked={block.data.show_password !== false}
+                checked={safeBlock.data.show_password !== false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_password: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -2512,7 +2512,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`form-inscription-phone-${block.id}`}
-                checked={block.data.show_phone || false}
+                checked={safeBlock.data.show_phone || false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_phone: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -2535,7 +2535,7 @@ function BlockRenderer({
         </div>
       )
     case 'testimonials':
-      const testimonials = block.data.testimonials || [{ name: '', role: '', content: '', avatar: '' }]
+      const testimonials = safeBlock.data.testimonials || [{ name: '', role: '', content: '', avatar: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -2624,7 +2624,7 @@ function BlockRenderer({
         </div>
       )
     case 'pricing':
-      const plans = block.data.plans || [{ name: '', price: '', features: [''], button_text: '', button_url: '' }]
+      const plans = safeBlock.data.plans || [{ name: '', price: '', features: [''], button_text: '', button_url: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -2641,7 +2641,7 @@ function BlockRenderer({
               <option value="api">API (chargement automatique)</option>
             </select>
           </div>
-          {block.data.source === 'dynamic' || block.data.source === 'api' ? (
+          {safeBlock.data.source === 'dynamic' || safeBlock.data.source === 'api' ? (
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Endpoint API
@@ -2759,7 +2759,7 @@ function BlockRenderer({
         </div>
       )
     case 'timeline':
-      const events = block.data.events || [{ date: '', title: '', description: '' }]
+      const events = safeBlock.data.events || [{ date: '', title: '', description: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -2837,7 +2837,7 @@ function BlockRenderer({
         </div>
       )
     case 'accordion':
-      const items = block.data.items || [{ title: '', content: '' }]
+      const items = safeBlock.data.items || [{ title: '', content: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -2904,7 +2904,7 @@ function BlockRenderer({
         </div>
       )
     case 'stats':
-      const stats = block.data.stats || [{ label: '', value: '', icon: '' }]
+      const stats = safeBlock.data.stats || [{ label: '', value: '', icon: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -2982,7 +2982,7 @@ function BlockRenderer({
         </div>
       )
     case 'social-links':
-      const links = block.data.links || [{ platform: '', url: '', icon: '' }]
+      const links = safeBlock.data.links || [{ platform: '', url: '', icon: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -3078,7 +3078,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`booking-pickup-${block.id}`}
-                checked={block.data.show_pickup !== false}
+                checked={safeBlock.data.show_pickup !== false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_pickup: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -3090,7 +3090,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`booking-dropoff-${block.id}`}
-                checked={block.data.show_dropoff !== false}
+                checked={safeBlock.data.show_dropoff !== false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_dropoff: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -3102,7 +3102,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`booking-date-${block.id}`}
-                checked={block.data.show_date !== false}
+                checked={safeBlock.data.show_date !== false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_date: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -3114,7 +3114,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`booking-passengers-${block.id}`}
-                checked={block.data.show_passengers || false}
+                checked={safeBlock.data.show_passengers || false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_passengers: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -3126,7 +3126,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`booking-vehicle-${block.id}`}
-                checked={block.data.show_vehicle || false}
+                checked={safeBlock.data.show_vehicle || false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_vehicle: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -3138,7 +3138,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`booking-phone-${block.id}`}
-                checked={block.data.show_phone !== false}
+                checked={safeBlock.data.show_phone !== false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_phone: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -3150,7 +3150,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`booking-notes-${block.id}`}
-                checked={block.data.show_notes || false}
+                checked={safeBlock.data.show_notes || false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_notes: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -3173,7 +3173,7 @@ function BlockRenderer({
         </div>
       )
     case 'pricing-table':
-      const pricingRows = block.data.rows || [{ route: '', price: '', duration: '' }]
+      const pricingRows = safeBlock.data.rows || [{ route: '', price: '', duration: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -3253,7 +3253,7 @@ function BlockRenderer({
         </div>
       )
     case 'service-zones':
-      const zones = block.data.zones || [{ name: '', description: '', icon: '' }]
+      const zones = safeBlock.data.zones || [{ name: '', description: '', icon: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -3331,7 +3331,7 @@ function BlockRenderer({
         </div>
       )
     case 'vehicle-gallery':
-      const vehicles = block.data.vehicles || [{ name: '', image: '', description: '', features: '' }]
+      const vehicles = safeBlock.data.vehicles || [{ name: '', image: '', description: '', features: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -3420,7 +3420,7 @@ function BlockRenderer({
         </div>
       )
     case 'contact-buttons':
-      const contacts = block.data.contacts || [{ type: 'phone', label: '', value: '', icon: '' }]
+      const contacts = safeBlock.data.contacts || [{ type: 'phone', label: '', value: '', icon: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -3555,7 +3555,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               id={`map-zoom-${block.id}`}
-              checked={block.data.show_controls || false}
+              checked={safeBlock.data.show_controls || false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_controls: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
@@ -3566,7 +3566,7 @@ function BlockRenderer({
         </div>
       )
     case 'badges':
-      const badges = block.data.badges || [{ text: '', icon: '', color: 'blue' }]
+      const badges = safeBlock.data.badges || [{ text: '', icon: '', color: 'blue' }]
       return (
         <div className="space-y-3">
           <div>
@@ -3651,7 +3651,7 @@ function BlockRenderer({
         </div>
       )
     case 'form':
-      const formFields = block.data.fields || [
+      const formFields = safeBlock.data.fields || [
         { type: 'text', label: 'Nom', placeholder: 'Votre nom', required: true },
         { type: 'email', label: 'Email', placeholder: 'votre@email.com', required: true },
         { type: 'textarea', label: 'Message', placeholder: 'Votre message', required: true }
@@ -3766,7 +3766,7 @@ function BlockRenderer({
         </div>
       )
     case 'columns':
-      const columnCount = block.data.columns_count || 2
+      const columnCount = safeBlock.data.columns_count || 2
       return (
         <div className="space-y-3">
           <div>
@@ -3848,14 +3848,14 @@ function BlockRenderer({
               Boutons
             </label>
             <div className="space-y-2">
-              {(block.data.buttons || (block.data.button_text ? [{ text: block.data.button_text, url: block.data.button_url, style: 'primary' }] : [])).map((btn: any, index: number) => (
+              {(safeBlock.data.buttons || (safeBlock.data.button_text ? [{ text: safeBlock.data.button_text, url: safeBlock.data.button_url, style: 'primary' }] : [])).map((btn: any, index: number) => (
                 <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <input
                       type="text"
                       value={btn.text || ''}
                       onChange={(e) => {
-                        const buttons = block.data.buttons || []
+                        const buttons = safeBlock.data.buttons || []
                         buttons[index] = { ...btn, text: e.target.value }
                         onUpdate({ data: { ...block.data, buttons } })
                       }}
@@ -3865,7 +3865,7 @@ function BlockRenderer({
                     <select
                       value={btn.style || 'primary'}
                       onChange={(e) => {
-                        const buttons = block.data.buttons || []
+                        const buttons = safeBlock.data.buttons || []
                         buttons[index] = { ...btn, style: e.target.value }
                         onUpdate({ data: { ...block.data, buttons } })
                       }}
@@ -3878,7 +3878,7 @@ function BlockRenderer({
                   <PageSelector
                     value={btn.url || ''}
                     onChange={(url) => {
-                      const buttons = block.data.buttons || []
+                      const buttons = safeBlock.data.buttons || []
                       buttons[index] = { ...btn, url }
                       onUpdate({ data: { ...block.data, buttons } })
                     }}
@@ -3887,7 +3887,7 @@ function BlockRenderer({
                   />
                   <button
                     onClick={() => {
-                      const buttons = block.data.buttons || []
+                      const buttons = safeBlock.data.buttons || []
                       onUpdate({ data: { ...block.data, buttons: buttons.filter((_: any, i: number) => i !== index) } })
                     }}
                     className="mt-1 text-xs text-red-600 hover:text-red-800"
@@ -3898,7 +3898,7 @@ function BlockRenderer({
               ))}
               <button
                 onClick={() => {
-                  const buttons = block.data.buttons || []
+                  const buttons = safeBlock.data.buttons || []
                   onUpdate({ data: { ...block.data, buttons: [...(buttons || []), { text: '', url: '', style: 'primary' }] } })
                 }}
                 className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -3911,7 +3911,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               id={`hero-overlay-${block.id}`}
-              checked={block.data.overlay || false}
+              checked={safeBlock.data.overlay || false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, overlay: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
@@ -4050,7 +4050,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               id={`video-autoplay-${block.id}`}
-              checked={block.data.autoplay || false}
+              checked={safeBlock.data.autoplay || false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, autoplay: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
@@ -4061,7 +4061,7 @@ function BlockRenderer({
         </div>
       )
     case 'gallery':
-      const galleryImages = block.data.images || []
+      const galleryImages = safeBlock.data.images || []
       return (
         <div className="space-y-3">
           <div>
@@ -4189,7 +4189,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               id={`banner-overlay-${block.id}`}
-              checked={block.data.overlay || false}
+              checked={safeBlock.data.overlay || false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, overlay: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
@@ -4197,7 +4197,7 @@ function BlockRenderer({
               Overlay sombre sur l'image
             </label>
           </div>
-          {block.data.button_text && (
+          {safeBlock.data.button_text && (
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -4226,7 +4226,7 @@ function BlockRenderer({
         </div>
       )
     case 'header':
-      const headerLinks = block.data.links || []
+      const headerLinks = safeBlock.data.links || []
       return (
         <div className="space-y-3">
           <div>
@@ -4283,7 +4283,7 @@ function BlockRenderer({
             </label>
             <input
               type="checkbox"
-              checked={block.data.sticky !== false}
+              checked={safeBlock.data.sticky !== false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, sticky: e.target.checked } })}
               className="w-4 h-4"
             />
@@ -4294,7 +4294,7 @@ function BlockRenderer({
             </label>
             <input
               type="checkbox"
-              checked={block.data.show_theme_toggle !== false}
+              checked={safeBlock.data.show_theme_toggle !== false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_theme_toggle: e.target.checked } })}
               className="w-4 h-4"
             />
@@ -4362,7 +4362,7 @@ function BlockRenderer({
                   data: { 
                     ...block.data, 
                     cta_button: { 
-                      ...block.data.cta_button, 
+                      ...safeBlock.data.cta_button, 
                       text: e.target.value 
                     } 
                   } 
@@ -4377,7 +4377,7 @@ function BlockRenderer({
                   data: { 
                     ...block.data, 
                     cta_button: { 
-                      ...block.data.cta_button, 
+                      ...safeBlock.data.cta_button, 
                       url: e.target.value 
                     } 
                   } 
@@ -4391,7 +4391,7 @@ function BlockRenderer({
                   data: { 
                     ...block.data, 
                     cta_button: { 
-                      ...block.data.cta_button, 
+                      ...safeBlock.data.cta_button, 
                       style: e.target.value 
                     } 
                   } 
@@ -4407,8 +4407,8 @@ function BlockRenderer({
       )
     
     case 'footer':
-      const footerLinks = block.data.links || []
-      const footerColumns = block.data.columns || [
+      const footerLinks = safeBlock.data.links || []
+      const footerColumns = safeBlock.data.columns || [
         { title: 'Liens rapides', links: [] },
         { title: 'Contact', links: [] },
         { title: 'Réseaux sociaux', links: [] }
@@ -4575,7 +4575,7 @@ function BlockRenderer({
             <input
               type="checkbox"
               id={`section-overlay-${block.id}`}
-              checked={block.data.overlay || false}
+              checked={safeBlock.data.overlay || false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, overlay: e.target.checked } })}
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
@@ -4591,7 +4591,7 @@ function BlockRenderer({
         </div>
       )
     case 'carousel':
-      const carouselItems = block.data.items || []
+      const carouselItems = safeBlock.data.items || []
       return (
         <div className="space-y-3">
           <div>
@@ -4672,7 +4672,7 @@ function BlockRenderer({
               <input
                 type="checkbox"
                 id={`carousel-autoplay-${block.id}`}
-                checked={block.data.autoplay !== false}
+                checked={safeBlock.data.autoplay !== false}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, autoplay: e.target.checked } })}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
@@ -4934,7 +4934,7 @@ function BlockRenderer({
       )
 
     case 'team-member':
-      const socialLinks = block.data.social_links || [{ url: '', icon: '' }]
+      const socialLinks = safeBlock.data.social_links || [{ url: '', icon: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -5038,7 +5038,7 @@ function BlockRenderer({
       )
 
     case 'logo-grid':
-      const logos = block.data.logos || [{ url: '', alt: '' }]
+      const logos = safeBlock.data.logos || [{ url: '', alt: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -5119,7 +5119,7 @@ function BlockRenderer({
       )
 
     case 'card':
-      const cards = block.data.cards || [{ title: '', description: '', image: '', button_text: '', button_url: '' }]
+      const cards = safeBlock.data.cards || [{ title: '', description: '', image: '', button_text: '', button_url: '' }]
       return (
         <div className="space-y-3">
           <div>
@@ -5225,7 +5225,7 @@ function BlockRenderer({
       )
 
     case 'tabs':
-      const tabs = block.data.tabs || [{ title: 'Onglet 1', content: '' }]
+      const tabs = safeBlock.data.tabs || [{ title: 'Onglet 1', content: '' }]
       return (
         <div className="space-y-3">
           <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-800">
@@ -5322,11 +5322,11 @@ function BlockRenderer({
             </label>
             <input
               type="checkbox"
-              checked={block.data.show_text !== false}
+              checked={safeBlock.data.show_text !== false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_text: e.target.checked } })}
               className="w-4 h-4"
             />
-            {block.data.show_text !== false && (
+            {safeBlock.data.show_text !== false && (
               <input
                 type="text"
                 value={safeBlock.data.text || ''}
@@ -5340,7 +5340,7 @@ function BlockRenderer({
       )
 
     case 'breadcrumb':
-      const breadcrumbItems = block.data.items || [{ label: 'Accueil', url: '/' }]
+      const breadcrumbItems = safeBlock.data.items || [{ label: 'Accueil', url: '/' }]
       return (
         <div className="space-y-3">
           <div>
@@ -5395,7 +5395,7 @@ function BlockRenderer({
       )
 
     case 'tags':
-      const tags = block.data.tags || ['Tag 1', 'Tag 2']
+      const tags = safeBlock.data.tags || ['Tag 1', 'Tag 2']
       return (
         <div className="space-y-3">
           <div>
@@ -5508,7 +5508,7 @@ function BlockRenderer({
             </label>
             <input
               type="checkbox"
-              checked={block.data.show_button !== false}
+              checked={safeBlock.data.show_button !== false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_button: e.target.checked } })}
               className="w-4 h-4"
             />
@@ -5551,7 +5551,7 @@ function BlockRenderer({
               <label className="flex items-center gap-2 text-xs">
                 <input
                   type="checkbox"
-                  checked={block.data.controls !== false}
+                  checked={safeBlock.data.controls !== false}
                   onChange={(e) => onUpdate({ data: { ...safeBlock.data, controls: e.target.checked } })}
                   className="w-4 h-4"
                 />
@@ -5560,7 +5560,7 @@ function BlockRenderer({
               <label className="flex items-center gap-2 text-xs">
                 <input
                   type="checkbox"
-                  checked={block.data.autoplay === true}
+                  checked={safeBlock.data.autoplay === true}
                   onChange={(e) => onUpdate({ data: { ...safeBlock.data, autoplay: e.target.checked } })}
                   className="w-4 h-4"
                 />
@@ -5569,7 +5569,7 @@ function BlockRenderer({
               <label className="flex items-center gap-2 text-xs">
                 <input
                   type="checkbox"
-                  checked={block.data.loop === true}
+                  checked={safeBlock.data.loop === true}
                   onChange={(e) => onUpdate({ data: { ...safeBlock.data, loop: e.target.checked } })}
                   className="w-4 h-4"
                 />
@@ -5733,7 +5733,7 @@ function BlockRenderer({
             </label>
             <input
               type="checkbox"
-              checked={block.data.show_events !== false}
+              checked={safeBlock.data.show_events !== false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_events: e.target.checked } })}
               className="w-4 h-4"
             />
@@ -5761,7 +5761,7 @@ function BlockRenderer({
       )
 
     case 'pagination':
-      const totalPages = block.data.total_pages || 10
+      const totalPages = safeBlock.data.total_pages || 10
       return (
         <div className="space-y-3">
           <div>
@@ -5795,7 +5795,7 @@ function BlockRenderer({
             </label>
             <input
               type="checkbox"
-              checked={block.data.show_arrows !== false}
+              checked={safeBlock.data.show_arrows !== false}
               onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_arrows: e.target.checked } })}
               className="w-4 h-4"
             />
@@ -5804,7 +5804,7 @@ function BlockRenderer({
       )
 
     case 'list':
-      const listItems = block.data.items || ['Item 1', 'Item 2']
+      const listItems = safeBlock.data.items || ['Item 1', 'Item 2']
       return (
         <div className="space-y-3">
           <div>
