@@ -16,10 +16,19 @@ SILENT_401_ENDPOINTS = [
 ]
 
 
-class Suppress401Handler(logging.Handler):
+class Suppress401Handler(logging.StreamHandler):
     """
     Custom logging handler that suppresses 401 logs for expected endpoints
+    Extends StreamHandler to properly handle stream output
     """
+    def __init__(self, *args, **kwargs):
+        # Remove 'stream' from kwargs if present, as we'll set it ourselves
+        stream = kwargs.pop('stream', None)
+        if stream is None:
+            import sys
+            stream = sys.stdout
+        super().__init__(stream)
+    
     def emit(self, record):
         """
         Only emit logs that are not 401 errors for expected endpoints
@@ -27,14 +36,18 @@ class Suppress401Handler(logging.Handler):
         message = str(record.getMessage())
         message_lower = message.lower()
         
-        # Check if this is a 401/Unauthorized log
-        if 'unauthorized' in message_lower or '401' in message:
+        # Check if this is a 401/Unauthorized log (DRF format: "GET /api/endpoint/ 401")
+        # or Django format: "Unauthorized: /api/endpoint/"
+        if 'unauthorized' in message_lower or ' 401' in message or '401 ' in message:
             # Check if message contains any silent endpoint
             for endpoint in SILENT_401_ENDPOINTS:
                 endpoint_lower = endpoint.lower()
+                endpoint_short = endpoint.replace('/api/', '')
+                # Check various formats
                 if (endpoint_lower in message_lower or 
                     endpoint in message or
-                    endpoint.replace('/api/', '') in message_lower):
+                    endpoint_short in message_lower or
+                    endpoint_short.replace('-', ' ') in message_lower):
                     # Suppress this log
                     return
         
@@ -43,10 +56,10 @@ class Suppress401Handler(logging.Handler):
         if pathname:
             for endpoint in SILENT_401_ENDPOINTS:
                 if endpoint in pathname or endpoint.lower() in pathname.lower():
-                    if 'unauthorized' in message_lower or '401' in message:
+                    if 'unauthorized' in message_lower or ' 401' in message or '401 ' in message:
                         return
         
-        # Check args
+        # Check args (sometimes the endpoint is in args)
         args = getattr(record, 'args', ())
         if args:
             for arg in args:
@@ -55,7 +68,7 @@ class Suppress401Handler(logging.Handler):
                     for endpoint in SILENT_401_ENDPOINTS:
                         endpoint_lower = endpoint.lower()
                         if ((endpoint_lower in arg_lower or endpoint in arg) and 
-                            ('unauthorized' in message_lower or '401' in message)):
+                            ('unauthorized' in message_lower or ' 401' in message or '401 ' in message)):
                             return
         
         # If we get here, emit the log normally
