@@ -38,6 +38,7 @@ export default function EditPublicPage() {
   const [headerVisible, setHeaderVisible] = useState(true)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [inspectorMode, setInspectorMode] = useState(false)
+  const [blocksPaletteOpen, setBlocksPaletteOpen] = useState(true) // État de la palette de blocs
 
   // Fonction de sauvegarde (mémorisée pour éviter les re-renders)
   const handleSave = useCallback(async (data: { blocks: Block[]; metaTitle: string; metaDescription: string; status: 'draft' | 'published' }) => {
@@ -839,7 +840,7 @@ export default function EditPublicPage() {
         {/* Main Editor Area with Split View */}
         <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Editor Section */}
-          <div className={`${showPreview ? 'w-1/2' : 'w-full'} border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
+          <div className={`${showPreview ? (blocksPaletteOpen ? 'w-1/2' : 'w-1/3') : 'w-full'} border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
             <div className="flex-1 overflow-hidden min-h-0 h-full">
               <BlockEditor 
                 blocks={blocks}
@@ -847,13 +848,14 @@ export default function EditPublicPage() {
                 availableBlockTypes={blockTypes.length > 0 ? blockTypes : undefined}
                 selectedBlockId={selectedBlockId}
                 onBlockSelect={setSelectedBlockId}
+                onBlocksPaletteToggle={setBlocksPaletteOpen}
               />
             </div>
           </div>
 
           {/* Preview Section */}
           {showPreview && (
-            <div className={`w-1/2 border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 ${
+            <div className={`${blocksPaletteOpen ? 'w-1/2' : 'w-2/3'} border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 ${
               previewMode === 'tablet' ? 'max-w-2xl mx-auto' : previewMode === 'mobile' ? 'max-w-md mx-auto' : ''
             }`}>
               <div className="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
