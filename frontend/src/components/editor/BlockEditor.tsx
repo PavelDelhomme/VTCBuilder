@@ -1443,16 +1443,19 @@ function ContainerChildrenRenderer({
   const children = block.children || []
   const [showAddMenu, setShowAddMenu] = useState(false)
 
-  const handleAddBlock = (blockType: BlockType) => {
+  const handleAddBlock = useCallback((blockType: BlockType) => {
     const newChild: Block = {
       id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type: blockType.name,
       data: {},
       layout: block.type === 'grid-container' ? undefined : 12,
     }
-    onAddChild(newChild)
-    setShowAddMenu(false)
-  }
+    // Utiliser setTimeout pour éviter setState pendant le rendu
+    setTimeout(() => {
+      onAddChild(newChild)
+      setShowAddMenu(false)
+    }, 0)
+  }, [block.type, onAddChild])
 
   const containerStyle: React.CSSProperties = {
     minHeight: '120px',
@@ -1513,7 +1516,13 @@ function ContainerChildrenRenderer({
                       </svg>
                     </button>
                   </div>
-                  <BlockRenderer block={child} blockType={childBlockType} onUpdate={(updates) => onUpdateChild(child.id, updates)} />
+                  {childBlockType && (
+                    <BlockRenderer 
+                      block={{ ...child, data: child.data || {} }} 
+                      blockType={childBlockType} 
+                      onUpdate={(updates) => onUpdateChild(child.id, updates)} 
+                    />
+                  )}
                 </div>
               )
             })}
@@ -1575,6 +1584,11 @@ function BlockRenderer({
   blockType?: BlockType
   onUpdate: (updates: Partial<Block>) => void
 }) {
+  // S'assurer que block.data existe pour éviter les erreurs
+  if (!block.data) {
+    block = { ...block, data: {} }
+  }
+  
   // Render based on block type
   switch (block.type) {
     case 'container':
