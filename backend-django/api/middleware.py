@@ -16,6 +16,53 @@ SILENT_401_ENDPOINTS = [
 ]
 
 
+class Suppress401Handler(logging.Handler):
+    """
+    Custom logging handler that suppresses 401 logs for expected endpoints
+    """
+    def emit(self, record):
+        """
+        Only emit logs that are not 401 errors for expected endpoints
+        """
+        message = str(record.getMessage())
+        message_lower = message.lower()
+        
+        # Check if this is a 401/Unauthorized log
+        if 'unauthorized' in message_lower or '401' in message:
+            # Check if message contains any silent endpoint
+            for endpoint in SILENT_401_ENDPOINTS:
+                endpoint_lower = endpoint.lower()
+                if (endpoint_lower in message_lower or 
+                    endpoint in message or
+                    endpoint.replace('/api/', '') in message_lower):
+                    # Suppress this log
+                    return
+        
+        # Check pathname if available
+        pathname = getattr(record, 'pathname', '')
+        if pathname:
+            for endpoint in SILENT_401_ENDPOINTS:
+                if endpoint in pathname or endpoint.lower() in pathname.lower():
+                    if 'unauthorized' in message_lower or '401' in message:
+                        return
+        
+        # Check args
+        args = getattr(record, 'args', ())
+        if args:
+            for arg in args:
+                if isinstance(arg, str):
+                    arg_lower = arg.lower()
+                    for endpoint in SILENT_401_ENDPOINTS:
+                        endpoint_lower = endpoint.lower()
+                        if ((endpoint_lower in arg_lower or endpoint in arg) and 
+                            ('unauthorized' in message_lower or '401' in message)):
+                            return
+        
+        # If we get here, emit the log normally
+        # Use the parent class's emit method
+        super().emit(record)
+
+
 class SuppressExpected401LogFilter(logging.Filter):
     """
     Logging filter to suppress 401 Unauthorized logs for expected endpoints
