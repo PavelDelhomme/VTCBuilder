@@ -692,7 +692,7 @@ export default function EditPublicPage() {
             onClick={async () => {
               // Sauvegarder la page actuelle avant de créer une nouvelle
               try {
-                await handleSave()
+                await handleManualSave()
                 
                 // Récupérer les pages existantes pour trouver le prochain numéro
                 const currentSettings = await api.get('/system-settings/')
@@ -741,7 +741,7 @@ export default function EditPublicPage() {
 
           {/* Save Button */}
           <button
-            onClick={handleSave}
+            onClick={handleManualSave}
             disabled={saving || isAutoSaving}
             className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2 whitespace-nowrap"
           >
