@@ -289,6 +289,14 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       const rendered = renderBlockFromTemplate(block, blockType, blockTypes)
       if (rendered) {
         // Apply wrapper styles
+        // IMPORTANT: Ne jamais utiliser padding shorthand ici pour éviter les conflits
+        const hasIndividualPadding = block.styles?.padding_top || block.styles?.padding_bottom || 
+                                      block.styles?.padding_left || block.styles?.padding_right ||
+                                      block.styles?.padding_vertical || block.styles?.padding_horizontal ||
+                                      block.styles?.paddingTop || block.styles?.paddingBottom ||
+                                      block.styles?.paddingLeft || block.styles?.paddingRight ||
+                                      block.styles?.paddingVertical || block.styles?.paddingHorizontal
+        
         const wrapperStyles: React.CSSProperties = {
           position: block.position?.type || block.styles?.position || 'static',
           top: block.position?.top || block.styles?.top,
@@ -301,10 +309,15 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
           marginBottom: block.styles?.margin_vertical || block.styles?.margin_bottom || block.styles?.marginBottom,
           marginLeft: block.styles?.margin_horizontal || block.styles?.margin_left || block.styles?.marginLeft,
           marginRight: block.styles?.margin_horizontal || block.styles?.margin_right || block.styles?.marginRight,
-          paddingTop: block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical,
-          paddingBottom: block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom,
-          paddingLeft: block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft,
-          paddingRight: block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight,
+          // Padding - Utiliser uniquement les propriétés individuelles pour éviter les conflits
+          ...(hasIndividualPadding ? {
+            paddingTop: block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical,
+            paddingBottom: block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom,
+            paddingLeft: block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft,
+            paddingRight: block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight,
+          } : block.styles?.padding ? {
+            padding: block.styles.padding
+          } : {}),
           background: block.styles?.background && block.styles?.background.includes('gradient')
             ? block.styles?.background
             : block.styles?.background_color || block.styles?.backgroundColor || undefined,
@@ -355,6 +368,14 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
   
   // Fallback to original switch-based rendering
   // Styles du wrapper (container) - position, margin, padding du container
+  // IMPORTANT: Ne jamais utiliser padding shorthand ici pour éviter les conflits avec les propriétés individuelles
+  const hasIndividualPadding = block.styles?.padding_top || block.styles?.padding_bottom || 
+                                block.styles?.padding_left || block.styles?.padding_right ||
+                                block.styles?.padding_vertical || block.styles?.padding_horizontal ||
+                                block.styles?.paddingTop || block.styles?.paddingBottom ||
+                                block.styles?.paddingLeft || block.styles?.paddingRight ||
+                                block.styles?.paddingVertical || block.styles?.paddingHorizontal
+  
   const wrapperStyles: React.CSSProperties = {
     // Position
     position: block.position?.type || block.styles?.position || 'static',
@@ -382,11 +403,16 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       : block.styles?.background_color || block.styles?.backgroundColor || undefined,
     // Couleur de texte du wrapper
     color: block.styles?.color,
-    // Padding du wrapper
-    paddingTop: block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical,
-    paddingBottom: block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom,
-    paddingLeft: block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft,
-    paddingRight: block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight,
+    // Padding du wrapper - Utiliser uniquement les propriétés individuelles pour éviter les conflits
+    // Ne jamais utiliser padding shorthand si on a des propriétés individuelles
+    ...(hasIndividualPadding ? {
+      paddingTop: block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical,
+      paddingBottom: block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom,
+      paddingLeft: block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft,
+      paddingRight: block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight,
+    } : block.styles?.padding ? {
+      padding: block.styles.padding
+    } : {}),
     // Bordures du wrapper
     borderWidth: block.styles?.border_width || block.styles?.borderWidth,
     borderStyle: block.styles?.border_style || block.styles?.borderStyle,
@@ -1256,15 +1282,30 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
             fetch(fullUrl, {
               headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
               },
+              credentials: 'include',
             })
-              .then(res => {
+              .then(async res => {
                 if (!res.ok) {
+                  // Si c'est une erreur 401/403, ne pas essayer de parser en JSON
+                  if (res.status === 401 || res.status === 403) {
+                    const text = await res.text()
+                    if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+                      throw new Error('Authentification requise')
+                    }
+                  }
                   throw new Error(`HTTP error! status: ${res.status}`)
                 }
-                const contentType = res.headers.get('content-type')
-                if (!contentType || !contentType.includes('application/json')) {
-                  throw new Error('Response is not JSON')
+                const contentType = res.headers.get('content-type') || ''
+                // Vérifier que c'est bien du JSON
+                if (!contentType.includes('application/json')) {
+                  const text = await res.text()
+                  // Si c'est du HTML, c'est probablement une page de login ou d'erreur
+                  if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+                    throw new Error('Réponse HTML reçue au lieu de JSON (authentification requise?)')
+                  }
+                  throw new Error(`Response is not JSON (Content-Type: ${contentType})`)
                 }
                 return res.json()
               })
@@ -1273,7 +1314,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                 setPlans(plansData.filter((p: any) => p.is_active).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)))
               })
               .catch(err => {
-                console.error('Erreur chargement plans:', err)
+                // Ne logger l'erreur que si ce n'est pas une erreur d'authentification attendue
+                if (!err.message.includes('Authentification requise') && !err.message.includes('Réponse HTML')) {
+                  console.error('Erreur chargement plans:', err)
+                }
                 setPlans([])
               })
               .finally(() => setLoading(false))
