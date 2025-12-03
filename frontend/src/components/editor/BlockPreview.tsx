@@ -592,7 +592,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
             className={`${block.data.full_width ? 'w-full block text-center' : 'inline-block'} ${buttonSizeClass} rounded-lg font-medium transition-colors ${buttonStyleClass}`}
             style={{
               ...contentStyles,
-              padding: block.styles?.padding || undefined,
+              // Ne pas utiliser padding shorthand si on a des propriétés individuelles
+              ...(block.styles?.padding && !block.styles?.padding_top && !block.styles?.padding_bottom && !block.styles?.padding_left && !block.styles?.padding_right
+                ? { padding: block.styles.padding }
+                : {}),
               borderRadius: contentStyles.borderRadius || block.styles?.border_radius || '0.5rem',
               backgroundColor: block.data.bg_color || contentStyles.backgroundColor || undefined,
               color: block.data.text_color || contentStyles.color || undefined,
@@ -1250,8 +1253,21 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
             const apiUrl = block.data.api_endpoint || '/api/billing/pricing-plans/'
             // Use absolute URL for API calls
             const fullUrl = apiUrl.startsWith('http') ? apiUrl : `${window.location.origin}${apiUrl}`
-            fetch(fullUrl)
-              .then(res => res.json())
+            fetch(fullUrl, {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+              .then(res => {
+                if (!res.ok) {
+                  throw new Error(`HTTP error! status: ${res.status}`)
+                }
+                const contentType = res.headers.get('content-type')
+                if (!contentType || !contentType.includes('application/json')) {
+                  throw new Error('Response is not JSON')
+                }
+                return res.json()
+              })
               .then(data => {
                 const plansData = Array.isArray(data) ? data : (data.results || data.plans || [])
                 setPlans(plansData.filter((p: any) => p.is_active).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)))
@@ -1986,12 +2002,16 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       
       return (
         <div 
-          style={{
+            style={{
             ...wrapperStyles,
             background: heroBg,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            padding: `${block.styles?.padding_top || '5rem'} ${block.styles?.padding_right || '2rem'} ${block.styles?.padding_bottom || '8rem'} ${block.styles?.padding_left || '2rem'}`,
+            // Utiliser les propriétés individuelles au lieu de padding shorthand
+            paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '5rem',
+            paddingRight: block.styles?.padding_right || block.styles?.padding_horizontal || '2rem',
+            paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '8rem',
+            paddingLeft: block.styles?.padding_left || block.styles?.padding_horizontal || '2rem',
             textAlign: block.styles?.text_align || 'center',
             minHeight: '400px',
           }}
@@ -2063,7 +2083,15 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
           style={{
             ...contentStyles,
             background: block.data.background_gradient || 'linear-gradient(to right, #2563eb, #9333ea)',
-            padding: block.styles?.padding || '5rem 2rem',
+            // Ne pas utiliser padding shorthand si on a des propriétés individuelles
+            ...(block.styles?.padding && !block.styles?.padding_top && !block.styles?.padding_bottom && !block.styles?.padding_left && !block.styles?.padding_right
+              ? { padding: block.styles.padding }
+              : {
+                  paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '5rem',
+                  paddingRight: block.styles?.padding_right || block.styles?.padding_horizontal || '2rem',
+                  paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '5rem',
+                  paddingLeft: block.styles?.padding_left || block.styles?.padding_horizontal || '2rem',
+                }),
           }}
           className="mb-6 rounded-lg"
         >
@@ -2181,7 +2209,15 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
             display: 'flex',
             alignItems: 'center',
             justifyContent: block.data.text_align === 'left' ? 'flex-start' : block.data.text_align === 'right' ? 'flex-end' : 'center',
-            padding: block.styles?.padding || '4rem 2rem',
+            // Ne pas utiliser padding shorthand si on a des propriétés individuelles
+            ...(block.styles?.padding && !block.styles?.padding_top && !block.styles?.padding_bottom && !block.styles?.padding_left && !block.styles?.padding_right
+              ? { padding: block.styles.padding }
+              : {
+                  paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '4rem',
+                  paddingRight: block.styles?.padding_right || block.styles?.padding_horizontal || '2rem',
+                  paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '4rem',
+                  paddingLeft: block.styles?.padding_left || block.styles?.padding_horizontal || '2rem',
+                }),
           }}
           className="mb-6 rounded-lg overflow-hidden"
         >
@@ -2265,9 +2301,29 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                       <a
                         key={index}
                         href={link.url || '#'}
-                        className={`font-medium transition-colors ${
-                          block.styles?.color || 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+                        className={`font-medium transition-colors ${link.custom_class || ''} ${
+                          !link.color && !link.custom_class
+                            ? (block.styles?.color || 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100')
+                            : ''
                         }`}
+                        style={{
+                          color: link.color || undefined,
+                          fontSize: link.font_size || undefined,
+                          fontWeight: link.font_weight || undefined,
+                          ...(link.hover_color ? {
+                            '--hover-color': link.hover_color,
+                          } as React.CSSProperties : {}),
+                        } as React.CSSProperties}
+                        onMouseEnter={(e) => {
+                          if (link.hover_color) {
+                            e.currentTarget.style.color = link.hover_color
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (link.color) {
+                            e.currentTarget.style.color = link.color
+                          }
+                        }}
                       >
                         {link.label || `Lien ${index + 1}`}
                       </a>
@@ -2356,7 +2412,15 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
             backgroundSize: block.data.background_size || 'cover',
             backgroundPosition: block.data.background_position || 'center',
             position: 'relative',
-            padding: block.styles?.padding || '2rem',
+            // Ne pas utiliser padding shorthand si on a des propriétés individuelles
+            ...(block.styles?.padding && !block.styles?.padding_top && !block.styles?.padding_bottom && !block.styles?.padding_left && !block.styles?.padding_right
+              ? { padding: block.styles.padding }
+              : {
+                  paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '2rem',
+                  paddingRight: block.styles?.padding_right || block.styles?.padding_horizontal || '2rem',
+                  paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '2rem',
+                  paddingLeft: block.styles?.padding_left || block.styles?.padding_horizontal || '2rem',
+                }),
             minHeight: block.styles?.min_height || 'auto',
           }}
           className="mb-6 rounded-lg"

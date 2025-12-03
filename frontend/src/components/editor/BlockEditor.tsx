@@ -4616,50 +4616,117 @@ function BlockRenderer({
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Liens de navigation
             </label>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {headerLinks.map((link: any, index: number) => (
-                <div key={index} className="flex gap-2">
+                <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Lien {index + 1}</span>
+                    <button
+                      onClick={() => {
+                        const newLinks = headerLinks.filter((_: any, i: number) => i !== index)
+                        onUpdate({ data: { ...block.data, links: newLinks } })
+                      }}
+                      className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                      title="Supprimer ce lien"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={link.label || ''}
+                      onChange={(e) => {
+                        const newLinks = [...headerLinks]
+                        newLinks[index] = { ...link, label: e.target.value }
+                        onUpdate({ data: { ...block.data, links: newLinks } })
+                      }}
+                      className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                      placeholder="Label"
+                    />
+                    <input
+                      type="text"
+                      value={link.url || ''}
+                      onChange={(e) => {
+                        const newLinks = [...headerLinks]
+                        newLinks[index] = { ...link, url: e.target.value }
+                        onUpdate({ data: { ...block.data, links: newLinks } })
+                      }}
+                      className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                      placeholder="URL"
+                    />
+                  </div>
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-2">Personnalisation CSS</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="color"
+                      value={link.color || '#374151'}
+                      onChange={(e) => {
+                        const newLinks = [...headerLinks]
+                        newLinks[index] = { ...link, color: e.target.value }
+                        onUpdate({ data: { ...block.data, links: newLinks } })
+                      }}
+                      className="h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                      title="Couleur du texte"
+                    />
+                    <input
+                      type="color"
+                      value={link.hover_color || '#111827'}
+                      onChange={(e) => {
+                        const newLinks = [...headerLinks]
+                        newLinks[index] = { ...link, hover_color: e.target.value }
+                        onUpdate({ data: { ...block.data, links: newLinks } })
+                      }}
+                      className="h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                      title="Couleur au survol"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={link.font_size || ''}
+                      onChange={(e) => {
+                        const newLinks = [...headerLinks]
+                        newLinks[index] = { ...link, font_size: e.target.value }
+                        onUpdate({ data: { ...block.data, links: newLinks } })
+                      }}
+                      className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                      placeholder="Taille police (ex: 14px)"
+                    />
+                    <input
+                      type="text"
+                      value={link.font_weight || ''}
+                      onChange={(e) => {
+                        const newLinks = [...headerLinks]
+                        newLinks[index] = { ...link, font_weight: e.target.value }
+                        onUpdate({ data: { ...block.data, links: newLinks } })
+                      }}
+                      className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                      placeholder="Poids police (ex: 500)"
+                    />
+                  </div>
                   <input
                     type="text"
-                    value={link.label || ''}
+                    value={link.custom_class || ''}
                     onChange={(e) => {
                       const newLinks = [...headerLinks]
-                      newLinks[index] = { ...link, label: e.target.value }
+                      newLinks[index] = { ...link, custom_class: e.target.value }
                       onUpdate({ data: { ...block.data, links: newLinks } })
                     }}
-                    className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
-                    placeholder="Label"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                    placeholder="Classes CSS personnalisées (optionnel)"
                   />
-                  <input
-                    type="text"
-                    value={link.url || ''}
-                    onChange={(e) => {
-                      const newLinks = [...headerLinks]
-                      newLinks[index] = { ...link, url: e.target.value }
-                      onUpdate({ data: { ...block.data, links: newLinks } })
-                    }}
-                    className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
-                    placeholder="URL"
-                  />
-                  <button
-                    onClick={() => {
-                      const newLinks = headerLinks.filter((_: any, i: number) => i !== index)
-                      onUpdate({ data: { ...block.data, links: newLinks } })
-                    }}
-                    className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    ×
-                  </button>
                 </div>
               ))}
               <button
                 onClick={() => {
-                  const newLinks = [...headerLinks, { label: '', url: '#' }]
+                  const newLinks = [...headerLinks, { label: '', url: '#', color: '#374151', hover_color: '#111827' }]
                   onUpdate({ data: { ...block.data, links: newLinks } })
                 }}
-                className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center gap-1"
               >
-                + Ajouter un lien
+                <span>+</span>
+                <span>Ajouter un lien</span>
               </button>
             </div>
           </div>
