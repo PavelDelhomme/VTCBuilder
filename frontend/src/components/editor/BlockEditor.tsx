@@ -1898,7 +1898,7 @@ function ContainerChildrenRenderer({
       {showAddMenu && (
         <BlockPickerModal
           blockTypes={blockTypes.filter((bt) => bt.name !== 'container' && bt.name !== 'flex-container' && bt.name !== 'grid-container')}
-          existingBlocks={allBlocks?.filter(b => b.id !== block.id && !isBlockInContainer(b, block.id)) || []}
+          existingBlocks={Array.isArray(allBlocks) ? allBlocks.filter(b => b.id !== block.id && !isBlockInContainer(b, block.id)) : []}
           onSelectNew={(blockType) => {
             handleAddBlock(blockType)
           }}
