@@ -3075,7 +3075,19 @@ function BlockRenderer({
       )
     
     case 'pricing':
-      const plans = safeBlock.data.plans || [{ name: '', price: '', features: [''], button_text: '', button_url: '' }]
+      const plans = safeBlock.data.plans || [{ 
+        name: '', 
+        description: '',
+        price_monthly: '', 
+        price_yearly: '',
+        period: 'monthly',
+        badge: '',
+        is_featured: false,
+        features: [], 
+        button_text: '', 
+        button_url: '',
+        button_style: 'primary'
+      }]
       return (
         <div className="space-y-3">
           <div>
@@ -3119,92 +3131,272 @@ function BlockRenderer({
                   value={safeBlock.data.title || ''}
                   onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
                   className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                  placeholder="Nos tarifs"
+                  placeholder="Tarifs Transparents"
                 />
               </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Forfaits ({plans.length})
-            </label>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {plans.map((plan: any, index: number) => (
-                <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
-                  <input
-                    type="text"
-                    value={plan.name || ''}
-                    onChange={(e) => {
-                      const newPlans = [...plans]
-                      newPlans[index] = { ...plan, name: e.target.value }
-                      onUpdate({ data: { ...block.data, plans: newPlans } })
-                    }}
-                    className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    placeholder="Nom du forfait"
-                  />
-                  <input
-                    type="text"
-                    value={plan.price || ''}
-                    onChange={(e) => {
-                      const newPlans = [...plans]
-                      newPlans[index] = { ...plan, price: e.target.value }
-                      onUpdate({ data: { ...block.data, plans: newPlans } })
-                    }}
-                    className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    placeholder="Prix (ex: 29€/mois)"
-                  />
-                  <textarea
-                    value={(plan.features || []).join('\n')}
-                    onChange={(e) => {
-                      const newPlans = [...plans]
-                      newPlans[index] = { ...plan, features: e.target.value.split('\n').filter(f => f.trim()) }
-                      onUpdate({ data: { ...block.data, plans: newPlans } })
-                    }}
-                    className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    placeholder="Fonctionnalités (une par ligne)"
-                    rows={3}
-                  />
-                  <div className="grid grid-cols-2 gap-1">
-                    <input
-                      type="text"
-                      value={plan.button_text || ''}
-                      onChange={(e) => {
-                        const newPlans = [...plans]
-                        newPlans[index] = { ...plan, button_text: e.target.value }
-                        onUpdate({ data: { ...block.data, plans: newPlans } })
-                      }}
-                      className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                      placeholder="Texte bouton"
-                    />
-                    <UrlInputWithSuggestions
-                      value={plan.button_url || ''}
-                      onChange={(url) => {
-                        const newPlans = [...plans]
-                        newPlans[index] = { ...plan, button_url: url }
-                        onUpdate({ data: { ...block.data, plans: newPlans } })
-                      }}
-                      placeholder="URL"
-                      className="text-xs"
-                    />
-                  </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Plans tarifaires ({plans.length})
+                </label>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {plans.map((plan: any, planIndex: number) => (
+                    <div key={planIndex} className="p-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          Plan {planIndex + 1}
+                        </span>
+                        <button
+                          onClick={() => {
+                            const newPlans = plans.filter((_: any, i: number) => i !== planIndex)
+                            onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                          }}
+                          className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 flex items-center justify-center gap-1"
+                          title="Supprimer ce plan"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Supprimer
+                        </button>
+                      </div>
+                      
+                      {/* Nom du plan */}
+                      <div className="mb-2">
+                        <label className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1">
+                          Nom du plan
+                        </label>
+                        <input
+                          type="text"
+                          value={plan.name || ''}
+                          onChange={(e) => {
+                            const newPlans = [...plans]
+                            newPlans[planIndex] = { ...plan, name: e.target.value }
+                            onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                          }}
+                          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                          placeholder="Starter, Pro, Enterprise..."
+                        />
+                      </div>
+
+                      {/* Description */}
+                      <div className="mb-2">
+                        <label className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1">
+                          Description
+                        </label>
+                        <input
+                          type="text"
+                          value={plan.description || ''}
+                          onChange={(e) => {
+                            const newPlans = [...plans]
+                            newPlans[planIndex] = { ...plan, description: e.target.value }
+                            onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                          }}
+                          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                          placeholder="Description courte du plan"
+                        />
+                      </div>
+
+                      {/* Prix */}
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1">
+                            Prix mensuel (€)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={plan.price_monthly || ''}
+                            onChange={(e) => {
+                              const newPlans = [...plans]
+                              newPlans[planIndex] = { ...plan, price_monthly: e.target.value }
+                              onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                            }}
+                            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                            placeholder="29.99"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1">
+                            Prix annuel (€)
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={plan.price_yearly || ''}
+                            onChange={(e) => {
+                              const newPlans = [...plans]
+                              newPlans[planIndex] = { ...plan, price_yearly: e.target.value }
+                              onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                            }}
+                            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                            placeholder="299.99"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Badge et Featured */}
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1">
+                            Badge (optionnel)
+                          </label>
+                          <input
+                            type="text"
+                            value={plan.badge || ''}
+                            onChange={(e) => {
+                              const newPlans = [...plans]
+                              newPlans[planIndex] = { ...plan, badge: e.target.value }
+                              onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                            }}
+                            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                            placeholder="POPULAIRE, RECOMMANDÉ..."
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <label className="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
+                            <input
+                              type="checkbox"
+                              checked={plan.is_featured || false}
+                              onChange={(e) => {
+                                const newPlans = [...plans]
+                                newPlans[planIndex] = { ...plan, is_featured: e.target.checked }
+                                onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                              }}
+                              className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            Plan mis en avant
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Fonctionnalités */}
+                      <div className="mb-2">
+                        <label className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1">
+                          Fonctionnalités ({(plan.features || []).length})
+                        </label>
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                          {(plan.features || []).map((feature: string, featureIndex: number) => (
+                            <div key={featureIndex} className="flex items-center gap-1">
+                              <input
+                                type="text"
+                                value={feature}
+                                onChange={(e) => {
+                                  const newPlans = [...plans]
+                                  const newFeatures = [...(plan.features || [])]
+                                  newFeatures[featureIndex] = e.target.value
+                                  newPlans[planIndex] = { ...plan, features: newFeatures }
+                                  onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                                }}
+                                className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                                placeholder="Fonctionnalité"
+                              />
+                              <button
+                                onClick={() => {
+                                  const newPlans = [...plans]
+                                  const newFeatures = (plan.features || []).filter((_: string, i: number) => i !== featureIndex)
+                                  newPlans[planIndex] = { ...plan, features: newFeatures }
+                                  onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                                }}
+                                className="px-1.5 py-1 text-[10px] bg-red-500 text-white rounded hover:bg-red-600"
+                                title="Supprimer"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => {
+                            const newPlans = [...plans]
+                            const newFeatures = [...(plan.features || []), '']
+                            newPlans[planIndex] = { ...plan, features: newFeatures }
+                            onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                          }}
+                          className="mt-1 px-2 py-1 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600"
+                        >
+                          + Ajouter fonctionnalité
+                        </button>
+                      </div>
+
+                      {/* Bouton d'action */}
+                      <div className="grid grid-cols-3 gap-1">
+                        <div className="col-span-2">
+                          <label className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1">
+                            Texte bouton
+                          </label>
+                          <input
+                            type="text"
+                            value={plan.button_text || ''}
+                            onChange={(e) => {
+                              const newPlans = [...plans]
+                              newPlans[planIndex] = { ...plan, button_text: e.target.value }
+                              onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                            }}
+                            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                            placeholder="Choisir ce plan"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1">
+                            Style
+                          </label>
+                          <select
+                            value={plan.button_style || 'primary'}
+                            onChange={(e) => {
+                              const newPlans = [...plans]
+                              newPlans[planIndex] = { ...plan, button_style: e.target.value }
+                              onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                            }}
+                            className="w-full px-1 py-1 text-[10px] border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                          >
+                            <option value="primary">Primaire</option>
+                            <option value="secondary">Secondaire</option>
+                            <option value="outline">Contour</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="mt-1">
+                        <label className="block text-[10px] font-medium text-gray-600 dark:text-gray-400 mb-1">
+                          URL bouton
+                        </label>
+                        <UrlInputWithSuggestions
+                          value={plan.button_url || ''}
+                          onChange={(url) => {
+                            const newPlans = [...plans]
+                            newPlans[planIndex] = { ...plan, button_url: url }
+                            onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                          }}
+                          placeholder="/register?plan=starter"
+                          className="text-xs"
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="flex gap-2 mt-2">
-              <button
-                onClick={() => onUpdate({ data: { ...block.data, plans: [...plans, { name: '', price: '', features: [''], button_text: '', button_url: '' }] } })}
-                className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                + Ajouter
-              </button>
-              {plans.length > 1 && (
                 <button
-                  onClick={() => onUpdate({ data: { ...block.data, plans: plans.slice(0, -1) } })}
-                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                  onClick={() => onUpdate({ 
+                    data: { 
+                      ...safeBlock.data, 
+                      plans: [...plans, { 
+                        name: '', 
+                        description: '',
+                        price_monthly: '', 
+                        price_yearly: '',
+                        period: 'monthly',
+                        badge: '',
+                        is_featured: false,
+                        features: [], 
+                        button_text: 'Choisir ce plan', 
+                        button_url: '',
+                        button_style: 'primary'
+                      }] 
+                    } 
+                  })}
+                  className="mt-2 px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
-                  - Supprimer
+                  + Ajouter un plan tarifaire
                 </button>
-              )}
-            </div>
-          </div>
+              </div>
             </>
           )}
         </div>
