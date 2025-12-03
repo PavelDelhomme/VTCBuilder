@@ -513,42 +513,10 @@ export default function EditPublicPage() {
     loadData()
   }, [router, pageSlug, loadData])
 
-  const handleSave = useCallback(async () => {
+  const handleManualSave = useCallback(async () => {
     setSaving(true)
     try {
-      const settingsData: any = {}
-      
-      if (pageSlug === 'home') {
-        // Sauvegarder les blocs
-        settingsData.public_homepage_blocks = blocks
-        // Ne publier que si le statut est explicitement 'published'
-        // Sinon, garder en mode brouillon pour ne pas affecter la page publiée
-        if (status === 'published') {
-          settingsData.public_homepage_status = 'published'
-        } else {
-          settingsData.public_homepage_status = 'draft'
-        }
-        settingsData.public_homepage_meta_title = metaTitle
-        settingsData.public_homepage_meta_description = metaDescription
-      } else {
-        // Get existing public pages
-        const currentSettings = await api.get('/system-settings/')
-        const publicPages = currentSettings.data.public_pages || {}
-        
-        // Update the specific page
-        publicPages[pageSlug] = {
-          ...publicPages[pageSlug],
-          title: PAGE_TITLES[pageSlug] || pageSlug,
-          blocks,
-          meta_title: metaTitle,
-          meta_description: metaDescription,
-          is_active: publicPages[pageSlug]?.is_active !== false,
-        }
-        
-        settingsData.public_pages = publicPages
-      }
-      
-      await api.patch('/system-settings/', settingsData)
+      await handleSave({ blocks, metaTitle, metaDescription, status })
       // Mettre à jour le timestamp de dernière sauvegarde
       updateLastSaved()
       toast.success('Page sauvegardée avec succès !')
@@ -558,7 +526,7 @@ export default function EditPublicPage() {
     } finally {
       setSaving(false)
     }
-  }, [blocks, metaTitle, metaDescription, status, pageSlug, updateLastSaved])
+  }, [blocks, metaTitle, metaDescription, status, handleSave, updateLastSaved])
 
   if (loading) {
     return (
