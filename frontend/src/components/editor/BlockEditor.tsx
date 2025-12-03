@@ -4148,15 +4148,11 @@ function BlockRenderer({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Image de fond (URL)
-            </label>
-            <input
-              type="url"
+            <ImageSelector
               value={safeBlock.data.background_image || ''}
-              onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_image: e.target.value } })}
-              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              placeholder="https://example.com/image.jpg"
+              onChange={(url) => onUpdate({ data: { ...safeBlock.data, background_image: url } })}
+              label="Image de fond"
+              placeholder="Sélectionner ou uploader une image de fond"
             />
           </div>
           <div>
