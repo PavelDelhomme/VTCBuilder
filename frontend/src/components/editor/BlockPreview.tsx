@@ -3045,6 +3045,174 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
         </div>
       )
 
+    case 'rich-text':
+      return (
+        <div style={wrapperStyles} className="mb-6" dangerouslySetInnerHTML={{ __html: block.data?.html || '' }} />
+      )
+
+    case 'markdown':
+      // Note: Pour un vrai rendu Markdown, il faudrait une bibliothèque comme react-markdown
+      return (
+        <div style={wrapperStyles} className="mb-6 prose dark:prose-invert max-w-none">
+          <pre className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{block.data?.markdown || ''}</pre>
+        </div>
+      )
+
+    case 'html-raw':
+      return (
+        <div style={wrapperStyles} className="mb-6" dangerouslySetInnerHTML={{ __html: block.data?.html || '' }} />
+      )
+
+    case 'icon':
+      const iconSize = block.data?.size === 'sm' ? 'text-2xl' : block.data?.size === 'lg' ? 'text-5xl' : block.data?.size === 'xl' ? 'text-6xl' : 'text-4xl'
+      return (
+        <div style={wrapperStyles} className="mb-6 flex items-center justify-center">
+          <span className={iconSize} style={{ color: block.data?.color || undefined }}>
+            {block.data?.icon || '⭐'}
+          </span>
+        </div>
+      )
+
+    case 'label':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <label htmlFor={block.data?.for || undefined} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            {block.data?.text || 'Label'}
+          </label>
+        </div>
+      )
+
+    case 'tooltip':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <span
+            className="text-blue-600 dark:text-blue-400 underline cursor-help"
+            title={block.data?.tooltip || ''}
+          >
+            {block.data?.text || 'Survolez-moi'}
+          </span>
+        </div>
+      )
+
+    case 'popover':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            {block.data?.trigger || 'Cliquez ici'}
+          </button>
+          {/* Note: Le popover nécessiterait une bibliothèque comme Radix UI pour un vrai rendu */}
+        </div>
+      )
+
+    case 'dropdown':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <select className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+            {(block.data?.items || []).map((item: any, index: number) => (
+              <option key={index} value={item.value}>{item.label}</option>
+            ))}
+          </select>
+        </div>
+      )
+
+    case 'categories':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && <h3 className="text-lg font-semibold mb-3">{block.data.title}</h3>}
+          <div className="flex flex-wrap gap-2">
+            {(block.data?.categories || []).map((cat: any, index: number) => (
+              <a key={index} href={`/category/${cat.slug}`} className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-700">
+                {cat.name}
+              </a>
+            ))}
+          </div>
+        </div>
+      )
+
+    case 'author-box':
+      return (
+        <div style={wrapperStyles} className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-4">
+            {block.data?.avatar && (
+              <img src={block.data.avatar} alt={block.data?.name || ''} className="w-16 h-16 rounded-full" />
+            )}
+            <div>
+              {block.data?.name && <h4 className="font-semibold text-gray-900 dark:text-gray-100">{block.data.name}</h4>}
+              {block.data?.bio && <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{block.data.bio}</p>}
+              {block.data?.url && (
+                <a href={block.data.url} className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 inline-block">
+                  Voir le profil →
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )
+
+    case 'related-posts':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && <h3 className="text-lg font-semibold mb-3">{block.data.title}</h3>}
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            💡 {block.data?.count || 3} articles liés seront chargés automatiquement
+          </div>
+        </div>
+      )
+
+    case 'table-of-contents':
+      return (
+        <div style={wrapperStyles} className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h3 className="font-semibold mb-3">{block.data?.title || 'Table des matières'}</h3>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            💡 La table des matières sera générée automatiquement à partir des titres de la page
+          </div>
+        </div>
+      )
+
+    case 'reading-time':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {block.data?.prefix || 'Temps de lecture:'} <strong>5 min</strong>
+          </span>
+        </div>
+      )
+
+    case 'share-buttons':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && <h3 className="text-sm font-semibold mb-2">{block.data.title}</h3>}
+          <div className="flex gap-2">
+            {(block.data?.platforms || []).map((platform: string) => (
+              <button key={platform} className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded text-sm hover:bg-gray-200 dark:hover:bg-gray-700 capitalize">
+                {platform}
+              </button>
+            ))}
+          </div>
+        </div>
+      )
+
+    case 'flexbox':
+    case 'grid':
+    case 'stack':
+    case 'inline':
+    case 'group':
+    case 'wrapper':
+      // Ces blocs sont des conteneurs, ils affichent leurs enfants
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            {block.type === 'flexbox' && '📐 Flexbox Container'}
+            {block.type === 'grid' && '⚏ Grid Container'}
+            {block.type === 'stack' && '📚 Stack Container'}
+            {block.type === 'inline' && '➡️ Inline Container'}
+            {block.type === 'group' && '👥 Group Container'}
+            {block.type === 'wrapper' && '📦 Wrapper Container'}
+          </div>
+          {/* Les enfants seront rendus par le composant parent */}
+        </div>
+      )
+
     default:
       return (
         <div style={wrapperStyles} className="mb-6 p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-center">

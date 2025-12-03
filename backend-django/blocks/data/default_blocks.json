@@ -1022,5 +1022,77 @@
     "category": "custom",
     "description": "Section d'information sur l'essai gratuit",
     "order": 106
+  },
+  {
+    "name": "label",
+    "label": "Label",
+    "icon": "🏷️",
+    "category": "content",
+    "description": "Label/étiquette pour formulaires",
+    "order": 30
+  },
+  {
+    "name": "popover",
+    "label": "Popover",
+    "icon": "💬",
+    "category": "content",
+    "description": "Popover avec contenu au clic",
+    "order": 31
+  },
+  {
+    "name": "categories",
+    "label": "Catégories",
+    "icon": "📂",
+    "category": "content",
+    "description": "Affichage de catégories",
+    "order": 32
+  },
+  {
+    "name": "flexbox",
+    "label": "Flexbox",
+    "icon": "📐",
+    "category": "layout",
+    "description": "Conteneur flexbox avec propriétés avancées",
+    "order": -3
+  },
+  {
+    "name": "grid",
+    "label": "Grid",
+    "icon": "⚏",
+    "category": "layout",
+    "description": "Grille CSS avec propriétés avancées",
+    "order": -2
+  },
+  {
+    "name": "stack",
+    "label": "Stack",
+    "icon": "📚",
+    "category": "layout",
+    "description": "Pile verticale d'éléments",
+    "order": -1
+  },
+  {
+    "name": "inline",
+    "label": "Inline",
+    "icon": "➡️",
+    "category": "layout",
+    "description": "Ligne horizontale d'éléments",
+    "order": 0
+  },
+  {
+    "name": "group",
+    "label": "Groupe",
+    "icon": "👥",
+    "category": "layout",
+    "description": "Groupe d'éléments",
+    "order": 1
+  },
+  {
+    "name": "wrapper",
+    "label": "Wrapper",
+    "icon": "📦",
+    "category": "layout",
+    "description": "Enveloppe générique pour contenir des éléments",
+    "order": 2
   }
 ]

@@ -3,6 +3,28 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, useDroppable, useDraggable, DragOverlay } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import {
+  RichTextEditorConfig,
+  MarkdownEditorConfig,
+  HtmlRawConfig,
+  IconConfig,
+  LabelConfig,
+  TooltipConfig,
+  PopoverConfig,
+  DropdownConfig,
+  CategoriesConfig,
+  AuthorBoxConfig,
+  RelatedPostsConfig,
+  TableOfContentsConfig,
+  ReadingTimeConfig,
+  ShareButtonsConfig,
+  FlexboxConfig,
+  GridConfig,
+  StackConfig,
+  InlineConfig,
+  GroupConfig,
+  WrapperConfig,
+} from './blocks-implementations'
 import { CSS } from '@dnd-kit/utilities'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import { useFeatures } from '@/contexts/FeaturesContext'
@@ -1399,7 +1421,9 @@ const SortableBlock = React.memo(function SortableBlock({
       {/* Block Content - Simple and Clean */}
       <div className={`${isSmall ? 'p-2 sm:p-3' : 'p-4 sm:p-6'} bg-white dark:bg-gray-800 min-h-[120px]`}>
         {/* Conteneur avec enfants */}
-        {(block.type === 'container' || block.type === 'flex-container' || block.type === 'grid-container') ? (
+        {(block.type === 'container' || block.type === 'flex-container' || block.type === 'grid-container' || 
+          block.type === 'flexbox' || block.type === 'grid' || block.type === 'stack' || 
+          block.type === 'inline' || block.type === 'group' || block.type === 'wrapper') ? (
           <ContainerChildrenRenderer
             block={block}
             blockTypes={blockTypes}
@@ -6151,6 +6175,66 @@ function BlockRenderer({
           </div>
         </div>
       )
+
+    case 'rich-text':
+      return <RichTextEditorConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'markdown':
+      return <MarkdownEditorConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'html-raw':
+      return <HtmlRawConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'icon':
+      return <IconConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'label':
+      return <LabelConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'tooltip':
+      return <TooltipConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'popover':
+      return <PopoverConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'dropdown':
+      return <DropdownConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'categories':
+      return <CategoriesConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'author-box':
+      return <AuthorBoxConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'related-posts':
+      return <RelatedPostsConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'table-of-contents':
+      return <TableOfContentsConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'reading-time':
+      return <ReadingTimeConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'share-buttons':
+      return <ShareButtonsConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'flexbox':
+      return <FlexboxConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'grid':
+      return <GridConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'stack':
+      return <StackConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'inline':
+      return <InlineConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'group':
+      return <GroupConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'wrapper':
+      return <WrapperConfig block={safeBlock} onUpdate={onUpdate} />
 
     default:
       return (
