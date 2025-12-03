@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react'
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core'
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, useDroppable, useDraggable, DragOverlay } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import blocksService, { BlockType } from '@/services/blocks.service'
@@ -221,14 +221,75 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
 
+    if (!over) return
+
+    // Gérer le drop d'un type de bloc dans un conteneur
+    if (active.data.current?.type === 'block-type' && over.data.current?.type === 'container') {
+      const blockType = active.data.current.blockType as BlockType
+      const containerId = over.data.current.containerId as string
+      
+      // Trouver le bloc conteneur dans l'arbre
+      const findAndUpdateContainer = (blocks: Block[], containerId: string, newChild: Block): Block[] => {
+        return blocks.map((block) => {
+          if (block.id === containerId && (block.type === 'container' || block.type === 'flex-container' || block.type === 'grid-container')) {
+            return {
+              ...block,
+              children: [...(block.children || []), newChild],
+            }
+          }
+          if (block.children) {
+            return {
+              ...block,
+              children: findAndUpdateContainer(block.children, containerId, newChild),
+            }
+          }
+          return block
+        })
+      }
+      
+      const newChild: Block = {
+        id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: blockType.name,
+        data: {},
+        layout: 12,
+      }
+      
+      // Trouver le conteneur pour déterminer le layout
+      const findContainer = (blocks: Block[]): Block | null => {
+        for (const block of blocks) {
+          if (block.id === containerId) {
+            return block
+          }
+          if (block.children) {
+            const found = findContainer(block.children)
+            if (found) return found
+          }
+        }
+        return null
+      }
+      
+      const container = findContainer(history.state)
+      if (container && container.type === 'grid-container') {
+        newChild.layout = undefined
+      }
+      
+      const newBlocks = findAndUpdateContainer(history.state, containerId, newChild)
+      history.set(newBlocks, true)
+      trackBlockAction(blockType.name, 'add')
+      return
+    }
+
+    // Gérer le réordonnancement normal des blocs
     if (over && active.id !== over.id) {
       const oldIndex = history.state.findIndex((b: Block) => b.id === active.id)
       const newIndex = history.state.findIndex((b: Block) => b.id === over.id)
 
-      const newBlocks = arrayMove(history.state, oldIndex, newIndex)
-      history.set(newBlocks, true)
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newBlocks = arrayMove(history.state, oldIndex, newIndex)
+        history.set(newBlocks, true)
+      }
     }
-  }, [history])
+  }, [history, trackBlockAction])
 
   const addBlock = useCallback((blockType: BlockType) => {
     const newBlock: Block = {
@@ -1530,47 +1591,193 @@ function ContainerChildrenRenderer({
         )}
       </div>
 
-      {/* Bouton pour ajouter un bloc */}
-      <div className="relative">
-        <button
-          onClick={() => setShowAddMenu(!showAddMenu)}
-          className="w-full px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center justify-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          <span className="text-sm font-medium">Ajouter un bloc</span>
-        </button>
+      {/* Zone de drop pour drag & drop */}
+      <ContainerDropZone
+        containerId={block.id}
+        onDrop={handleAddBlock}
+        className="min-h-[80px] border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center transition-colors hover:border-blue-400 dark:hover:border-blue-600 mb-3"
+      >
+        <div className="text-center py-4">
+          <div className="text-2xl mb-2">📦</div>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Glissez un bloc ici</p>
+          <p className="text-xs text-gray-500 dark:text-gray-500">ou</p>
+        </div>
+      </ContainerDropZone>
 
-        {showAddMenu && (
-          <>
-            <div
-              className="fixed inset-0 z-40"
-              onClick={() => setShowAddMenu(false)}
-            />
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
-              <div className="p-2">
-                <div className="grid grid-cols-2 gap-2">
-                  {blockTypes
-                    .filter((bt) => bt.name !== 'container' && bt.name !== 'flex-container' && bt.name !== 'grid-container')
-                    .slice(0, 12)
-                    .map((bt) => (
-                      <button
-                        key={bt.name}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleAddBlock(bt)
-                        }}
-                        className="p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2"
-                      >
-                        <span className="text-xl">{bt.icon || '📦'}</span>
-                        <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{bt.label || bt.name}</span>
-                      </button>
-                    ))}
-                </div>
+      {/* Bouton pour ajouter un bloc */}
+      <button
+        onClick={() => setShowAddMenu(true)}
+        className="w-full px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center justify-center gap-2"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        <span className="text-sm font-medium">Ajouter un bloc</span>
+      </button>
+
+      {/* Popup modale pour la liste des blocs */}
+      {showAddMenu && (
+        <BlockPickerModal
+          blockTypes={blockTypes.filter((bt) => bt.name !== 'container' && bt.name !== 'flex-container' && bt.name !== 'grid-container')}
+          onSelect={(blockType) => {
+            handleAddBlock(blockType)
+            setShowAddMenu(false)
+          }}
+          onClose={() => setShowAddMenu(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+// Container Drop Zone - Zone de drop pour les conteneurs
+function ContainerDropZone({
+  containerId,
+  onDrop,
+  children,
+  className = '',
+}: {
+  containerId: string
+  onDrop: (blockType: BlockType) => void
+  children?: React.ReactNode
+  className?: string
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `container-drop-${containerId}`,
+    data: {
+      type: 'container',
+      containerId,
+    },
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`${className} ${isOver ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' : ''}`}
+    >
+      {children}
+    </div>
+  )
+}
+
+// Block Picker Modal - Popup pour choisir un bloc
+function BlockPickerModal({
+  blockTypes,
+  onSelect,
+  onClose,
+}: {
+  blockTypes: BlockType[]
+  onSelect: (blockType: BlockType) => void
+  onClose: () => void
+}) {
+  // Grouper les blocs par catégorie
+  const groupedBlocks = useMemo(() => {
+    const groups: Record<string, BlockType[]> = {}
+    blockTypes.forEach((bt) => {
+      const category = bt.category || 'Autres'
+      if (!groups[category]) {
+        groups[category] = []
+      }
+      groups[category].push(bt)
+    })
+    return groups
+  }, [blockTypes])
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Overlay */}
+      <div
+        className="absolute inset-0 bg-black/50 dark:bg-black/70"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Choisir un bloc
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            aria-label="Fermer"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          {Object.entries(groupedBlocks).map(([category, blocks]) => (
+            <div key={category} className="mb-6">
+              <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3 px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-md inline-block">
+                {category}
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {blocks.map((bt) => (
+                  <DraggableBlockItem
+                    key={bt.name}
+                    blockType={bt}
+                    onSelect={() => {
+                      onSelect(bt)
+                      onClose()
+                    }}
+                  />
+                ))}
               </div>
             </div>
-          </>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Draggable Block Item - Bloc draggable dans la popup
+function DraggableBlockItem({
+  blockType,
+  onSelect,
+}: {
+  blockType: BlockType
+  onSelect: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `block-type-${blockType.name}`,
+    data: {
+      type: 'block-type',
+      blockType,
+    },
+  })
+
+  const style = transform
+    ? {
+        transform: CSS.Translate.toString(transform),
+      }
+    : undefined
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      onClick={onSelect}
+      className={`p-4 bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-600 hover:shadow-lg transition-all cursor-move ${
+        isDragging ? 'opacity-50' : ''
+      }`}
+    >
+      <div className="text-center">
+        <div className="text-3xl mb-2">{blockType.icon || '📦'}</div>
+        <div className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+          {blockType.label || blockType.name}
+        </div>
+        {blockType.description && (
+          <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+            {blockType.description}
+          </div>
         )}
       </div>
     </div>
