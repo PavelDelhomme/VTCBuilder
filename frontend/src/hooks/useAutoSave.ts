@@ -17,6 +17,12 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
   const lastSavedDataRef = useRef<any>(null)
   const timeoutRef = useRef<number | null>(null)
   const isInitialMount = useRef(true)
+  const onSaveRef = useRef(onSave)
+  
+  // Mettre à jour la ref quand onSave change
+  useEffect(() => {
+    onSaveRef.current = onSave
+  }, [onSave])
 
   // Fonction pour comparer deux objets (comparaison profonde simplifiée)
   const hasDataChanged = (oldData: any, newData: any): boolean => {
