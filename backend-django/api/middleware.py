@@ -92,15 +92,19 @@ class SuppressExpected401LogFilter(logging.Filter):
         args = getattr(record, 'args', ())
         
         # Check message content - look for "Unauthorized" in various forms
+        # DRF format: "GET /api/endpoint/ 401" or "Unauthorized: /api/endpoint/"
         message_lower = message.lower()
-        if 'unauthorized' in message_lower or '401' in message:
+        if 'unauthorized' in message_lower or ' 401' in message or '401 ' in message:
             # Check if message contains any silent endpoint
             for endpoint in SILENT_401_ENDPOINTS:
                 endpoint_lower = endpoint.lower()
+                endpoint_short = endpoint.replace('/api/', '')
+                # Check various formats
                 if (endpoint_lower in message_lower or 
                     endpoint in message or 
                     endpoint in pathname or
-                    endpoint_lower in pathname.lower()):
+                    endpoint_lower in pathname.lower() or
+                    endpoint_short in message_lower):
                     # Suppress this log
                     return False
         
