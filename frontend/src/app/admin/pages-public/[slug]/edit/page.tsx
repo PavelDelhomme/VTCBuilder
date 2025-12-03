@@ -305,6 +305,16 @@ export default function EditPublicPage() {
                 styles: block.styles || {}
               }
             }
+            // S'assurer que le bloc hero a la couleur blanche si elle n'est pas définie
+            if (block.type === 'hero' && (!block.styles || !block.styles.color)) {
+              return {
+                ...block,
+                styles: {
+                  ...block.styles,
+                  color: '#ffffff'
+                }
+              }
+            }
             return block
           })
         }
