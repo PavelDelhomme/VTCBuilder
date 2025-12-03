@@ -60,15 +60,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Liste des endpoints où les erreurs 404/500 sont attendues (ne pas les logger)
+// Liste des endpoints où les erreurs 404/401/500 sont attendues (ne pas les logger)
 const SILENT_ERROR_ENDPOINTS = [
   '/payment-methods/',
   '/system-settings/',
   '/billing/unpaid-items/',
   '/templates/',
   '/pricing-plans/', // Peut être en erreur temporaire
-  '/users/impersonation-status/', // Endpoint optionnel
-  '/dashboard/', // Peut être en erreur temporaire
+  '/users/impersonation-status/', // Endpoint optionnel (401 normal si non connecté)
+  '/dashboard/', // Peut être en erreur temporaire (401 normal si non connecté)
+  '/blocks/types/', // Peut être en erreur temporaire (401 normal si non connecté)
 ];
 
 // Intercepteur pour gérer les erreurs
@@ -122,6 +123,12 @@ api.interceptors.response.use(
     );
     
     if (status === 401) {
+      // Pour les endpoints silencieux avec 401, ne pas logger (c'est normal si non connecté)
+      if (isSilentError) {
+        // Ne rien logger, c'est attendu
+        return Promise.reject(error);
+      }
+      
       // Ne rediriger vers /login que si on n'est pas sur une page publique
       // et qu'il y a un token (ce qui signifie qu'il a expiré)
       const hasToken = localStorage.getItem('token');

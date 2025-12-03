@@ -57,7 +57,13 @@ class BlocksService {
       }
       return [];
     } catch (error: any) {
-      console.error('Error fetching block types:', error);
+      // Ne pas logger les erreurs 401 (non authentifié) - c'est normal si l'utilisateur n'est pas connecté
+      const isExpectedError = error.response?.status === 401 ||
+                             error.code === 'ERR_NETWORK' || 
+                             error.code === 'ERR_BLOCKED_BY_CLIENT'
+      if (!isExpectedError) {
+        console.error('Error fetching block types:', error);
+      }
       // Don't throw, return empty array to prevent breaking the editor
       return [];
     }

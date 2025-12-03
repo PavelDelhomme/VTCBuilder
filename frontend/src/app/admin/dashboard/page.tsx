@@ -121,8 +121,9 @@ export default function AdminDashboard() {
         // Continue without detailed stats
       }
     } catch (error: any) {
-      // Ne pas logger les erreurs réseau ou bloquées (bloqueur de pub)
-      const isExpectedError = error.code === 'ERR_NETWORK' || 
+      // Ne pas logger les erreurs 401 (non authentifié), réseau ou bloquées (bloqueur de pub)
+      const isExpectedError = error.response?.status === 401 ||
+                             error.code === 'ERR_NETWORK' || 
                              error.code === 'ERR_BLOCKED_BY_CLIENT' ||
                              error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||
                              error.message?.includes('blocked by client')

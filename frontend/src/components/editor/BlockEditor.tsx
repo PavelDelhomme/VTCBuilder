@@ -235,8 +235,14 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             console.warn('Aucun bloc disponible depuis l\'API')
             setBlockTypes([])
           }
-        } catch (apiError) {
-          console.error('Erreur chargement blocs API:', apiError)
+        } catch (apiError: any) {
+          // Ne pas logger les erreurs 401 (non authentifié) - c'est normal si l'utilisateur n'est pas connecté
+          const isExpectedError = apiError.response?.status === 401 ||
+                                 apiError.code === 'ERR_NETWORK' || 
+                                 apiError.code === 'ERR_BLOCKED_BY_CLIENT'
+          if (!isExpectedError) {
+            console.error('Erreur chargement blocs API:', apiError)
+          }
           setBlockTypes([])
         }
       }

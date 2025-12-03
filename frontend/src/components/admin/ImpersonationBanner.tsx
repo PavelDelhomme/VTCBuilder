@@ -26,9 +26,10 @@ export default function ImpersonationBanner() {
         setOriginalAdmin(status.original_admin || status.impersonated_by ? { email: status.impersonated_by } : null)
       }
     } catch (error: any) {
-      // Ignore 404, network errors, and blocked errors (endpoint might not be available or user not in impersonation mode)
-      // This is normal if the endpoint doesn't exist or user is not impersonating
-      const isExpectedError = error.response?.status === 404 || 
+      // Ignore 401 (not authenticated), 404 (endpoint doesn't exist), network errors, and blocked errors
+      // This is normal if the endpoint doesn't exist, user is not authenticated, or user is not impersonating
+      const isExpectedError = error.response?.status === 401 ||
+                             error.response?.status === 404 || 
                              error.code === 'ERR_NETWORK' || 
                              error.code === 'ERR_BLOCKED_BY_CLIENT' ||
                              error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||

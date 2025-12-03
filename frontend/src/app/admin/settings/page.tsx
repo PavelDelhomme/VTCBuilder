@@ -46,14 +46,19 @@ export default function SettingsPage() {
           loadSettings()
         } catch (err: any) {
           // Erreur silencieuse lors de la création
-          if (err.response?.status !== 404) {
+          if (err.response?.status !== 404 && err.response?.status !== 401) {
             console.error('Erreur création paramètres:', err)
           }
         }
       } else {
-        // Ne logger que les erreurs non attendues
-        console.error('Erreur chargement paramètres:', error)
-        toast.error('Erreur lors du chargement des paramètres')
+        // Ne logger que les erreurs non attendues (pas les 401 - non authentifié)
+        const isExpectedError = error.response?.status === 401 ||
+                               error.code === 'ERR_NETWORK' || 
+                               error.code === 'ERR_BLOCKED_BY_CLIENT'
+        if (!isExpectedError) {
+          console.error('Erreur chargement paramètres:', error)
+          toast.error('Erreur lors du chargement des paramètres')
+        }
       }
     } finally {
       setLoading(false)
