@@ -17,6 +17,9 @@ interface BlockPreviewProps {
   selectedBlockId?: string | null
   isInteractive?: boolean
   isEditable?: boolean
+  onNavigate?: (url: string) => void // Callback pour navigation dans l'éditeur
+  inspectorMode?: boolean // Mode inspecteur activé
+  onInspectorModeChange?: (enabled: boolean) => void // Callback pour activer/désactiver le mode inspecteur
 }
 
 export default function BlockPreview({ 
@@ -27,10 +30,14 @@ export default function BlockPreview({
   onBlockDoubleClick,
   selectedBlockId,
   isInteractive = false,
-  isEditable = false
+  isEditable = false,
+  onNavigate,
+  inspectorMode = false,
+  onInspectorModeChange
 }: BlockPreviewProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [hoveredElement, setHoveredElement] = useState<HTMLElement | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -65,21 +72,185 @@ export default function BlockPreview({
   }
 
   const handleBlockClick = (blockId: string) => {
-    if (onBlockSelect && !isDragging) {
+    if (onBlockSelect && !isDragging && !inspectorMode) {
       onBlockSelect(blockId === selectedBlockId ? null : blockId)
     }
   }
 
   const handleBlockDoubleClick = (blockId: string) => {
-    if (onBlockDoubleClick && !isDragging) {
+    if (onBlockDoubleClick && !isDragging && !inspectorMode) {
       onBlockDoubleClick(blockId)
     }
   }
 
+  // Intercepter les clics sur les liens pour navigation dans l'éditeur
+  useEffect(() => {
+    if (!onNavigate) return
+
+    const handleLinkClick = (e: MouseEvent) => {
+      // Ne pas intercepter en mode inspecteur
+      if (inspectorMode) return
+
+      const target = e.target as HTMLElement
+      const link = target.closest('a') as HTMLAnchorElement
+      
+      if (link && link.href) {
+        try {
+          const url = new URL(link.href)
+          const pathname = url.pathname
+          
+          // Ne pas intercepter les liens externes, les liens avec target="_blank", ou les ancres (#)
+          if (link.target === '_blank' || 
+              url.origin !== window.location.origin ||
+              pathname.startsWith('http') ||
+              (pathname === '' && url.hash)) {
+            return
+          }
+          
+          // Intercepter uniquement les liens vers des pages publiques de l'éditeur
+          // Ne pas intercepter les liens vers des pages publiées accessibles sur localhost
+          const isPublicPage = pathname === '/' || 
+                              pathname.startsWith('/docs') || 
+                              pathname.startsWith('/contact') || 
+                              pathname.startsWith('/faq') ||
+                              pathname.startsWith('/legal/') ||
+                              pathname.startsWith('/features') ||
+                              pathname.startsWith('/templates') ||
+                              pathname.startsWith('/register') ||
+                              pathname.startsWith('/login')
+          
+          if (isPublicPage) {
+            e.preventDefault()
+            e.stopPropagation()
+            
+            // Extraire le slug de la page
+            let pageSlug = 'home'
+            if (pathname === '/' || pathname === '') {
+              pageSlug = 'home'
+            } else if (pathname.startsWith('/admin/pages-public/')) {
+              const match = pathname.match(/\/admin\/pages-public\/([^\/]+)/)
+              if (match) pageSlug = match[1]
+            } else {
+              // Extraire le slug depuis le pathname (ex: /docs -> docs, /legal/terms -> legal/terms)
+              pageSlug = pathname.replace(/^\//, '').split('#')[0] || 'home'
+              // Gérer les sous-pages comme legal/terms
+              if (pageSlug.includes('/')) {
+                // Garder le chemin complet pour les sous-pages
+                pageSlug = pageSlug
+              }
+            }
+            
+            onNavigate(`/admin/pages-public/${pageSlug}/edit`)
+          }
+        } catch (err) {
+          // Si l'URL n'est pas valide, laisser le comportement par défaut
+          console.warn('URL invalide:', link.href)
+        }
+      }
+    }
+
+    const previewContainer = document.querySelector('.block-preview-container')
+    if (previewContainer) {
+      previewContainer.addEventListener('click', handleLinkClick, true) // Use capture phase
+      return () => {
+        previewContainer.removeEventListener('click', handleLinkClick, true)
+      }
+    }
+  }, [onNavigate, inspectorMode])
+
+  // Mode inspecteur : détecter les éléments survolés
+  useEffect(() => {
+    if (!inspectorMode || !onBlockSelect) {
+      // Nettoyer les outlines quand le mode inspecteur est désactivé
+      if (hoveredElement) {
+        hoveredElement.style.outline = ''
+        hoveredElement.style.outlineOffset = ''
+        setHoveredElement(null)
+      }
+      return
+    }
+
+    let currentHovered: HTMLElement | null = null
+
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const blockElement = target.closest('[data-block-id]') as HTMLElement
+      
+      if (blockElement && blockElement !== currentHovered) {
+        // Retirer l'outline de l'élément précédent
+        if (currentHovered && currentHovered.getAttribute('data-block-id') !== selectedBlockId) {
+          currentHovered.style.outline = ''
+          currentHovered.style.outlineOffset = ''
+        }
+        
+        // Ajouter l'outline au nouvel élément
+        currentHovered = blockElement
+        setHoveredElement(blockElement)
+        if (blockElement.getAttribute('data-block-id') !== selectedBlockId) {
+          blockElement.style.outline = '2px dashed #3b82f6'
+          blockElement.style.outlineOffset = '2px'
+          blockElement.style.cursor = 'pointer'
+        }
+      }
+    }
+
+    const handleMouseOut = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const blockElement = target.closest('[data-block-id]') as HTMLElement
+      
+      // Vérifier si on sort vraiment du bloc (pas juste d'un enfant)
+      if (blockElement && !blockElement.contains(e.relatedTarget as Node)) {
+        if (blockElement.getAttribute('data-block-id') !== selectedBlockId) {
+          blockElement.style.outline = ''
+          blockElement.style.outlineOffset = ''
+          blockElement.style.cursor = ''
+        }
+        if (currentHovered === blockElement) {
+          currentHovered = null
+          setHoveredElement(null)
+        }
+      }
+    }
+
+    const handleClick = (e: MouseEvent) => {
+      e.preventDefault()
+      e.stopPropagation()
+      
+      const target = e.target as HTMLElement
+      const blockElement = target.closest('[data-block-id]') as HTMLElement
+      
+      if (blockElement) {
+        const blockId = blockElement.getAttribute('data-block-id')
+        if (blockId && onBlockSelect) {
+          onBlockSelect(blockId === selectedBlockId ? null : blockId)
+        }
+      }
+    }
+
+    const previewContainer = document.querySelector('.block-preview-container')
+    if (previewContainer) {
+      previewContainer.addEventListener('mouseover', handleMouseOver, true)
+      previewContainer.addEventListener('mouseout', handleMouseOut, true)
+      previewContainer.addEventListener('click', handleClick, true)
+      
+      return () => {
+        previewContainer.removeEventListener('mouseover', handleMouseOver, true)
+        previewContainer.removeEventListener('mouseout', handleMouseOut, true)
+        previewContainer.removeEventListener('click', handleClick, true)
+        // Nettoyer les outlines
+        if (currentHovered && currentHovered.getAttribute('data-block-id') !== selectedBlockId) {
+          currentHovered.style.outline = ''
+          currentHovered.style.outlineOffset = ''
+          currentHovered.style.cursor = ''
+        }
+      }
+    }
+  }, [inspectorMode, onBlockSelect, selectedBlockId, hoveredElement])
+
   const activeBlock = activeId ? blocks.find(b => b.id === activeId) : null
 
   return (
-    <div className="w-full h-full bg-white dark:bg-gray-900 overflow-y-auto flex flex-col">
+    <div className="w-full h-full bg-white dark:bg-gray-900 overflow-y-auto flex flex-col block-preview-container">
       {/* Preview Header - Simulated Browser Bar */}
       <div className="bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 px-4 py-2 flex items-center gap-2 flex-shrink-0">
         <div className="flex gap-1.5">
@@ -90,7 +261,12 @@ export default function BlockPreview({
         <div className="flex-1 bg-white dark:bg-gray-900 rounded px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
           localhost:9494/
         </div>
-        {isInteractive && (
+        {inspectorMode && (
+          <div className="text-xs text-blue-600 dark:text-blue-400 px-2 font-semibold">
+            🔍 Mode Inspecteur Actif - Cliquez sur un élément pour le sélectionner
+          </div>
+        )}
+        {isInteractive && !inspectorMode && (
           <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
             Mode prévisualisation interactive
           </div>
@@ -191,9 +367,10 @@ function SortablePreviewBlock({
     <div
       ref={setNodeRef}
       style={style}
+      data-block-id={block.id}
       className={`mb-6 relative group ${isInteractive ? 'cursor-move' : isEditable ? 'cursor-pointer' : ''} ${
-        isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : ''
-      } ${isEditable ? 'hover:ring-2 hover:ring-blue-300 hover:ring-offset-1' : ''}`}
+        isSelected ? 'ring-4 ring-blue-500 ring-offset-4 shadow-lg' : ''
+      } ${isEditable && !isSelected ? 'hover:ring-2 hover:ring-blue-300 hover:ring-offset-2' : ''}`}
       onClick={onClick}
       onDoubleClick={isEditable ? onDoubleClick : undefined}
       {...(isInteractive ? { ...attributes, ...listeners } : {})}

@@ -36,6 +36,8 @@ export default function EditPublicPage() {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const [availablePages, setAvailablePages] = useState<Array<{ slug: string; title: string }>>([])
   const [headerVisible, setHeaderVisible] = useState(true)
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
+  const [inspectorMode, setInspectorMode] = useState(false)
 
   // Sauvegarde automatique
   const { isSaving: isAutoSaving, lastSaved, updateLastSaved } = useAutoSave({
@@ -587,6 +589,25 @@ export default function EditPublicPage() {
             </div>
           )}
 
+          {/* Inspector Mode Toggle - Only when preview is visible */}
+          {showPreview && (
+            <button
+              onClick={() => setInspectorMode(!inspectorMode)}
+              className={`px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+                inspectorMode 
+                  ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                  : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+              title="Mode Inspecteur (comme DevTools)"
+            >
+              <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span className="hidden sm:inline">{inspectorMode ? 'Désactiver' : 'Activer'} Inspecteur</span>
+              <span className="sm:hidden">🔍</span>
+            </button>
+          )}
+
           {/* Preview Toggle */}
           <button
             onClick={() => setShowPreview(!showPreview)}
@@ -813,6 +834,8 @@ export default function EditPublicPage() {
                 blocks={blocks}
                 onChange={setBlocks}
                 availableBlockTypes={blockTypes.length > 0 ? blockTypes : undefined}
+                selectedBlockId={selectedBlockId}
+                onBlockSelect={setSelectedBlockId}
               />
             </div>
           </div>
@@ -841,7 +864,18 @@ export default function EditPublicPage() {
                   }`}>
                     {/* Utiliser uniquement les blocs - pas de composants statiques */}
                     <div className="min-h-screen bg-white dark:bg-gray-900">
-                      <BlockPreview blocks={blocks} blockTypes={blockTypes} />
+                      <BlockPreview 
+                        blocks={blocks} 
+                        blockTypes={blockTypes}
+                        selectedBlockId={selectedBlockId}
+                        onBlockSelect={setSelectedBlockId}
+                        isEditable={true}
+                        onNavigate={(url) => {
+                          router.push(url)
+                        }}
+                        inspectorMode={inspectorMode}
+                        onInspectorModeChange={setInspectorMode}
+                      />
                     </div>
                   </div>
                 </div>
