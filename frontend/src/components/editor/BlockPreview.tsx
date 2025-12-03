@@ -261,8 +261,30 @@ function FAQSectionPreview({ title, items, wrapperStyles }: { title?: string; it
 }
 
 function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; blockType?: BlockType; blockTypes?: BlockType[] }) {
-  // Try to render using template from database first
-  if (blockType?.render_template && Object.keys(blockType.render_template).length > 0) {
+  // Liste des blocs qui ont un rendu hardcodé et doivent toujours utiliser le switch case
+  const blocksWithHardcodedRender = [
+    'hero', 'progress-bar', 'cta-section', 'features-grid', 'pricing', 
+    'heading', 'text', 'paragraph', 'image', 'button', 'link', 'list',
+    'quote', 'code', 'alert', 'divider', 'spacer', 'container', 'flex-container',
+    'grid-container', 'columns', 'section', 'footer', 'header', 'contact-form',
+    'faq-section', 'banner', 'tabs', 'accordion', 'carousel', 'modal',
+    'table', 'chart', 'stats', 'timeline', 'calendar', 'countdown',
+    'form', 'form-newsletter', 'form-search', 'form-inscription', 'form-login',
+    'booking-form', 'pricing-card', 'pricing-cards-grid', 'billing-cycle-toggle',
+    'rating', 'icon-box', 'card', 'testimonials', 'logo-grid', 'team-member',
+    'search-bar', 'docs-grid', 'quick-start-section', 'support-hours', 'trial-info',
+    'rich-text', 'markdown', 'html-raw', 'icon', 'label', 'tooltip', 'popover',
+    'dropdown', 'categories', 'author-box', 'related-posts', 'table-of-contents',
+    'reading-time', 'share-buttons', 'flexbox', 'grid', 'stack', 'inline', 'group',
+    'wrapper', 'image-slider', 'lightbox', 'vimeo-embed', 'counter', 'card-grid',
+    'logo-carousel', 'progress-circle'
+  ]
+  
+  // Si le bloc a un rendu hardcodé, utiliser directement le switch case
+  const shouldUseHardcodedRender = blocksWithHardcodedRender.includes(block.type)
+  
+  // Try to render using template from database first (only if not hardcoded)
+  if (!shouldUseHardcodedRender && blockType?.render_template && Object.keys(blockType.render_template).length > 0) {
     try {
       const rendered = renderBlockFromTemplate(block, blockType, blockTypes)
       if (rendered) {
