@@ -49,11 +49,8 @@ class MediaService {
       formData.append('collection', metadata.collection);
     }
 
-    const response = await api.post('/media/upload/', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Ne pas définir Content-Type manuellement - le navigateur le fera automatiquement avec le boundary
+    const response = await api.post('/media/upload/', formData);
     return response.data;
   }
 

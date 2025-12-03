@@ -51,12 +51,19 @@ export const api = axios.create({
   timeout: 30000, // 30 secondes timeout
 });
 
-// Intercepteur pour ajouter le token
+// Intercepteur pour ajouter le token et gérer FormData
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // Si on envoie un FormData, supprimer le Content-Type pour que le navigateur
+  // définisse automatiquement le bon Content-Type avec le boundary
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+  
   return config;
 });
 
