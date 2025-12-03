@@ -1304,7 +1304,7 @@ const SortableBlock = React.memo(function SortableBlock({
         {/* Indicateur clic pour paramètres - visible au survol */}
         <div className="flex items-center gap-1 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700">
-            <span className="text-blue-600 dark:text-blue-400">⚙️</span> Clic droit paramètres
+            <span className="text-blue-600 dark:text-blue-400">⚙️</span> Clic droit options
           </div>
         </div>
       </div>
