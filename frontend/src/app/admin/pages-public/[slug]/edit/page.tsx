@@ -308,6 +308,7 @@ export default function EditPublicPage() {
           })
         }
         
+        console.log('Blocs chargés pour la page d\'accueil:', homepageBlocks.length, homepageBlocks)
         setBlocks(homepageBlocks)
         // Toujours charger en mode 'draft' pour ne pas modifier la page publiée
         // L'utilisateur devra explicitement publier pour que les changements soient visibles
