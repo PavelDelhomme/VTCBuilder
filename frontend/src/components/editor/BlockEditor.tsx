@@ -768,8 +768,9 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                 setBlocksPaletteOpen(newState)
                 onBlocksPaletteToggle?.(newState)
               }}
-              className="absolute top-2 right-2 z-50 p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors shadow-sm"
+              className={`absolute top-2 ${blocksPaletteOpen ? 'right-2' : 'right-2'} z-50 p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-all duration-300 shadow-sm`}
               title={blocksPaletteOpen ? "Masquer les blocs disponibles" : "Afficher les blocs disponibles"}
+              style={!blocksPaletteOpen ? { position: 'fixed', left: '8px' } : {}}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {blocksPaletteOpen ? (
