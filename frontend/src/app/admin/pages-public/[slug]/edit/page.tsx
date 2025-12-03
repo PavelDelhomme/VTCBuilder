@@ -132,8 +132,10 @@ export default function EditPublicPage() {
               type: 'header',
               data: {
                 logo_text: 'VTCBuilder',
-                logo_badge: 'Beta',
+                badge: 'Beta',
+                logo_url: '/',
                 show_theme_toggle: true,
+                sticky: true,
                 links: [
                   { label: 'Tarifs', url: '/#pricing' },
                   { label: 'Fonctionnalités', url: '/features' },
