@@ -1087,21 +1087,28 @@ const SortableBlock = React.memo(function SortableBlock({
     setIsResizing(true)
     
     const startX = e.clientX
-    const startY = e.clientY
-    const startWidth = blockRef.current?.offsetWidth || 0
     const startLayout = block.layout || 12
+    const containerWidth = blockRef.current?.parentElement?.offsetWidth || 1200
+    const colWidth = containerWidth / 12 // Largeur d'une colonne
+
+    // Paliers de colonnes disponibles (1-12)
+    const availableLayouts: (1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12)[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!blockRef.current || !blockRef.current.parentElement) return
       
       const deltaX = moveEvent.clientX - startX
-      const containerWidth = blockRef.current.parentElement.offsetWidth
-      const newWidth = Math.max(50, startWidth + (direction.includes('right') ? deltaX : -deltaX))
-      const colsPerPixel = 12 / containerWidth
-      const newLayout = Math.max(1, Math.min(12, Math.round(newWidth * colsPerPixel)))
+      const currentContainerWidth = blockRef.current.parentElement.offsetWidth
+      const currentColWidth = currentContainerWidth / 12
+      
+      // Calculer le nombre de colonnes basé sur le delta
+      const deltaCols = Math.round(deltaX / currentColWidth)
+      const newLayoutIndex = availableLayouts.indexOf(startLayout) + (direction.includes('right') ? deltaCols : -deltaCols)
+      const clampedIndex = Math.max(0, Math.min(availableLayouts.length - 1, newLayoutIndex))
+      const newLayout = availableLayouts[clampedIndex]
       
       if (newLayout !== startLayout) {
-        onUpdate({ layout: newLayout as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 })
+        onUpdate({ layout: newLayout })
       }
     }
 
@@ -1310,7 +1317,7 @@ const SortableBlock = React.memo(function SortableBlock({
       </div>
 
       {/* Block Content - Simple and Clean */}
-      <div className={`${isSmall ? 'p-2 sm:p-3' : 'p-4 sm:p-6'} bg-white dark:bg-gray-800`}>
+      <div className={`${isSmall ? 'p-2 sm:p-3' : 'p-4 sm:p-6'} bg-white dark:bg-gray-800 min-h-[120px]`}>
         {/* Simple indicator when selected */}
         {isSelected && (
           <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg text-xs text-blue-700 dark:text-blue-300">
@@ -1321,6 +1328,33 @@ const SortableBlock = React.memo(function SortableBlock({
               <span>Bloc sélectionné - Configurez dans le panneau de droite</span>
             </div>
           </div>
+        )}
+        
+        {/* Conteneur avec enfants */}
+        {(block.type === 'container' || block.type === 'flex-container' || block.type === 'grid-container') ? (
+          <ContainerChildrenRenderer
+            block={block}
+            blockTypes={blockTypes}
+            onAddChild={(childBlock) => {
+              const newChildren = [...(block.children || []), childBlock]
+              onUpdate({ children: newChildren })
+            }}
+            onUpdateChild={(childId, updates) => {
+              const newChildren = (block.children || []).map((child) =>
+                child.id === childId ? { ...child, ...updates } : child
+              )
+              onUpdate({ children: newChildren })
+            }}
+            onDeleteChild={(childId) => {
+              const newChildren = (block.children || []).filter((child) => child.id !== childId)
+              onUpdate({ children: newChildren })
+            }}
+            onSelectChild={(childId) => {
+              // TODO: Gérer la sélection des enfants
+            }}
+          />
+        ) : (
+          <BlockRenderer block={block} blockType={blockType} onUpdate={onUpdate} />
         )}
       </div>
 
@@ -1389,6 +1423,147 @@ const SortableBlock = React.memo(function SortableBlock({
     </>
   )
 })
+
+// Container Children Renderer - Affiche et gère les enfants d'un conteneur
+function ContainerChildrenRenderer({
+  block,
+  blockTypes,
+  onAddChild,
+  onUpdateChild,
+  onDeleteChild,
+  onSelectChild,
+}: {
+  block: Block
+  blockTypes: BlockType[]
+  onAddChild: (child: Block) => void
+  onUpdateChild: (childId: string, updates: Partial<Block>) => void
+  onDeleteChild: (childId: string) => void
+  onSelectChild: (childId: string) => void
+}) {
+  const children = block.children || []
+  const [showAddMenu, setShowAddMenu] = useState(false)
+
+  const handleAddBlock = (blockType: BlockType) => {
+    const newChild: Block = {
+      id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: blockType.name,
+      data: {},
+      layout: block.type === 'grid-container' ? undefined : 12,
+    }
+    onAddChild(newChild)
+    setShowAddMenu(false)
+  }
+
+  const containerStyle: React.CSSProperties = {
+    minHeight: '120px',
+    ...(block.type === 'flex-container' && {
+      display: 'flex',
+      flexDirection: block.data?.direction || 'row',
+      flexWrap: block.data?.wrap || 'nowrap',
+      gap: block.data?.gap || '1rem',
+    }),
+    ...(block.type === 'grid-container' && {
+      display: 'grid',
+      gridTemplateColumns: block.data?.columns || 'repeat(3, 1fr)',
+      gridTemplateRows: block.data?.rows || 'auto',
+      gap: block.data?.gap || '1rem',
+    }),
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Zone de conteneur avec style approprié */}
+      <div
+        className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50"
+        style={containerStyle}
+      >
+        {children.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="text-2xl mb-2">📦</div>
+            <p className="text-sm font-medium mb-1">Conteneur vide</p>
+            <p className="text-xs">Ajoutez des blocs pour commencer</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {children.map((child) => {
+              const childBlockType = blockTypes.find((bt) => bt.name === child.type)
+              return (
+                <div
+                  key={child.id}
+                  className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer"
+                  onClick={() => onSelectChild(child.id)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{childBlockType?.icon || '📦'}</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {childBlockType?.label || child.type}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDeleteChild(child.id)
+                      }}
+                      className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                      title="Supprimer"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <BlockRenderer block={child} blockType={childBlockType} onUpdate={(updates) => onUpdateChild(child.id, updates)} />
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Bouton pour ajouter un bloc */}
+      <div className="relative">
+        <button
+          onClick={() => setShowAddMenu(!showAddMenu)}
+          className="w-full px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex items-center justify-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          <span className="text-sm font-medium">Ajouter un bloc</span>
+        </button>
+
+        {showAddMenu && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setShowAddMenu(false)}
+            />
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+              <div className="p-2">
+                <div className="grid grid-cols-2 gap-2">
+                  {blockTypes
+                    .filter((bt) => bt.name !== 'container' && bt.name !== 'flex-container' && bt.name !== 'grid-container')
+                    .slice(0, 12)
+                    .map((bt) => (
+                      <button
+                        key={bt.name}
+                        onClick={() => handleAddBlock(bt)}
+                        className="p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <span className="text-xl">{bt.icon || '📦'}</span>
+                        <span className="text-xs font-medium text-gray-900 dark:text-gray-100">{bt.label || bt.name}</span>
+                      </button>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
 
 // Block Renderer Component
 function BlockRenderer({
