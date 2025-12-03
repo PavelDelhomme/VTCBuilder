@@ -35,6 +35,12 @@
 18. ✅ Inline - Ligne horizontale d'éléments
 19. ✅ Group - Groupe d'éléments
 20. ✅ Wrapper - Enveloppe générique
+21. ✅ Image Slider - Diaporama d'images
+22. ✅ Lightbox - Lightbox pour images
+23. ✅ Vimeo Embed - Intégration Vimeo
+24. ✅ Counter - Compteur animé
+25. ✅ Card Grid - Grille de cartes responsive
+26. ✅ Logo Carousel - Carrousel de logos partenaires
 
 **Fichiers Créés/Modifiés** :
 - `backend-django/blocks/data/default_blocks.json` : Ajout des définitions des nouveaux blocs

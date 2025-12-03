@@ -51,13 +51,13 @@
 - ✅ Video (Vidéo) - Implémenté
 - ✅ Gallery (Galerie) - Implémenté
 - ✅ Audio Player (Lecteur audio) - Implémenté
-- ⬜ Image Slider (Diaporama) - À implémenter (priorité moyenne)
+- ✅ Image Slider (Diaporama) - Implémenté (03/12/2025)
 - ✅ Image Carousel (Carrousel) - Implémenté (carousel block)
-- ⬜ Lightbox (Lightbox) - À implémenter (priorité moyenne)
+- ✅ Lightbox (Lightbox) - Implémenté (03/12/2025)
 - ⬜ Image Comparison (Comparaison d'images) - À implémenter (priorité basse)
 - ⬜ Video Playlist (Playlist vidéo) - À implémenter (priorité basse)
 - ✅ YouTube Embed - Implémenté (video-embed block)
-- ⬜ Vimeo Embed - À implémenter (priorité moyenne)
+- ✅ Vimeo Embed - Implémenté (03/12/2025)
 - ⬜ SoundCloud Embed - À implémenter (priorité basse)
 - ⬜ Spotify Embed - À implémenter (priorité basse)
 - ✅ Map (Carte) - Implémenté
@@ -68,7 +68,7 @@
 - ✅ Chart (Graphique) - Implémenté (basique)
 - ⬜ Data Table (Tableau de données) - À implémenter (priorité moyenne)
 - ✅ Statistics (Statistiques) - Implémenté (stats block)
-- ⬜ Counter (Compteur) - À implémenter (priorité moyenne)
+- ✅ Counter (Compteur) - Implémenté (03/12/2025)
 - ✅ Progress Bar (Barre de progression) - Implémenté
 - ✅ Progress Circle (Cercle de progression) - Implémenté
 - ✅ Timeline (Chronologie) - Implémenté
@@ -153,13 +153,13 @@
 - ✅ Feature Card (Carte fonctionnalité) - Implémenté
 - ✅ Icon Box (Boîte icône) - Implémenté
 - ✅ Card (Carte) - Implémenté
-- ⬜ Card Grid (Grille de cartes) - À implémenter (priorité moyenne)
+- ✅ Card Grid (Grille de cartes) - Implémenté (03/12/2025)
 - ⬜ Card Masonry (Masonry de cartes) - À implémenter (priorité basse)
 - ⬜ Card Carousel (Carrousel de cartes) - À implémenter (priorité moyenne)
 - ✅ Testimonials (Témoignages) - Implémenté
 - ⬜ Reviews Slider (Slider d'avis) - À implémenter (priorité moyenne)
 - ✅ Logo Grid (Grille de logos) - Implémenté
-- ⬜ Logo Carousel (Carrousel de logos) - À implémenter (priorité moyenne)
+- ✅ Logo Carousel (Carrousel de logos) - Implémenté (03/12/2025)
 - ✅ Team Member (Membre d'équipe) - Implémenté
 - ⬜ Team Grid (Grille d'équipe)
 - ⬜ Client List (Liste clients)
@@ -871,8 +871,8 @@
 
 ### 📊 Statistiques d'Implémentation
 - **Total blocs dans roadmap:** ~200+
-- **Blocs implémentés:** 107 (87 de base + 20 nouveaux blocs)
-- **Taux d'implémentation:** ~53.5%
+- **Blocs implémentés:** 113 (87 de base + 26 nouveaux blocs)
+- **Taux d'implémentation:** ~56.5%
 - **Blocs essentiels implémentés:** ✅ (heading, text, image, button, form, etc.)
 - **Blocs premium implémentés:** ✅ (chart, calendar, modal, etc.)
 - **Blocs VTC implémentés:** ✅ (tous les blocs VTC de base)
