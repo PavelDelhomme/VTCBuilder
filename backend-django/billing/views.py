@@ -64,15 +64,17 @@ class PricingPlanViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter plans based on user role"""
         try:
-            user = self.request.user
+            # Allow unauthenticated users to see active plans
             queryset = PricingPlan.objects.filter(is_active=True)
             
-            # Super admin can see all plans (including inactive)
-            try:
-                if user.is_super_admin():
-                    queryset = PricingPlan.objects.all()
-            except Exception as e:
-                logger.error(f"Error checking super admin in PricingPlanViewSet: {e}", exc_info=True)
+            # If user is authenticated, check if super admin
+            if hasattr(self.request, 'user') and self.request.user and self.request.user.is_authenticated:
+                user = self.request.user
+                try:
+                    if user.is_super_admin():
+                        queryset = PricingPlan.objects.all()
+                except Exception as e:
+                    logger.error(f"Error checking super admin in PricingPlanViewSet: {e}", exc_info=True)
             
             return queryset.order_by('order', 'price_monthly')
         except Exception as e:
@@ -82,18 +84,9 @@ class PricingPlanViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """List pricing plans with error handling - public access allowed"""
         try:
-            # Allow public access to list pricing plans
-            # Temporarily remove authentication requirement
-            original_permission_classes = self.permission_classes
-            self.permission_classes = []  # No authentication required for list
-            
-            try:
-                response = super().list(request, *args, **kwargs)
-                add_cors_headers(response, request)
-                return response
-            finally:
-                # Restore original permissions
-                self.permission_classes = original_permission_classes
+            response = super().list(request, *args, **kwargs)
+            add_cors_headers(response, request)
+            return response
         except Exception as e:
             logger.error(f"Error in PricingPlanViewSet.list: {e}", exc_info=True)
             error_response = Response({
