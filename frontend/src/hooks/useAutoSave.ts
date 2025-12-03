@@ -54,7 +54,8 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
       setIsSaving(true)
       
       try {
-        await onSave(data)
+        // Utiliser la fonction onSave stockée dans une ref pour éviter les problèmes de dépendances
+        await onSaveRef.current(data)
         lastSavedDataRef.current = data
         setLastSaved(new Date())
       } catch (error) {
@@ -69,7 +70,7 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
         window.clearTimeout(timeoutRef.current)
       }
     }
-  }, [data, enabled, debounceMs, onSave])
+  }, [data, enabled, debounceMs]) // onSave retiré des dépendances pour éviter les re-renders infinis
 
   // Fonction pour mettre à jour manuellement le timestamp après une sauvegarde manuelle
   const updateLastSaved = () => {
