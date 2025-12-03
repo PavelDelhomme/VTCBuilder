@@ -11,40 +11,40 @@
 - ✅ Quote (Citation) - Implémenté
 - ✅ Code (Code) - Implémenté
 - ✅ Alert (Alerte) - Implémenté
-- ⬜ Rich Text Editor (Éditeur WYSIWYG) - À implémenter (priorité haute)
-- ⬜ Markdown Editor - À implémenter (priorité moyenne)
-- ⬜ HTML Raw - À implémenter (priorité moyenne)
+- ✅ Rich Text Editor (Éditeur WYSIWYG) - Implémenté
+- ✅ Markdown Editor - Implémenté
+- ✅ HTML Raw - Implémenté
 - ✅ Divider (Séparateur) - Implémenté (horizontal/vertical)
 - ✅ Spacer (Espaceur) - Implémenté (horizontal/vertical)
-- ⬜ Icon (Icône seule) - À implémenter (priorité moyenne)
+- ✅ Icon (Icône seule) - Implémenté
 - ✅ Badge (Badge/Étiquette) - Implémenté
-- ⬜ Label (Label) - À implémenter (priorité basse)
-- ⬜ Tooltip (Info-bulle) - À implémenter (priorité moyenne)
-- ⬜ Popover (Popover) - À implémenter (priorité basse)
-- ⬜ Dropdown (Menu déroulant) - À implémenter (priorité moyenne)
+- ✅ Label (Label) - Implémenté
+- ✅ Tooltip (Info-bulle) - Implémenté
+- ✅ Popover (Popover) - Implémenté
+- ✅ Dropdown (Menu déroulant) - Implémenté
 - ✅ Breadcrumb (Fil d'Ariane) - Implémenté
 - ✅ Pagination (Pagination) - Implémenté
 - ✅ Tags (Tags) - Implémenté
-- ⬜ Categories (Catégories)
-- ⬜ Author Box (Boîte auteur)
-- ⬜ Related Posts (Articles liés)
-- ⬜ Table of Contents (Table des matières)
-- ⬜ Reading Time (Temps de lecture)
-- ⬜ Share Buttons (Boutons de partage)
+- ✅ Categories (Catégories) - Implémenté
+- ✅ Author Box (Boîte auteur) - Implémenté
+- ✅ Related Posts (Articles liés) - Implémenté
+- ✅ Table of Contents (Table des matières) - Implémenté
+- ✅ Reading Time (Temps de lecture) - Implémenté
+- ✅ Share Buttons (Boutons de partage) - Implémenté
 
 ## 🎨 Blocs de Mise en Page (Gratuits)
 - ✅ Columns (Colonnes) - Implémenté
 - ✅ Rows (Lignes) - Implémenté
 - ✅ Section (Section) - Implémenté
 - ✅ Container (Conteneur) - Implémenté (via propriété container)
-- ⬜ Flexbox (Flexbox) - À implémenter (priorité moyenne)
-- ⬜ Grid (Grille) - À implémenter (priorité moyenne)
-- ⬜ Stack (Pile verticale) - À implémenter (priorité basse)
-- ⬜ Inline (Ligne horizontale) - À implémenter (priorité basse)
+- ✅ Flexbox (Flexbox) - Implémenté
+- ✅ Grid (Grille) - Implémenté
+- ✅ Stack (Pile verticale) - Implémenté
+- ✅ Inline (Ligne horizontale) - Implémenté
 - ✅ Spacer (Espaceur) - Implémenté (déjà dans contenu)
 - ✅ Divider (Séparateur) - Implémenté (déjà dans contenu)
-- ⬜ Group (Groupe) - À implémenter (priorité basse)
-- ⬜ Wrapper (Enveloppe) - À implémenter (priorité basse)
+- ✅ Group (Groupe) - Implémenté
+- ✅ Wrapper (Enveloppe) - Implémenté
 
 ## 🖼️ Blocs Médias (Gratuits)
 - ✅ Image (Image) - Implémenté
