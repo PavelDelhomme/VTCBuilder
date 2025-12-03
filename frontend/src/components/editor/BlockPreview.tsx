@@ -1542,65 +1542,119 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               </div>
             ) : plans.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {plans.map((plan: any, index: number) => (
-                  <div
-                    key={plan.id || index}
-                    className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 relative ${
-                      plan.is_featured ? 'ring-4 ring-blue-500 scale-105' : ''
-                    }`}
-                  >
-                    {plan.is_featured && (
-                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                        <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-bold">
-                          POPULAIRE
-                        </span>
-                      </div>
-                    )}
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{plan.name}</h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">{plan.description}</p>
-                    <div className="mb-6">
-                      <span className="text-4xl font-extrabold text-gray-900 dark:text-gray-100">
-                        {formatPrice(plan.price_monthly || plan.price || 0)}
-                      </span>
-                      <span className="text-gray-600 dark:text-gray-400">/mois</span>
-                      {plan.price_yearly && (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          ou {formatPrice(plan.price_yearly)}/an (-{Math.round((1 - (plan.price_yearly / ((plan.price_monthly || plan.price || 0) * 12))) * 100)}%)
-                        </div>
-                      )}
-                    </div>
-                    <ul className="space-y-3 mb-8">
-                      <li className="flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        <span className="text-gray-700 dark:text-gray-300">{plan.max_sites || 1} site{(plan.max_sites || 1) > 1 ? 's' : ''}</span>
-                      </li>
-                      <li className="flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        <span className="text-gray-700 dark:text-gray-300">{plan.max_users || 1} utilisateur{(plan.max_users || 1) > 1 ? 's' : ''} max</span>
-                      </li>
-                      <li className="flex items-center">
-                        <span className="text-green-500 mr-2">✓</span>
-                        <span className="text-gray-700 dark:text-gray-300">{plan.max_storage_gb || 1} GB de stockage</span>
-                      </li>
-                      {plan.features && plan.features.map((feature: string, i: number) => (
-                        <li key={i} className="flex items-center">
-                          <span className="text-green-500 mr-2">✓</span>
-                          <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <a
-                      href={`/register?plan=${plan.slug || plan.id}`}
-                      className={`block w-full text-center py-3 rounded-lg font-bold transition-colors ${
-                        plan.is_featured
-                          ? 'bg-blue-600 text-white hover:bg-blue-700'
-                          : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'
+                {plans.map((plan: any, index: number) => {
+                  // Calculer le prix pour l'affichage
+                  const priceMonthly = parseFloat(plan.price_monthly || plan.price || 0)
+                  const priceYearly = plan.price_yearly ? parseFloat(plan.price_yearly) : null
+                  
+                  // Déterminer le style du bouton
+                  const buttonStyle = plan.button_style || (plan.is_featured ? 'primary' : 'secondary')
+                  const buttonClasses = {
+                    primary: 'bg-blue-600 text-white hover:bg-blue-700',
+                    secondary: 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600',
+                    outline: 'bg-transparent border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900'
+                  }[buttonStyle] || buttonClasses.primary
+                  
+                  // URL du bouton
+                  const buttonUrl = plan.button_url || `/register?plan=${plan.slug || plan.id || index}`
+                  const buttonText = plan.button_text || `Choisir ${plan.name || 'ce plan'}`
+                  
+                  return (
+                    <div
+                      key={plan.id || index}
+                      className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 relative ${
+                        plan.is_featured ? 'ring-4 ring-blue-500 scale-105' : ''
                       }`}
                     >
-                      Choisir {plan.name}
-                    </a>
-                  </div>
-                ))}
+                      {/* Badge personnalisé ou POPULAIRE par défaut si featured */}
+                      {(plan.badge || plan.is_featured) && (
+                        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                          <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-bold">
+                            {plan.badge || 'POPULAIRE'}
+                          </span>
+                        </div>
+                      )}
+                      
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                        {plan.name || `Plan ${index + 1}`}
+                      </h3>
+                      
+                      {plan.description && (
+                        <p className="text-gray-600 dark:text-gray-400 mb-6">{plan.description}</p>
+                      )}
+                      
+                      <div className="mb-6">
+                        {priceMonthly > 0 ? (
+                          <>
+                            <span className="text-4xl font-extrabold text-gray-900 dark:text-gray-100">
+                              {formatPrice(priceMonthly)}
+                            </span>
+                            <span className="text-gray-600 dark:text-gray-400">/mois</span>
+                            {priceYearly && priceYearly > 0 && (
+                              <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                ou {formatPrice(priceYearly)}/an 
+                                {priceMonthly > 0 && (
+                                  <span className="ml-1">
+                                    (-{Math.round((1 - (priceYearly / (priceMonthly * 12))) * 100)}%)
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                            Gratuit
+                          </span>
+                        )}
+                      </div>
+                      
+                      <ul className="space-y-3 mb-8">
+                        {/* Fonctionnalités personnalisées */}
+                        {plan.features && plan.features.length > 0 ? (
+                          plan.features.map((feature: string, i: number) => (
+                            feature && (
+                              <li key={i} className="flex items-center">
+                                <span className="text-green-500 mr-2">✓</span>
+                                <span className="text-gray-700 dark:text-gray-300">{feature}</span>
+                              </li>
+                            )
+                          ))
+                        ) : (
+                          // Fonctionnalités par défaut si aucune n'est définie (pour compatibilité API)
+                          <>
+                            {plan.max_sites && (
+                              <li className="flex items-center">
+                                <span className="text-green-500 mr-2">✓</span>
+                                <span className="text-gray-700 dark:text-gray-300">{plan.max_sites} site{(plan.max_sites || 1) > 1 ? 's' : ''}</span>
+                              </li>
+                            )}
+                            {plan.max_users && (
+                              <li className="flex items-center">
+                                <span className="text-green-500 mr-2">✓</span>
+                                <span className="text-gray-700 dark:text-gray-300">{plan.max_users} utilisateur{(plan.max_users || 1) > 1 ? 's' : ''} max</span>
+                              </li>
+                            )}
+                            {plan.max_storage_gb && (
+                              <li className="flex items-center">
+                                <span className="text-green-500 mr-2">✓</span>
+                                <span className="text-gray-700 dark:text-gray-300">{plan.max_storage_gb} GB de stockage</span>
+                              </li>
+                            )}
+                          </>
+                        )}
+                      </ul>
+                      
+                      {buttonText && buttonUrl && (
+                        <a
+                          href={buttonUrl}
+                          className={`block w-full text-center py-3 rounded-lg font-bold transition-colors ${buttonClasses}`}
+                        >
+                          {buttonText}
+                        </a>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             ) : (
               <div className="text-center py-12 text-gray-400">
