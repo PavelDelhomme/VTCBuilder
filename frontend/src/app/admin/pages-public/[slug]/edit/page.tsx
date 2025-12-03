@@ -903,10 +903,10 @@ export default function EditPublicPage() {
           </div>
         </div>
 
-        {/* Main Editor Area with Split View */}
+        {/* Main Editor Area with Split View - 1/3 éditeur, 2/3 prévisualisation */}
         <div className="flex-1 flex overflow-hidden min-h-0">
-          {/* Editor Section */}
-          <div className={`${showPreview ? (blocksPaletteOpen ? 'w-1/2' : 'w-1/3') : 'w-full'} border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
+          {/* Editor Section - Toujours 1/3 */}
+          <div className={`${showPreview ? 'w-1/3' : 'w-full'} border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
             <div className="flex-1 overflow-hidden min-h-0 h-full">
               <BlockEditor 
                 blocks={blocks}
@@ -914,14 +914,14 @@ export default function EditPublicPage() {
                 availableBlockTypes={blockTypes.length > 0 ? blockTypes : undefined}
                 selectedBlockId={selectedBlockId}
                 onBlockSelect={setSelectedBlockId}
-                onBlocksPaletteToggle={setBlocksPaletteOpen}
+                showBlocksPalette={false} // Désactiver la sidebar de blocs (popup externe)
               />
             </div>
           </div>
 
-          {/* Preview Section */}
+          {/* Preview Section - Toujours 2/3 */}
           {showPreview && (
-            <div className={`${blocksPaletteOpen ? 'w-1/2' : 'w-2/3'} border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 ${
+            <div className={`w-2/3 border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 ${
               previewMode === 'tablet' ? 'max-w-2xl mx-auto' : previewMode === 'mobile' ? 'max-w-md mx-auto' : ''
             }`}>
               <div className="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
