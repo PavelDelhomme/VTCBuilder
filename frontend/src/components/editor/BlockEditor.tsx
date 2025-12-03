@@ -330,7 +330,36 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     }
   }, [history, trackBlockAction])
 
+  // Vérifier si un conteneur existe dans les blocs
+  const hasContainer = useCallback((blocks: Block[]): boolean => {
+    const containerTypes = ['container', 'grid-container', 'flex-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
+    for (const block of blocks) {
+      if (containerTypes.includes(block.type)) {
+        return true
+      }
+      // Vérifier récursivement dans les enfants
+      if (block.children && block.children.length > 0) {
+        if (hasContainer(block.children)) {
+          return true
+        }
+      }
+    }
+    return false
+  }, [])
+
+  // Vérifier si un type de bloc est un conteneur
+  const isContainerType = useCallback((blockTypeName: string): boolean => {
+    const containerTypes = ['container', 'grid-container', 'flex-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
+    return containerTypes.includes(blockTypeName)
+  }, [])
+
   const addBlock = useCallback((blockType: BlockType) => {
+    // Si ce n'est pas un conteneur et qu'aucun conteneur n'existe, empêcher l'ajout
+    if (!isContainerType(blockType.name) && !hasContainer(history.state)) {
+      alert('⚠️ Vous devez d\'abord ajouter un conteneur (Container, Grid, Flex, etc.) avant d\'ajouter des blocs de contenu.\n\nLes blocs de structure sont disponibles dans la catégorie "Mise en page".')
+      return
+    }
+
     const newBlock: Block = {
       id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type: blockType.name,
@@ -339,12 +368,18 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       layout: 12, // Par défaut, pleine largeur (12/12)
       container: 'container',
     }
+
+    // Si c'est un conteneur, initialiser avec un tableau d'enfants vide
+    if (isContainerType(blockType.name)) {
+      newBlock.children = []
+    }
+
     history.set([...history.state, newBlock], true)
     setSelectedBlock(newBlock.id)
     setSidebarOpen(true) // Ouvrir la sidebar pour afficher les paramètres
     // Tracker l'ajout du bloc
     trackBlockAction(blockType.name, 'add')
-  }, [history, trackBlockAction])
+  }, [history, trackBlockAction, hasContainer, isContainerType])
 
   const removeBlock = useCallback((blockId: string) => {
     // Désélectionner immédiatement le bloc si c'était celui sélectionné (optimistic UI)
@@ -874,6 +909,25 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         
                 {/* Liste des blocs - Scrollable en dessous des filtres */}
                 <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-5 lg:p-6 pt-0 sm:pt-0 lg:pt-0">
+                  {/* Message informatif si aucun conteneur */}
+                  {!hasContainer(history.state) && (
+                    <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-semibold text-yellow-800 dark:text-yellow-200 mb-1">
+                            ⚠️ Aucun conteneur détecté
+                          </h4>
+                          <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                            Vous devez d'abord ajouter un conteneur (Container, Grid, Flex, etc.) dans la catégorie <strong>"Mise en page"</strong> avant de pouvoir ajouter des blocs de contenu.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Affichage des blocs - Recherche ou groupé par catégorie */}
                   {(() => {
                     // Filtrer les blocs selon la recherche et la catégorie
@@ -917,23 +971,27 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                         <div className="space-y-2">
                           {sortedBlocks.map((blockType: BlockType) => {
                             const isPremium = !!(blockType.available_plans && blockType.available_plans.length > 0)
+                            const isContainer = isContainerType(blockType.name)
+                            const hasContainerInBlocks = hasContainer(history.state)
                             const canUse = canUseBlockType(blockType.name, isPremium)
+                            const canAdd = canUse && (isContainer || hasContainerInBlocks)
                             
                             return (
                               <button
                                 key={blockType.id}
                                 onClick={() => {
-                                  if (canUse) {
+                                  if (canAdd) {
                                     addBlock(blockType)
                                     setSidebarOpen(false)
                                   }
                                 }}
-                                disabled={!canUse}
+                                disabled={!canAdd}
                                 className={`w-full p-3 rounded-lg border transition-all text-left group ${
-                                  canUse
+                                  canAdd
                                     ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-md hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-[0.98]'
                                     : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed'
                                 }`}
+                                title={!canAdd && !isContainer && !hasContainerInBlocks ? '⚠️ Ajoutez d\'abord un conteneur (Container, Grid, Flex, etc.)' : ''}
                               >
                                 <div className="flex items-center gap-3">
                                   <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-xl shadow-sm">
@@ -984,24 +1042,33 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                             <div className="space-y-2.5">
                               {categoryBlocks.map((blockType: BlockType) => {
                                 const isPremium = !!(blockType.available_plans && blockType.available_plans.length > 0)
+                                const isContainer = isContainerType(blockType.name)
+                                const hasContainerInBlocks = hasContainer(history.state)
                                 const canUse = canUseBlockType(blockType.name, isPremium)
+                                const canAdd = canUse && (isContainer || hasContainerInBlocks)
                                 
                                 return (
                                   <button
                                     key={`${blockType.name}-${blockType.id}`}
                                     onClick={() => {
-                                      if (canUse) {
+                                      if (canAdd) {
                                         addBlock(blockType)
                                         setSidebarOpen(false)
                                       }
                                     }}
-                                    disabled={!canUse}
+                                    disabled={!canAdd}
                                     className={`w-full px-3 sm:px-4 py-3 text-left bg-white dark:bg-gray-800 border-2 rounded-xl transition-all duration-200 flex items-center gap-3 ${
-                                      canUse
+                                      canAdd
                                         ? 'border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-md cursor-pointer group'
                                         : 'border-gray-100 dark:border-gray-800 opacity-60 cursor-not-allowed'
                                     }`}
-                                    title={!canUse && isPremium ? 'Bloc premium - Nécessite un abonnement supérieur' : ''}
+                                    title={
+                                      !canAdd && !isContainer && !hasContainerInBlocks 
+                                        ? '⚠️ Ajoutez d\'abord un conteneur (Container, Grid, Flex, etc.) dans la catégorie "Mise en page"' 
+                                        : !canUse && isPremium 
+                                          ? 'Bloc premium - Nécessite un abonnement supérieur' 
+                                          : ''
+                                    }
                                   >
                                     <div className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br flex items-center justify-center border transition-all ${
                                       canUse

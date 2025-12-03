@@ -124,178 +124,207 @@ export default function EditPublicPage() {
         let homepageBlocks = data.public_homepage_blocks || []
         
         // Si aucun bloc n'existe, créer des blocs par défaut correspondant à la page actuelle
-        // Structure complète : Header, Hero, Features, Pricing, CTA, Footer
+        // Structure complète avec conteneurs : Container > Grid > Header, Hero, Features, Pricing, CTA, Footer
         if (homepageBlocks.length === 0) {
           const now = Date.now()
-          homepageBlocks = [
-            // Header - Reproduit exactement PublicHeader
-            {
-              id: `header-${now}`,
-              type: 'header',
-              data: {
-                logo_text: 'VTCBuilder',
-                badge: 'Beta',
-                logo_url: '/',
-                show_theme_toggle: true,
-                sticky: true,
-                links: [
-                  { label: 'Tarifs', url: '/#pricing' },
-                  { label: 'Fonctionnalités', url: '/features' },
-                  { label: 'Templates', url: '/templates' }
-                ],
-                cta_button: {
-                  text: 'Créer un compte',
-                  url: '/register',
-                  style: 'primary'
-                }
-              },
-              styles: {
-                position: 'sticky',
-                top: '0',
-                z_index: '50',
-                backgroundColor: 'bg-white/95 dark:bg-gray-900/90',
-                backdrop_blur: true
+          
+          // Créer les blocs de contenu
+          const headerBlock = {
+            id: `header-${now}`,
+            type: 'header',
+            data: {
+              logo_text: 'VTCBuilder',
+              badge: 'Beta',
+              logo_url: '/',
+              show_theme_toggle: true,
+              sticky: true,
+              links: [
+                { label: 'Tarifs', url: '/#pricing' },
+                { label: 'Fonctionnalités', url: '/features' },
+                { label: 'Templates', url: '/templates' }
+              ],
+              cta_button: {
+                text: 'Créer un compte',
+                url: '/register',
+                style: 'primary'
               }
             },
-            {
-              id: `hero-${now}`,
-              type: 'hero',
-              data: {
-                title: 'Le WordPress des Chauffeurs VTC',
-                subtitle: 'Créez votre site VTC professionnel en quelques minutes. Gestion complète, réservations, paiements, tout inclus.',
-                buttons: [
-                  { text: '🚀 Démarrer gratuitement', url: '/register', style: 'primary' },
-                  { text: 'Voir les tarifs', url: '#pricing', style: 'secondary' }
-                ],
-                background_image: '',
-                background_gradient: 'from-blue-500 via-purple-600 to-pink-500'
-              },
-              styles: {
-                padding: 'py-20 lg:py-32',
-                textAlign: 'center',
-                color: '#ffffff'
-              }
-            },
-            {
-              id: `features-${now}`,
-              type: 'features-grid',
-              data: {
-                title: 'Tout ce dont vous avez besoin',
-                subtitle: '',
-                columns: 3,
-                features: [
-                  {
-                    icon: '🎨',
-                    title: 'Site Professionnel',
-                    description: 'Designs modernes et responsive. Personnalisez votre site sans coder.'
-                  },
-                  {
-                    icon: '📅',
-                    title: 'Réservations en Ligne',
-                    description: 'Système de réservation complet avec calendrier et notifications.'
-                  },
-                  {
-                    icon: '💳',
-                    title: 'Paiements Intégrés',
-                    description: 'Acceptez les paiements en ligne. Cartes bancaires, virement, tout est possible.'
-                  },
-                  {
-                    icon: '📱',
-                    title: 'Mobile First',
-                    description: 'Votre site s\'adapte automatiquement aux smartphones et tablettes.'
-                  },
-                  {
-                    icon: '📊',
-                    title: 'Analytics Inclus',
-                    description: 'Suivez vos performances, réservations, revenus en temps réel.'
-                  },
-                  {
-                    icon: '🔒',
-                    title: 'Sécurisé & Rapide',
-                    description: 'Hébergement sécurisé, sauvegardes automatiques, SSL inclus.'
-                  }
-                ]
-              },
-              styles: {
-                padding: 'py-20',
-                backgroundColor: 'bg-white dark:bg-gray-800'
-              }
-            },
-            {
-              id: `pricing-${now}`,
-              type: 'pricing',
-              data: {
-                title: 'Tarifs Transparents',
-                subtitle: 'Choisissez le plan adapté à vos besoins. Pas d\'engagement, changez de plan à tout moment.',
-                source: 'api',
-                api_endpoint: '/api/billing/pricing-plans/',
-                columns: 3
-              },
-              styles: {
-                padding: 'py-20',
-                backgroundColor: 'bg-gray-50 dark:bg-gray-900'
-              }
-            },
-            {
-              id: `cta-${now}`,
-              type: 'cta-section',
-              data: {
-                title: 'Prêt à démarrer ?',
-                subtitle: 'Créez votre site VTC professionnel dès aujourd\'hui. Essai gratuit de 14 jours.',
-                button_text: '🚀 Créer mon compte gratuitement',
-                button_url: '/register',
-                background_gradient: 'from-blue-600 to-purple-600'
-              },
-              styles: {
-                padding: 'py-20',
-                textAlign: 'center'
-              }
-            },
-            // Footer - Reproduit exactement PublicFooter
-            {
-              id: `footer-${now}`,
-              type: 'footer',
-              data: {
-                columns: [
-                  {
-                    title: 'VTCBuilder',
-                    links: [],
-                    description: 'La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.'
-                  },
-                  {
-                    title: 'Produit',
-                    links: [
-                      { label: 'Tarifs', url: '/#pricing' },
-                      { label: 'Fonctionnalités', url: '/features' },
-                      { label: 'Templates', url: '/templates' }
-                    ]
-                  },
-                  {
-                    title: 'Support',
-                    links: [
-                      { label: 'Documentation', url: '/docs' },
-                      { label: 'Contact', url: '/contact' },
-                      { label: 'FAQ', url: '/faq' }
-                    ]
-                  },
-                  {
-                    title: 'Légal',
-                    links: [
-                      { label: 'CGV', url: '/legal/terms' },
-                      { label: 'Confidentialité', url: '/legal/privacy' }
-                    ]
-                  }
-                ],
-                copyright: `© ${new Date().getFullYear()} VTCBuilder. Tous droits réservés.`,
-                additional_text: 'vtcbuilder.com - Développé avec ❤️ en France'
-              },
-              styles: {
-                backgroundColor: 'bg-gray-900',
-                color: 'text-white',
-                padding: 'py-12'
-              }
+            styles: {
+              position: 'sticky',
+              top: '0',
+              z_index: '50',
+              backgroundColor: 'bg-white/95 dark:bg-gray-900/90',
+              backdrop_blur: true
             }
-          ]
+          }
+          
+          const heroBlock = {
+            id: `hero-${now}`,
+            type: 'hero',
+            data: {
+              title: 'Le WordPress des Chauffeurs VTC',
+              subtitle: 'Créez votre site VTC professionnel en quelques minutes. Gestion complète, réservations, paiements, tout inclus.',
+              buttons: [
+                { text: '🚀 Démarrer gratuitement', url: '/register', style: 'primary' },
+                { text: 'Voir les tarifs', url: '#pricing', style: 'secondary' }
+              ],
+              background_image: '',
+              background_gradient: 'from-blue-500 via-purple-600 to-pink-500'
+            },
+            styles: {
+              padding: 'py-20 lg:py-32',
+              textAlign: 'center',
+              color: '#ffffff'
+            }
+          }
+          
+          const featuresBlock = {
+            id: `features-${now}`,
+            type: 'features-grid',
+            data: {
+              title: 'Tout ce dont vous avez besoin',
+              subtitle: '',
+              columns: 3,
+              features: [
+                {
+                  icon: '🎨',
+                  title: 'Site Professionnel',
+                  description: 'Designs modernes et responsive. Personnalisez votre site sans coder.'
+                },
+                {
+                  icon: '📅',
+                  title: 'Réservations en Ligne',
+                  description: 'Système de réservation complet avec calendrier et notifications.'
+                },
+                {
+                  icon: '💳',
+                  title: 'Paiements Intégrés',
+                  description: 'Acceptez les paiements en ligne. Cartes bancaires, virement, tout est possible.'
+                },
+                {
+                  icon: '📱',
+                  title: 'Mobile First',
+                  description: 'Votre site s\'adapte automatiquement aux smartphones et tablettes.'
+                },
+                {
+                  icon: '📊',
+                  title: 'Analytics Inclus',
+                  description: 'Suivez vos performances, réservations, revenus en temps réel.'
+                },
+                {
+                  icon: '🔒',
+                  title: 'Sécurisé & Rapide',
+                  description: 'Hébergement sécurisé, sauvegardes automatiques, SSL inclus.'
+                }
+              ]
+            },
+            styles: {
+              padding: 'py-20',
+              backgroundColor: 'bg-white dark:bg-gray-800'
+            }
+          }
+          
+          const pricingBlock = {
+            id: `pricing-${now}`,
+            type: 'pricing',
+            data: {
+              title: 'Tarifs Transparents',
+              subtitle: 'Choisissez le plan adapté à vos besoins. Pas d\'engagement, changez de plan à tout moment.',
+              source: 'api',
+              api_endpoint: '/api/billing/pricing-plans/',
+              columns: 3
+            },
+            styles: {
+              padding: 'py-20',
+              backgroundColor: 'bg-gray-50 dark:bg-gray-900'
+            }
+          }
+          
+          const ctaBlock = {
+            id: `cta-${now}`,
+            type: 'cta-section',
+            data: {
+              title: 'Prêt à démarrer ?',
+              subtitle: 'Créez votre site VTC professionnel dès aujourd\'hui. Essai gratuit de 14 jours.',
+              button_text: '🚀 Créer mon compte gratuitement',
+              button_url: '/register',
+              background_gradient: 'from-blue-600 to-purple-600'
+            },
+            styles: {
+              padding: 'py-20',
+              textAlign: 'center'
+            }
+          }
+          
+          const footerBlock = {
+            id: `footer-${now}`,
+            type: 'footer',
+            data: {
+              columns: [
+                {
+                  title: 'VTCBuilder',
+                  links: [],
+                  description: 'La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.'
+                },
+                {
+                  title: 'Produit',
+                  links: [
+                    { label: 'Tarifs', url: '/#pricing' },
+                    { label: 'Fonctionnalités', url: '/features' },
+                    { label: 'Templates', url: '/templates' }
+                  ]
+                },
+                {
+                  title: 'Support',
+                  links: [
+                    { label: 'Documentation', url: '/docs' },
+                    { label: 'Contact', url: '/contact' },
+                    { label: 'FAQ', url: '/faq' }
+                  ]
+                },
+                {
+                  title: 'Légal',
+                  links: [
+                    { label: 'CGV', url: '/legal/terms' },
+                    { label: 'Confidentialité', url: '/legal/privacy' }
+                  ]
+                }
+              ],
+              copyright: `© ${new Date().getFullYear()} VTCBuilder. Tous droits réservés.`,
+              additional_text: 'vtcbuilder.com - Développé avec ❤️ en France'
+            },
+            styles: {
+              backgroundColor: 'bg-gray-900',
+              color: 'text-white',
+              padding: 'py-12'
+            }
+          }
+          
+          // Créer la structure avec conteneurs
+          // Container principal > Grid Container > Blocs de contenu
+          const gridContainer = {
+            id: `grid-container-${now}`,
+            type: 'grid-container',
+            data: {
+              columns: 1,
+              gap: 'gap-4'
+            },
+            styles: {},
+            children: [headerBlock, heroBlock, featuresBlock, pricingBlock, ctaBlock, footerBlock]
+          }
+          
+          const mainContainer = {
+            id: `container-${now}`,
+            type: 'container',
+            data: {
+              max_width: 'max-w-7xl',
+              padding: 'px-4 sm:px-6 lg:px-8'
+            },
+            styles: {},
+            children: [gridContainer]
+          }
+          
+          homepageBlocks = [mainContainer]
         } else {
           // Si des blocs existent, s'assurer qu'ils ont la structure correcte (data au lieu de properties)
           homepageBlocks = homepageBlocks.map((block: any) => {
