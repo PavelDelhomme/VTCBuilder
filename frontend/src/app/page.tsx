@@ -42,7 +42,20 @@ export default function HomePage() {
       try {
         const settings = await settingsService.getSettings()
         if (settings.public_homepage_blocks && settings.public_homepage_blocks.length > 0) {
-          setHomepageBlocks(settings.public_homepage_blocks)
+          // S'assurer que les blocs hero ont la couleur blanche si elle n'est pas définie
+          const blocksWithColor = settings.public_homepage_blocks.map((block: any) => {
+            if (block.type === 'hero' && (!block.styles || !block.styles.color)) {
+              return {
+                ...block,
+                styles: {
+                  ...block.styles,
+                  color: '#ffffff'
+                }
+              }
+            }
+            return block
+          })
+          setHomepageBlocks(blocksWithColor)
           setHomepageStatus(settings.public_homepage_status || 'draft')
           // Utiliser les blocs seulement si publié
           setUseBlocks(settings.public_homepage_status === 'published')
