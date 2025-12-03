@@ -170,7 +170,8 @@ export default function EditPublicPage() {
               },
               styles: {
                 padding: 'py-20 lg:py-32',
-                textAlign: 'center'
+                textAlign: 'center',
+                color: '#ffffff'
               }
             },
             {
