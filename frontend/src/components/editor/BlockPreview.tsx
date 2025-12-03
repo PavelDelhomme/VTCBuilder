@@ -2319,6 +2319,15 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
 
     case 'features-grid':
       const features = block.data.features || []
+      const columns = block.data.columns || 3
+      // Déterminer les classes de grille en fonction du nombre de colonnes
+      const gridClasses = {
+        1: 'grid-cols-1',
+        2: 'grid-cols-1 md:grid-cols-2',
+        3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+        4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
+      }[columns] || 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+      
       return (
         <div style={wrapperStyles} className="mb-6">
           {block.data.title && (
@@ -2326,10 +2335,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               {block.data.title}
             </h2>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className={`grid ${gridClasses} gap-8`}>
             {features.length > 0 ? (
               features.map((feature: any, i: number) => (
-                <div key={i} className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow">
+                <div key={i} className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                   <div className="text-5xl mb-4">{feature.icon || '✨'}</div>
                   <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                     {feature.title || `Fonctionnalité ${i + 1}`}
