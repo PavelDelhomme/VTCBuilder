@@ -2058,8 +2058,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       
       return (
         <div 
-            style={{
-            ...wrapperStyles,
+          style={{
+            // Copier wrapperStyles sans les propriétés de padding pour éviter les conflits
+            ...Object.fromEntries(
+              Object.entries(wrapperStyles).filter(([key]) => 
+                !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'].includes(key)
+              )
+            ),
             background: heroBg,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
