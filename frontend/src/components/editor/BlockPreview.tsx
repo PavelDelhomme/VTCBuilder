@@ -664,6 +664,18 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       : block.styles?.background_color || block.styles?.backgroundColor || undefined,
     // Couleur de texte
     color: block.styles?.color,
+    // Typographie
+    fontFamily: block.styles?.font_family || block.styles?.fontFamily || undefined,
+    fontSize: block.styles?.font_size || block.styles?.fontSize || undefined,
+    fontWeight: block.styles?.font_weight || block.styles?.fontWeight || undefined,
+    fontStyle: block.styles?.font_style || block.styles?.fontStyle || undefined,
+    lineHeight: block.styles?.line_height || block.styles?.lineHeight || undefined,
+    letterSpacing: block.styles?.letter_spacing || block.styles?.letterSpacing || undefined,
+    wordSpacing: block.styles?.word_spacing || block.styles?.wordSpacing || undefined,
+    textTransform: block.styles?.text_transform || block.styles?.textTransform || undefined,
+    textDecoration: block.styles?.text_decoration || block.styles?.textDecoration || undefined,
+    textShadow: block.styles?.text_shadow || block.styles?.textShadow || undefined,
+    textAlign: block.styles?.text_align || block.styles?.textAlign || undefined,
     // Opacité
     opacity: block.styles?.opacity !== undefined ? block.styles?.opacity : 1,
     // Transform

@@ -86,15 +86,16 @@
 - ✅ Form Inscription (Inscription) - Implémenté
 - ✅ Form Login (Formulaire de connexion) - Implémenté (form-login)
 - ✅ Booking Form (Formulaire de réservation) - Implémenté
-- ⬜ Form Multi-step (Formulaire multi-étapes) - Premium - À implémenter (priorité moyenne)
-- ⬜ Form Conditional (Formulaire conditionnel) - Premium - À implémenter (priorité moyenne)
-- ⬜ Form Calculator (Formulaire calculateur) - Premium - À implémenter (priorité basse)
-- ⬜ Form File Upload (Upload de fichiers) - Premium - À implémenter (priorité moyenne)
-- ⬜ Form Payment (Paiement) - Premium - À implémenter (priorité haute)
-- ⬜ Form Quiz (Quiz) - Premium - À implémenter (priorité basse)
-- ⬜ Form Survey (Sondage) - Premium - À implémenter (priorité basse)
-- ⬜ Form Poll (Sondage rapide) - À implémenter (priorité basse)
-- ⬜ Form RSVP (RSVP) - À implémenter (priorité basse)
+- ✅ Form Multi-step (Formulaire multi-étapes) - Premium - Implémenté
+- ✅ Form Conditional (Formulaire conditionnel) - Premium - Implémenté
+- ✅ Form Calculator (Formulaire calculateur) - Premium - Implémenté
+- ✅ Form File Upload (Upload de fichiers) - Premium - Implémenté
+- ✅ Form Payment (Paiement) - Premium - Implémenté
+- ✅ Form Quiz (Quiz) - Premium - Implémenté
+- ✅ Form Survey (Sondage) - Premium - Implémenté
+- ✅ Form Poll (Sondage rapide) - Implémenté
+- ✅ Form RSVP (RSVP) - Implémenté
+- ✅ Captcha (Captcha) - Implémenté
 
 ## 🎯 Blocs Interactifs (Premium ⭐)
 - ✅ Tabs (Onglets) - Implémenté
@@ -126,9 +127,8 @@
 - ⬜ Typeahead (Saisie prédictive)
 
 ## 🛍️ Blocs E-commerce (Premium ⭐)
-- ⬜ Product Card (Carte produit) - À implémenter (priorité haute)
-- ⬜ Product Gallery (Galerie produit) - À implémenter (priorité haute)
-- ⬜ Product Details (Détails produit) - À implémenter (priorité haute)
+- ✅ Product Gallery (Galerie produit) - Implémenté
+- ✅ Product Details (Détails produit) - Implémenté
 - ⬜ Shopping Cart (Panier) - À implémenter (priorité haute)
 - ⬜ Checkout (Paiement) - À implémenter (priorité haute)
 - ✅ Price Table (Tableau de prix) - Implémenté (pricing block)
@@ -140,8 +140,8 @@
 - ⬜ Reviews (Avis clients) - À implémenter (priorité moyenne)
 - ✅ Rating (Évaluation) - Implémenté
 - ⬜ Stock Status (Statut stock)
-- ⬜ Add to Cart Button (Bouton ajouter au panier)
-- ⬜ Buy Now Button (Bouton acheter maintenant)
+- ✅ Add to Cart Button (Bouton ajouter au panier) - Implémenté
+- ✅ Buy Now Button (Bouton acheter maintenant) - Implémenté
 - ⬜ Related Products (Produits liés)
 - ⬜ Upsell Products (Produits complémentaires)
 - ⬜ Cross-sell Products (Produits croisés)
@@ -203,12 +203,12 @@
 - ✅ Contact Buttons (Boutons de contact) - Implémenté
 - ✅ Map (Carte) - Implémenté
 - ✅ Badges (Badges) - Implémenté
-- ⬜ Route Calculator (Calculateur d'itinéraire) - Premium
-- ⬜ Fare Calculator (Calculateur de tarif) - Premium
-- ⬜ Availability Calendar (Calendrier disponibilité) - Premium
-- ⬜ Driver Profile (Profil chauffeur)
-- ⬜ Vehicle Comparison (Comparaison véhicules)
-- ⬜ Service Packages (Forfaits service)
+- ✅ Route Calculator (Calculateur d'itinéraire) - Premium - Implémenté
+- ✅ Fare Calculator (Calculateur de tarif) - Premium - Implémenté
+- ✅ Availability Calendar (Calendrier disponibilité) - Premium - Implémenté
+- ✅ Driver Profile (Profil chauffeur) - Implémenté
+- ✅ Vehicle Comparison (Comparaison véhicules) - Implémenté
+- ✅ Service Packages (Forfaits service) - Implémenté
 - ⬜ Testimonials VTC (Témoignages VTC)
 - ⬜ Reviews VTC (Avis VTC)
 - ⬜ Rating Display (Affichage note)
@@ -217,12 +217,12 @@
 - ⬜ Chat Widget (Widget chat) - Premium
 - ⬜ WhatsApp Button (Bouton WhatsApp)
 - ⬜ Phone Button (Bouton téléphone)
-- ⬜ SMS Button (Bouton SMS)
-- ⬜ Email Button (Bouton email)
+- ✅ SMS Button (Bouton SMS) - Implémenté
+- ✅ Email Button (Bouton email) - Implémenté
 - ⬜ Social Proof (Preuve sociale)
-- ⬜ Trust Badges (Badges de confiance)
+- ✅ Trust Badges (Badges de confiance) - Implémenté
 - ⬜ Security Badges (Badges sécurité)
-- ⬜ Payment Methods (Méthodes de paiement)
+- ✅ Payment Methods (Méthodes de paiement) - Implémenté
 - ⬜ Insurance Info (Info assurance)
 - ⬜ License Info (Info licence)
 - ⬜ Certifications VTC (Certifications VTC)
@@ -493,14 +493,14 @@
 - ✅ Font Size
 - ✅ Font Weight
 - ✅ Text Align
-- ⬜ Font Family
-- ⬜ Line Height
-- ⬜ Letter Spacing
-- ⬜ Word Spacing
-- ⬜ Text Transform (uppercase, lowercase, capitalize)
-- ⬜ Text Decoration (underline, overline, line-through)
-- ⬜ Text Shadow
-- ⬜ Font Style (normal, italic, oblique)
+- ✅ Font Family (50+ polices incluant Google Fonts)
+- ✅ Line Height
+- ✅ Letter Spacing
+- ✅ Word Spacing
+- ✅ Text Transform (uppercase, lowercase, capitalize)
+- ✅ Text Decoration (underline, overline, line-through)
+- ✅ Text Shadow
+- ✅ Font Style (normal, italic, oblique)
 - ⬜ Font Variant (normal, small-caps)
 - ⬜ Text Overflow (ellipsis, clip)
 - ⬜ White Space (normal, nowrap, pre, pre-wrap)
@@ -820,28 +820,28 @@
 
 ## 📝 Notes d'Implémentation
 
-### ✅ Blocs Déjà Implémentés (87 blocs)
-**Blocs de Contenu:** heading, text, paragraph, line, button, link, list, quote, code, alert, divider, spacer, breadcrumb, pagination, tags
+### ✅ Blocs Déjà Implémentés (130+ blocs)
+**Blocs de Contenu (34):** heading, text, paragraph, line, button, link, list, quote, code, alert, divider, spacer, breadcrumb, pagination, tags, rich-text, markdown, html-raw, icon, label, tooltip, popover, dropdown, categories, author-box, related-posts, table-of-contents, reading-time, share-buttons
 
-**Blocs de Mise en Page:** columns, rows, section, container
+**Blocs de Mise en Page (9):** columns, rows, section, container, flexbox, grid, stack, inline, group, wrapper
 
-**Blocs Médias:** image, video, gallery, audio-player, carousel, video-embed, map
+**Blocs Médias (8):** image, video, gallery, audio-player, carousel, video-embed, vimeo-embed, image-slider, lightbox, map
 
-**Blocs de Données:** table, chart, stats, progress-bar, progress-circle, timeline, calendar, countdown
+**Blocs de Données (9):** table, chart, stats, progress-bar, progress-circle, timeline, calendar, countdown, counter
 
-**Blocs de Formulaire:** form, form-newsletter, form-search, form-inscription, form-login, booking-form
+**Blocs de Formulaire (15):** form, form-newsletter, form-search, form-inscription, form-login, booking-form, form-multi-step, form-conditional, form-calculator, form-file-upload, form-payment, form-quiz, form-survey, form-poll, form-rsvp, captcha
 
-**Blocs Interactifs:** tabs, accordion, carousel, modal, faq-filters
+**Blocs Interactifs (5):** tabs, accordion, carousel, modal, faq-filters
 
-**Blocs E-commerce:** pricing, pricing-card, pricing-cards-grid, billing-cycle-toggle, rating
+**Blocs E-commerce (8):** pricing, pricing-card, pricing-cards-grid, billing-cycle-toggle, rating, product-gallery, product-details, add-to-cart, buy-now
 
-**Blocs de Design:** hero, banner, cta-section, feature-card, icon-box, card, testimonials, logo-grid, team-member, features-grid, contact-form, faq-section
+**Blocs de Design (12):** hero, banner, cta-section, feature-card, icon-box, card, testimonials, logo-grid, team-member, features-grid, contact-form, faq-section, card-grid, logo-carousel
 
-**Blocs VTC:** booking-form, pricing-table-vtc, service-zones, vehicle-gallery, contact-buttons, map, badges
+**Blocs VTC (15):** booking-form, pricing-table-vtc, service-zones, vehicle-gallery, contact-buttons, map, badges, route-calculator, fare-calculator, availability-calendar, driver-profile, vehicle-comparison, service-packages, email-button, sms-button, trust-badges, payment-methods
 
-**Blocs Utilitaires:** search-bar, docs-grid, quick-start-section, support-hours, trial-info
+**Blocs Utilitaires (5):** search-bar, docs-grid, quick-start-section, support-hours, trial-info
 
-**Blocs Footer:** footer
+**Blocs Footer/Header (2):** footer, header
 
 ### Priorité Haute - À Implémenter
 1. ✅ Sélecteur de pages dans l'éditeur - **FAIT**
@@ -871,12 +871,15 @@
 
 ### 📊 Statistiques d'Implémentation
 - **Total blocs dans roadmap:** ~200+
-- **Blocs implémentés:** 113 (87 de base + 26 nouveaux blocs)
-- **Taux d'implémentation:** ~56.5%
+- **Blocs implémentés:** 130+ (tous les blocs essentiels + premium)
+- **Taux d'implémentation:** ~65%
 - **Blocs essentiels implémentés:** ✅ (heading, text, image, button, form, etc.)
-- **Blocs premium implémentés:** ✅ (chart, calendar, modal, etc.)
-- **Blocs VTC implémentés:** ✅ (tous les blocs VTC de base)
-- **Nouveaux blocs (03/12/2025):** ✅ Rich Text, Markdown, HTML Raw, Icon, Label, Tooltip, Popover, Dropdown, Categories, Author Box, Related Posts, Table of Contents, Reading Time, Share Buttons, Flexbox, Grid, Stack, Inline, Group, Wrapper
+- **Blocs premium implémentés:** ✅ (chart, calendar, modal, form-multi-step, form-payment, etc.)
+- **Blocs VTC implémentés:** ✅ (tous les blocs VTC essentiels + calculateurs)
+- **Blocs E-commerce implémentés:** ✅ (product-gallery, product-details, add-to-cart, buy-now)
+- **Système de Typographie:** ✅ Complet (Font Family, Size, Weight, Style, Line Height, Letter/Word Spacing, Text Transform, Decoration, Shadow, Align)
+- **Nouveaux blocs (03/12/2025):** ✅ Rich Text, Markdown, HTML Raw, Icon, Label, Tooltip, Popover, Dropdown, Categories, Author Box, Related Posts, Table of Contents, Reading Time, Share Buttons, Flexbox, Grid, Stack, Inline, Group, Wrapper, Image Slider, Lightbox, Vimeo Embed, Counter, Card Grid, Logo Carousel
+- **Nouveaux blocs (04/12/2025):** ✅ Form Multi-step, Form Conditional, Form Calculator, Form File Upload, Form Payment, Form Quiz, Form Survey, Form Poll, Form RSVP, Captcha, Route Calculator, Fare Calculator, Availability Calendar, Driver Profile, Vehicle Comparison, Service Packages, Email Button, SMS Button, Product Gallery, Product Details, Add to Cart, Buy Now, Trust Badges, Payment Methods
 
 ### 🎯 Prochaines Étapes Recommandées
 1. **Rich Text Editor (WYSIWYG)** - Priorité absolue pour améliorer l'expérience éditeur de texte
