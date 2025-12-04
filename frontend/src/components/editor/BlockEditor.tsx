@@ -91,6 +91,10 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const [categoryFilter, setCategoryFilter] = useState<string>('all') // Filtre par catégorie
   const [searchQuery, setSearchQuery] = useState<string>('') // Recherche par nom
   
+  // Ref pour scroller vers le bloc sélectionné
+  const blockListRef = useRef<HTMLDivElement>(null)
+  const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  
   // Synchroniser avec la sélection externe (optimisé pour éviter les conflits)
   useEffect(() => {
     if (externalSelectedBlockId !== undefined && externalSelectedBlockId !== selectedBlock) {
@@ -1316,7 +1320,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                       </div>
                     </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-12 gap-4 lg:gap-6 auto-rows-min">
+                  <div ref={blockListRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-12 gap-4 lg:gap-6 auto-rows-min">
                       {history.state
                         .filter((b: Block) => !b.position || b.position.type === 'static')
                         .map((block: Block) => {
@@ -1325,7 +1329,18 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                           const colSpan = layoutCols === 12 ? 'col-span-full' : `col-span-${layoutCols}`
                         
                         return (
-                          <div key={block.id} className={colSpan}>
+                          <div 
+                            key={block.id} 
+                            className={colSpan}
+                            ref={(el) => {
+                              if (el) {
+                                blockRefs.current.set(block.id, el)
+                              } else {
+                                blockRefs.current.delete(block.id)
+                              }
+                            }}
+                            data-block-list-id={block.id}
+                          >
                   <SortableBlock
                     block={block}
                     blockTypes={blockTypes}
