@@ -24,7 +24,7 @@ interface BlockPreviewProps {
   onInspectorModeChange?: (enabled: boolean) => void // Callback pour activer/désactiver le mode inspecteur
 }
 
-const BlockPreviewComponent = function BlockPreview({ 
+function BlockPreview({ 
   blocks, 
   blockTypes, 
   onBlocksChange,
@@ -346,6 +346,24 @@ const BlockPreviewComponent = function BlockPreview({
     </div>
   )
 }
+
+// Mémoriser le composant pour éviter les re-renders inutiles
+const MemoizedBlockPreview = memo(BlockPreview, (prevProps, nextProps) => {
+  // Comparaison personnalisée pour éviter les re-renders inutiles
+  if (prevProps.blocks.length !== nextProps.blocks.length) return false
+  if (prevProps.selectedBlockId !== nextProps.selectedBlockId) return false
+  if (prevProps.isEditable !== nextProps.isEditable) return false
+  if (prevProps.inspectorMode !== nextProps.inspectorMode) return false
+  
+  // Comparaison rapide des IDs des blocs
+  const prevIds = prevProps.blocks.map(b => b.id).join(',')
+  const nextIds = nextProps.blocks.map(b => b.id).join(',')
+  if (prevIds !== nextIds) return false
+  
+  return true // Pas de changement, ne pas re-render
+})
+
+export default MemoizedBlockPreview
 
 // Sortable Preview Block Component
 function SortablePreviewBlock({
@@ -1471,6 +1489,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                     src={testimonial.avatar}
                     alt={testimonial.name}
                     className="w-16 h-16 rounded-full mx-auto mb-4 object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                 )}
                 <p className="text-gray-700 dark:text-gray-300 mb-4 italic">
@@ -2014,6 +2034,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                       src={vehicle.image}
                       alt={vehicle.name}
                       className="w-full h-48 object-cover"
+                      loading="lazy"
+                      decoding="async"
                       onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
                         (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23ddd" width="400" height="300"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="18" dy="10.5" font-weight="bold" x="50%25" y="50%25" text-anchor="middle"%3EVéhicule%3C/text%3E%3C/svg%3E'
                       }}
