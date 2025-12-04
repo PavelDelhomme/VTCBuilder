@@ -127,6 +127,47 @@ export default function EditPublicPage() {
     }
   }, [blocks, metaTitle, metaDescription, status, handleSave, updateLastSaved])
 
+  // Gestion du redimensionnement des panneaux
+  useEffect(() => {
+    if (!isResizing) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return
+      
+      const container = document.querySelector('.flex-1.flex.overflow-hidden.min-h-0')
+      if (!container) return
+      
+      const containerRect = container.getBoundingClientRect()
+      const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100
+      
+      // Limiter entre 20% et 80%
+      const clampedWidth = Math.max(20, Math.min(80, newWidth))
+      setEditorWidth(clampedWidth)
+    }
+
+    const handleMouseUp = () => {
+      setIsResizing(false)
+      // Sauvegarder dans localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('editor-panel-width', editorWidth.toString())
+      }
+    }
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isResizing, editorWidth])
+
   // Raccourcis clavier pour navigation entre blocs
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1021,10 +1062,17 @@ export default function EditPublicPage() {
           </div>
         </div>
 
-        {/* Main Editor Area with Split View - 1/3 éditeur, 2/3 prévisualisation */}
-        <div className="flex-1 flex overflow-hidden min-h-0">
-          {/* Editor Section - Toujours 1/3 */}
-          <div className={`${showPreview ? 'w-1/3' : 'w-full'} border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
+        {/* Main Editor Area with Split View - Redimensionnable */}
+        <div className="flex-1 flex overflow-hidden min-h-0 relative">
+          {/* Editor Section - Largeur dynamique */}
+          <div 
+            className="border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-0 transition-none"
+            style={{ 
+              width: showPreview ? `${editorWidth}%` : '100%',
+              minWidth: showPreview ? '200px' : '0',
+              maxWidth: showPreview ? '80%' : '100%'
+            }}
+          >
             <div className="flex-1 overflow-hidden min-h-0 h-full">
             <div className="relative h-full">
               {/* Indicateur de raccourcis clavier */}
@@ -1090,9 +1138,7 @@ export default function EditPublicPage() {
           {/* Preview Section - Largeur dynamique */}
           {showPreview && (
             <div 
-              className="border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-0 transition-none ${
-              previewMode === 'tablet' ? 'max-w-2xl mx-auto' : previewMode === 'mobile' ? 'max-w-md mx-auto' : ''
-            }`}
+              className="border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-0 transition-none"
               style={{ 
                 width: `${100 - editorWidth}%`,
                 minWidth: '200px'
