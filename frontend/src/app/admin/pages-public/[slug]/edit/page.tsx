@@ -54,6 +54,16 @@ export default function EditPublicPage() {
   const [modalBlockId, setModalBlockId] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<{ blockId: string; position: { x: number; y: number } } | null>(null)
   const [copiedBlock, setCopiedBlock] = useState<Block | null>(null)
+  
+  // État pour le redimensionnement des panneaux
+  const [editorWidth, setEditorWidth] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('editor-panel-width')
+      return saved ? parseFloat(saved) : 33.33 // 1/3 par défaut
+    }
+    return 33.33
+  })
+  const [isResizing, setIsResizing] = useState(false)
 
   // Fonction de sauvegarde (mémorisée pour éviter les re-renders)
   const handleSave = useCallback(async (data: { blocks: Block[]; metaTitle: string; metaDescription: string; status: 'draft' | 'published' }) => {
@@ -1063,11 +1073,31 @@ export default function EditPublicPage() {
             </div>
           </div>
 
-          {/* Preview Section - Toujours 2/3 */}
+          {/* Resizer - Barre de redimensionnement */}
           {showPreview && (
-            <div className={`w-2/3 border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 ${
+            <div
+              className="w-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-col-resize transition-colors relative z-10 flex-shrink-0"
+              onMouseDown={(e) => {
+                e.preventDefault()
+                setIsResizing(true)
+              }}
+              style={{ cursor: 'col-resize' }}
+            >
+              <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 bg-transparent hover:bg-blue-500 dark:hover:bg-blue-600 transition-colors" />
+            </div>
+          )}
+
+          {/* Preview Section - Largeur dynamique */}
+          {showPreview && (
+            <div 
+              className="border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-0 transition-none ${
               previewMode === 'tablet' ? 'max-w-2xl mx-auto' : previewMode === 'mobile' ? 'max-w-md mx-auto' : ''
-            }`}>
+            }`}
+              style={{ 
+                width: `${100 - editorWidth}%`,
+                minWidth: '200px'
+              }}
+            >
               <div className="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
                 <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   Prévisualisation en direct
