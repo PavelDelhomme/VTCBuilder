@@ -1678,7 +1678,7 @@ const SortableBlock = React.memo(function SortableBlock({
       )}
       {/* Block Header - Modern Design */}
       <div
-        className={`flex items-center justify-between ${getPadding()} transition-colors cursor-grab active:cursor-grabbing ${
+        className={`flex items-center justify-between ${getPadding()} transition-colors ${
           isSelected 
             ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-b border-blue-200 dark:border-blue-700' 
             : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-800'
