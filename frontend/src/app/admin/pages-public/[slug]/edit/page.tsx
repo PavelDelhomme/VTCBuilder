@@ -1000,19 +1000,105 @@ export default function EditPublicPage() {
         </div>
       }
     >
-      {/* Bouton flottant pour réafficher la barre quand elle est masquée */}
+      {/* Barre d'actions minimale quand la barre est masquée */}
       {!headerVisible && (
-        <button
-          onClick={() => setHeaderVisible(true)}
-          className="fixed top-4 right-4 z-50 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-lg transition-all flex items-center gap-2 group"
-          title="Afficher la barre supérieure"
-        >
-          <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-          <span className="hidden sm:inline">Afficher Barre</span>
-          <span className="sm:hidden">↑</span>
-        </button>
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 flex-wrap justify-end">
+          {/* Bouton Afficher Barre */}
+          <button
+            onClick={() => setHeaderVisible(true)}
+            className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            title="Afficher la barre supérieure"
+          >
+            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+            <span className="hidden sm:inline">Afficher Barre</span>
+            <span className="sm:hidden">↑</span>
+          </button>
+          
+          {/* Bouton Sauvegarder */}
+          <button
+            onClick={handleManualSave}
+            disabled={saving || isAutoSaving}
+            className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+            title="Sauvegarder"
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white flex-shrink-0"></div>
+                <span className="hidden sm:inline">Sauvegarde...</span>
+                <span className="sm:hidden">...</span>
+              </>
+            ) : (
+              <>
+                <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="hidden sm:inline">Sauvegarder</span>
+                <span className="sm:hidden">Sauvegarder</span>
+              </>
+            )}
+          </button>
+          
+          {/* Bouton Blocs Disponibles */}
+          <button
+            onClick={() => setBlocksPaletteOpen(!blocksPaletteOpen)}
+            className={`px-3 sm:px-4 py-2 rounded-lg shadow-lg transition-colors flex items-center gap-2 ${
+              blocksPaletteOpen 
+                ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                : 'bg-gray-700 dark:bg-gray-800 text-white hover:bg-gray-600 dark:hover:bg-gray-700'
+            }`}
+            title="Blocs disponibles"
+          >
+            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
+            </svg>
+            <span className="hidden sm:inline">Blocs</span>
+            <span className="sm:hidden">Blocs</span>
+          </button>
+          
+          {/* Bouton Nouvelle Page */}
+          <button
+            onClick={async () => {
+              try {
+                // Sauvegarder la page actuelle avant de créer une nouvelle
+                if (blocks.length > 0) {
+                  await handleManualSave()
+                }
+                
+                const newPageSlug = prompt('Entrez le slug de la nouvelle page (ex: ma-nouvelle-page):')
+                if (!newPageSlug) return
+                
+                // Sauvegarder la nouvelle page
+                const currentSettings = await api.get('/system-settings/')
+                const publicPages = currentSettings.data.public_pages || {}
+                
+                publicPages[newPageSlug] = {
+                  title: newPageSlug.charAt(0).toUpperCase() + newPageSlug.slice(1).replace(/-/g, ' '),
+                  blocks: [],
+                  meta_title: '',
+                  meta_description: '',
+                  is_active: true,
+                }
+                
+                await api.patch('/system-settings/', { public_pages: publicPages })
+                toast.success('Nouvelle page créée !')
+                router.push(`/admin/pages-public/${newPageSlug}/edit`)
+              } catch (error: any) {
+                console.error('Erreur création page:', error)
+                toast.error('Erreur lors de la création de la page')
+              }
+            }}
+            className="px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+            title="Créer une nouvelle page"
+          >
+            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="hidden sm:inline">Nouvelle Page</span>
+            <span className="sm:hidden">+ Page</span>
+          </button>
+        </div>
       )}
 
       <div className="flex flex-col h-full min-h-0 overflow-hidden">
