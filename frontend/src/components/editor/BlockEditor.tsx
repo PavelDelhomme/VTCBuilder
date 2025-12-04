@@ -361,7 +361,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     }
 
     // Gérer le drop d'un type de bloc dans un conteneur (nouveau bloc depuis la palette)
-    if (active.data.current?.type === 'block-type' && (over.data.current?.type === 'container' || isContainerDropZone)) {
+    // Utiliser uniquement la zone de drop pour éviter les conflits
+    if (active.data.current?.type === 'block-type' && isContainerDropZone) {
       const blockType = active.data.current.blockType as BlockType
       
       const newChild: Block = {
