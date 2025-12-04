@@ -128,7 +128,8 @@ export default function EditPublicPage() {
   }, [blocks, metaTitle, metaDescription, status, handleSave, updateLastSaved])
 
   // Points d'ancrage (snap points) pour le redimensionnement
-  const SNAP_POINTS = [25, 33.33, 50, 66.67, 75] // Pourcentages
+  // Inclut: 1/4, 1/3, 2/5, 1/2, 3/5, 2/3, 3/4
+  const SNAP_POINTS = [25, 33.33, 40, 50, 60, 66.67, 75] // Pourcentages
   const SNAP_THRESHOLD = 3 // Distance en % pour déclencher le snap
 
   // Fonction pour trouver le point d'ancrage le plus proche
