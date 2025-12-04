@@ -1697,15 +1697,20 @@ const SortableBlock = React.memo(function SortableBlock({
           <button
             onClick={(e) => {
               e.stopPropagation()
+              e.preventDefault()
               if (onToggleCollapse) {
                 onToggleCollapse()
               }
             }}
-            className="flex-shrink-0 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            onMouseDown={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+            }}
+            className="flex-shrink-0 p-2 sm:p-2.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 transition-colors cursor-pointer touch-manipulation"
             title={isExpanded ? "Masquer les propriétés" : "Afficher les propriétés"}
           >
             <svg 
-              className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
+              className={`w-5 h-5 sm:w-6 sm:h-6 text-gray-600 dark:text-gray-300 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
