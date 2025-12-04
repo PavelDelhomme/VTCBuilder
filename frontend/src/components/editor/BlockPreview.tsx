@@ -2432,6 +2432,29 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       )
 
     case 'cta-section':
+      // Déterminer le style d'arrière-plan
+      const backgroundType = block.data?.background_type || 'gradient'
+      let backgroundStyle: React.CSSProperties = {}
+      
+      if (backgroundType === 'image' && block.data?.background_image) {
+        backgroundStyle = {
+          backgroundImage: block.data.background_overlay 
+            ? `url(${block.data.background_image}), ${block.data.background_overlay}`
+            : `url(${block.data.background_image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }
+        if (block.data.background_image_opacity !== undefined) {
+          backgroundStyle.opacity = block.data.background_image_opacity
+        }
+      } else if (backgroundType === 'solid') {
+        backgroundStyle.backgroundColor = block.data?.background_color || '#2563eb'
+      } else {
+        // Gradient par défaut
+        backgroundStyle.background = block.data?.background_gradient || 'linear-gradient(to right, #2563eb, #9333ea)'
+      }
+
       return (
         <div
           style={{
@@ -2441,7 +2464,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                 !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'].includes(key)
               )
             ),
-            background: block.data.background_gradient || 'linear-gradient(to right, #2563eb, #9333ea)',
+            ...backgroundStyle,
             // Ne pas utiliser padding shorthand si on a des propriétés individuelles
             ...(block.styles?.padding && !block.styles?.padding_top && !block.styles?.padding_bottom && !block.styles?.padding_left && !block.styles?.padding_right
               ? { padding: block.styles.padding }
