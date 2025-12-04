@@ -8,6 +8,7 @@ import BlockEditor from '@/components/editor/BlockEditor'
 import { Block } from '@/components/editor/types'
 import BlockPreview from '@/components/editor/BlockPreview'
 import BlockPropertiesModal from '@/components/editor/BlockPropertiesModal'
+import BlockContextMenu from '@/components/editor/BlockContextMenu'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import toast from 'react-hot-toast'
 import { useAutoSave } from '@/hooks/useAutoSave'
@@ -49,6 +50,8 @@ export default function VisualPageEditor() {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const [propertiesModalOpen, setPropertiesModalOpen] = useState(false)
   const [modalBlockId, setModalBlockId] = useState<string | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ blockId: string; position: { x: number; y: number } } | null>(null)
+  const [copiedBlock, setCopiedBlock] = useState<Block | null>(null)
   
   // Calcul de la largeur dynamique
   const editorWidth = viewportWidth >= 1024 ? viewportWidth - 256 : viewportWidth // 256px = 16rem (sidebar)
@@ -407,6 +410,9 @@ export default function VisualPageEditor() {
                       onBlockDoubleClick={(blockId) => {
                         setModalBlockId(blockId)
                         setPropertiesModalOpen(true)
+                      }}
+                      onBlockRightClick={(blockId, position) => {
+                        setContextMenu({ blockId, position })
                       }}
                       isEditable={true}
                     />

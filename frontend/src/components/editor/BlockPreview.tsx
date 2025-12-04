@@ -15,6 +15,7 @@ interface BlockPreviewProps {
   onBlocksChange?: (blocks: Block[]) => void
   onBlockSelect?: (blockId: string | null) => void
   onBlockDoubleClick?: (blockId: string) => void
+  onBlockRightClick?: (blockId: string, position: { x: number; y: number }) => void
   selectedBlockId?: string | null
   isInteractive?: boolean
   isEditable?: boolean
@@ -29,6 +30,7 @@ export default function BlockPreview({
   onBlocksChange,
   onBlockSelect,
   onBlockDoubleClick,
+  onBlockRightClick,
   selectedBlockId,
   isInteractive = false,
   isEditable = false,
@@ -269,7 +271,7 @@ export default function BlockPreview({
         )}
         {isEditable && !inspectorMode && (
           <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
-            💡 Double-cliquez sur un élément pour le modifier
+            💡 Double-cliquez pour modifier • Clic droit pour menu contextuel
           </div>
         )}
         {isInteractive && !inspectorMode && !isEditable && (
@@ -345,6 +347,7 @@ function SortablePreviewBlock({
   isEditable,
   onClick,
   onDoubleClick,
+  onRightClick,
 }: {
   block: Block
   blockType?: BlockType
@@ -353,6 +356,7 @@ function SortablePreviewBlock({
   isEditable: boolean
   onClick: () => void
   onDoubleClick: () => void
+  onRightClick?: (e: React.MouseEvent) => void
 }) {
   const {
     attributes,
@@ -379,6 +383,7 @@ function SortablePreviewBlock({
       } ${isEditable && !isSelected ? 'hover:ring-2 hover:ring-blue-300 hover:ring-offset-2' : ''}`}
       onClick={onClick}
       onDoubleClick={isEditable ? onDoubleClick : undefined}
+      onContextMenu={isEditable ? onRightClick : undefined}
       {...(isInteractive ? { ...attributes, ...listeners } : {})}
     >
       {isInteractive && (

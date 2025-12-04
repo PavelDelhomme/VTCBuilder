@@ -11,6 +11,7 @@ import { Block } from '@/components/editor/types'
 import BlockPreview from '@/components/editor/BlockPreview'
 import BlocksPalettePopup from '@/components/editor/BlocksPalettePopup'
 import BlockPropertiesModal from '@/components/editor/BlockPropertiesModal'
+import BlockContextMenu from '@/components/editor/BlockContextMenu'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import PageLoader from '@/components/shared/PageLoader'
 import { useAutoSave } from '@/hooks/useAutoSave'
@@ -48,6 +49,8 @@ export default function EditPublicPage() {
   const [blocksPaletteOpen, setBlocksPaletteOpen] = useState(false) // Popup des blocs disponibles fermée par défaut
   const [propertiesModalOpen, setPropertiesModalOpen] = useState(false)
   const [modalBlockId, setModalBlockId] = useState<string | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ blockId: string; position: { x: number; y: number } } | null>(null)
+  const [copiedBlock, setCopiedBlock] = useState<Block | null>(null)
 
   // Fonction de sauvegarde (mémorisée pour éviter les re-renders)
   const handleSave = useCallback(async (data: { blocks: Block[]; metaTitle: string; metaDescription: string; status: 'draft' | 'published' }) => {
@@ -992,6 +995,9 @@ export default function EditPublicPage() {
                         onBlockDoubleClick={(blockId) => {
                           setModalBlockId(blockId)
                           setPropertiesModalOpen(true)
+                        }}
+                        onBlockRightClick={(blockId, position) => {
+                          setContextMenu({ blockId, position })
                         }}
                         isEditable={true}
                         onNavigate={(url) => {
