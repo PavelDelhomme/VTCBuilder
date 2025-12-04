@@ -98,6 +98,66 @@ export default function EditPublicPage() {
     enabled: true,
   })
 
+  // Raccourcis clavier pour navigation entre blocs
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignorer si on est dans un input, textarea, ou select
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable) {
+        return
+      }
+
+      // Escape : désélectionner le bloc
+      if (e.key === 'Escape') {
+        setSelectedBlockId(null)
+        setPropertiesModalOpen(false)
+        setContextMenu(null)
+      }
+
+      // Flèches haut/bas : naviguer entre les blocs
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault()
+        const flatBlocks: Block[] = []
+        const flattenBlocks = (blocs: Block[]) => {
+          blocs.forEach(block => {
+            flatBlocks.push(block)
+            if (block.children && block.children.length > 0) {
+              flattenBlocks(block.children)
+            }
+          })
+        }
+        flattenBlocks(blocks)
+
+        if (flatBlocks.length === 0) return
+
+        const currentIndex = selectedBlockId 
+          ? flatBlocks.findIndex(b => b.id === selectedBlockId)
+          : -1
+
+        let newIndex: number
+        if (e.key === 'ArrowUp') {
+          newIndex = currentIndex > 0 ? currentIndex - 1 : flatBlocks.length - 1
+        } else {
+          newIndex = currentIndex < flatBlocks.length - 1 ? currentIndex + 1 : 0
+        }
+
+        setSelectedBlockId(flatBlocks[newIndex].id)
+      }
+
+      // Ctrl/Cmd + S : sauvegarder manuellement
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        handleManualSave()
+      }
+
+      // Ctrl/Cmd + Z : undo (géré par BlockEditor)
+      // Ctrl/Cmd + Shift + Z : redo (géré par BlockEditor)
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [blocks, selectedBlockId, handleManualSave])
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
