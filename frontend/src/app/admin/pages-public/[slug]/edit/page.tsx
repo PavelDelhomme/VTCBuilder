@@ -10,6 +10,7 @@ import BlockEditor from '@/components/editor/BlockEditor'
 import { Block } from '@/components/editor/types'
 import BlockPreview from '@/components/editor/BlockPreview'
 import BlocksPalettePopup from '@/components/editor/BlocksPalettePopup'
+import BlockPropertiesModal from '@/components/editor/BlockPropertiesModal'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import PageLoader from '@/components/shared/PageLoader'
 import { useAutoSave } from '@/hooks/useAutoSave'
@@ -45,6 +46,8 @@ export default function EditPublicPage() {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [inspectorMode, setInspectorMode] = useState(false)
   const [blocksPaletteOpen, setBlocksPaletteOpen] = useState(false) // Popup des blocs disponibles fermée par défaut
+  const [propertiesModalOpen, setPropertiesModalOpen] = useState(false)
+  const [modalBlockId, setModalBlockId] = useState<string | null>(null)
 
   // Fonction de sauvegarde (mémorisée pour éviter les re-renders)
   const handleSave = useCallback(async (data: { blocks: Block[]; metaTitle: string; metaDescription: string; status: 'draft' | 'published' }) => {
@@ -986,6 +989,10 @@ export default function EditPublicPage() {
                         blockTypes={blockTypes}
                         selectedBlockId={selectedBlockId}
                         onBlockSelect={setSelectedBlockId}
+                        onBlockDoubleClick={(blockId) => {
+                          setModalBlockId(blockId)
+                          setPropertiesModalOpen(true)
+                        }}
                         isEditable={true}
                         onNavigate={(url) => {
                           router.push(url)
@@ -1001,6 +1008,107 @@ export default function EditPublicPage() {
           )}
         </div>
       </div>
+
+      {/* Modal de modification de bloc */}
+      {modalBlockId && (
+        <BlockPropertiesModal
+          isOpen={propertiesModalOpen}
+          onClose={() => {
+            setPropertiesModalOpen(false)
+            setModalBlockId(null)
+          }}
+          block={(() => {
+            // Trouver le bloc dans l'arbre
+            const findBlock = (blocks: Block[], id: string): Block | null => {
+              for (const block of blocks) {
+                if (block.id === id) return block
+                if (block.children) {
+                  const found = findBlock(block.children, id)
+                  if (found) return found
+                }
+              }
+              return null
+            }
+            return findBlock(blocks, modalBlockId)
+          })()}
+          blockTypes={blockTypes}
+          allBlocks={blocks}
+          onUpdate={(updates) => {
+            // Mettre à jour le bloc dans l'arbre
+            const updateBlock = (blocks: Block[], id: string, updates: Partial<Block>): Block[] => {
+              return blocks.map(block => {
+                if (block.id === id) {
+                  return { ...block, ...updates }
+                }
+                if (block.children) {
+                  return {
+                    ...block,
+                    children: updateBlock(block.children, id, updates),
+                  }
+                }
+                return block
+              })
+            }
+            setBlocks(updateBlock(blocks, modalBlockId, updates))
+          }}
+          onDelete={(blockId) => {
+            // Supprimer le bloc de l'arbre
+            const removeBlock = (blocks: Block[], id: string): Block[] => {
+              return blocks
+                .filter(block => block.id !== id)
+                .map(block => {
+                  if (block.children) {
+                    return {
+                      ...block,
+                      children: removeBlock(block.children, id),
+                    }
+                  }
+                  return block
+                })
+            }
+            setBlocks(removeBlock(blocks, blockId))
+            setPropertiesModalOpen(false)
+            setModalBlockId(null)
+          }}
+          onDuplicate={(block) => {
+            // Dupliquer le bloc
+            const newBlock: Block = {
+              ...block,
+              id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              children: block.children
+                ? block.children.map((child, idx) => ({
+                    ...child,
+                    id: `block-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 9)}`,
+                  }))
+                : undefined,
+            }
+            
+            // Trouver la position du bloc original et insérer après
+            const findAndInsert = (blocks: Block[], id: string, newBlock: Block): Block[] => {
+              for (let i = 0; i < blocks.length; i++) {
+                if (blocks[i].id === id) {
+                  const newBlocks = [...blocks]
+                  newBlocks.splice(i + 1, 0, newBlock)
+                  return newBlocks
+                }
+                if (blocks[i].children) {
+                  const updated = findAndInsert(blocks[i].children, id, newBlock)
+                  if (updated !== blocks[i].children) {
+                    return blocks.map((b, idx) => 
+                      idx === i ? { ...b, children: updated } : b
+                    )
+                  }
+                }
+              }
+              return blocks
+            }
+            
+            setBlocks(findAndInsert(blocks, block.id, newBlock))
+            setPropertiesModalOpen(false)
+            setModalBlockId(null)
+          }}
+        />
+      )}
 
       {/* Popup Blocs Disponibles */}
       <BlocksPalettePopup

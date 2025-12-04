@@ -267,7 +267,12 @@ export default function BlockPreview({
             🔍 Mode Inspecteur Actif - Cliquez sur un élément pour le sélectionner
           </div>
         )}
-        {isInteractive && !inspectorMode && (
+        {isEditable && !inspectorMode && (
+          <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
+            💡 Double-cliquez sur un élément pour le modifier
+          </div>
+        )}
+        {isInteractive && !inspectorMode && !isEditable && (
           <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
             Mode prévisualisation interactive
           </div>

@@ -7,6 +7,7 @@ import pageService, { Page } from '@/services/page.service'
 import BlockEditor from '@/components/editor/BlockEditor'
 import { Block } from '@/components/editor/types'
 import BlockPreview from '@/components/editor/BlockPreview'
+import BlockPropertiesModal from '@/components/editor/BlockPropertiesModal'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import toast from 'react-hot-toast'
 import { useAutoSave } from '@/hooks/useAutoSave'
@@ -46,6 +47,8 @@ export default function VisualPageEditor() {
   const [isHomepage, setIsHomepage] = useState(false)
   const [showPreview, setShowPreview] = useState(true)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
+  const [propertiesModalOpen, setPropertiesModalOpen] = useState(false)
+  const [modalBlockId, setModalBlockId] = useState<string | null>(null)
   
   // Calcul de la largeur dynamique
   const editorWidth = viewportWidth >= 1024 ? viewportWidth - 256 : viewportWidth // 256px = 16rem (sidebar)
@@ -398,7 +401,15 @@ export default function VisualPageEditor() {
                     previewMode === 'mobile' ? 'max-w-[375px] mx-auto' : 
                     'w-full'
                   }`}>
-                    <BlockPreview blocks={blocks} blockTypes={blockTypes} />
+                    <BlockPreview 
+                      blocks={blocks} 
+                      blockTypes={blockTypes}
+                      onBlockDoubleClick={(blockId) => {
+                        setModalBlockId(blockId)
+                        setPropertiesModalOpen(true)
+                      }}
+                      isEditable={true}
+                    />
                   </div>
                 </div>
               </div>

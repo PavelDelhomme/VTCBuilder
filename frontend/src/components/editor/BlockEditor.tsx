@@ -7290,7 +7290,7 @@ function BlockRenderer({
 }
 
 // Block Layout Panel (Alignement et Grille)
-function BlockLayoutPanel({
+export function BlockLayoutPanel({
   block,
   onUpdate,
   allBlocks = [],
@@ -7670,7 +7670,7 @@ function BlockLayoutPanel({
 }
 
 // Block Style Panel (Peinture/Styling)
-function BlockStylePanel({
+export function BlockStylePanel({
   block,
   onUpdate,
   allBlocks = [],
@@ -8239,7 +8239,7 @@ function BlockStylePanel({
 }
 
 // Block Properties Panel
-function BlockPropertiesPanel({
+export function BlockPropertiesPanel({
   block,
   blockType,
   onUpdate,
