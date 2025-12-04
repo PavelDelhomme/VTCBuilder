@@ -1251,7 +1251,7 @@ export default function EditPublicPage() {
                 setIsResizing(true)
               }}
               style={{ cursor: 'col-resize' }}
-              title="Redimensionner (points d'ancrage: 25%, 33%, 50%, 67%, 75%)"
+              title="Redimensionner (points d'ancrage: 25%, 33% (1/3), 40%, 50%, 60%, 67% (2/3), 75%)"
             >
               <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 bg-transparent hover:bg-blue-500 dark:hover:bg-blue-600 transition-colors" />
               
