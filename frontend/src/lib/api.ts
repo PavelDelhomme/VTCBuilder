@@ -195,7 +195,8 @@ api.interceptors.response.use(
             }
             return api(originalRequest);
           } else {
-            // Refresh token invalide, afficher le modal de reconnexion
+            // Refresh token invalide, sauvegarder l'état de l'éditeur et afficher le modal
+            // L'état sera sauvegardé automatiquement par le contexte avant d'afficher le modal
             if (window.__showReconnectModal) {
               window.__showReconnectModal();
             }

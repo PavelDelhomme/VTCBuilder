@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, usePathname } from 'next/navigation'
 import TenantLayout from '@/components/tenant/TenantLayout'
 import pageService, { Page } from '@/services/page.service'
 import BlockEditor from '@/components/editor/BlockEditor'
@@ -10,6 +10,8 @@ import BlockPreview from '@/components/editor/BlockPreview'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import toast from 'react-hot-toast'
 import { useAutoSave } from '@/hooks/useAutoSave'
+import { useReconnect } from '@/contexts/ReconnectContext'
+import { restoreEditorStateAfterReconnect } from '@/hooks/useEditorStatePersistence'
 
 // Hook pour la largeur du viewport
 function useViewportWidth() {
@@ -28,6 +30,8 @@ function useViewportWidth() {
 export default function VisualPageEditor() {
   const router = useRouter()
   const params = useParams()
+  const pathname = usePathname()
+  const { saveEditorState } = useReconnect()
   const viewportWidth = useViewportWidth()
   const pageId = params?.id ? parseInt(params.id as string) : null
   const [page, setPage] = useState<Page | null>(null)
@@ -63,6 +67,43 @@ export default function VisualPageEditor() {
     debounceMs: 2000,
     enabled: !!pageId && !!title.trim(),
   })
+
+  // Sauvegarder l'état de l'éditeur pour la reconnexion
+  useEffect(() => {
+    if (pathname) {
+      saveEditorState({
+        title,
+        blocks,
+        metaTitle,
+        metaDescription,
+        status,
+        isHomepage,
+      })
+    }
+  }, [title, blocks, metaTitle, metaDescription, status, isHomepage, pathname, saveEditorState])
+
+  // Restaurer l'état après reconnexion
+  useEffect(() => {
+    const handleReconnectSuccess = () => {
+      if (pathname) {
+        const restored = restoreEditorStateAfterReconnect(pathname)
+        if (restored) {
+          if (restored.title) setTitle(restored.title)
+          if (restored.blocks) setBlocks(restored.blocks)
+          if (restored.metaTitle) setMetaTitle(restored.metaTitle)
+          if (restored.metaDescription) setMetaDescription(restored.metaDescription)
+          if (restored.status) setStatus(restored.status)
+          if (restored.isHomepage !== undefined) setIsHomepage(restored.isHomepage)
+          toast.success('Vos modifications ont été restaurées')
+        }
+      }
+    }
+
+    window.addEventListener('reconnect-success', handleReconnectSuccess)
+    return () => {
+      window.removeEventListener('reconnect-success', handleReconnectSuccess)
+    }
+  }, [pathname])
 
   useEffect(() => {
     if (pageId) {

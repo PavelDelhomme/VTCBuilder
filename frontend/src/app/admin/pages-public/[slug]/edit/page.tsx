@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, usePathname } from 'next/navigation'
 import authService from '@/services/auth.service'
 import AdminLayout from '@/components/admin/AdminLayout'
 import api from '@/lib/api'
@@ -13,6 +13,8 @@ import BlocksPalettePopup from '@/components/editor/BlocksPalettePopup'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import PageLoader from '@/components/shared/PageLoader'
 import { useAutoSave } from '@/hooks/useAutoSave'
+import { useReconnect } from '@/contexts/ReconnectContext'
+import { restoreEditorStateAfterReconnect } from '@/hooks/useEditorStatePersistence'
 
 const PAGE_TITLES: Record<string, string> = {
   home: 'Page d\'accueil',
@@ -26,6 +28,8 @@ const PAGE_TITLES: Record<string, string> = {
 export default function EditPublicPage() {
   const router = useRouter()
   const params = useParams()
+  const pathname = usePathname()
+  const { saveEditorState } = useReconnect()
   const pageSlug = params?.slug as string
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)

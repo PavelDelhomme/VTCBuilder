@@ -3,22 +3,35 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import ReconnectModal from '@/components/shared/ReconnectModal'
+import { saveEditorStateBeforeReconnect } from '@/hooks/useEditorStatePersistence'
 
 interface ReconnectContextType {
   showReconnectModal: () => void
   hideReconnectModal: () => void
   isReconnectModalOpen: boolean
+  saveEditorState: (state: any) => void
 }
 
 const ReconnectContext = createContext<ReconnectContextType | undefined>(undefined)
 
 export function ReconnectProvider({ children }: { children: ReactNode }) {
   const [isReconnectModalOpen, setIsReconnectModalOpen] = useState(false)
+  const [editorState, setEditorState] = useState<any>(null)
   const pathname = usePathname()
 
-  const showReconnectModal = useCallback(() => {
-    setIsReconnectModalOpen(true)
+  const saveEditorState = useCallback((state: any) => {
+    setEditorState(state)
   }, [])
+
+  const showReconnectModal = useCallback(() => {
+    // Sauvegarder l'état de l'éditeur si on est sur une page d'édition
+    if (pathname && (pathname.includes('/edit') || pathname.includes('/edit-visual') || pathname.includes('/pages-public'))) {
+      if (editorState) {
+        saveEditorStateBeforeReconnect(pathname, editorState)
+      }
+    }
+    setIsReconnectModalOpen(true)
+  }, [pathname, editorState])
 
   const hideReconnectModal = useCallback(() => {
     setIsReconnectModalOpen(false)
@@ -26,9 +39,11 @@ export function ReconnectProvider({ children }: { children: ReactNode }) {
 
   const handleReconnect = useCallback(() => {
     setIsReconnectModalOpen(false)
-    // Rafraîchir la page pour recharger les données
+    // Ne PAS rafraîchir la page - les requêtes seront relancées automatiquement
+    // L'état de l'éditeur sera restauré si nécessaire
+    // On déclenche juste un événement personnalisé pour notifier les composants
     if (typeof window !== 'undefined') {
-      window.location.reload()
+      window.dispatchEvent(new CustomEvent('reconnect-success'))
     }
   }, [])
 
@@ -38,6 +53,7 @@ export function ReconnectProvider({ children }: { children: ReactNode }) {
         showReconnectModal,
         hideReconnectModal,
         isReconnectModalOpen,
+        saveEditorState,
       }}
     >
       {children}

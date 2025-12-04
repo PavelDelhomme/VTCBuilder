@@ -59,10 +59,8 @@ export default function ReconnectModal({ isOpen, onClose, onReconnect, currentPa
         onReconnect()
         onClose()
         
-        // Rafraîchir la page pour recharger les données
-        if (currentPath) {
-          router.refresh()
-        }
+        // Ne PAS rafraîchir la page - les requêtes seront relancées automatiquement
+        // L'état de l'éditeur sera préservé
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || error.response?.data?.detail || 'Erreur lors de la reconnexion'
