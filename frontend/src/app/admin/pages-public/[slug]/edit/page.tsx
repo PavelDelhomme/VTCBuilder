@@ -1126,18 +1126,8 @@ export default function EditPublicPage() {
             setPropertiesModalOpen(true)
           }}
           block={(() => {
-            // Trouver le bloc dans l'arbre
-            const findBlock = (blocks: Block[], id: string): Block | null => {
-              for (const block of blocks) {
-                if (block.id === id) return block
-                if (block.children) {
-                  const found = findBlock(block.children, id)
-                  if (found) return found
-                }
-              }
-              return null
-            }
-            return findBlock(blocks, modalBlockId)
+            const result = findBlockInTree(blocks, modalBlockId)
+            return result ? result.block : null
           })()}
           blockTypes={blockTypes}
           allBlocks={blocks}
