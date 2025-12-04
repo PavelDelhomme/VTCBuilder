@@ -1324,10 +1324,10 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                           Cliquez sur un bloc dans la palette à gauche pour commencer
                         </p>
                       </div>
-                </div>
-                  )
-              ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-12 gap-4 lg:gap-6 auto-rows-min">
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-12 gap-4 lg:gap-6 auto-rows-min">
                       {history.state
                         .filter((b: Block) => !b.position || b.position.type === 'static')
                         .map((block: Block) => {
