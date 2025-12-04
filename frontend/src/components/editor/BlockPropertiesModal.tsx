@@ -259,6 +259,9 @@ export default function BlockPropertiesModal({
           </button>
         </div>
       </div>
+
+      {/* Modal de confirmation */}
+      <ConfirmDialog />
     </div>
   )
 }
