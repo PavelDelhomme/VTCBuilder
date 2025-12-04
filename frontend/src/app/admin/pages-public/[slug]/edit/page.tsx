@@ -512,6 +512,39 @@ export default function EditPublicPage() {
     }
   }, [pageSlug])
 
+  // Sauvegarder l'état de l'éditeur pour la reconnexion
+  useEffect(() => {
+    if (pathname) {
+      saveEditorState({
+        blocks,
+        metaTitle,
+        metaDescription,
+        status,
+      })
+    }
+  }, [blocks, metaTitle, metaDescription, status, pathname, saveEditorState])
+
+  // Restaurer l'état après reconnexion
+  useEffect(() => {
+    const handleReconnectSuccess = () => {
+      if (pathname) {
+        const restored = restoreEditorStateAfterReconnect(pathname)
+        if (restored) {
+          if (restored.blocks) setBlocks(restored.blocks)
+          if (restored.metaTitle) setMetaTitle(restored.metaTitle)
+          if (restored.metaDescription) setMetaDescription(restored.metaDescription)
+          if (restored.status) setStatus(restored.status)
+          toast.success('Vos modifications ont été restaurées')
+        }
+      }
+    }
+
+    window.addEventListener('reconnect-success', handleReconnectSuccess)
+    return () => {
+      window.removeEventListener('reconnect-success', handleReconnectSuccess)
+    }
+  }, [pathname])
+
   useEffect(() => {
     if (!authService.isSuperAdmin()) {
       router.push('/dashboard')
