@@ -1312,7 +1312,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             <SortableContext items={history.state.map((b: Block) => b.id)} strategy={verticalListSortingStrategy}>
               <div className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 max-w-full min-h-0">
                 {history.state.length === 0 ? (
-                    <div className="text-center py-12 lg:py-20">
+                  <div className="text-center py-12 lg:py-20">
                       <div className="max-w-md mx-auto">
                         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                           <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1360,14 +1360,12 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                           </div>
                         )
                       })}
-                    </div>
-              )}
-            </div>
-          </SortableContext>
-        </DndContext>
+                  </div>
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
-      </div>
-
       </div>
     </div>
   )
