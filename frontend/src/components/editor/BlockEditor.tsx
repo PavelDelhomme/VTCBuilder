@@ -91,9 +91,25 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const [categoryFilter, setCategoryFilter] = useState<string>('all') // Filtre par catégorie
   const [searchQuery, setSearchQuery] = useState<string>('') // Recherche par nom
   
+  // État pour les blocs réduits (collapsed) dans l'éditeur
+  const [collapsedBlocks, setCollapsedBlocks] = useState<Set<string>>(new Set())
+  
   // Ref pour scroller vers le bloc sélectionné
   const blockListRef = useRef<HTMLDivElement>(null)
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  
+  // Fonction pour basculer l'état réduit/étendu d'un bloc
+  const toggleBlockCollapse = useCallback((blockId: string) => {
+    setCollapsedBlocks(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(blockId)) {
+        newSet.delete(blockId)
+      } else {
+        newSet.add(blockId)
+      }
+      return newSet
+    })
+  }, [])
   
   // Scroller vers le bloc sélectionné dans la liste (mode inspecteur)
   useEffect(() => {
@@ -1407,6 +1423,8 @@ const SortableBlock = React.memo(function SortableBlock({
   onUpdate,
   onDelete,
   onDuplicate,
+  isCollapsed,
+  onToggleCollapse,
 }: {
   block: Block
   blockTypes: BlockType[]
@@ -1415,12 +1433,14 @@ const SortableBlock = React.memo(function SortableBlock({
   onUpdate: (updates: Partial<Block>) => void
   onDelete: () => void
   onDuplicate: () => void
+  isCollapsed?: boolean
+  onToggleCollapse?: () => void
 }) {
   // État pour le menu contextuel
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [showMenu, setShowMenu] = useState(false)
-  // État pour cacher/afficher les propriétés du bloc
-  const [isExpanded, setIsExpanded] = useState(true)
+  // Utiliser l'état passé en prop ou un état local par défaut
+  const isExpanded = isCollapsed !== undefined ? !isCollapsed : true
   const {
     attributes,
     listeners,
@@ -1675,7 +1695,9 @@ const SortableBlock = React.memo(function SortableBlock({
           <button
             onClick={(e) => {
               e.stopPropagation()
-              setIsExpanded(!isExpanded)
+              if (onToggleCollapse) {
+                onToggleCollapse()
+              }
             }}
             className="flex-shrink-0 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             title={isExpanded ? "Masquer les propriétés" : "Afficher les propriétés"}
@@ -1781,6 +1803,25 @@ const SortableBlock = React.memo(function SortableBlock({
             </svg>
             Paramètres
           </button>
+          {onToggleCollapse && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleCollapse()
+                closeContextMenu()
+              }}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isExpanded ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                )}
+              </svg>
+              {isExpanded ? 'Réduire' : 'Étendre'}
+            </button>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation()
