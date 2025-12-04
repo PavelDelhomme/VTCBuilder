@@ -7982,6 +7982,369 @@ export function BlockStylePanel({
         </div>
       </div>
 
+      {/* Section Typographie */}
+      <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">📝 Typographie</span>
+        </div>
+
+        {/* Famille de police */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Famille de police
+          </label>
+          <select
+            value={block.styles?.font_family || block.styles?.fontFamily || 'inherit'}
+            onChange={(e) => {
+              updateStyle('font_family', e.target.value)
+              updateStyle('fontFamily', e.target.value)
+            }}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          >
+            <option value="inherit">Héritée (par défaut)</option>
+            <option value="Arial, sans-serif">Arial</option>
+            <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Courier New', Courier, monospace">Courier New</option>
+            <option value="Verdana, sans-serif">Verdana</option>
+            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+            <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+            <option value="Impact, sans-serif">Impact</option>
+            <option value="'Lucida Console', Monaco, monospace">Lucida Console</option>
+            <option value="'Palatino Linotype', 'Book Antiqua', Palatino, serif">Palatino</option>
+            <option value="Tahoma, sans-serif">Tahoma</option>
+            <option value="'Century Gothic', sans-serif">Century Gothic</option>
+            <option value="'Lucida Sans Unicode', 'Lucida Grande', sans-serif">Lucida Sans</option>
+            <option value="'Arial Black', sans-serif">Arial Black</option>
+            <option value="'Gill Sans', 'Gill Sans MT', sans-serif">Gill Sans</option>
+            <option value="'Bookman Old Style', serif">Bookman Old Style</option>
+            <option value="'Garamond', serif">Garamond</option>
+            <option value="'MS Sans Serif', sans-serif">MS Sans Serif</option>
+            <option value="'MS Serif', serif">MS Serif</option>
+            <option value="'Symbol', sans-serif">Symbol</option>
+            <option value="'Webdings', sans-serif">Webdings</option>
+            <option value="'Wingdings', sans-serif">Wingdings</option>
+            <option value="'Segoe UI', Tahoma, sans-serif">Segoe UI</option>
+            <option value="'Roboto', sans-serif">Roboto</option>
+            <option value="'Open Sans', sans-serif">Open Sans</option>
+            <option value="'Lato', sans-serif">Lato</option>
+            <option value="'Montserrat', sans-serif">Montserrat</option>
+            <option value="'Raleway', sans-serif">Raleway</option>
+            <option value="'Poppins', sans-serif">Poppins</option>
+            <option value="'Playfair Display', serif">Playfair Display</option>
+            <option value="'Merriweather', serif">Merriweather</option>
+            <option value="'Oswald', sans-serif">Oswald</option>
+            <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
+            <option value="'Ubuntu', sans-serif">Ubuntu</option>
+            <option value="'PT Sans', sans-serif">PT Sans</option>
+            <option value="'Droid Sans', sans-serif">Droid Sans</option>
+            <option value="'Droid Serif', serif">Droid Serif</option>
+            <option value="'Noto Sans', sans-serif">Noto Sans</option>
+            <option value="'Noto Serif', serif">Noto Serif</option>
+            <option value="'Fira Sans', sans-serif">Fira Sans</option>
+            <option value="'Fira Code', monospace">Fira Code (Monospace)</option>
+            <option value="'Inconsolata', monospace">Inconsolata (Monospace)</option>
+            <option value="'Space Mono', monospace">Space Mono (Monospace)</option>
+          </select>
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+            Les polices Google Fonts nécessitent d'être chargées dans votre thème
+          </p>
+        </div>
+
+        {/* Taille de police */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Taille de police
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={block.styles?.font_size || block.styles?.fontSize || ''}
+              onChange={(e) => {
+                updateStyle('font_size', e.target.value)
+                updateStyle('fontSize', e.target.value)
+              }}
+              className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="1rem, 16px, 1.2em..."
+            />
+            <select
+              value=""
+              onChange={(e) => {
+                if (e.target.value) {
+                  updateStyle('font_size', e.target.value)
+                  updateStyle('fontSize', e.target.value)
+                  e.target.value = ''
+                }
+              }}
+              className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            >
+              <option value="">Rapide</option>
+              <option value="0.75rem">Très petit (0.75rem)</option>
+              <option value="0.875rem">Petit (0.875rem)</option>
+              <option value="1rem">Normal (1rem)</option>
+              <option value="1.125rem">Moyen (1.125rem)</option>
+              <option value="1.25rem">Grand (1.25rem)</option>
+              <option value="1.5rem">Très grand (1.5rem)</option>
+              <option value="2rem">Énorme (2rem)</option>
+              <option value="3rem">Géant (3rem)</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Poids de police */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Poids de police
+          </label>
+          <select
+            value={block.styles?.font_weight || block.styles?.fontWeight || 'normal'}
+            onChange={(e) => {
+              updateStyle('font_weight', e.target.value)
+              updateStyle('fontWeight', e.target.value)
+            }}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          >
+            <option value="100">100 - Thin</option>
+            <option value="200">200 - Extra Light</option>
+            <option value="300">300 - Light</option>
+            <option value="400">400 - Normal</option>
+            <option value="500">500 - Medium</option>
+            <option value="600">600 - Semi Bold</option>
+            <option value="700">700 - Bold</option>
+            <option value="800">800 - Extra Bold</option>
+            <option value="900">900 - Black</option>
+            <option value="normal">Normal (400)</option>
+            <option value="bold">Bold (700)</option>
+            <option value="lighter">Lighter</option>
+            <option value="bolder">Bolder</option>
+          </select>
+        </div>
+
+        {/* Style de police */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Style de police
+          </label>
+          <select
+            value={block.styles?.font_style || block.styles?.fontStyle || 'normal'}
+            onChange={(e) => {
+              updateStyle('font_style', e.target.value)
+              updateStyle('fontStyle', e.target.value)
+            }}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          >
+            <option value="normal">Normal</option>
+            <option value="italic">Italique</option>
+            <option value="oblique">Oblique</option>
+          </select>
+        </div>
+
+        {/* Hauteur de ligne */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Hauteur de ligne (Line Height)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={block.styles?.line_height || block.styles?.lineHeight || ''}
+              onChange={(e) => {
+                updateStyle('line_height', e.target.value)
+                updateStyle('lineHeight', e.target.value)
+              }}
+              className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="1.5, 1.6, 24px..."
+            />
+            <select
+              value=""
+              onChange={(e) => {
+                if (e.target.value) {
+                  updateStyle('line_height', e.target.value)
+                  updateStyle('lineHeight', e.target.value)
+                  e.target.value = ''
+                }
+              }}
+              className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            >
+              <option value="">Rapide</option>
+              <option value="1">1 - Compact</option>
+              <option value="1.2">1.2 - Serré</option>
+              <option value="1.5">1.5 - Normal</option>
+              <option value="1.6">1.6 - Confortable</option>
+              <option value="1.8">1.8 - Espacé</option>
+              <option value="2">2 - Très espacé</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Espacement des lettres */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Espacement des lettres (Letter Spacing)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={block.styles?.letter_spacing || block.styles?.letterSpacing || ''}
+              onChange={(e) => {
+                updateStyle('letter_spacing', e.target.value)
+                updateStyle('letterSpacing', e.target.value)
+              }}
+              className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="0px, 0.1em, -1px..."
+            />
+            <select
+              value=""
+              onChange={(e) => {
+                if (e.target.value) {
+                  updateStyle('letter_spacing', e.target.value)
+                  updateStyle('letterSpacing', e.target.value)
+                  e.target.value = ''
+                }
+              }}
+              className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            >
+              <option value="">Rapide</option>
+              <option value="normal">Normal (0)</option>
+              <option value="0.05em">Tight (-0.05em)</option>
+              <option value="0.1em">Loose (0.1em)</option>
+              <option value="0.2em">Wide (0.2em)</option>
+              <option value="0.5em">Very Wide (0.5em)</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Espacement des mots */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Espacement des mots (Word Spacing)
+          </label>
+          <input
+            type="text"
+            value={block.styles?.word_spacing || block.styles?.wordSpacing || ''}
+            onChange={(e) => {
+              updateStyle('word_spacing', e.target.value)
+              updateStyle('wordSpacing', e.target.value)
+            }}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            placeholder="normal, 0.2em, 5px..."
+          />
+        </div>
+
+        {/* Transformation de texte */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Transformation de texte
+          </label>
+          <select
+            value={block.styles?.text_transform || block.styles?.textTransform || 'none'}
+            onChange={(e) => {
+              updateStyle('text_transform', e.target.value)
+              updateStyle('textTransform', e.target.value)
+            }}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          >
+            <option value="none">Aucune</option>
+            <option value="uppercase">MAJUSCULES</option>
+            <option value="lowercase">minuscules</option>
+            <option value="capitalize">Première Lettre Majuscule</option>
+          </select>
+        </div>
+
+        {/* Décoration de texte */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Décoration de texte
+          </label>
+          <select
+            value={block.styles?.text_decoration || block.styles?.textDecoration || 'none'}
+            onChange={(e) => {
+              updateStyle('text_decoration', e.target.value)
+              updateStyle('textDecoration', e.target.value)
+            }}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          >
+            <option value="none">Aucune</option>
+            <option value="underline">Souligné</option>
+            <option value="overline">Ligne au-dessus</option>
+            <option value="line-through">Barré</option>
+          </select>
+        </div>
+
+        {/* Alignement du texte */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Alignement du texte
+          </label>
+          <div className="grid grid-cols-4 gap-1">
+            {[
+              { value: 'left', icon: '←', label: 'Gauche' },
+              { value: 'center', icon: '↔', label: 'Centre' },
+              { value: 'right', icon: '→', label: 'Droite' },
+              { value: 'justify', icon: '⇄', label: 'Justifié' }
+            ].map((align) => (
+              <button
+                key={align.value}
+                type="button"
+                onClick={() => {
+                  updateStyle('text_align', align.value)
+                  updateStyle('textAlign', align.value)
+                }}
+                className={`px-2 py-1.5 text-xs rounded border transition-all ${
+                  (block.styles?.text_align || block.styles?.textAlign || 'left') === align.value
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-400'
+                }`}
+                title={align.label}
+              >
+                <span className="text-sm">{align.icon}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Ombre de texte */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Ombre de texte (Text Shadow)
+          </label>
+          <input
+            type="text"
+            value={block.styles?.text_shadow || block.styles?.textShadow || ''}
+            onChange={(e) => {
+              updateStyle('text_shadow', e.target.value)
+              updateStyle('textShadow', e.target.value)
+            }}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono"
+            placeholder="2px 2px 4px rgba(0,0,0,0.3)"
+          />
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+            Format: offsetX offsetY blur color
+          </p>
+          <div className="flex gap-1 mt-1">
+            {[
+              { label: 'Aucune', value: 'none' },
+              { label: 'Léger', value: '1px 1px 2px rgba(0,0,0,0.2)' },
+              { label: 'Moyen', value: '2px 2px 4px rgba(0,0,0,0.3)' },
+              { label: 'Fort', value: '3px 3px 6px rgba(0,0,0,0.4)' }
+            ].map((preset) => (
+              <button
+                key={preset.value}
+                type="button"
+                onClick={() => {
+                  updateStyle('text_shadow', preset.value)
+                  updateStyle('textShadow', preset.value)
+                }}
+                className="px-2 py-1 text-[10px] border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Propriétés avancées - Premium */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
         <div className="flex items-center gap-2 mb-3">
