@@ -7254,6 +7254,41 @@ function BlockRenderer({
     case 'form-rsvp':
       return <FormRSVPConfig block={safeBlock} onUpdate={onUpdate} />
 
+    // Blocs VTC
+    case 'driver-profile':
+      return <DriverProfileConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'email-button':
+      return <EmailButtonConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'sms-button':
+      return <SMSButtonConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'vehicle-comparison':
+      return <VehicleComparisonConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'service-packages':
+      return <ServicePackagesConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    // Blocs E-commerce
+    case 'product-gallery':
+      return <ProductGalleryConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'product-details':
+      return <ProductDetailsConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'add-to-cart':
+      return <AddToCartConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'buy-now':
+      return <BuyNowConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'trust-badges':
+      return <TrustBadgesConfig block={safeBlock} onUpdate={onUpdate} />
+    
+    case 'payment-methods':
+      return <PaymentMethodsConfig block={safeBlock} onUpdate={onUpdate} />
+
     default:
       return (
         <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 text-center">
