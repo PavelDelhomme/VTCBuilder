@@ -289,6 +289,20 @@ class MediaViewSet(viewsets.ModelViewSet):
                 
                 validated_data = serializer.validated_data
                 
+                # Get project_id from request if provided
+                project_id = validated_data.pop('project_id', None)
+                if project_id:
+                    try:
+                        from projects.models import Project
+                        # Vérifier que le projet existe et appartient au tenant ou est un projet système
+                        with tenant_context(user.tenant):
+                            project = Project.objects.filter(id=project_id).first()
+                            if project:
+                                validated_data['project'] = project
+                    except Exception as e:
+                        logger.warning(f"Error setting project for media: {e}")
+                        # Continuer sans projet si erreur
+                
                 with tenant_context(user.tenant):
                     # Set tenant FK - django-tenants handles cross-schema FK
                     validated_data['tenant'] = user.tenant
@@ -316,23 +330,44 @@ class MediaViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def images(self, request):
-        """Get only image files"""
+        """Get only image files, optionally filtered by project"""
         from django_tenants.utils import tenant_context
         
         user = request.user
+        project_id = request.query_params.get('project_id')
+        
         if hasattr(user, 'tenant') and user.tenant:
             try:
                 with tenant_context(user.tenant):
                     queryset = Media.objects.filter(tenant=user.tenant, mime_type__startswith='image/')
+                    
+                    # Filtrer par projet si project_id fourni
+                    if project_id:
+                        try:
+                            project_id_int = int(project_id)
+                            if project_id_int > 0:
+                                queryset = queryset.filter(project_id=project_id_int)
+                            else:
+                                # project_id=0 signifie "sans projet" (globales)
+                                queryset = queryset.filter(project__isnull=True)
+                        except (ValueError, TypeError):
+                            pass  # Ignorer si project_id n'est pas un entier valide
+                    
                     serializer = MediaListSerializer(queryset, many=True)
-                    return Response(serializer.data)
+                    response = Response(serializer.data)
+                    add_cors_headers(response, request)
+                    return response
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error getting images: {e}", exc_info=True)
-                return Response([], status=status.HTTP_200_OK)
+                response = Response([], status=status.HTTP_200_OK)
+                add_cors_headers(response, request)
+                return response
         
-        return Response([], status=status.HTTP_200_OK)
+        response = Response([], status=status.HTTP_200_OK)
+        add_cors_headers(response, request)
+        return response
 
     @action(detail=False, methods=['get'])
     def documents(self, request):

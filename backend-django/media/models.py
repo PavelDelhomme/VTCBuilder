@@ -19,6 +19,14 @@ class Media(models.Model):
 
     # Relations
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, null=True, blank=True)
+    project = models.ForeignKey(
+        'projects.Project',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='media_files',
+        help_text="Projet auquel ce média est lié (null = média global)"
+    )
 
     # File info
     name = models.CharField(max_length=255)

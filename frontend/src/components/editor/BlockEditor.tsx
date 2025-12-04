@@ -4972,6 +4972,7 @@ function BlockRenderer({
               value={safeBlock.data.background_image || ''}
               onChange={(url) => onUpdate({ data: { ...safeBlock.data, background_image: url } })}
               label="Image de fond"
+              projectId={1} // Projet système pour les pages publiques
               placeholder="Sélectionner ou uploader une image de fond"
             />
           </div>

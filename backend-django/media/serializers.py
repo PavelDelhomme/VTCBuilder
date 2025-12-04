@@ -9,6 +9,7 @@ from .models import Media, Template
 class MediaSerializer(serializers.ModelSerializer):
     """Serializer for Media model"""
     tenant_name = serializers.CharField(source='tenant.name', read_only=True)
+    project_name = serializers.CharField(source='project.name', read_only=True)
     url = serializers.SerializerMethodField()
     file_extension = serializers.ReadOnlyField()
     is_image = serializers.ReadOnlyField()
@@ -19,7 +20,7 @@ class MediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Media
         fields = [
-            'id', 'tenant', 'tenant_name', 'name', 'file_name', 'mime_type',
+            'id', 'tenant', 'tenant_name', 'project', 'project_name', 'name', 'file_name', 'mime_type',
             'path', 'disk', 'size', 'collection', 'alt_text', 'order',
             'metadata', 'url', 'file_extension', 'is_image', 'is_video',
             'is_audio', 'is_document', 'created_at', 'updated_at'
@@ -34,11 +35,12 @@ class MediaSerializer(serializers.ModelSerializer):
 class MediaUploadSerializer(serializers.ModelSerializer):
     """Serializer for media upload"""
     file = serializers.FileField(write_only=True, required=True)
+    project_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = Media
         fields = [
-            'file', 'name', 'collection', 'alt_text'
+            'file', 'name', 'collection', 'alt_text', 'project_id'
         ]
 
     def create(self, validated_data):
@@ -91,9 +93,20 @@ class MediaUploadSerializer(serializers.ModelSerializer):
             # Save to default storage
             saved_path = default_storage.save(storage_path, ContentFile(file_content))
             
+            # Get project if project_id provided
+            project = None
+            project_id = validated_data.get('project_id')
+            if project_id:
+                try:
+                    from projects.models import Project
+                    project = Project.objects.get(id=project_id)
+                except Project.DoesNotExist:
+                    pass  # Si le projet n'existe pas, on continue sans projet
+            
             # Create Media record
             media = Media.objects.create(
                 tenant=tenant,
+                project=project,
                 name=name,
                 file_name=file_name,
                 mime_type=mime_type,
@@ -117,13 +130,14 @@ class MediaUploadSerializer(serializers.ModelSerializer):
 class MediaListSerializer(serializers.ModelSerializer):
     """Simplified serializer for media listings"""
     tenant_name = serializers.CharField(source='tenant.name', read_only=True)
+    project_name = serializers.CharField(source='project.name', read_only=True)
     url = serializers.SerializerMethodField()
     file_extension = serializers.ReadOnlyField()
 
     class Meta:
         model = Media
         fields = [
-            'id', 'tenant', 'tenant_name', 'name', 'file_name',
+            'id', 'tenant', 'tenant_name', 'project', 'project_name', 'name', 'file_name',
             'mime_type', 'size', 'collection', 'url', 'file_extension',
             'created_at'
         ]

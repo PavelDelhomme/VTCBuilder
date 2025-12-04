@@ -3,6 +3,8 @@ import api from '@/lib/api';
 export interface Media {
   id: number;
   tenant_id?: number;
+  project?: number | null;
+  project_name?: string;
   name: string;
   file_name: string;
   mime_type: string;
@@ -39,7 +41,7 @@ class MediaService {
     return response.data;
   }
 
-  async upload(file: File, metadata?: { alt_text?: string; collection?: string }) {
+  async upload(file: File, metadata?: { alt_text?: string; collection?: string; project_id?: number | null }) {
     const formData = new FormData();
     formData.append('file', file);
     if (metadata?.alt_text) {
@@ -47,6 +49,9 @@ class MediaService {
     }
     if (metadata?.collection) {
       formData.append('collection', metadata.collection);
+    }
+    if (metadata?.project_id !== undefined) {
+      formData.append('project_id', metadata.project_id?.toString() || '');
     }
 
     // Ne pas définir Content-Type manuellement - le navigateur le fera automatiquement avec le boundary
@@ -64,9 +69,13 @@ class MediaService {
     return response.data;
   }
 
-  async getImages() {
-    const response = await api.get('/media/images/');
-    return response.data;
+  async getImages(projectId?: number | null) {
+    const params: any = {}
+    if (projectId !== undefined) {
+      params.project_id = projectId || 0 // 0 pour les images sans projet
+    }
+    const response = await api.get('/media/images/', { params });
+    return Array.isArray(response.data) ? response.data : [];
   }
 }
 

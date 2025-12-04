@@ -10,6 +10,7 @@ interface ImageSelectorProps {
   label?: string
   placeholder?: string
   className?: string
+  projectId?: number | null // ID du projet pour filtrer les images (null = toutes, 0 = sans projet)
 }
 
 export default function ImageSelector({
@@ -18,24 +19,29 @@ export default function ImageSelector({
   label = 'Image',
   placeholder = 'Sélectionner ou uploader une image',
   className = '',
+  projectId,
 }: ImageSelectorProps) {
   const [images, setImages] = useState<Media[]>([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [filterProject, setFilterProject] = useState<number | null | 'all'>(projectId !== undefined ? projectId : 'all')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (showModal) {
       loadImages()
     }
-  }, [showModal])
+  }, [showModal, filterProject])
 
   const loadImages = async () => {
     try {
       setLoading(true)
-      const allImages = await mediaService.getImages()
+      // Si filterProject est 'all', charger toutes les images
+      // Sinon, filtrer par projet (null pour sans projet, number pour un projet spécifique)
+      const projectFilter = filterProject === 'all' ? undefined : (filterProject === null ? 0 : filterProject)
+      const allImages = await mediaService.getImages(projectFilter)
       setImages(Array.isArray(allImages) ? allImages : [])
     } catch (error: any) {
       console.error('Erreur chargement images:', error)
@@ -66,9 +72,17 @@ export default function ImageSelector({
 
     try {
       setUploading(true)
+      // Déterminer le project_id à utiliser
+      // Si projectId est fourni en prop, l'utiliser
+      // Sinon, utiliser le filtre actuel (mais pas 'all')
+      const uploadProjectId = projectId !== undefined 
+        ? projectId 
+        : (filterProject !== 'all' ? filterProject : null)
+      
       const uploaded = await mediaService.upload(file, {
         alt_text: file.name,
         collection: 'images',
+        project_id: uploadProjectId,
       })
       
       if (uploaded.url) {
@@ -92,10 +106,30 @@ export default function ImageSelector({
     }
   }
 
-  const filteredImages = images.filter((img) =>
-    img.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    img.alt_text?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Grouper les images par projet pour l'affichage
+  const imagesByProject = images.reduce((acc, img) => {
+    const projectKey = img.project ? `project-${img.project}` : 'no-project'
+    if (!acc[projectKey]) {
+      acc[projectKey] = {
+        projectId: img.project || null,
+        projectName: img.project_name || 'Sans projet (Globales)',
+        images: []
+      }
+    }
+    acc[projectKey].images.push(img)
+    return acc
+  }, {} as Record<string, { projectId: number | null; projectName: string; images: Media[] }>)
+
+  const filteredImagesByProject = Object.entries(imagesByProject).reduce((acc, [key, group]) => {
+    const filtered = group.images.filter((img) =>
+      img.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      img.alt_text?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    if (filtered.length > 0) {
+      acc[key] = { ...group, images: filtered }
+    }
+    return acc
+  }, {} as Record<string, { projectId: number | null; projectName: string; images: Media[] }>)
 
   return (
     <div className={`space-y-2 ${className}`}>
@@ -206,47 +240,56 @@ export default function ImageSelector({
                 <div className="flex items-center justify-center py-12">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
-              ) : filteredImages.length === 0 ? (
+              ) : Object.keys(filteredImagesByProject).length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-gray-500 dark:text-gray-400">
                     {searchTerm ? 'Aucune image trouvée' : 'Aucune image disponible. Uploader une image pour commencer.'}
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {filteredImages.map((image) => (
-                    <button
-                      key={image.id}
-                      onClick={() => {
-                        onChange(image.url || '')
-                        setShowModal(false)
-                        toast.success('Image sélectionnée')
-                      }}
-                      className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                        value === image.url
-                          ? 'border-blue-500 ring-2 ring-blue-200'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
-                      }`}
-                    >
-                      <img
-                        src={image.url}
-                        alt={image.alt_text || image.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23ddd"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3EImage%3C/text%3E%3C/svg%3E'
-                        }}
-                      />
-                      {value === image.url && (
-                        <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
-                          <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                      )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
-                        {image.name}
+                <div className="space-y-6">
+                  {Object.entries(filteredImagesByProject).map(([key, group]) => (
+                    <div key={key}>
+                      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 px-2">
+                        📁 {group.projectName} ({group.images.length})
+                      </h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {group.images.map((image) => (
+                          <button
+                            key={image.id}
+                            onClick={() => {
+                              onChange(image.url || '')
+                              setShowModal(false)
+                              toast.success('Image sélectionnée')
+                            }}
+                            className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                              value === image.url
+                                ? 'border-blue-500 ring-2 ring-blue-200'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                            }`}
+                          >
+                            <img
+                              src={image.url}
+                              alt={image.alt_text || image.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23ddd"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3EImage%3C/text%3E%3C/svg%3E'
+                              }}
+                            />
+                            {value === image.url && (
+                              <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                              {image.name}
+                            </div>
+                          </button>
+                        ))}
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
               )}
