@@ -1301,15 +1301,15 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       </div>
 
       {/* Main Editor Area */}
-        <div className="flex-1 flex min-w-0 w-full h-full border-r border-gray-200 dark:border-gray-700">
-          {/* Editor Panel */}
-          <div className={`flex-1 flex flex-col min-w-0 h-full transition-all duration-300 w-full ${!blocksPaletteOpen ? 'ml-0' : ''}`}>
+      <div className="flex-1 flex min-w-0 w-full h-full border-r border-gray-200 dark:border-gray-700">
+        {/* Editor Panel */}
+        <div className={`flex-1 flex flex-col min-w-0 h-full transition-all duration-300 w-full ${!blocksPaletteOpen ? 'ml-0' : ''}`}>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-              <SortableContext items={history.state.map((b: Block) => b.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={history.state.map((b: Block) => b.id)} strategy={verticalListSortingStrategy}>
                 <div className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 max-w-full min-h-0">
                   {history.state.length === 0 ? (
                     <div className="text-center py-12 lg:py-20">
