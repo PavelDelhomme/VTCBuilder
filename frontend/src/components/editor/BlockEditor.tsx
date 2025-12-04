@@ -65,31 +65,10 @@ import PageSelector from './PageSelector'
 import ImageSelector from './ImageSelector'
 import { useHistory } from '@/hooks/useHistory'
 import { useBlockTracking } from '@/hooks/useBlockTracking'
+import { Block } from './types'
 
-export interface Block {
-  id: string
-  type: string
-  data: Record<string, any>
-  styles?: Record<string, any>
-  children?: Block[]
-  layout?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 // Nombre de colonnes sur 12 (système Bootstrap)
-  container?: 'container' | 'container-fluid' | 'none'
-  position?: {
-    type: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky'
-    top?: string
-    right?: string
-    bottom?: string
-    left?: string
-    align?: 'left' | 'center' | 'right' | 'stretch'
-    alignTo?: string // ID du bloc de référence pour position relative
-  }
-  width?: string // Largeur personnalisée (px, %, etc.)
-  height?: string // Hauteur personnalisée (px, %, etc.)
-  minWidth?: string
-  minHeight?: string
-  maxWidth?: string
-  maxHeight?: string
-}
+// Re-export Block type for backward compatibility
+export type { Block }
 
 
 interface BlockEditorProps {
@@ -132,6 +111,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       })
     }
   }, [selectedBlock, onBlockSelect])
+  
   const { canUseBlockType } = useFeatures()
   
   // Historique avec undo/redo
@@ -1294,12 +1274,11 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             </p>
           </div>
         )}
-              </div>
+            </div>
             </>
           )}
-        </div>
-      )}
-      </div>
+          </div>
+        )}
 
       {/* Main Editor Area */}
       <div className="flex-1 flex min-w-0 w-full h-full border-r border-gray-200 dark:border-gray-700">

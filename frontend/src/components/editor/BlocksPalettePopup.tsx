@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { Block } from './BlockEditor'
+import { Block } from './types'
 import blocksService, { BlockType } from '@/services/blocks.service'
 
 interface BlocksPalettePopupProps {

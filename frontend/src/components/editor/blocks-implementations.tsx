@@ -4,7 +4,7 @@
  */
 
 import React from 'react'
-import { Block } from './BlockEditor'
+import { Block } from './types'
 
 /**
  * Composants de configuration pour BlockRenderer (panneau de propriétés)

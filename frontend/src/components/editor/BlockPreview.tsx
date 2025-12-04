@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Block } from './BlockEditor'
+import { Block } from './types'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import { renderBlockFromTemplate } from '@/lib/block-renderer'
 import Captcha from '@/components/shared/Captcha'
@@ -4861,7 +4861,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       )
 
     case 'vehicle-comparison':
-      const vehicles = block.data?.vehicles || []
+      const comparisonVehicles = block.data?.vehicles || []
       return (
         <div style={wrapperStyles} className="mb-6">
           {block.data?.title && (
@@ -4874,7 +4874,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               <thead>
                 <tr className="bg-gray-100 dark:bg-gray-700">
                   <th className="p-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600">Caractéristique</th>
-                  {vehicles.map((vehicle: any, index: number) => (
+                  {comparisonVehicles.map((vehicle: any, index: number) => (
                     <th key={index} className="p-3 text-center text-sm font-semibold text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600">
                       {vehicle.name || `Véhicule ${index + 1}`}
                     </th>
@@ -4884,7 +4884,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               <tbody>
                 <tr>
                   <td className="p-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">Places</td>
-                  {vehicles.map((vehicle: any, index: number) => (
+                  {comparisonVehicles.map((vehicle: any, index: number) => (
                     <td key={index} className="p-3 text-center text-sm text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600">
                       {vehicle.seats || 4}
                     </td>
@@ -4892,7 +4892,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                 </tr>
                 <tr>
                   <td className="p-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">Prix</td>
-                  {vehicles.map((vehicle: any, index: number) => (
+                  {comparisonVehicles.map((vehicle: any, index: number) => (
                     <td key={index} className="p-3 text-center text-sm font-semibold text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600">
                       {vehicle.price || 0} €
                     </td>
@@ -4940,14 +4940,14 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
 
     // Blocs E-commerce
     case 'product-gallery':
-      const images = block.data?.images || []
+      const productImages = block.data?.images || []
       const displayMode = block.data?.display_mode || 'grid'
       return (
         <div style={wrapperStyles} className="mb-6">
-          {images.length > 0 ? (
+          {productImages.length > 0 ? (
             displayMode === 'grid' ? (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {images.map((img: string, index: number) => (
+                {productImages.map((img: string, index: number) => (
                   <img
                     key={index}
                     src={img}
@@ -4959,13 +4959,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
             ) : (
               <div className="relative">
                 <img
-                  src={images[0]}
+                  src={productImages[0]}
                   alt="Produit"
                   className="w-full h-64 object-cover rounded-lg"
                 />
-                {block.data?.show_thumbnails && images.length > 1 && (
+                {block.data?.show_thumbnails && productImages.length > 1 && (
                   <div className="mt-4 flex gap-2">
-                    {images.slice(1, 5).map((img: string, index: number) => (
+                    {productImages.slice(1, 5).map((img: string, index: number) => (
                       <img
                         key={index}
                         src={img}

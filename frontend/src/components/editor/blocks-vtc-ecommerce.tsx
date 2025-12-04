@@ -3,7 +3,7 @@
  */
 
 import React from 'react'
-import { Block } from './BlockEditor'
+import { Block } from './types'
 
 // Driver Profile (Profil Chauffeur)
 export function DriverProfileConfig({ block, onUpdate }: { block: Block; onUpdate: (updates: Partial<Block>) => void }) {
