@@ -1683,11 +1683,9 @@ const SortableBlock = React.memo(function SortableBlock({
             ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-b border-blue-200 dark:border-blue-700' 
             : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-800'
         }`}
-        {...attributes}
-        {...listeners}
         onClick={(e) => {
-          // Ne pas ouvrir les paramètres si on drag
-          if (!isDragging) {
+          // Ne pas ouvrir les paramètres si on drag ou si on clique sur le bouton collapse
+          if (!isDragging && !(e.target as HTMLElement).closest('[data-collapse-button]')) {
             e.stopPropagation()
             handleBlockClick(e as any)
           }
@@ -1695,6 +1693,7 @@ const SortableBlock = React.memo(function SortableBlock({
       >
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
           <button
+            data-collapse-button
             onClick={(e) => {
               e.stopPropagation()
               e.preventDefault()
@@ -1706,7 +1705,11 @@ const SortableBlock = React.memo(function SortableBlock({
               e.stopPropagation()
               e.preventDefault()
             }}
-            className="flex-shrink-0 p-2 sm:p-2.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 transition-colors cursor-pointer touch-manipulation"
+            onPointerDown={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+            }}
+            className="flex-shrink-0 p-2.5 sm:p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 transition-colors cursor-pointer touch-manipulation z-10 relative"
             title={isExpanded ? "Masquer les propriétés" : "Afficher les propriétés"}
           >
             <svg 
@@ -1718,9 +1721,13 @@ const SortableBlock = React.memo(function SortableBlock({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
-          <div className={`flex-shrink-0 ${getIconContainerSize()} rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-700`}>
+          <div 
+            className={`flex-shrink-0 ${getIconContainerSize()} rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-700`}
+            {...attributes}
+            {...listeners}
+          >
             <span className={getIconSize()}>{blockType?.icon || '📦'}</span>
-        </div>
+          </div>
           <div className="min-w-0 flex-1">
             <span className={`${getTextSize()} font-semibold text-gray-900 dark:text-gray-100 truncate block`}>{blockType?.label || block.type}</span>
             {blockType?.description && layoutCols > 4 && (
