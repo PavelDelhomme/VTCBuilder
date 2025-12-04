@@ -5467,6 +5467,7 @@ function BlockRenderer({
                 value={safeBlock.data.background_image || ''}
                 onChange={(imageUrl) => onUpdate({ data: { ...safeBlock.data, background_image: imageUrl } })}
                 className="text-sm"
+                projectId={1} // Projet système pour les pages publiques
               />
               <div className="mt-2">
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -5557,6 +5558,7 @@ function BlockRenderer({
               value={safeBlock.data.logo_image || ''}
               onChange={(imageUrl) => onUpdate({ data: { ...safeBlock.data, logo_image: imageUrl } })}
               className="text-sm"
+              projectId={1} // Projet système pour les pages publiques
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Uploadez une image ou sélectionnez-en une depuis votre bibliothèque média
