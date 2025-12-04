@@ -4783,8 +4783,313 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               // La validation est gérée par le composant Captcha lui-même
             }}
             theme={block.data.theme || 'light'}
-            className={block.data.className || ''}
-          />
+          className={block.data.className || ''}
+        />
+      </div>
+    )
+
+    // Blocs VTC
+    case 'driver-profile':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-start gap-4">
+              {block.data?.photo_url && (
+                <img
+                  src={block.data.photo_url}
+                  alt={block.data.name || 'Chauffeur'}
+                  className="w-20 h-20 rounded-full object-cover"
+                />
+              )}
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+                  {block.data?.name || 'Nom du chauffeur'}
+                </h3>
+                {block.data?.rating && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-yellow-500">⭐</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{block.data.rating}</span>
+                    {block.data?.reviews_count && (
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        ({block.data.reviews_count} avis)
+                      </span>
+                    )}
+                  </div>
+                )}
+                {block.data?.description && (
+                  <p className="text-gray-600 dark:text-gray-400 mb-2">{block.data.description}</p>
+                )}
+                {block.data?.experience_years && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {block.data.experience_years} ans d'expérience
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+
+    case 'email-button':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <a
+            href={`mailto:${block.data?.email || ''}${block.data?.subject ? `?subject=${encodeURIComponent(block.data.subject)}` : ''}`}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            {block.data?.button_text || 'Envoyer un email'}
+          </a>
+        </div>
+      )
+
+    case 'sms-button':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <a
+            href={`sms:${block.data?.phone || ''}${block.data?.default_message ? `?body=${encodeURIComponent(block.data.default_message)}` : ''}`}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            {block.data?.button_text || 'Envoyer un SMS'}
+          </a>
+        </div>
+      )
+
+    case 'vehicle-comparison':
+      const vehicles = block.data?.vehicles || []
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && (
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              {block.data.title}
+            </h2>
+          )}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse bg-white dark:bg-gray-800 rounded-lg shadow-md">
+              <thead>
+                <tr className="bg-gray-100 dark:bg-gray-700">
+                  <th className="p-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600">Caractéristique</th>
+                  {vehicles.map((vehicle: any, index: number) => (
+                    <th key={index} className="p-3 text-center text-sm font-semibold text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600">
+                      {vehicle.name || `Véhicule ${index + 1}`}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="p-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">Places</td>
+                  {vehicles.map((vehicle: any, index: number) => (
+                    <td key={index} className="p-3 text-center text-sm text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600">
+                      {vehicle.seats || 4}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="p-3 text-sm text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">Prix</td>
+                  {vehicles.map((vehicle: any, index: number) => (
+                    <td key={index} className="p-3 text-center text-sm font-semibold text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600">
+                      {vehicle.price || 0} €
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )
+
+    case 'service-packages':
+      const packages = block.data?.packages || []
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && (
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              {block.data.title}
+            </h2>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {packages.map((pkg: any, index: number) => (
+              <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  {pkg.name || `Forfait ${index + 1}`}
+                </h3>
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-4">
+                  {pkg.price || 0} €
+                </div>
+                {pkg.features && pkg.features.length > 0 && (
+                  <ul className="space-y-2">
+                    {pkg.features.map((feature: string, fIndex: number) => (
+                      <li key={fIndex} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <span className="text-green-500">✓</span>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+
+    // Blocs E-commerce
+    case 'product-gallery':
+      const images = block.data?.images || []
+      const displayMode = block.data?.display_mode || 'grid'
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {images.length > 0 ? (
+            displayMode === 'grid' ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {images.map((img: string, index: number) => (
+                  <img
+                    key={index}
+                    src={img}
+                    alt={`Produit ${index + 1}`}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="relative">
+                <img
+                  src={images[0]}
+                  alt="Produit"
+                  className="w-full h-64 object-cover rounded-lg"
+                />
+                {block.data?.show_thumbnails && images.length > 1 && (
+                  <div className="mt-4 flex gap-2">
+                    {images.slice(1, 5).map((img: string, index: number) => (
+                      <img
+                        key={index}
+                        src={img}
+                        alt={`Miniature ${index + 1}`}
+                        className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-75"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          ) : (
+            <div className="text-center py-8 text-gray-400">Aucune image</div>
+          )}
+        </div>
+      )
+
+    case 'product-details':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+              {block.data?.name || 'Nom du produit'}
+            </h2>
+            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-4">
+              {block.data?.price || 0} {block.data?.currency || 'EUR'}
+            </div>
+            {block.data?.description && (
+              <p className="text-gray-600 dark:text-gray-400 mb-4">{block.data.description}</p>
+            )}
+            <div className="flex items-center gap-4">
+              {block.data?.in_stock ? (
+                <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
+                  En stock ({block.data?.stock || 0} disponibles)
+                </span>
+              ) : (
+                <span className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-sm font-medium">
+                  Rupture de stock
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )
+
+    case 'add-to-cart':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <div className="flex items-center gap-4">
+            {block.data?.show_quantity && (
+              <div className="flex items-center gap-2">
+                <button className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">-</button>
+                <input
+                  type="number"
+                  min="1"
+                  defaultValue="1"
+                  className="w-16 px-2 py-2 text-center border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                />
+                <button className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">+</button>
+              </div>
+            )}
+            <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {block.data?.button_text || 'Ajouter au panier'}
+            </button>
+          </div>
+        </div>
+      )
+
+    case 'buy-now':
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          <button className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            {block.data?.button_text || 'Acheter maintenant'}
+          </button>
+        </div>
+      )
+
+    case 'trust-badges':
+      const badges = block.data?.badges || []
+      const layout = block.data?.layout || 'horizontal'
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {badges.length > 0 ? (
+            <div className={`flex ${layout === 'vertical' ? 'flex-col' : layout === 'grid' ? 'flex-wrap' : 'flex-row'} gap-4`}>
+              {badges.map((badge: any, index: number) => (
+                <div key={index} className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                  <span className="text-xl">{badge.icon || '✅'}</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{badge.text || ''}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-gray-400">Aucun badge configuré</div>
+          )}
+        </div>
+      )
+
+    case 'payment-methods':
+      const methods = block.data?.methods || []
+      return (
+        <div style={wrapperStyles} className="mb-6">
+          {block.data?.title && (
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              {block.data.title}
+            </h3>
+          )}
+          {methods.length > 0 ? (
+            <div className="flex flex-wrap gap-4">
+              {methods.map((method: any, index: number) => (
+                <div key={index} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <span className="text-xl">{method.icon || '💳'}</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{method.name || ''}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-gray-400">Aucune méthode configurée</div>
+          )}
         </div>
       )
 

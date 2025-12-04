@@ -44,6 +44,19 @@ import {
   FormPollConfig,
   FormRSVPConfig,
 } from './blocks-implementations'
+import {
+  DriverProfileConfig,
+  EmailButtonConfig,
+  SMSButtonConfig,
+  ProductGalleryConfig,
+  ProductDetailsConfig,
+  AddToCartConfig,
+  BuyNowConfig,
+  VehicleComparisonConfig,
+  ServicePackagesConfig,
+  TrustBadgesConfig,
+  PaymentMethodsConfig,
+} from './blocks-vtc-ecommerce'
 import { CSS } from '@dnd-kit/utilities'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import { useFeatures } from '@/contexts/FeaturesContext'
