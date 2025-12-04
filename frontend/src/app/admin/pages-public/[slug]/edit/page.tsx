@@ -130,10 +130,11 @@ export default function EditPublicPage() {
   // Points d'ancrage (snap points) pour le redimensionnement
   // Inclut: 1/4, 1/3, 2/5, 1/2, 3/5, 2/3, 3/4
   const SNAP_POINTS = [25, 33.33, 40, 50, 60, 66.67, 75] // Pourcentages
-  const SNAP_THRESHOLD = 3 // Distance en % pour déclencher le snap
+  const SNAP_THRESHOLD = 5 // Distance en % pour déclencher le snap (augmenté pour plus de facilité)
+  const [snappedPoint, setSnappedPoint] = useState<number | null>(null) // Point actuellement aimanté
 
   // Fonction pour trouver le point d'ancrage le plus proche
-  const findNearestSnapPoint = useCallback((width: number): number | null => {
+  const findNearestSnapPoint = useCallback((width: number): { point: number | null; distance: number } => {
     let nearestPoint: number | null = null
     let minDistance = Infinity
 
@@ -145,7 +146,7 @@ export default function EditPublicPage() {
       }
     }
 
-    return nearestPoint
+    return { point: nearestPoint, distance: minDistance }
   }, [])
 
   // Gestion du redimensionnement des panneaux avec snap
@@ -164,10 +165,15 @@ export default function EditPublicPage() {
       // Limiter entre 20% et 80%
       newWidth = Math.max(20, Math.min(80, newWidth))
       
-      // Vérifier si on est proche d'un point d'ancrage
-      const snapPoint = findNearestSnapPoint(newWidth)
+      // Vérifier si on est proche d'un point d'ancrage (aimantation)
+      const { point: snapPoint, distance } = findNearestSnapPoint(newWidth)
       if (snapPoint !== null) {
+        // Aimantation active : forcer le snap
         newWidth = snapPoint
+        setSnappedPoint(snapPoint)
+      } else {
+        // Pas de snap, réinitialiser l'indicateur
+        setSnappedPoint(null)
       }
       
       setEditorWidth(newWidth)
@@ -177,15 +183,21 @@ export default function EditPublicPage() {
       setIsResizing(false)
       
       // Vérifier le snap final au relâchement
-      const finalSnapPoint = findNearestSnapPoint(editorWidth)
+      const { point: finalSnapPoint } = findNearestSnapPoint(editorWidth)
       if (finalSnapPoint !== null) {
         setEditorWidth(finalSnapPoint)
+        setSnappedPoint(finalSnapPoint)
+      } else {
+        setSnappedPoint(null)
       }
       
       // Sauvegarder dans localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('editor-panel-width', editorWidth.toString())
       }
+      
+      // Réinitialiser l'indicateur après un court délai
+      setTimeout(() => setSnappedPoint(null), 300)
     }
 
     if (isResizing) {
