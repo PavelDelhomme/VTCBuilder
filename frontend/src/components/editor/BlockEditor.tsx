@@ -1294,10 +1294,10 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             </p>
           </div>
         )}
-                </div>
-              </div>
-            </>
-          )}
+            </div>
+          </div>
+        </>
+      )}
       </div>
 
       {/* Main Editor Area */}
