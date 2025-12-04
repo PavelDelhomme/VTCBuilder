@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
+import { compressObject, quickHash } from '@/lib/memory-utils'
 
 interface HistoryState<T> {
   past: T[]
@@ -6,7 +7,8 @@ interface HistoryState<T> {
   future: T[]
 }
 
-export function useHistory<T>(initialState: T, maxHistorySize: number = 50) {
+// Réduire la taille par défaut de l'historique pour économiser la mémoire
+export function useHistory<T>(initialState: T, maxHistorySize: number = 20) {
   const [state, setState] = useState<HistoryState<T>>({
     past: [],
     present: initialState,
@@ -19,20 +21,27 @@ export function useHistory<T>(initialState: T, maxHistorySize: number = 50) {
   const set = useCallback((newState: T, addToHistory: boolean = true) => {
     if (addToHistory) {
       setState((current) => {
-        const newPast = [...current.past, current.present]
+        // Compresser l'état actuel avant de l'ajouter à l'historique
+        const compressedPresent = compressObject(current.present, true, false)
+        const newPast = [...current.past, compressedPresent]
         // Limiter la taille de l'historique
         const trimmedPast = newPast.slice(-maxHistorySize)
         
+        // Compresser aussi le nouvel état
+        const compressedNewState = compressObject(newState, true, false)
+        
         return {
           past: trimmedPast,
-          present: newState,
+          present: compressedNewState,
           future: [], // Effacer le futur quand on fait une nouvelle action
         }
       })
     } else {
+      // Compresser même les mises à jour sans historique
+      const compressedNewState = compressObject(newState, true, false)
       setState((current) => ({
         ...current,
-        present: newState,
+        present: compressedNewState,
       }))
     }
   }, [maxHistorySize])

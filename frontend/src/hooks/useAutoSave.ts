@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { quickHash } from '@/lib/memory-utils'
 
 interface UseAutoSaveOptions {
   data: any
@@ -10,11 +11,12 @@ interface UseAutoSaveOptions {
 /**
  * Hook pour sauvegarde automatique avec détection de modifications réelles
  * Ne sauvegarde que si les données ont vraiment changé
+ * Optimisé pour la mémoire : utilise quickHash au lieu de JSON.stringify
  */
 export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }: UseAutoSaveOptions) {
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const lastSavedDataRef = useRef<any>(null)
+  const lastSavedHashRef = useRef<string | null>(null) // Stocker le hash au lieu de l'objet complet
   const timeoutRef = useRef<number | null>(null)
   const isInitialMount = useRef(true)
   const onSaveRef = useRef(onSave)
@@ -24,24 +26,25 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
     onSaveRef.current = onSave
   }, [onSave])
 
-  // Fonction pour comparer deux objets (comparaison profonde simplifiée)
-  const hasDataChanged = (oldData: any, newData: any): boolean => {
-    if (oldData === null || oldData === undefined) return true
-    return JSON.stringify(oldData) !== JSON.stringify(newData)
+  // Fonction pour comparer deux objets (utilise hash au lieu de JSON.stringify)
+  const hasDataChanged = (oldHash: string | null, newData: any): boolean => {
+    if (oldHash === null || oldHash === undefined) return true
+    const newHash = quickHash(newData)
+    return oldHash !== newHash
   }
 
   useEffect(() => {
     // Ignorer le premier rendu (montage initial)
     if (isInitialMount.current) {
       isInitialMount.current = false
-      lastSavedDataRef.current = data
+      lastSavedHashRef.current = quickHash(data)
       return
     }
 
     if (!enabled || !data) return
 
-    // Vérifier si les données ont vraiment changé
-    if (!hasDataChanged(lastSavedDataRef.current, data)) {
+    // Vérifier si les données ont vraiment changé (comparaison par hash)
+    if (!hasDataChanged(lastSavedHashRef.current, data)) {
       return // Pas de changement, pas de sauvegarde
     }
 
@@ -53,7 +56,8 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
     // Set new timeout (2 secondes par défaut)
     timeoutRef.current = window.setTimeout(async () => {
       // Vérifier une dernière fois si les données ont changé
-      if (!hasDataChanged(lastSavedDataRef.current, data)) {
+      const currentHash = quickHash(data)
+      if (lastSavedHashRef.current === currentHash) {
         return
       }
 
@@ -62,7 +66,7 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
       try {
         // Utiliser la fonction onSave stockée dans une ref pour éviter les problèmes de dépendances
         await onSaveRef.current(data)
-        lastSavedDataRef.current = data
+        lastSavedHashRef.current = currentHash
         setLastSaved(new Date())
       } catch (error) {
         console.error('Erreur sauvegarde automatique:', error)
@@ -80,7 +84,7 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
 
   // Fonction pour mettre à jour manuellement le timestamp après une sauvegarde manuelle
   const updateLastSaved = () => {
-    lastSavedDataRef.current = data
+    lastSavedHashRef.current = quickHash(data)
     setLastSaved(new Date())
   }
 

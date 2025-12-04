@@ -151,12 +151,12 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   
   const { canUseBlockType } = useFeatures()
   
-  // Historique avec undo/redo
-  const history = useHistory<Block[]>(blocks, 50)
+  // Historique avec undo/redo (réduit à 20 pour économiser la mémoire)
+  const history = useHistory<Block[]>(blocks, 20)
   const isHistoryUpdate = useRef(false)
   const isInternalUpdate = useRef(false) // Pour éviter les boucles infinies
   const onChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastBlocksRef = useRef<string>('') // Pour comparer les blocs (JSON string)
+  const lastBlocksHashRef = useRef<string>('') // Pour comparer les blocs (hash au lieu de JSON string)
   
   // Tracking des blocs
   const { trackBlockAction } = useBlockTracking()
@@ -168,28 +168,28 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     })
   )
 
-  // Synchroniser l'historique avec les blocks externes
+  // Synchroniser l'historique avec les blocks externes (optimisé avec hash)
   useEffect(() => {
     if (!isHistoryUpdate.current && !isInternalUpdate.current) {
-      const blocksJson = JSON.stringify(blocks)
-      if (blocksJson !== lastBlocksRef.current) {
+      const blocksHash = quickHash(blocks)
+      if (blocksHash !== lastBlocksHashRef.current) {
         history.reset(blocks)
-        lastBlocksRef.current = blocksJson
+        lastBlocksHashRef.current = blocksHash
       }
     }
     isHistoryUpdate.current = false
     isInternalUpdate.current = false
   }, [blocks, history])
 
-  // Synchroniser onChange avec l'historique (avec debounce et protection contre les boucles)
+  // Synchroniser onChange avec l'historique (avec debounce et protection contre les boucles, optimisé avec hash)
   useEffect(() => {
-    const historyJson = JSON.stringify(history.state)
-    const blocksJson = JSON.stringify(blocks)
+    const historyHash = quickHash(history.state)
+    const blocksHash = quickHash(blocks)
     
     // Ne pas appeler onChange si c'est une mise à jour externe ou si les valeurs sont identiques
-    if (historyJson !== blocksJson && historyJson !== lastBlocksRef.current) {
+    if (historyHash !== blocksHash && historyHash !== lastBlocksHashRef.current) {
       isInternalUpdate.current = true
-      lastBlocksRef.current = historyJson
+      lastBlocksHashRef.current = historyHash
       
       // Debounce pour éviter trop d'appels (surtout pour les changements de couleur)
       if (onChangeTimeoutRef.current) {

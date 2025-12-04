@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, memo } from 'react'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverlay } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -24,7 +24,7 @@ interface BlockPreviewProps {
   onInspectorModeChange?: (enabled: boolean) => void // Callback pour activer/désactiver le mode inspecteur
 }
 
-export default function BlockPreview({ 
+const BlockPreviewComponent = function BlockPreview({ 
   blocks, 
   blockTypes, 
   onBlocksChange,
@@ -783,6 +783,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               src={imageUrl}
               alt={block.data.alt || ''}
               className="rounded-lg shadow-md"
+              loading="lazy"
+              decoding="async"
               style={{
                 width: block.data.width ? `${block.data.width}%` : '100%',
                 maxWidth: '100%',
