@@ -1066,160 +1066,318 @@ L'équipe VTCBuilder
             add_cors_headers(response, request)
             return response
         
-        # Generate HTML invoice (can be printed as PDF by browser) - Default template
+        # Generate HTML invoice (can be printed as PDF by browser) - Professional template
+        status_display = dict(Invoice.STATUS_CHOICES).get(invoice.status, invoice.status)
+        status_color = '#10b981' if invoice.status == 'paid' else '#f59e0b' if invoice.status == 'open' else '#ef4444'
+        plan_name = invoice.subscription.plan.name if invoice.subscription and invoice.subscription.plan else 'Abonnement'
+        
         html_content = f"""
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Facture {invoice.invoice_number}</title>
     <style>
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
         @media print {{
             @page {{
                 size: A4;
-                margin: 2cm;
+                margin: 1.5cm;
             }}
             .no-print {{
                 display: none;
             }}
+            body {{
+                background: white;
+            }}
         }}
         body {{
-            font-family: Arial, sans-serif;
-            max-width: 800px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: #f9fafb;
+            padding: 40px 20px;
+        }}
+        .invoice-container {{
+            max-width: 210mm;
             margin: 0 auto;
-            padding: 20px;
-            color: #333;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 50px;
+            border-radius: 8px;
         }}
         .header {{
             display: flex;
             justify-content: space-between;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #333;
+            align-items: flex-start;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #3b82f6;
+        }}
+        .company-info {{
+            flex: 1;
+        }}
+        .company-name {{
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 8px;
+        }}
+        .company-details {{
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.8;
+        }}
+        .invoice-info {{
+            text-align: right;
+            flex: 1;
         }}
         .invoice-title {{
-            font-size: 32px;
-            font-weight: bold;
+            font-size: 36px;
+            font-weight: 700;
+            color: #1f2937;
             margin-bottom: 10px;
+            letter-spacing: 2px;
         }}
         .invoice-number {{
-            font-size: 18px;
-            font-weight: bold;
+            font-size: 16px;
+            color: #6b7280;
+            margin-bottom: 15px;
         }}
         .status-badge {{
             display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-top: 10px;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            background-color: {status_color};
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }}
-        .info-section {{
-            margin-bottom: 40px;
+        .content-grid {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 50px;
         }}
-        .info-row {{
-            display: flex;
-            margin-bottom: 10px;
+        .section {{
+            background: #f9fafb;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }}
+        .section-title {{
+            font-size: 16px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }}
+        .info-item {{
+            margin-bottom: 12px;
+            font-size: 14px;
         }}
         .info-label {{
-            font-weight: bold;
-            width: 200px;
+            font-weight: 600;
+            color: #4b5563;
+            display: inline-block;
+            min-width: 140px;
         }}
-        table {{
+        .info-value {{
+            color: #1f2937;
+        }}
+        .items-table {{
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 30px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
         }}
-        th, td {{
-            padding: 12px;
+        .items-table thead {{
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }}
+        .items-table th {{
+            padding: 18px 20px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }}
-        th {{
-            background-color: #f3f4f6;
-            font-weight: bold;
+        .items-table th:last-child,
+        .items-table td:last-child {{
+            text-align: right;
+        }}
+        .items-table tbody tr {{
+            border-bottom: 1px solid #e5e7eb;
+        }}
+        .items-table tbody tr:hover {{
+            background: #f9fafb;
+        }}
+        .items-table td {{
+            padding: 18px 20px;
+            font-size: 14px;
+            color: #1f2937;
+        }}
+        .items-table tfoot {{
+            background: #f9fafb;
+            border-top: 2px solid #3b82f6;
+        }}
+        .items-table tfoot td {{
+            padding: 20px;
+            font-weight: 700;
+            font-size: 16px;
         }}
         .total-row {{
-            font-weight: bold;
-            font-size: 18px;
+            font-size: 20px;
+            color: #1e40af;
         }}
-        .footer {{
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
+        .footer-section {{
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 2px solid #e5e7eb;
+            text-align: center;
+        }}
+        .footer-text {{
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }}
+        .footer-contact {{
             font-size: 12px;
-            color: #666;
+            color: #9ca3af;
+        }}
+        .footer-contact a {{
+            color: #3b82f6;
+            text-decoration: none;
+        }}
+        .footer-contact a:hover {{
+            text-decoration: underline;
+        }}
+        .print-button {{
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }}
+        .print-button:hover {{
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }}
+        @media print {{
+            .print-button {{
+                display: none;
+            }}
+            .invoice-container {{
+                box-shadow: none;
+                padding: 0;
+            }}
         }}
     </style>
 </head>
 <body>
-    <div class="header">
-        <div>
-            <div class="invoice-title">FACTURE</div>
-            <div>VTCBuilder</div>
+    <div class="invoice-container">
+        <div class="header">
+            <div class="company-info">
+                <div class="company-name">VTCBuilder</div>
+                <div class="company-details">
+                    Plateforme SaaS pour Chauffeurs VTC<br>
+                    support@vtcbuilder.com<br>
+                    www.vtcbuilder.com
+                </div>
+            </div>
+            <div class="invoice-info">
+                <div class="invoice-title">FACTURE</div>
+                <div class="invoice-number">N° {invoice.invoice_number}</div>
+                <div class="status-badge">{status_display}</div>
+            </div>
         </div>
-        <div>
-            <div class="invoice-number">N° {invoice.invoice_number}</div>
-            <div class="status-badge" style="background-color: {'#10b981' if invoice.status == 'paid' else '#f59e0b'}; color: white;">
-                {dict(Invoice.STATUS_CHOICES).get(invoice.status, invoice.status)}
+        
+        <div class="content-grid">
+            <div class="section">
+                <div class="section-title">Facturé à</div>
+                <div class="info-item">
+                    <span class="info-label">Nom:</span>
+                    <span class="info-value">{invoice.tenant.name}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">{invoice.tenant.email}</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Détails de la facture</div>
+                <div class="info-item">
+                    <span class="info-label">Date d'émission:</span>
+                    <span class="info-value">{invoice.issue_date.strftime('%d/%m/%Y')}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Date d'échéance:</span>
+                    <span class="info-value">{invoice.due_date.strftime('%d/%m/%Y')}</span>
+                </div>
+                {f'<div class="info-item"><span class="info-label">Date de paiement:</span><span class="info-value">{invoice.paid_at.strftime("%d/%m/%Y")}</span></div>' if invoice.paid_at else ''}
+            </div>
+        </div>
+        
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th style="text-align: right;">Sous-total</th>
+                    <th style="text-align: right;">TVA</th>
+                    <th style="text-align: right;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>{plan_name}</strong></td>
+                    <td style="text-align: right;">{invoice.subtotal:.2f} {invoice.currency}</td>
+                    <td style="text-align: right;">{invoice.tax:.2f} {invoice.currency}</td>
+                    <td style="text-align: right;"><strong>{invoice.total:.2f} {invoice.currency}</strong></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" style="text-align: right; font-size: 16px;">TOTAL TTC:</td>
+                    <td class="total-row">{invoice.total:.2f} {invoice.currency}</td>
+                </tr>
+            </tfoot>
+        </table>
+        
+        <div class="footer-section">
+            <div class="footer-text">
+                <strong>Merci de votre confiance !</strong>
+            </div>
+            <div class="footer-contact">
+                Pour toute question concernant cette facture, contactez-nous à<br>
+                <a href="mailto:support@vtcbuilder.com">support@vtcbuilder.com</a>
             </div>
         </div>
     </div>
     
-    <div class="info-section">
-        <h3>Informations Client</h3>
-        <div class="info-row">
-            <div class="info-label">Nom:</div>
-            <div>{invoice.tenant.name}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Email:</div>
-            <div>{invoice.tenant.email}</div>
-        </div>
-    </div>
-    
-    <div class="info-section">
-        <h3>Détails de la facture</h3>
-        <div class="info-row">
-            <div class="info-label">Date d'émission:</div>
-            <div>{invoice.issue_date.strftime('%d/%m/%Y')}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Date d'échéance:</div>
-            <div>{invoice.due_date.strftime('%d/%m/%Y')}</div>
-        </div>
-        {f"<div class='info-row'><div class='info-label'>Date de paiement:</div><div>{invoice.paid_at.strftime('%d/%m/%Y')}</div></div>" if invoice.paid_at else ""}
-    </div>
-    
-    <table>
-        <thead>
-            <tr>
-                <th>Description</th>
-                <th style="text-align: right;">Sous-total</th>
-                <th style="text-align: right;">TVA</th>
-                <th style="text-align: right;">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>{invoice.subscription.plan.name if invoice.subscription else 'Abonnement'}</td>
-                <td style="text-align: right;">{invoice.subtotal} {invoice.currency}</td>
-                <td style="text-align: right;">{invoice.tax} {invoice.currency}</td>
-                <td style="text-align: right;">{invoice.total} {invoice.currency}</td>
-            </tr>
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="3" style="text-align: right; font-weight: bold;">TOTAL TTC:</td>
-                <td style="text-align: right; font-weight: bold; font-size: 18px;">{invoice.total} {invoice.currency}</td>
-            </tr>
-        </tfoot>
-    </table>
-    
-    <div class="footer">
-        <p>Merci de votre confiance !</p>
-        <p>Pour toute question concernant cette facture, contactez-nous à support@vtcbuilder.com</p>
-    </div>
+    <button class="print-button no-print" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
 </body>
 </html>
         """

@@ -120,7 +120,30 @@ export default function InvoicesTab({ invoices: initialInvoices, getStatusBadge,
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9495'
       const token = localStorage.getItem('token')
       const url = `${apiUrl}/api/invoices/${invoice.id}/download_pdf/`
-      window.open(url, '_blank')
+      
+      // Utiliser fetch pour passer le token dans les headers
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+      })
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors du chargement de la facture')
+      }
+      
+      const blob = await response.blob()
+      const blobUrl = window.URL.createObjectURL(blob)
+      const newWindow = window.open(blobUrl, '_blank')
+      
+      if (newWindow) {
+        newWindow.onload = () => {
+          window.URL.revokeObjectURL(blobUrl)
+        }
+      } else {
+        toast.error('Impossible d\'ouvrir la fenêtre. Veuillez autoriser les pop-ups.')
+        window.URL.revokeObjectURL(blobUrl)
+      }
     } catch (error: any) {
       console.error('Erreur ouverture HTML:', error)
       toast.error('Erreur lors de l\'ouverture de la facture')
