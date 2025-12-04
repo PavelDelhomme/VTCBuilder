@@ -1079,7 +1079,12 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   {/* Affichage des blocs - Recherche ou groupé par catégorie */}
                   {(() => {
                     // Filtrer les blocs selon la recherche et la catégorie
+                    // Exclure le header de la liste des blocs disponibles dans l'éditeur
                     const filteredBlockTypes = blockTypes.filter((bt: BlockType) => {
+                      // Exclure le header de la liste des blocs disponibles
+                      if (bt.name === 'header') {
+                        return false
+                      }
                       const matchesCategory = categoryFilter === 'all' || bt.category === categoryFilter
                       const matchesSearch = !searchQuery || 
                         bt.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
