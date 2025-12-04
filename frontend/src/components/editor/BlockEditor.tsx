@@ -399,15 +399,17 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     }
 
     // Gérer le déplacement d'un bloc existant dans un conteneur
-    if (active.data.current?.type === 'block' && (over.data.current?.type === 'container' || isContainerDropZone)) {
+    // IMPORTANT: Utiliser uniquement la zone de drop (container-drop-*) pour éviter de remplacer le conteneur
+    if (active.data.current?.type === 'block' && isContainerDropZone) {
       const blockId = active.id as string
       
       // Ne pas permettre de déplacer un bloc dans lui-même
       if (blockId === containerId) return
       
       // Trouver le bloc à déplacer
-      const blockToMove = findBlockInTree(history.state, blockId)
-      if (!blockToMove) return
+      const blockToMoveResult = findBlockInTree(history.state, blockId)
+      if (!blockToMoveResult) return
+      const blockToMove = blockToMoveResult.block
       
       // Vérifier que le conteneur cible n'est pas un enfant du bloc à déplacer (éviter les boucles)
       const isDescendant = (blocks: Block[], targetId: string): boolean => {
@@ -420,7 +422,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         return false
       }
       
-      if (blockToMove.block.children && isDescendant(blockToMove.block.children, containerId)) {
+      if (blockToMove.children && isDescendant(blockToMove.children, containerId)) {
         // Ne pas permettre de déplacer un conteneur dans un de ses enfants
         return
       }
@@ -429,7 +431,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       let newBlocks = removeBlockFromTree(history.state, blockId)
       
       // Ajouter le bloc dans le conteneur cible
-      newBlocks = addBlockToContainer(newBlocks, containerId, blockToMove.block)
+      newBlocks = addBlockToContainer(newBlocks, containerId, blockToMove)
       
       history.set(newBlocks, true)
       trackBlockAction(blockToMove.block.type, 'move')

@@ -1229,8 +1229,9 @@ export default function EditPublicPage() {
 
       {/* Menu contextuel pour la prévisualisation */}
       {contextMenu && (() => {
-        const block = findBlockInTree(blocks, contextMenu.blockId)
-        if (!block) return null
+        const blockResult = findBlockInTree(blocks, contextMenu.blockId)
+        if (!blockResult) return null
+        const block = blockResult.block
         return (
           <BlockContextMenu
             isOpen={true}
@@ -1243,11 +1244,44 @@ export default function EditPublicPage() {
               setContextMenu(null)
             }}
             onDuplicate={() => {
-              const blockToDuplicate = findBlockInTree(blocks, contextMenu.blockId)
-              if (blockToDuplicate) {
-                const newBlocks = duplicateBlockInTree(blocks, blockToDuplicate)
-                setBlocks(newBlocks)
-                handleSave({ blocks: newBlocks, metaTitle, metaDescription, status })
+              const blockToDuplicateResult = findBlockInTree(blocks, contextMenu.blockId)
+              if (blockToDuplicateResult) {
+                const blockToDuplicate = blockToDuplicateResult.block
+                const newId = `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                
+                // Dupliquer le bloc avec ses enfants
+                const duplicatedBlock: Block = {
+                  ...blockToDuplicate,
+                  id: newId,
+                  children: blockToDuplicate.children
+                    ? blockToDuplicate.children.map((child, idx) => ({
+                        ...child,
+                        id: `${newId}-child-${idx}-${Date.now()}`,
+                      }))
+                    : undefined,
+                }
+                
+                // Insérer le bloc dupliqué après l'original dans l'arbre
+                const insertAfter = (blocks: Block[], targetId: string, newBlock: Block): Block[] => {
+                  for (let i = 0; i < blocks.length; i++) {
+                    if (blocks[i].id === targetId) {
+                      const newBlocks = [...blocks]
+                      newBlocks.splice(i + 1, 0, newBlock)
+                      return newBlocks
+                    }
+                    if (blocks[i].children) {
+                      const updated = insertAfter(blocks[i].children, targetId, newBlock)
+                      if (updated !== blocks[i].children) {
+                        return blocks.map((b, idx) => idx === i ? { ...b, children: updated } : b)
+                      }
+                    }
+                  }
+                  return blocks
+                }
+                
+                const finalBlocks = insertAfter(blocks, contextMenu.blockId, duplicatedBlock)
+                setBlocks(finalBlocks)
+                handleSave({ blocks: finalBlocks, metaTitle, metaDescription, status })
               }
               setContextMenu(null)
             }}
