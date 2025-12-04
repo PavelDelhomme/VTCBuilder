@@ -1365,9 +1365,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             </div>
           </SortableContext>
         </DndContext>
-      </div>
-
         </div>
+      </div>
 
       </div>
     </div>
