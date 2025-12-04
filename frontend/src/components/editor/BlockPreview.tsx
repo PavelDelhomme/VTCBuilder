@@ -5050,13 +5050,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       )
 
     case 'trust-badges':
-      const badges = block.data?.badges || []
+      const trustBadges = block.data?.badges || []
       const layout = block.data?.layout || 'horizontal'
       return (
         <div style={wrapperStyles} className="mb-6">
-          {badges.length > 0 ? (
+          {trustBadges.length > 0 ? (
             <div className={`flex ${layout === 'vertical' ? 'flex-col' : layout === 'grid' ? 'flex-wrap' : 'flex-row'} gap-4`}>
-              {badges.map((badge: any, index: number) => (
+              {trustBadges.map((badge: any, index: number) => (
                 <div key={index} className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
                   <span className="text-xl">{badge.icon || '✅'}</span>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{badge.text || ''}</span>

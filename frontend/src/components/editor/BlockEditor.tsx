@@ -1274,7 +1274,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             </p>
           </div>
         )}
-            </div>
+                </div>
+              </div>
             </>
           )}
           </div>
@@ -1305,7 +1306,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                         </p>
                       </div>
                     </div>
-                  </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-12 gap-4 lg:gap-6 auto-rows-min">
                       {history.state
@@ -1347,6 +1347,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           </DndContext>
         </div>
       </div>
+    </div>
     </div>
   )
 }
