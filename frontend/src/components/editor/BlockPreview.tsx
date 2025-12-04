@@ -1560,7 +1560,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
               </div>
             ) : plans.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 w-full min-w-0 overflow-hidden">
                 {plans.map((plan: any, index: number) => {
                   // Calculer le prix pour l'affichage
                   const priceMonthly = parseFloat(plan.price_monthly || plan.price || 0)
@@ -1582,8 +1582,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                   return (
                     <div
                       key={plan.id || index}
-                      className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 relative ${
-                        plan.is_featured ? 'ring-4 ring-blue-500 scale-105' : ''
+                      className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 relative min-w-0 overflow-hidden ${
+                        plan.is_featured ? 'ring-2 sm:ring-4 ring-blue-500 sm:scale-105' : ''
                       }`}
                     >
                       {/* Badge personnalisé ou POPULAIRE par défaut si featured */}
@@ -2394,36 +2394,36 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
     case 'features-grid':
       const features = block.data.features || []
       const columns = block.data.columns || 3
-      // Déterminer les classes de grille en fonction du nombre de colonnes
+      // Déterminer les classes de grille en fonction du nombre de colonnes avec responsive amélioré
       const gridClasses = {
         1: 'grid-cols-1',
-        2: 'grid-cols-1 md:grid-cols-2',
-        3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
-        4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
-      }[columns] || 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+        2: 'grid-cols-1 sm:grid-cols-2',
+        3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+        4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+      }[columns] || 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
       
       return (
-        <div style={wrapperStyles} className="mb-6">
+        <div style={wrapperStyles} className="mb-6 w-full min-w-0 overflow-hidden">
           {block.data.title && (
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-gray-100 mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-gray-100 mb-8 sm:mb-12 px-4">
               {block.data.title}
             </h2>
           )}
-          <div className={`grid ${gridClasses} gap-8`}>
+          <div className={`grid ${gridClasses} gap-4 sm:gap-6 lg:gap-8 w-full min-w-0`}>
             {features.length > 0 ? (
               features.map((feature: any, i: number) => (
-                <div key={i} className="text-center p-6 rounded-lg hover:shadow-lg transition-shadow bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                  <div className="text-5xl mb-4">{feature.icon || '✨'}</div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                <div key={i} className="text-center p-4 sm:p-6 rounded-lg hover:shadow-lg transition-shadow bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 min-w-0 overflow-hidden">
+                  <div className="text-4xl sm:text-5xl mb-3 sm:mb-4">{feature.icon || '✨'}</div>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 break-words">
                     {feature.title || `Fonctionnalité ${i + 1}`}
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 break-words">
                     {feature.description || 'Description...'}
                   </p>
                 </div>
               ))
             ) : (
-              <div className="col-span-full text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
+              <div className="col-span-full text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded">
                 Aucune fonctionnalité
               </div>
             )}
@@ -2635,6 +2635,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       const logoText = block.data.logo_text || 'VTCBuilder'
       const logoUrl = block.data.logo_url || '/'
       const showThemeToggle = block.data.show_theme_toggle !== false
+      const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
       
       return (
         <header 
@@ -2651,28 +2652,28 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
           }`}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
-              <a href={logoUrl} className="flex items-center space-x-2">
+            <div className="flex items-center justify-between flex-wrap gap-2 min-w-0">
+              <a href={logoUrl} className="flex items-center space-x-2 flex-shrink-0 min-w-0">
                 {block.data.logo_image && (
-                  <img src={block.data.logo_image} alt={logoText} className="h-8 w-auto" />
+                  <img src={block.data.logo_image} alt={logoText} className="h-6 sm:h-8 w-auto flex-shrink-0" />
                 )}
-                <h1 className={`text-2xl font-bold ${
+                <h1 className={`text-lg sm:text-2xl font-bold truncate ${
                   block.styles?.color || 'text-gray-900 dark:text-white'
                 }`}>
                   {logoText}
                 </h1>
                 {block.data.badge && (
-                  <span className={`text-xs ${
+                  <span className={`text-xs flex-shrink-0 ${
                     block.styles?.color || 'text-gray-400 dark:text-gray-500'
                   }`}>
                     {block.data.badge}
                   </span>
                 )}
               </a>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
                 {showThemeToggle && (
                   <button
-                    className={`p-2 rounded-lg transition-colors ${
+                    className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
                       block.styles?.color || 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                     }`}
                     title="Toggle theme"
@@ -2682,49 +2683,88 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                     </svg>
                   </button>
                 )}
-                {headerLinks.length > 0 ? (
-                  <nav className="hidden md:flex items-center space-x-6">
-                    {headerLinks.map((link: any, index: number) => (
-                      <a
-                        key={index}
-                        href={link.url || '#'}
-                        className={`font-medium transition-colors ${link.custom_class || ''} ${
-                          !link.color && !link.custom_class
-                            ? (block.styles?.color || 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100')
-                            : ''
-                        }`}
-                        style={{
-                          color: link.color || undefined,
-                          fontSize: link.font_size || undefined,
-                          fontWeight: link.font_weight || undefined,
-                          ...(link.hover_color ? {
-                            '--hover-color': link.hover_color,
-                          } as React.CSSProperties : {}),
-                        } as React.CSSProperties}
-                        onMouseEnter={(e) => {
-                          if (link.hover_color) {
-                            e.currentTarget.style.color = link.hover_color
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (link.color) {
-                            e.currentTarget.style.color = link.color
-                          }
-                        }}
-                      >
-                        {link.label || `Lien ${index + 1}`}
-                      </a>
-                    ))}
-                  </nav>
-                ) : (
-                  <div className="text-sm text-gray-400 dark:text-gray-500">
-                    Aucun lien configuré
-                  </div>
+                {headerLinks.length > 0 && (
+                  <>
+                    {/* Menu mobile hamburger */}
+                    <button
+                      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                      className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                      aria-label="Menu"
+                    >
+                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {mobileMenuOpen ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        )}
+                      </svg>
+                    </button>
+                    {/* Navigation desktop */}
+                    <nav className="hidden md:flex items-center space-x-4 lg:space-x-6 flex-wrap">
+                      {headerLinks.map((link: any, index: number) => (
+                        <a
+                          key={index}
+                          href={link.url || '#'}
+                          className={`font-medium transition-colors whitespace-nowrap ${link.custom_class || ''} ${
+                            !link.color && !link.custom_class
+                              ? (block.styles?.color || 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100')
+                              : ''
+                          }`}
+                          style={{
+                            color: link.color || undefined,
+                            fontSize: link.font_size || undefined,
+                            fontWeight: link.font_weight || undefined,
+                            ...(link.hover_color ? {
+                              '--hover-color': link.hover_color,
+                            } as React.CSSProperties : {}),
+                          } as React.CSSProperties}
+                          onMouseEnter={(e) => {
+                            if (link.hover_color) {
+                              e.currentTarget.style.color = link.hover_color
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (link.color) {
+                              e.currentTarget.style.color = link.color
+                            }
+                          }}
+                        >
+                          {link.label || `Lien ${index + 1}`}
+                        </a>
+                      ))}
+                    </nav>
+                    {/* Navigation mobile */}
+                    {mobileMenuOpen && (
+                      <nav className="absolute top-full left-0 right-0 md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg z-50">
+                        <div className="px-4 py-2 space-y-2">
+                          {headerLinks.map((link: any, index: number) => (
+                            <a
+                              key={index}
+                              href={link.url || '#'}
+                              className={`block px-4 py-2 rounded-lg font-medium transition-colors ${link.custom_class || ''} ${
+                                !link.color && !link.custom_class
+                                  ? (block.styles?.color || 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100')
+                                  : ''
+                              }`}
+                              style={{
+                                color: link.color || undefined,
+                                fontSize: link.font_size || undefined,
+                                fontWeight: link.font_weight || undefined,
+                              } as React.CSSProperties}
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              {link.label || `Lien ${index + 1}`}
+                            </a>
+                          ))}
+                        </div>
+                      </nav>
+                    )}
+                  </>
                 )}
                 {block.data.cta_button && (
                   <a
                     href={block.data.cta_button.url || '#'}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base whitespace-nowrap flex-shrink-0 ${
                       block.data.cta_button.style === 'primary'
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -2742,27 +2782,27 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
     case 'footer':
       const footerColumns = block.data.columns || []
       return (
-        <footer style={wrapperStyles} className="mb-6 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <footer style={wrapperStyles} className="mb-6 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white py-8 sm:py-12 w-full min-w-0 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full min-w-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 w-full min-w-0">
               {footerColumns.length > 0 ? (
                 footerColumns.map((column: any, colIndex: number) => (
-                  <div key={colIndex}>
+                  <div key={colIndex} className="min-w-0 overflow-hidden">
                     {column.title && (
-                      <h3 className={`${colIndex === 0 ? 'text-xl' : 'font-bold'} mb-4 text-gray-900 dark:text-white`}>
+                      <h3 className={`${colIndex === 0 ? 'text-lg sm:text-xl' : 'font-bold text-base sm:text-lg'} mb-3 sm:mb-4 text-gray-900 dark:text-white break-words`}>
                         {column.title}
                       </h3>
                     )}
                     {column.description && (
-                      <p className="text-gray-600 dark:text-gray-400 mb-4">{column.description}</p>
+                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-3 sm:mb-4 break-words">{column.description}</p>
                     )}
                     {(column.links || []).length > 0 && (
-                      <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                      <ul className="space-y-1 sm:space-y-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
                         {column.links.map((link: any, linkIndex: number) => (
-                          <li key={linkIndex}>
+                          <li key={linkIndex} className="break-words">
                             <a
                               href={link.url || '#'}
-                              className="hover:text-gray-900 dark:hover:text-white transition-colors"
+                              className="hover:text-gray-900 dark:hover:text-white transition-colors break-words"
                             >
                               {link.label || 'Lien'}
                             </a>
