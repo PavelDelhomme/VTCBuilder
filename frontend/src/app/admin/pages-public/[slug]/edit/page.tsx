@@ -17,6 +17,7 @@ import PageLoader from '@/components/shared/PageLoader'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import { useReconnect } from '@/contexts/ReconnectContext'
 import { restoreEditorStateAfterReconnect } from '@/hooks/useEditorStatePersistence'
+import { findBlockInTree, duplicateBlockInTree, removeBlockFromTree } from '@/lib/block-utils'
 
 const PAGE_TITLES: Record<string, string> = {
   home: 'Page d\'accueil',
@@ -1225,6 +1226,41 @@ export default function EditPublicPage() {
         currentBlocks={blocks}
         blockTypes={blockTypes}
       />
+
+      {/* Menu contextuel pour la prévisualisation */}
+      {contextMenu && (() => {
+        const block = findBlockInTree(blocks, contextMenu.blockId)
+        if (!block) return null
+        return (
+          <BlockContextMenu
+            isOpen={true}
+            position={contextMenu.position}
+            block={block}
+            onClose={() => setContextMenu(null)}
+            onEdit={() => {
+              setModalBlockId(contextMenu.blockId)
+              setPropertiesModalOpen(true)
+              setContextMenu(null)
+            }}
+            onDuplicate={() => {
+              const blockToDuplicate = findBlockInTree(blocks, contextMenu.blockId)
+              if (blockToDuplicate) {
+                const newBlocks = duplicateBlockInTree(blocks, blockToDuplicate)
+                setBlocks(newBlocks)
+                handleSave({ blocks: newBlocks, metaTitle, metaDescription, status })
+              }
+              setContextMenu(null)
+            }}
+            onDelete={() => {
+              const newBlocks = removeBlockFromTree(blocks, contextMenu.blockId)
+              setBlocks(newBlocks)
+              handleSave({ blocks: newBlocks, metaTitle, metaDescription, status })
+              setSelectedBlockId(null)
+              setContextMenu(null)
+            }}
+          />
+        )
+      })()}
     </AdminLayout>
   )
 }

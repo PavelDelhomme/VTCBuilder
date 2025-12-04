@@ -353,6 +353,12 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     const overId = String(over.id || '')
     const isContainerDropZone = overId.startsWith('container-drop-')
     const containerId = isContainerDropZone ? overId.replace('container-drop-', '') : (over.data.current?.containerId as string || '')
+    
+    // Si on drop sur un bloc conteneur directement (pas sa zone de drop), ignorer
+    // pour éviter de remplacer le conteneur
+    if (active.data.current?.type === 'block' && over.data.current?.type === 'container' && !isContainerDropZone) {
+      return
+    }
 
     // Gérer le drop d'un type de bloc dans un conteneur (nouveau bloc depuis la palette)
     if (active.data.current?.type === 'block-type' && (over.data.current?.type === 'container' || isContainerDropZone)) {
