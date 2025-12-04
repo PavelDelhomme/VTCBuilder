@@ -1310,8 +1310,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={history.state.map((b: Block) => b.id)} strategy={verticalListSortingStrategy}>
-                <div className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 max-w-full min-h-0">
-                  {history.state.length === 0 ? (
+              <div className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 max-w-full min-h-0">
+                {history.state.length === 0 ? (
                     <div className="text-center py-12 lg:py-20">
                       <div className="max-w-md mx-auto">
                         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
