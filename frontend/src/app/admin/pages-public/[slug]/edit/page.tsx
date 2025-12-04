@@ -166,7 +166,7 @@ export default function EditPublicPage() {
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
     }
-  }, [isResizing, editorWidth])
+  }, [isResizing, editorWidth, findNearestSnapPoint])
 
   // Raccourcis clavier pour navigation entre blocs
   useEffect(() => {
