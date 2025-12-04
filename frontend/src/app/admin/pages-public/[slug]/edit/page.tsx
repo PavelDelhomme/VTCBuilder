@@ -1257,31 +1257,50 @@ export default function EditPublicPage() {
           {/* Resizer - Barre de redimensionnement avec indicateurs de snap */}
           {showPreview && (
             <div
-              className="w-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-col-resize transition-colors relative z-10 flex-shrink-0 group"
+              className={`w-1 cursor-col-resize transition-all relative z-10 flex-shrink-0 group ${
+                snappedPoint !== null
+                  ? 'bg-blue-500 dark:bg-blue-600 shadow-lg shadow-blue-500/50'
+                  : 'bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600'
+              }`}
               onMouseDown={(e) => {
                 e.preventDefault()
                 setIsResizing(true)
+                setSnappedPoint(null) // Réinitialiser au début du drag
               }}
               style={{ cursor: 'col-resize' }}
               title="Redimensionner (points d'ancrage: 25%, 33% (1/3), 40%, 50%, 60%, 67% (2/3), 75%)"
             >
-              <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 bg-transparent hover:bg-blue-500 dark:hover:bg-blue-600 transition-colors" />
+              <div className={`absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 transition-all ${
+                snappedPoint !== null
+                  ? 'bg-blue-400 dark:bg-blue-500'
+                  : 'bg-transparent hover:bg-blue-500 dark:hover:bg-blue-600'
+              }`} />
+              
+              {/* Indicateur visuel du point aimanté pendant le drag */}
+              {snappedPoint !== null && isResizing && (
+                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-lg whitespace-nowrap animate-pulse z-20">
+                  🧲 Aimanté à {snappedPoint}%
+                </div>
+              )}
               
               {/* Indicateurs visuels des points d'ancrage au survol */}
               <div className="absolute inset-y-0 left-full ml-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                 <div className="flex flex-col h-full justify-around text-xs text-gray-500 dark:text-gray-400">
                   {SNAP_POINTS.map((point) => {
                     const isActive = Math.abs(editorWidth - point) < 1
+                    const isSnapped = snappedPoint === point
                     return (
                       <div
                         key={point}
-                        className={`px-2 py-1 rounded ${
-                          isActive
-                            ? 'bg-blue-500 text-white font-semibold'
+                        className={`px-2 py-1 rounded transition-all ${
+                          isSnapped
+                            ? 'bg-blue-500 text-white font-semibold scale-110 shadow-lg'
+                            : isActive
+                            ? 'bg-blue-400 dark:bg-blue-500 text-white font-semibold'
                             : 'bg-gray-100 dark:bg-gray-800'
                         }`}
                       >
-                        {point}%
+                        {point}% {isSnapped && '🧲'}
                       </div>
                     )
                   })}
