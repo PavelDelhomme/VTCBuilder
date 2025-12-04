@@ -95,6 +95,23 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const blockListRef = useRef<HTMLDivElement>(null)
   const blockRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   
+  // Scroller vers le bloc sélectionné dans la liste (mode inspecteur)
+  useEffect(() => {
+    if (externalSelectedBlockId && blockListRef.current) {
+      const blockElement = blockRefs.current.get(externalSelectedBlockId)
+      if (blockElement) {
+        // Attendre un peu pour que le DOM soit mis à jour
+        setTimeout(() => {
+          blockElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          })
+        }, 100)
+      }
+    }
+  }, [externalSelectedBlockId])
+  
   // Synchroniser avec la sélection externe (optimisé pour éviter les conflits)
   useEffect(() => {
     if (externalSelectedBlockId !== undefined && externalSelectedBlockId !== selectedBlock) {
