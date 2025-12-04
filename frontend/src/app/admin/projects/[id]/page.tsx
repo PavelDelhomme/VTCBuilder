@@ -65,28 +65,30 @@ export default function ProjectDetailPage() {
       // Load public pages
       const settingsResponse = await api.get('/system-settings/')
       const settings = settingsResponse.data
-      const pages: any[] = []
+      const allPages: any[] = []
       
       // Homepage
       if (settings.public_homepage_blocks !== undefined) {
-        pages.push({
+        allPages.push({
           slug: 'home',
           title: 'Page d\'accueil',
           type: 'public',
+          is_active: true, // Homepage is always active
         })
       }
       
       // Other public pages
       const publicPagesData = settings.public_pages || {}
       Object.entries(publicPagesData).forEach(([slug, pageData]: [string, any]) => {
-        pages.push({
+        allPages.push({
           slug,
           title: pageData.title || slug,
           type: 'public',
+          is_active: pageData.is_active !== false, // Default to true if not specified
         })
       })
       
-      setPublicPages(pages)
+      setPublicPages(allPages)
       
       // TODO: Load tenant pages if project has a tenant
       if (project?.tenant_id) {
@@ -409,32 +411,169 @@ export default function ProjectDetailPage() {
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Pages Disponibles</h2>
           
           {publicPages.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Pages Publiques</h3>
-              <div className="space-y-2">
-                {publicPages.map((page) => {
-                  const isInProject = project.pages?.some((p: ProjectPage) => p.page_slug === page.slug && p.page_type === 'public')
-                  return (
-                    <div
-                      key={page.slug}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg"
-                    >
-                      <span className="text-gray-900 dark:text-gray-100">{page.title}</span>
-                      {isInProject ? (
-                        <span className="text-sm text-gray-500 dark:text-gray-400">Déjà dans le projet</span>
-                      ) : (
-                        <button
-                          onClick={() => handleAddPage(page.slug, 'public')}
-                          className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+            <div className="space-y-4">
+              {/* Pages Publiques (publiées) - Sous-catégorie */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  Pages Publiques (Publiées)
+                </h3>
+                <div className="space-y-2">
+                  {publicPages
+                    .filter((page) => page.is_active !== false)
+                    .map((page) => {
+                      const projectPage = project.pages?.find((p: ProjectPage) => p.page_slug === page.slug && p.page_type === 'public')
+                      const isInProject = !!projectPage
+                      return (
+                        <div
+                          key={page.slug}
+                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
                         >
-                          Ajouter
-                        </button>
-                      )}
-                    </div>
-                  )
-                })}
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <span className="font-medium text-gray-900 dark:text-gray-100 break-words">{page.title}</span>
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              Publiée
+                            </span>
+                            {isInProject && (
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                projectPage.is_active !== false
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                              }`}>
+                                {projectPage.is_active !== false ? 'Active' : 'Inactive'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {isInProject ? (
+                              <>
+                                <label className="flex items-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={projectPage.is_active !== false}
+                                    onChange={() => handleToggleActive(projectPage)}
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                  />
+                                  <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Activer</span>
+                                </label>
+                                <button
+                                  onClick={() => handleRemovePage(projectPage.id)}
+                                  className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                                  title="Retirer du projet"
+                                >
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                  <span className="hidden sm:inline">Retirer</span>
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => handleAddPage(page.slug, 'public')}
+                                className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span>Ajouter</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  {publicPages.filter((page) => page.is_active !== false).length === 0 && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                      Aucune page publique publiée
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Pages Disponibles (non publiées) */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                  Pages Disponibles (Non publiées)
+                </h3>
+                <div className="space-y-2">
+                  {publicPages
+                    .filter((page) => page.is_active === false)
+                    .map((page) => {
+                      const projectPage = project.pages?.find((p: ProjectPage) => p.page_slug === page.slug && p.page_type === 'public')
+                      const isInProject = !!projectPage
+                      return (
+                        <div
+                          key={page.slug}
+                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <span className="font-medium text-gray-900 dark:text-gray-100 break-words">{page.title}</span>
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                              Non publiée
+                            </span>
+                            {isInProject && (
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                projectPage.is_active !== false
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                              }`}>
+                                {projectPage.is_active !== false ? 'Active' : 'Inactive'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {isInProject ? (
+                              <>
+                                <label className="flex items-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={projectPage.is_active !== false}
+                                    onChange={() => handleToggleActive(projectPage)}
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                  />
+                                  <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Activer</span>
+                                </label>
+                                <button
+                                  onClick={() => handleRemovePage(projectPage.id)}
+                                  className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                                  title="Retirer du projet"
+                                >
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                  <span className="hidden sm:inline">Retirer</span>
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => handleAddPage(page.slug, 'public')}
+                                className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span>Ajouter</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  {publicPages.filter((page) => page.is_active === false).length === 0 && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                      Toutes les pages sont publiées
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
+          )}
+          
+          {publicPages.length === 0 && (
+            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+              Aucune page disponible
+            </p>
           )}
         </div>
       </div>
