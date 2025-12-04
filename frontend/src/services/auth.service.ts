@@ -1,4 +1,5 @@
 import api from '@/lib/api';
+import axios from 'axios';
 
 export interface LoginCredentials {
   email: string;
@@ -69,6 +70,39 @@ class AuthService {
   async updatePassword(data: { current_password: string; password: string; password_confirmation: string }) {
     const response = await api.put('/auth/password/', data);
     return response.data;
+  }
+
+  async refreshToken(): Promise<boolean> {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (!refreshToken) {
+        return false;
+      }
+
+      // Utiliser une instance axios sans intercepteur pour éviter les boucles infinies
+      const axiosInstance = axios.create({
+        baseURL: api.defaults.baseURL,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const response = await axiosInstance.post('/auth/refresh/', {
+        refresh: refreshToken,
+      });
+
+      if (response.data.access) {
+        localStorage.setItem('token', response.data.access);
+        if (response.data.refresh) {
+          localStorage.setItem('refresh_token', response.data.refresh);
+        }
+        return true;
+      }
+      return false;
+    } catch (error) {
+      // Refresh token invalide ou expiré
+      return false;
+    }
   }
 
   getStoredUser(): User | null {

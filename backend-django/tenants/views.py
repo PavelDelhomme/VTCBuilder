@@ -1476,6 +1476,43 @@ L'équipe VTCBuilder
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
+def refresh_token_view(request):
+    """Refresh token endpoint"""
+    try:
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response(
+                {'error': 'Refresh token is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        token = RefreshToken(refresh_token)
+        new_access_token = token.access_token
+        
+        # Si ROTATE_REFRESH_TOKENS est activé, retourner aussi un nouveau refresh token
+        if hasattr(token, 'blacklist'):
+            # Rotation activée, créer un nouveau refresh token
+            user = token.user
+            new_refresh = RefreshToken.for_user(user)
+            token.blacklist()  # Blacklister l'ancien refresh token
+            
+            return Response({
+                'access': str(new_access_token),
+                'refresh': str(new_refresh),
+            })
+        else:
+            return Response({
+                'access': str(new_access_token),
+            })
+    except Exception as e:
+        return Response(
+            {'error': 'Invalid or expired refresh token'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
     """Logout endpoint"""

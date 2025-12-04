@@ -8,7 +8,7 @@ from rest_framework.routers import DefaultRouter
 from tenants.views import (
     TenantViewSet, UserViewSet, UserProfileView,
     FeatureViewSet, UserFeatureViewSet,
-    login_view, register_view, register_with_plan_view, logout_view,
+    login_view, register_view, register_with_plan_view, logout_view, refresh_token_view,
     request_password_reset_view, reset_password_view, verify_reset_token_view,
     verify_invitation_token_view, complete_invitation_view
 )
@@ -106,6 +106,8 @@ urlpatterns = [
     # Authentication (support both with and without trailing slash)
     path('auth/login/', login_view, name='login-slash'),
     path('auth/login', login_view, name='login'),
+    path('auth/refresh/', refresh_token_view, name='refresh-slash'),
+    path('auth/refresh', refresh_token_view, name='refresh'),
     path('auth/logout/', logout_view, name='logout-slash'),
     path('auth/logout', logout_view, name='logout'),
     path('auth/register/', register_view, name='register-slash'),

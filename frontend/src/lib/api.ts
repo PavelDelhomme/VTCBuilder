@@ -1,10 +1,18 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import authService from '@/services/auth.service';
 
 // Déclaration pour les flags globaux
 declare global {
   interface Window {
     __hasLoggedBlockedError?: boolean;
     __hasLoggedNetworkError?: boolean;
+    __showReconnectModal?: () => void;
+    __isRefreshingToken?: boolean;
+    __failedQueue?: Array<{
+      resolve: (value?: any) => void;
+      reject: (error?: any) => void;
+      config: InternalAxiosRequestConfig;
+    }>;
   }
 }
 
@@ -132,31 +140,107 @@ api.interceptors.response.use(
     );
     
     if (status === 401) {
+      const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+      const hasToken = localStorage.getItem('token');
+      const refreshToken = localStorage.getItem('refresh_token');
+      
       // Pour les endpoints silencieux avec 401, ne pas logger (c'est normal si non connecté)
       // Ces erreurs sont attendues et gérées gracieusement dans les composants
-      if (isSilentError) {
+      if (isSilentError && !hasToken) {
         // Ne rien logger, c'est attendu - rejeter silencieusement
         return Promise.reject(error);
       }
       
-      // Pour les requêtes POST/PATCH/DELETE, l'erreur 401 indique un problème d'authentification
-      // qui doit être traité (redirection vers login)
-      const isModificationRequest = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(error.config?.method?.toUpperCase() || '');
-      const hasToken = localStorage.getItem('token');
+      // Si on a un token et un refresh token, essayer de rafraîchir automatiquement
+      if (hasToken && refreshToken && !originalRequest._retry) {
+        originalRequest._retry = true;
+        
+        // Si on est déjà en train de rafraîchir, mettre en queue
+        if (window.__isRefreshingToken) {
+          return new Promise((resolve, reject) => {
+            if (!window.__failedQueue) {
+              window.__failedQueue = [];
+            }
+            window.__failedQueue.push({ resolve, reject, config: originalRequest });
+          }).then((token) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+            }
+            return api(originalRequest);
+          }).catch((err) => {
+            return Promise.reject(err);
+          });
+        }
+        
+        window.__isRefreshingToken = true;
+        
+        return authService.refreshToken().then((success) => {
+          window.__isRefreshingToken = false;
+          
+          if (success) {
+            // Traiter la queue des requêtes en attente
+            if (window.__failedQueue) {
+              window.__failedQueue.forEach(({ resolve }) => {
+                const newToken = localStorage.getItem('token');
+                resolve(newToken);
+              });
+              window.__failedQueue = [];
+            }
+            
+            // Réessayer la requête originale avec le nouveau token
+            const newToken = localStorage.getItem('token');
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            }
+            return api(originalRequest);
+          } else {
+            // Refresh token invalide, afficher le modal de reconnexion
+            if (window.__showReconnectModal) {
+              window.__showReconnectModal();
+            }
+            return Promise.reject(error);
+          }
+        }).catch((refreshError) => {
+          window.__isRefreshingToken = false;
+          
+          // Traiter la queue des requêtes en attente avec erreur
+          if (window.__failedQueue) {
+            window.__failedQueue.forEach(({ reject }) => {
+              reject(refreshError);
+            });
+            window.__failedQueue = [];
+          }
+          
+          // Afficher le modal de reconnexion
+          if (window.__showReconnectModal) {
+            window.__showReconnectModal();
+          }
+          return Promise.reject(refreshError);
+        });
+      }
       
-      // Rediriger vers /login si :
-      // - C'est une requête de modification ET qu'il y a un token (token expiré)
-      // - OU qu'on n'est pas sur une page publique ET qu'il y a un token
+      // Si pas de token ou refresh token invalide, gérer selon le contexte
+      const isModificationRequest = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(error.config?.method?.toUpperCase() || '');
+      
+      // Pour les endpoints silencieux, ne pas logger ni rediriger
+      if (isSilentError) {
+        return Promise.reject(error);
+      }
+      
+      // Pour les requêtes de modification ou pages non publiques avec token, afficher le modal
       if ((isModificationRequest && hasToken) || (hasToken && !isPublicRoute)) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
-        // Ne pas rediriger immédiatement pour les requêtes silencieuses
-        if (!isSilentError) {
+        // Afficher le modal de reconnexion au lieu de rediriger
+        if (window.__showReconnectModal) {
+          window.__showReconnectModal();
+        } else {
+          // Fallback : rediriger si le modal n'est pas disponible
+          localStorage.removeItem('token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
           window.location.href = '/login';
         }
       }
-      // Si pas de token et page publique, c'est normal, ne pas rediriger
+      
       // Ne pas logger les erreurs 401 - elles sont gérées gracieusement
     } else if (!isSilentError && status) {
       // Ne logger que les erreurs non attendues
