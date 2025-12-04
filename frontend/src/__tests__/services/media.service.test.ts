@@ -77,12 +77,7 @@ describe('MediaService', () => {
 
       expect(api.post).toHaveBeenCalledWith(
         '/media/upload/',
-        expect.any(FormData),
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        expect.any(FormData)
       )
       expect(result.id).toBe(1)
     })

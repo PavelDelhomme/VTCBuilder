@@ -51,11 +51,13 @@ class SettingsService {
   async getSettings(): Promise<SystemSettings> {
     try {
       // For singleton pattern, list endpoint returns the single instance
-      const response = await api.get('/system-settings/');
+      const response = await api.get('/system-settings/', {
+        validateStatus: (status) => status < 500 // Accepter 401, 404, etc. sans erreur
+      });
       return response.data;
     } catch (error: any) {
-      // Si 404, retourner des settings par défaut
-      if (error.response?.status === 404) {
+      // Si 401 ou 404, retourner des settings par défaut
+      if (error.response?.status === 401 || error.response?.status === 404) {
         return {
           id: 1,
           site_name: 'VTCBuilder',

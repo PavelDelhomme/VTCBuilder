@@ -27,7 +27,9 @@ describe('SettingsService', () => {
 
       const result = await settingsService.getSettings()
 
-      expect(api.get).toHaveBeenCalledWith('/system-settings/')
+      expect(api.get).toHaveBeenCalledWith('/system-settings/', expect.objectContaining({
+        validateStatus: expect.any(Function)
+      }))
       expect(result).toEqual(mockSettings)
     })
 

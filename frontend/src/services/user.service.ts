@@ -90,11 +90,14 @@ class UserService {
 
   async getImpersonationStatus() {
     try {
-      const response = await api.get(`/users/impersonation-status/`);
+      const response = await api.get(`/users/impersonation-status/`, {
+        validateStatus: (status) => status < 500 // Accepter 401, 404, etc. sans erreur
+      });
       return response.data;
     } catch (error: any) {
       // If endpoint doesn't exist (404), network error, or blocked, return default status
-      const isExpectedError = error.response?.status === 404 || 
+      const isExpectedError = error.response?.status === 401 ||
+                             error.response?.status === 404 || 
                              error.code === 'ERR_NETWORK' || 
                              error.code === 'ERR_BLOCKED_BY_CLIENT' ||
                              error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||

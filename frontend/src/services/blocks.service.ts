@@ -46,7 +46,10 @@ class BlocksService {
   async getBlockTypes(category?: string): Promise<BlockType[]> {
     try {
       const params = category ? { category } : {};
-      const response = await api.get('/blocks/types/', { params });
+      const response = await api.get('/blocks/types/', { 
+        params,
+        validateStatus: (status) => status < 500 // Accepter 401, 404, etc. sans erreur
+      });
       // Handle paginated response
       if (response.data && response.data.results) {
         return response.data.results;
@@ -59,6 +62,7 @@ class BlocksService {
     } catch (error: any) {
       // Ne pas logger les erreurs 401 (non authentifié) - c'est normal si l'utilisateur n'est pas connecté
       const isExpectedError = error.response?.status === 401 ||
+                             error.response?.status === 404 ||
                              error.code === 'ERR_NETWORK' || 
                              error.code === 'ERR_BLOCKED_BY_CLIENT'
       if (!isExpectedError) {
