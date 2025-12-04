@@ -86,6 +86,14 @@ export default function BlockPreview({
     }
   }
 
+  const handleBlockRightClick = (blockId: string, event: React.MouseEvent) => {
+    if (onBlockRightClick && !isDragging && !inspectorMode && isEditable) {
+      event.preventDefault()
+      event.stopPropagation()
+      onBlockRightClick(blockId, { x: event.clientX, y: event.clientY })
+    }
+  }
+
   // Intercepter les clics sur les liens pour navigation dans l'éditeur
   useEffect(() => {
     if (!onNavigate) return
@@ -317,6 +325,7 @@ export default function BlockPreview({
                     isEditable={isEditable}
                     onClick={() => handleBlockClick(block.id)}
                     onDoubleClick={() => handleBlockDoubleClick(block.id)}
+                    onRightClick={(e) => handleBlockRightClick(block.id, e)}
                   />
                 ))}
               </SortableContext>
