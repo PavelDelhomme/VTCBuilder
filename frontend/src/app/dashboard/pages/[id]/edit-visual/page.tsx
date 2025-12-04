@@ -432,6 +432,10 @@ export default function VisualPageEditor() {
             setPropertiesModalOpen(false)
             setModalBlockId(null)
           }}
+          onEditChild={(childBlockId) => {
+            setModalBlockId(childBlockId)
+            setPropertiesModalOpen(true)
+          }}
           block={(() => {
             // Trouver le bloc dans l'arbre
             const findBlock = (blocks: Block[], id: string): Block | null => {
