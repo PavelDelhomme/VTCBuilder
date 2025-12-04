@@ -684,21 +684,6 @@ export default function EditPublicPage() {
     toast.success(`Bloc "${blockType.label || blockType.name}" ajouté`)
   }, [blocks])
 
-  const handleManualSave = useCallback(async () => {
-    setSaving(true)
-    try {
-      await handleSave({ blocks, metaTitle, metaDescription, status })
-      // Mettre à jour le timestamp de dernière sauvegarde
-      updateLastSaved()
-      toast.success('Page sauvegardée avec succès !')
-    } catch (error: any) {
-      console.error('Erreur sauvegarde:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
-    } finally {
-      setSaving(false)
-    }
-  }, [blocks, metaTitle, metaDescription, status, handleSave, updateLastSaved])
-
   if (loading) {
     return (
       <AdminLayout title={`Éditer ${PAGE_TITLES[pageSlug] || pageSlug}`} subtitle="Chargement...">
