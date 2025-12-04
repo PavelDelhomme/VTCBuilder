@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Block } from './types'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import { BlockPropertiesPanel, BlockLayoutPanel, BlockStylePanel } from './BlockEditor'
+import { useConfirm } from '@/hooks/useConfirm'
 
 interface BlockPropertiesModalProps {
   isOpen: boolean
@@ -34,6 +35,7 @@ export default function BlockPropertiesModal({
   onEditChild,
 }: BlockPropertiesModalProps) {
   const [activeTab, setActiveTab] = useState<'content' | 'layout' | 'style'>('content')
+  const { confirm, ConfirmDialog } = useConfirm()
 
   // Réinitialiser l'onglet quand le bloc change
   useEffect(() => {
@@ -129,8 +131,15 @@ export default function BlockPropertiesModal({
                   )}
                   {onDelete && (
                     <button
-                      onClick={() => {
-                        if (confirm('Êtes-vous sûr de vouloir supprimer ce bloc ?')) {
+                      onClick={async () => {
+                        const confirmed = await confirm({
+                          title: 'Supprimer le bloc',
+                          message: 'Êtes-vous sûr de vouloir supprimer ce bloc ? Cette action est irréversible.',
+                          confirmText: 'Supprimer',
+                          cancelText: 'Annuler',
+                          variant: 'danger',
+                        })
+                        if (confirmed) {
                           onDelete(block.id)
                           onClose()
                         }

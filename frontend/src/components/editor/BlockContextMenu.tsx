@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { Block } from './types'
+import { useConfirm } from '@/hooks/useConfirm'
 
 interface BlockContextMenuProps {
   isOpen: boolean
@@ -27,6 +28,7 @@ export default function BlockContextMenu({
   onPaste,
 }: BlockContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
+  const { confirm, ConfirmDialog } = useConfirm()
 
   // Fermer le menu si on clique en dehors
   useEffect(() => {
@@ -157,8 +159,15 @@ export default function BlockContextMenu({
       <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
 
       <button
-        onClick={() => {
-          if (confirm('Êtes-vous sûr de vouloir supprimer ce bloc ?')) {
+        onClick={async () => {
+          const confirmed = await confirm({
+            title: 'Supprimer le bloc',
+            message: 'Êtes-vous sûr de vouloir supprimer ce bloc ? Cette action est irréversible.',
+            confirmText: 'Supprimer',
+            cancelText: 'Annuler',
+            variant: 'danger',
+          })
+          if (confirmed) {
             onDelete()
             onClose()
           }
@@ -170,6 +179,9 @@ export default function BlockContextMenu({
         </svg>
         Supprimer
       </button>
+
+      {/* Modal de confirmation */}
+      <ConfirmDialog />
     </div>
   )
 }

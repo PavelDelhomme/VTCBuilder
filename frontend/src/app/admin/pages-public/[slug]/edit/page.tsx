@@ -17,6 +17,7 @@ import PageLoader from '@/components/shared/PageLoader'
 import { useAutoSave } from '@/hooks/useAutoSave'
 import { useReconnect } from '@/contexts/ReconnectContext'
 import { restoreEditorStateAfterReconnect } from '@/hooks/useEditorStatePersistence'
+import { useConfirm } from '@/hooks/useConfirm'
 import { findBlockInTree, duplicateBlockInTree, removeBlockFromTree } from '@/lib/block-utils'
 
 const PAGE_TITLES: Record<string, string> = {
@@ -33,6 +34,7 @@ export default function EditPublicPage() {
   const params = useParams()
   const pathname = usePathname()
   const { saveEditorState } = useReconnect()
+  const { confirm, ConfirmDialog } = useConfirm()
   const pageSlug = params?.slug as string
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
