@@ -1012,6 +1012,41 @@ export default function EditPublicPage() {
           {/* Editor Section - Toujours 1/3 */}
           <div className={`${showPreview ? 'w-1/3' : 'w-full'} border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col transition-all duration-300 min-h-0`}>
             <div className="flex-1 overflow-hidden min-h-0 h-full">
+            <div className="relative h-full">
+              {/* Indicateur de raccourcis clavier */}
+              <div className="absolute top-2 right-2 z-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 text-xs opacity-0 hover:opacity-100 transition-opacity group">
+                <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Raccourcis</span>
+                </div>
+                <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-3 min-w-[200px] hidden group-hover:block">
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-400">Flèches ↑↓</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">Naviguer entre blocs</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-400">Escape</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">Désélectionner</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-400">Ctrl/Cmd + S</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">Sauvegarder</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-400">Double-clic</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">Modifier bloc</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 dark:text-gray-400">Clic droit</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-medium">Menu contextuel</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <BlockEditor 
                 blocks={blocks}
                 onChange={setBlocks}
@@ -1020,6 +1055,7 @@ export default function EditPublicPage() {
                 onBlockSelect={setSelectedBlockId}
                 showBlocksPalette={false} // Désactiver la sidebar de blocs (popup externe)
               />
+            </div>
             </div>
           </div>
 
