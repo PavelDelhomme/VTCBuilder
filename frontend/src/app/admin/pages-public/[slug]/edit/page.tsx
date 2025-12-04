@@ -98,6 +98,22 @@ export default function EditPublicPage() {
     enabled: true,
   })
 
+  // Sauvegarde manuelle (définie avant le useEffect qui l'utilise)
+  const handleManualSave = useCallback(async () => {
+    setSaving(true)
+    try {
+      await handleSave({ blocks, metaTitle, metaDescription, status })
+      // Mettre à jour le timestamp de dernière sauvegarde
+      updateLastSaved()
+      toast.success('Page sauvegardée avec succès !')
+    } catch (error: any) {
+      console.error('Erreur sauvegarde:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+    } finally {
+      setSaving(false)
+    }
+  }, [blocks, metaTitle, metaDescription, status, handleSave, updateLastSaved])
+
   // Raccourcis clavier pour navigation entre blocs
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
