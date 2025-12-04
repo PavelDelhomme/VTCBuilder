@@ -1277,16 +1277,28 @@ export default function EditPublicPage() {
               }
               setContextMenu(null)
             }}
-            onDelete={() => {
-              const newBlocks = removeBlockFromTree(blocks, contextMenu.blockId)
-              setBlocks(newBlocks)
-              handleSave({ blocks: newBlocks, metaTitle, metaDescription, status })
-              setSelectedBlockId(null)
-              setContextMenu(null)
+            onDelete={async () => {
+              const confirmed = await confirm({
+                title: 'Supprimer le bloc',
+                message: 'Êtes-vous sûr de vouloir supprimer ce bloc ? Cette action est irréversible.',
+                confirmText: 'Supprimer',
+                cancelText: 'Annuler',
+                variant: 'danger',
+              })
+              if (confirmed) {
+                const newBlocks = removeBlockFromTree(blocks, contextMenu.blockId)
+                setBlocks(newBlocks)
+                handleSave({ blocks: newBlocks, metaTitle, metaDescription, status })
+                setSelectedBlockId(null)
+                setContextMenu(null)
+              }
             }}
           />
         )
       })()}
+
+      {/* Modal de confirmation */}
+      <ConfirmDialog />
     </AdminLayout>
   )
 }
