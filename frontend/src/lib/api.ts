@@ -152,7 +152,8 @@ api.interceptors.response.use(
       }
       
       // Si on a un token et un refresh token, essayer de rafraîchir automatiquement
-      if (hasToken && refreshToken && !originalRequest._retry) {
+      // Ne pas rafraîchir pour l'endpoint de refresh lui-même pour éviter les boucles infinies
+      if (hasToken && refreshToken && !originalRequest._retry && !url.includes('/auth/refresh/')) {
         originalRequest._retry = true;
         
         // Si on est déjà en train de rafraîchir, mettre en queue
