@@ -1383,22 +1383,24 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                     block={block}
                     blockTypes={blockTypes}
                     isSelected={selectedBlock === block.id}
-                              onSelect={() => handleSelectBlock(block.id)}
+                    onSelect={() => handleSelectBlock(block.id)}
                     onUpdate={(updates) => updateBlock(block.id, updates)}
                     onDelete={() => removeBlock(block.id)}
-                              onDuplicate={() => {
-                                const newBlock: Block = {
-                                  ...block,
-                                  id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                                }
-                                const currentIndex = history.state.findIndex((b: Block) => b.id === block.id)
-                                const newBlocks = [...history.state]
-                                newBlocks.splice(currentIndex + 1, 0, newBlock)
-                                history.set(newBlocks)
-                                onChange(newBlocks)
-                                trackBlockAction(block.type, 'add')
-                              }}
-                            />
+                    onDuplicate={() => {
+                      const newBlock: Block = {
+                        ...block,
+                        id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                      }
+                      const currentIndex = history.state.findIndex((b: Block) => b.id === block.id)
+                      const newBlocks = [...history.state]
+                      newBlocks.splice(currentIndex + 1, 0, newBlock)
+                      history.set(newBlocks)
+                      onChange(newBlocks)
+                      trackBlockAction(block.type, 'add')
+                    }}
+                    isCollapsed={collapsedBlocks.has(block.id)}
+                    onToggleCollapse={() => toggleBlockCollapse(block.id)}
+                  />
                           </div>
                         )
                       })}
