@@ -127,7 +127,27 @@ export default function EditPublicPage() {
     }
   }, [blocks, metaTitle, metaDescription, status, handleSave, updateLastSaved])
 
-  // Gestion du redimensionnement des panneaux
+  // Points d'ancrage (snap points) pour le redimensionnement
+  const SNAP_POINTS = [25, 33.33, 50, 66.67, 75] // Pourcentages
+  const SNAP_THRESHOLD = 3 // Distance en % pour déclencher le snap
+
+  // Fonction pour trouver le point d'ancrage le plus proche
+  const findNearestSnapPoint = useCallback((width: number): number | null => {
+    let nearestPoint: number | null = null
+    let minDistance = Infinity
+
+    for (const snapPoint of SNAP_POINTS) {
+      const distance = Math.abs(width - snapPoint)
+      if (distance < SNAP_THRESHOLD && distance < minDistance) {
+        minDistance = distance
+        nearestPoint = snapPoint
+      }
+    }
+
+    return nearestPoint
+  }, [])
+
+  // Gestion du redimensionnement des panneaux avec snap
   useEffect(() => {
     if (!isResizing) return
 
@@ -138,15 +158,29 @@ export default function EditPublicPage() {
       if (!container) return
       
       const containerRect = container.getBoundingClientRect()
-      const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100
+      let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100
       
       // Limiter entre 20% et 80%
-      const clampedWidth = Math.max(20, Math.min(80, newWidth))
-      setEditorWidth(clampedWidth)
+      newWidth = Math.max(20, Math.min(80, newWidth))
+      
+      // Vérifier si on est proche d'un point d'ancrage
+      const snapPoint = findNearestSnapPoint(newWidth)
+      if (snapPoint !== null) {
+        newWidth = snapPoint
+      }
+      
+      setEditorWidth(newWidth)
     }
 
     const handleMouseUp = () => {
       setIsResizing(false)
+      
+      // Vérifier le snap final au relâchement
+      const finalSnapPoint = findNearestSnapPoint(editorWidth)
+      if (finalSnapPoint !== null) {
+        setEditorWidth(finalSnapPoint)
+      }
+      
       // Sauvegarder dans localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('editor-panel-width', editorWidth.toString())
@@ -1207,17 +1241,39 @@ export default function EditPublicPage() {
             </div>
           </div>
 
-          {/* Resizer - Barre de redimensionnement */}
+          {/* Resizer - Barre de redimensionnement avec indicateurs de snap */}
           {showPreview && (
             <div
-              className="w-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-col-resize transition-colors relative z-10 flex-shrink-0"
+              className="w-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-col-resize transition-colors relative z-10 flex-shrink-0 group"
               onMouseDown={(e) => {
                 e.preventDefault()
                 setIsResizing(true)
               }}
               style={{ cursor: 'col-resize' }}
+              title="Redimensionner (points d'ancrage: 25%, 33%, 50%, 67%, 75%)"
             >
               <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-1 bg-transparent hover:bg-blue-500 dark:hover:bg-blue-600 transition-colors" />
+              
+              {/* Indicateurs visuels des points d'ancrage au survol */}
+              <div className="absolute inset-y-0 left-full ml-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <div className="flex flex-col h-full justify-around text-xs text-gray-500 dark:text-gray-400">
+                  {SNAP_POINTS.map((point) => {
+                    const isActive = Math.abs(editorWidth - point) < 1
+                    return (
+                      <div
+                        key={point}
+                        className={`px-2 py-1 rounded ${
+                          isActive
+                            ? 'bg-blue-500 text-white font-semibold'
+                            : 'bg-gray-100 dark:bg-gray-800'
+                        }`}
+                      >
+                        {point}%
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
             </div>
           )}
 
