@@ -1373,6 +1373,8 @@ const SortableBlock = React.memo(function SortableBlock({
   // État pour le menu contextuel
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [showMenu, setShowMenu] = useState(false)
+  // État pour cacher/afficher les propriétés du bloc
+  const [isExpanded, setIsExpanded] = useState(true)
   const {
     attributes,
     listeners,
@@ -1624,6 +1626,23 @@ const SortableBlock = React.memo(function SortableBlock({
         }}
       >
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsExpanded(!isExpanded)
+            }}
+            className="flex-shrink-0 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            title={isExpanded ? "Masquer les propriétés" : "Afficher les propriétés"}
+          >
+            <svg 
+              className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
           <div className={`flex-shrink-0 ${getIconContainerSize()} rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-700`}>
             <span className={getIconSize()}>{blockType?.icon || '📦'}</span>
         </div>
@@ -1649,38 +1668,40 @@ const SortableBlock = React.memo(function SortableBlock({
       </div>
 
       {/* Block Content - Simple and Clean */}
-      <div className={`${isSmall ? 'p-2 sm:p-3' : 'p-4 sm:p-6'} bg-white dark:bg-gray-800 min-h-[120px]`}>
-        {/* Conteneur avec enfants */}
-        {(block.type === 'container' || block.type === 'flex-container' || block.type === 'grid-container' || 
-          block.type === 'flexbox' || block.type === 'grid' || block.type === 'stack' || 
-          block.type === 'inline' || block.type === 'group' || block.type === 'wrapper' || block.type === 'section' || block.type === 'rows') ? (
-          <ContainerChildrenRenderer
-            block={block}
-            blockTypes={blockTypes}
-            allBlocks={history.state} // Passer tous les blocs pour permettre de choisir un bloc existant
-            onAddChild={(childBlock) => {
-              const newChildren = [...(block.children || []), childBlock]
-              console.log('Ajout enfant au conteneur:', block.id, childBlock, newChildren)
-              onUpdate({ children: newChildren })
-            }}
-            onUpdateChild={(childId, updates) => {
-              const newChildren = (block.children || []).map((child) =>
-                child.id === childId ? { ...child, ...updates } : child
-              )
-              onUpdate({ children: newChildren })
-            }}
-            onDeleteChild={(childId) => {
-              const newChildren = (block.children || []).filter((child) => child.id !== childId)
-              onUpdate({ children: newChildren })
-            }}
-            onSelectChild={(childId) => {
-              // TODO: Gérer la sélection des enfants
-            }}
-          />
-        ) : (
-          <BlockRenderer block={block} blockType={blockType} onUpdate={onUpdate} />
-        )}
-      </div>
+      {isExpanded && (
+        <div className={`${isSmall ? 'p-2 sm:p-3' : 'p-4 sm:p-6'} bg-white dark:bg-gray-800 min-h-[120px]`}>
+          {/* Conteneur avec enfants */}
+          {(block.type === 'container' || block.type === 'flex-container' || block.type === 'grid-container' || 
+            block.type === 'flexbox' || block.type === 'grid' || block.type === 'stack' || 
+            block.type === 'inline' || block.type === 'group' || block.type === 'wrapper' || block.type === 'section' || block.type === 'rows') ? (
+            <ContainerChildrenRenderer
+              block={block}
+              blockTypes={blockTypes}
+              allBlocks={history.state} // Passer tous les blocs pour permettre de choisir un bloc existant
+              onAddChild={(childBlock) => {
+                const newChildren = [...(block.children || []), childBlock]
+                console.log('Ajout enfant au conteneur:', block.id, childBlock, newChildren)
+                onUpdate({ children: newChildren })
+              }}
+              onUpdateChild={(childId, updates) => {
+                const newChildren = (block.children || []).map((child) =>
+                  child.id === childId ? { ...child, ...updates } : child
+                )
+                onUpdate({ children: newChildren })
+              }}
+              onDeleteChild={(childId) => {
+                const newChildren = (block.children || []).filter((child) => child.id !== childId)
+                onUpdate({ children: newChildren })
+              }}
+              onSelectChild={(childId) => {
+                // TODO: Gérer la sélection des enfants
+              }}
+            />
+          ) : (
+            <BlockRenderer block={block} blockType={blockType} onUpdate={onUpdate} />
+          )}
+        </div>
+      )}
 
       {/* Menu contextuel */}
       {contextMenu && showMenu && (
@@ -5364,19 +5385,98 @@ function BlockRenderer({
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Dégradé de fond
+              Type d'arrière-plan
             </label>
-            <input
-              type="text"
-              value={safeBlock.data.background_gradient || ''}
-              onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_gradient: e.target.value } })}
-              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono"
-              placeholder="linear-gradient(to right, #2563eb, #9333ea)"
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Exemples: linear-gradient(to right, #2563eb, #9333ea) ou from-blue-600 to-purple-600
-            </p>
+            <select
+              value={safeBlock.data.background_type || 'gradient'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_type: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 mb-2"
+            >
+              <option value="gradient">Dégradé de couleur</option>
+              <option value="image">Image</option>
+              <option value="solid">Couleur unie</option>
+            </select>
           </div>
+
+          {safeBlock.data.background_type === 'gradient' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Dégradé de fond
+              </label>
+              <input
+                type="text"
+                value={safeBlock.data.background_gradient || 'linear-gradient(to right, #2563eb, #9333ea)'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_gradient: e.target.value } })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono"
+                placeholder="linear-gradient(to right, #2563eb, #9333ea)"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Exemples: linear-gradient(to right, #2563eb, #9333ea) ou radial-gradient(circle, #2563eb, #9333ea)
+              </p>
+            </div>
+          )}
+
+          {safeBlock.data.background_type === 'image' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Image de fond
+              </label>
+              <ImageSelector
+                value={safeBlock.data.background_image || ''}
+                onChange={(imageUrl) => onUpdate({ data: { ...safeBlock.data, background_image: imageUrl } })}
+                className="text-sm"
+              />
+              <div className="mt-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Opacité de l'image (0-1)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={safeBlock.data.background_image_opacity || 1}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_image_opacity: parseFloat(e.target.value) || 1 } })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+                />
+              </div>
+              <div className="mt-2">
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Dégradé par-dessus l'image (optionnel)
+                </label>
+                <input
+                  type="text"
+                  value={safeBlock.data.background_overlay || ''}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_overlay: e.target.value } })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-mono"
+                  placeholder="linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7))"
+                />
+              </div>
+            </div>
+          )}
+
+          {safeBlock.data.background_type === 'solid' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Couleur de fond
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={safeBlock.data.background_color || '#2563eb'}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_color: e.target.value } })}
+                  className="h-8 w-16 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={safeBlock.data.background_color || '#2563eb'}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_color: e.target.value } })}
+                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-mono"
+                  placeholder="#2563eb"
+                />
+              </div>
+            </div>
+          )}
         </div>
       )
     case 'header':
