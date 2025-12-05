@@ -35,6 +35,40 @@ export default function ProjectDetailPage() {
       loadProject()
       loadAvailablePages()
       loadBlockTypes()
+      
+      // Nettoyage automatique pour le projet système (ID 1)
+      // Garde uniquement 'home' et 'test'
+      if (projectId === 1) {
+        const cleanupProject1 = async () => {
+          try {
+            // Attendre que le projet soit chargé
+            const project = await projectService.getById(projectId)
+            if (project.pages && project.pages.length > 0) {
+              const pagesToRemove = project.pages.filter(
+                (p: ProjectPage) => p.page_slug !== 'home' && p.page_slug !== 'test'
+              )
+              
+              if (pagesToRemove.length > 0) {
+                console.log(`🧹 Nettoyage automatique du projet 1: ${pagesToRemove.length} page(s) à retirer`)
+                for (const page of pagesToRemove) {
+                  await projectService.removePage(projectId, page.id)
+                  console.log(`   ✅ Page "${page.page_slug}" retirée`)
+                }
+                toast.success(`${pagesToRemove.length} page(s) retirée(s) automatiquement`)
+                // Recharger le projet après nettoyage
+                loadProject()
+              }
+            }
+          } catch (error) {
+            console.error('Erreur nettoyage automatique:', error)
+          }
+        }
+        
+        // Attendre un peu que le projet soit chargé
+        setTimeout(() => {
+          cleanupProject1()
+        }, 1500)
+      }
     }
   }, [router, projectId])
 
