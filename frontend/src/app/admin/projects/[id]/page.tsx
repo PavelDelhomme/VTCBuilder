@@ -314,10 +314,17 @@ export default function ProjectDetailPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Toutes les Pages</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                <strong>Publié</strong> = accessible publiquement sur le site • <strong>Visible</strong> = affichée dans ce projet
-              </p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Gestion des Pages du Projet</h2>
+              <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-2">📖 Explication :</p>
+                <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 ml-4 list-disc">
+                  <li><strong>Pages publiques</strong> = pages créées dans le système (existent toujours, même si pas dans un projet)</li>
+                  <li><strong>Publiée</strong> = la page est accessible publiquement sur le site (visible par tous les visiteurs)</li>
+                  <li><strong>Visible</strong> = la page est affichée dans CE projet spécifique (peut être masquée dans un projet mais visible dans un autre)</li>
+                  <li><strong>Ajouter au projet</strong> = lier la page à ce projet (créer le lien, la page existe déjà)</li>
+                  <li><strong>Retirer</strong> = retirer la page de ce projet (la page existe toujours, juste plus liée à ce projet)</li>
+                </ul>
+              </div>
             </div>
             {project.pages && project.pages.length > 2 && (
               <button
@@ -495,12 +502,13 @@ export default function ProjectDetailPage() {
                         <button
                           onClick={() => handleRemovePage(projectPage.id)}
                           className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
-                          title="Retirer du projet"
+                          title="Retirer cette page du projet (la page existe toujours)"
                         >
                           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
-                          <span className="hidden sm:inline">Retirer</span>
+                          <span className="hidden sm:inline">Retirer du projet</span>
+                          <span className="sm:hidden">Retirer</span>
                         </button>
                       ) : (
                         <button
