@@ -91,8 +91,9 @@ const projectService = {
    * Remove a page from a project
    */
   async removePage(projectId: number, pageId: number): Promise<void> {
-    await api.delete(`/projects/${projectId}/remove_page/`, {
-      data: { page_id: pageId },
+    // Use POST instead of DELETE to ensure body data is sent correctly
+    await api.post(`/projects/${projectId}/remove_page/`, {
+      page_id: pageId,
     })
   },
 
