@@ -309,11 +309,26 @@ export default function ProjectsManagement() {
   const handleToggleStatus = async (project: Project) => {
     const newStatus = project.status === 'active' ? 'inactive' : 'active'
     try {
+      // Mise à jour optimiste : mettre à jour l'état local immédiatement
+      setProjects(prevProjects => 
+        prevProjects.map(p => 
+          p.id === project.id ? { ...p, status: newStatus } : p
+        )
+      )
+      
+      // Ensuite mettre à jour sur le serveur
       await projectService.update(project.id, { status: newStatus })
       toast.success(`Projet ${newStatus === 'active' ? 'mis en ligne' : 'mis hors ligne'} !`)
-      loadProjects()
+      
+      // Pas besoin de recharger toute la liste, on a déjà mis à jour l'état local
     } catch (error: any) {
       console.error('Erreur changement statut:', error)
+      // En cas d'erreur, restaurer l'état précédent
+      setProjects(prevProjects => 
+        prevProjects.map(p => 
+          p.id === project.id ? { ...p, status: project.status } : p
+        )
+      )
       toast.error('Erreur lors de la mise à jour du statut')
     }
   }
