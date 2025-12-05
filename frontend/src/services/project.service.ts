@@ -102,6 +102,32 @@ const projectService = {
     const response = await api.patch(`/projects/${projectId}/pages/${pageId}/`, data)
     return response.data
   },
+
+  /**
+   * Get system project (for public pages)
+   */
+  async getSystemProject(): Promise<Project | null> {
+    try {
+      const projects = await this.getAll()
+      return projects.find(p => p.is_system_project) || null
+    } catch (error) {
+      console.error('Erreur récupération projet système:', error)
+      return null
+    }
+  },
+
+  /**
+   * Get project by tenant slug
+   */
+  async getProjectByTenantSlug(tenantSlug: string): Promise<Project | null> {
+    try {
+      const projects = await this.getAll()
+      return projects.find(p => p.tenant?.slug === tenantSlug) || null
+    } catch (error) {
+      console.error('Erreur récupération projet tenant:', error)
+      return null
+    }
+  },
 }
 
 export default projectService

@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { isTenantSubdomain, getTenantSlug } from '@/lib/tenant-utils'
 import pageService, { Page } from '@/services/page.service'
+import projectService from '@/services/project.service'
+import ProjectUnavailablePage from '@/components/shared/ProjectUnavailablePage'
 
 export default function TenantPublicPage() {
   const params = useParams()
@@ -12,20 +14,55 @@ export default function TenantPublicPage() {
   const [page, setPage] = useState<Page | null>(null)
   const [loading, setLoading] = useState(true)
   const [isTenant, setIsTenant] = useState(false)
+  const [projectStatus, setProjectStatus] = useState<'active' | 'inactive' | 'archived' | null>(null)
+  const [projectName, setProjectName] = useState<string | null>(null)
 
   useEffect(() => {
     // Check if we're on a tenant subdomain
     if (isTenantSubdomain()) {
       setIsTenant(true)
-      loadPage()
+      checkProjectStatus()
     } else {
       setLoading(false)
     }
   }, [pagePath])
 
-  const loadPage = async () => {
+  const checkProjectStatus = async () => {
     try {
       setLoading(true)
+      const tenantSlug = getTenantSlug()
+      if (!tenantSlug) {
+        setLoading(false)
+        return
+      }
+
+      // Vérifier le statut du projet tenant
+      const project = await projectService.getProjectByTenantSlug(tenantSlug)
+      if (project) {
+        setProjectStatus(project.status)
+        setProjectName(project.name)
+        
+        // Si le projet est actif, charger la page
+        if (project.status === 'active') {
+          await loadPage()
+        } else {
+          setPage(null)
+        }
+      } else {
+        // Projet non trouvé, essayer de charger la page quand même
+        await loadPage()
+      }
+    } catch (error) {
+      console.error('Erreur vérification statut projet:', error)
+      // En cas d'erreur, essayer de charger la page quand même
+      await loadPage()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadPage = async () => {
+    try {
       // Load all pages and find the one matching the path
       const pages = await pageService.getAll({ status: 'published' })
       const foundPage = pages.find((p: Page) => {
@@ -40,8 +77,6 @@ export default function TenantPublicPage() {
     } catch (error) {
       console.error('Erreur chargement page:', error)
       setPage(null)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -54,6 +89,18 @@ export default function TenantPublicPage() {
           <p className="text-gray-600 dark:text-gray-400">Cette page n'existe pas.</p>
         </div>
       </div>
+    )
+  }
+
+  // Si le projet est désactivé, afficher la page d'erreur stylisée
+  if (projectStatus && projectStatus !== 'active' && !loading) {
+    return (
+      <ProjectUnavailablePage 
+        projectName={projectName || 'ce projet'}
+        reason={projectStatus === 'archived' 
+          ? 'Le projet a été archivé et n\'est plus accessible'
+          : 'Le projet est actuellement hors ligne pour maintenance'}
+      />
     )
   }
 

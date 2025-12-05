@@ -68,6 +68,18 @@ class Project(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
+        
+        # Si le projet est désactivé, désactiver toutes ses pages
+        if self.pk:  # Projet existant
+            old_instance = Project.objects.get(pk=self.pk)
+            if old_instance.status == 'active' and self.status != 'active':
+                # Projet désactivé : désactiver toutes les pages
+                ProjectPage.objects.filter(project=self).update(is_active=False)
+            elif old_instance.status != 'active' and self.status == 'active':
+                # Projet réactivé : les pages restent dans leur état actuel
+                # (on ne les réactive pas automatiquement)
+                pass
+        
         super().save(*args, **kwargs)
 
 
