@@ -189,7 +189,7 @@ export default function ProjectsManagement() {
                           : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
                       }`}
                     >
-                      {project.status === 'active' ? 'Actif' : project.status === 'archived' ? 'Archivé' : 'Inactif'}
+                      {project.status === 'active' ? '🟢 En ligne' : project.status === 'archived' ? '🔴 Archivé' : '🟡 Hors ligne'}
                     </span>
                   </div>
                 </div>
