@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import authService from '@/services/auth.service'
 import { useTheme } from '@/contexts/ThemeContext'
 import projectService, { Project } from '@/services/project.service'
+import { useNavigationLoading } from '@/hooks/useNavigationLoading'
 
 interface MenuItem {
   name: string
@@ -21,6 +22,7 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminSidebarProps = {}) {
   const router = useRouter()
   const pathname = usePathname()
+  const { isNavigating, navigate } = useNavigationLoading()
   const [isOpen, setIsOpen] = useState(false) // Sidebar fermé par défaut (sera géré par le parent)
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
@@ -606,20 +608,30 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
                       <div className="px-6 py-3 border-t border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50">
                         <button
                           onClick={() => {
-                            router.push('/admin/projects')
+                            navigate('/admin/projects')
                             handleClose()
                           }}
-                          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200 group"
+                          disabled={isNavigating}
+                          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200 group disabled:opacity-50 disabled:cursor-wait"
                         >
                           <span className="flex items-center gap-2">
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                            Voir tous les projets
+                            {isNavigating ? (
+                              <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                            ) : (
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                              </svg>
+                            )}
+                            {isNavigating ? 'Chargement...' : 'Voir tous les projets'}
                           </span>
-                          <svg className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
+                          {!isNavigating && (
+                            <svg className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          )}
                         </button>
                       </div>
                     </div>
