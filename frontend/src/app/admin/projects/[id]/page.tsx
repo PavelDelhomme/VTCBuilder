@@ -257,22 +257,6 @@ export default function ProjectDetailPage() {
     <AdminLayout
       title={project.name}
       subtitle={`Gérer les pages du projet ${project.slug}`}
-      headerActions={
-        <button
-          onClick={() => navigate('/admin/projects')}
-          disabled={isNavigating}
-          className="px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isNavigating ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 dark:border-gray-300"></div>
-              <span>Chargement...</span>
-            </>
-          ) : (
-            <>← Retour</>
-          )}
-        </button>
-      }
     >
       <div className="space-y-6">
         {/* Project Info */}
