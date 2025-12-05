@@ -509,7 +509,12 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
                                     <svg className={`h-4 w-4 flex-shrink-0 ${isProjectActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                     </svg>
-                                    <span className="truncate">{project.name}</span>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="truncate font-medium">{project.name}</div>
+                                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                        🔧 Pages publiques VTCBuilder
+                                      </div>
+                                    </div>
                                   </div>
                                   {project.pages_count !== undefined && project.pages_count > 0 && (
                                     <span className={`ml-2 px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 ${
@@ -568,19 +573,23 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
                                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/70 hover:pl-9 border-l-4 border-transparent'
                                 }`}
                               >
-                                <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                                  <svg className={`h-4 w-4 flex-shrink-0 ${isProjectActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                  </svg>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="truncate">{project.name}</div>
-                                    {project.tenant && (
-                                      <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                                        {project.tenant.name}
-                                      </div>
-                                    )}
+                                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                    <svg className={`h-4 w-4 flex-shrink-0 ${isProjectActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                    </svg>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="truncate font-medium">{project.name}</div>
+                                      {project.tenant ? (
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                          👤 {project.tenant.name}
+                                        </div>
+                                      ) : (
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                          Projet sans client
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
                                 {project.pages_count !== undefined && project.pages_count > 0 && (
                                   <span className={`ml-2 px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 ${
                                     isProjectActive

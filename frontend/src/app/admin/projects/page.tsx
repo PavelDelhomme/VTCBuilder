@@ -195,15 +195,28 @@ export default function ProjectsManagement() {
                 </div>
 
                 <div className="space-y-2 mb-4">
-                  {project.is_system_project && (
-                    <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded text-xs font-medium">
-                      Projet Système
-                    </span>
-                  )}
-                  {project.tenant && (
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      <span className="font-medium">Tenant:</span> {project.tenant.name}
+                  {project.is_system_project ? (
+                    <div className="space-y-1">
+                      <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded text-xs font-medium">
+                        🔧 Projet Système
+                      </span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                        Pages publiques de VTCBuilder (marketing, CGV, etc.)
+                      </p>
                     </div>
+                  ) : project.tenant ? (
+                    <div className="space-y-1">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">👤 Client:</span> {project.tenant.name}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                        Projet principal du client (créé automatiquement)
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                      Projet sans client assigné
+                    </p>
                   )}
                   <div className="text-sm text-gray-500 dark:text-gray-400">
                     {project.pages_count || 0} page{project.pages_count !== 1 ? 's' : ''}
