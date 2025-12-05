@@ -8,7 +8,7 @@ interface ToggleSwitchProps {
   label?: string
   disabled?: boolean
   size?: 'sm' | 'md' | 'lg'
-  color?: 'blue' | 'green' | 'purple'
+  color?: 'blue' | 'green' | 'purple' | 'gray'
 }
 
 export default function ToggleSwitch({
@@ -50,6 +50,11 @@ export default function ToggleSwitch({
     },
     purple: {
       checked: 'bg-purple-600',
+      unchecked: 'bg-gray-300 dark:bg-gray-600',
+      thumb: 'bg-white',
+    },
+    gray: {
+      checked: 'bg-gray-400',
       unchecked: 'bg-gray-300 dark:bg-gray-600',
       thumb: 'bg-white',
     },

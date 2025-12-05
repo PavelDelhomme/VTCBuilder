@@ -39,22 +39,22 @@ function ProjectCardNew({ project, onToggleStatus, onDelete, onOpen, isNavigatin
             )}
           </div>
           <div className="flex items-center gap-2">
-            <ToggleSwitch
-              checked={project.status === 'active'}
-              onChange={() => onToggleStatus(project)}
-              size="sm"
-              color={project.status === 'active' ? 'green' : 'gray'}
-            />
             <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 ${
                 project.status === 'active'
                   ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                   : project.status === 'archived'
                   ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
               }`}
             >
-              {project.status === 'active' ? '🟢 En ligne' : project.status === 'archived' ? '🔴 Archivé' : '🟡 Hors ligne'}
+              <ToggleSwitch
+                checked={project.status === 'active'}
+                onChange={() => onToggleStatus(project)}
+                size="sm"
+                color={project.status === 'active' ? 'green' : 'gray'}
+              />
+              {project.status === 'active' ? 'En ligne' : project.status === 'archived' ? 'Archivé' : 'Hors ligne'}
             </span>
           </div>
         </div>
