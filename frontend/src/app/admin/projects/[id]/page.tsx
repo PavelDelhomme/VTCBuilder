@@ -287,7 +287,7 @@ export default function ProjectDetailPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Statut
+                Statut du Projet
               </label>
               <select
                 value={project.status}
@@ -301,11 +301,29 @@ export default function ProjectDetailPage() {
                   }
                 }}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                title={
+                  project.status === 'active' 
+                    ? 'Le projet est en ligne et accessible' 
+                    : project.status === 'inactive'
+                    ? 'Le projet est temporairement désactivé (non accessible)'
+                    : 'Le projet est archivé (conservé mais non accessible)'
+                }
               >
-                <option value="active">Actif</option>
-                <option value="inactive">Inactif</option>
-                <option value="archived">Archivé</option>
+                <option value="active">🟢 En ligne - Site accessible</option>
+                <option value="inactive">🟡 Hors ligne - Site non accessible</option>
+                <option value="archived">🔴 Archivé - Projet conservé mais non accessible</option>
               </select>
+              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <strong className="text-gray-700 dark:text-gray-300">💡 Explication :</strong>
+                  <br />
+                  <span className="text-green-700 dark:text-green-300">🟢 En ligne</span> = Le site est accessible et fonctionne normalement
+                  <br />
+                  <span className="text-yellow-700 dark:text-yellow-300">🟡 Hors ligne</span> = Le site est temporairement désactivé (maintenance, pause, etc.)
+                  <br />
+                  <span className="text-red-700 dark:text-red-300">🔴 Archivé</span> = Le projet est conservé mais plus accessible (ancien projet, terminé, etc.)
+                </p>
+              </div>
             </div>
           </div>
         </div>
