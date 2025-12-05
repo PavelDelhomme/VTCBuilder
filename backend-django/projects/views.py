@@ -175,13 +175,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
             add_cors_headers(response, request)
             return response
     
-    @action(detail=True, methods=['delete', 'post'])
-    def remove_page(self, request, pk=None):
+    @action(detail=True, methods=['delete', 'post'], url_path='remove_page/(?P<page_id>[0-9]+)')
+    def remove_page(self, request, pk=None, page_id=None):
         """Remove a page from the project"""
         try:
             project = self.get_object()
-            # Support both body data and query params
-            page_id = request.data.get('page_id') or request.query_params.get('page_id')
+            # Support page_id from URL path, query params, or body
+            if not page_id:
+                page_id = request.query_params.get('page_id') or request.data.get('page_id')
             
             if not page_id:
                 response = Response(
