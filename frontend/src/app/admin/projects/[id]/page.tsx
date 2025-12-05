@@ -302,13 +302,13 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
-        {/* Pages in Project */}
+        {/* Toutes les Pages - Interface Unifiée */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Pages du Projet</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Toutes les Pages</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Pages ajoutées à ce projet. Activez/désactivez pour les afficher ou non sur le site.
+                <strong>Publié</strong> = accessible publiquement sur le site • <strong>Visible</strong> = affichée dans ce projet
               </p>
             </div>
             {project.pages && project.pages.length > 2 && (
