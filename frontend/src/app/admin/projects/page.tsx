@@ -39,7 +39,7 @@ function ProjectCard({ project, onToggleStatus, onDelete, onOpen, isNavigating }
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span
+            <div
               className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 ${
                 project.status === 'active'
                   ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -48,18 +48,31 @@ function ProjectCard({ project, onToggleStatus, onDelete, onOpen, isNavigating }
                   : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
               }`}
             >
-              <div className="relative z-10" onClick={(e) => e.stopPropagation()}>
+              <div 
+                className="relative z-10 flex-shrink-0" 
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                }}
+                onMouseDown={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                }}
+                style={{ pointerEvents: 'auto' }}
+              >
                 <ToggleSwitch
                   checked={project.status === 'active'}
-                  onChange={() => onToggleStatus(project)}
+                  onChange={() => {
+                    onToggleStatus(project)
+                  }}
                   size="sm"
                   color={project.status === 'active' ? 'green' : 'gray'}
                 />
               </div>
-              <span className="select-none">
+              <span className="select-none pointer-events-none">
                 {project.status === 'active' ? 'En ligne' : project.status === 'archived' ? 'Archivé' : 'Hors ligne'}
               </span>
-            </span>
+            </div>
           </div>
         </div>
 
@@ -88,7 +101,16 @@ function ProjectCard({ project, onToggleStatus, onDelete, onOpen, isNavigating }
             </p>
           )}
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            {project.pages_count || 0} page{project.pages_count !== 1 ? 's' : ''}
+            <div className="flex flex-col gap-0.5">
+              <span>
+                {project.pages_count || 0} page{project.pages_count !== 1 ? 's' : ''} liée{project.pages_count !== 1 ? 's' : ''}
+              </span>
+              {project.is_system_project && project.available_pages_count !== null && project.available_pages_count !== undefined && (
+                <span className="text-xs text-gray-400 dark:text-gray-500">
+                  {project.available_pages_count} page{project.available_pages_count !== 1 ? 's' : ''} disponible{project.available_pages_count !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -123,7 +145,9 @@ function ProjectCard({ project, onToggleStatus, onDelete, onOpen, isNavigating }
 export default function ProjectsManagement() {
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
+  const [trashProjects, setTrashProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [showTrash, setShowTrash] = useState(false)
   const { isNavigating, navigate } = useNavigationLoading()
 
   useEffect(() => {
@@ -144,7 +168,7 @@ export default function ProjectsManagement() {
     
     try {
       setLoading(true)
-      const data = await projectService.getAll()
+      const data = await projectService.getAll(false)
       setProjects(data)
     } catch (error: any) {
       // Gérer les erreurs d'authentification
@@ -164,6 +188,16 @@ export default function ProjectsManagement() {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadTrash = async () => {
+    try {
+      const data = await projectService.getAll(true)
+      setTrashProjects(data.filter(p => p.is_deleted))
+    } catch (error: any) {
+      console.error('Erreur chargement corbeille:', error)
+      toast.error('Erreur lors du chargement de la corbeille')
     }
   }
 
@@ -208,16 +242,42 @@ export default function ProjectsManagement() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
+    if (!confirm('Êtes-vous sûr de vouloir déplacer ce projet dans la corbeille ?')) {
       return
     }
     try {
       await projectService.delete(id)
-      toast.success('Projet supprimé avec succès !')
-      loadProjects()
+      toast.success('Projet déplacé dans la corbeille !')
+      // Mise à jour optimiste : retirer le projet de la liste
+      setProjects(prevProjects => prevProjects.filter(p => p.id !== id))
     } catch (error: any) {
       console.error('Erreur suppression projet:', error)
       toast.error('Erreur lors de la suppression')
+    }
+  }
+
+  const handleRestore = async (id: number) => {
+    try {
+      await projectService.restore(id)
+      toast.success('Projet restauré avec succès !')
+      loadProjects()
+    } catch (error: any) {
+      console.error('Erreur restauration projet:', error)
+      toast.error('Erreur lors de la restauration')
+    }
+  }
+
+  const handlePermanentDelete = async (id: number) => {
+    if (!confirm('⚠️ ATTENTION : Cette action est irréversible !\n\nÊtes-vous sûr de vouloir supprimer définitivement ce projet ?')) {
+      return
+    }
+    try {
+      await projectService.permanentDelete(id)
+      toast.success('Projet supprimé définitivement !')
+      loadTrash()
+    } catch (error: any) {
+      console.error('Erreur suppression définitive:', error)
+      toast.error('Erreur lors de la suppression définitive')
     }
   }
 
@@ -418,8 +478,88 @@ export default function ProjectsManagement() {
           )}
         </div>
 
+        {/* Section Corbeille */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <svg className="h-5 w-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">🗑️ Corbeille</h2>
+              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-xs font-medium">
+                {trashProjects.length}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setShowTrash(!showTrash)
+                if (!showTrash) {
+                  loadTrash()
+                }
+              }}
+              className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              {showTrash ? 'Masquer' : 'Afficher'} la corbeille
+            </button>
+          </div>
+          
+          {showTrash && (
+            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+              {trashProjects.length === 0 ? (
+                <div className="text-center py-8">
+                  <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <p className="text-gray-500 dark:text-gray-400">La corbeille est vide</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {trashProjects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden opacity-75"
+                    >
+                      <div className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
+                              {project.name}
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              /{project.slug}
+                            </p>
+                            {project.deleted_at && (
+                              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                Supprimé le {new Date(project.deleted_at).toLocaleDateString('fr-FR')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleRestore(project.id)}
+                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+                          >
+                            ♻️ Restaurer
+                          </button>
+                          <button
+                            onClick={() => handlePermanentDelete(project.id)}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+                          >
+                            🗑️ Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Empty State */}
-        {projects.length === 0 && (
+        {projects.length === 0 && !showTrash && (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl shadow">
             <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />

@@ -1231,6 +1231,72 @@ def login_view(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+def quick_reconnect_view(request):
+    """Quick reconnect endpoint - only requires password, uses email from stored user"""
+    password = request.data.get('password')
+    email = request.data.get('email')  # Email from frontend (stored user)
+    
+    if not password:
+        return Response(
+            {'error': 'Mot de passe requis'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    if not email:
+        return Response(
+            {'error': 'Email requis'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = authenticate(email=email, password=password)
+
+    if user:
+        # Check user status
+        if user.status == 'suspended':
+            return Response(
+                {
+                    'error': 'Compte suspendu',
+                    'detail': 'Votre compte a été suspendu. Veuillez contacter l\'administrateur.',
+                    'status': 'suspended'
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+        elif user.status == 'inactive':
+            return Response(
+                {
+                    'error': 'Compte désactivé',
+                    'detail': 'Votre compte a été désactivé. Veuillez contacter l\'administrateur.',
+                    'status': 'inactive'
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+        elif not user.is_active_user():
+            return Response(
+                {
+                    'error': 'Compte non actif',
+                    'detail': 'Votre compte n\'est pas actif. Veuillez contacter l\'administrateur.',
+                    'status': user.status
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'user': UserSerializer(user).data,
+            'tokens': {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+        })
+
+    return Response(
+        {'error': 'Mot de passe incorrect'},
+        status=status.HTTP_401_UNAUTHORIZED
+    )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def register_view(request):
     """User registration endpoint"""
     serializer = UserRegisterSerializer(data=request.data)

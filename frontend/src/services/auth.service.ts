@@ -105,6 +105,38 @@ class AuthService {
     }
   }
 
+  async quickReconnect(password: string): Promise<boolean> {
+    try {
+      const storedUser = this.getStoredUser();
+      if (!storedUser?.email) {
+        throw new Error('Aucun utilisateur trouvé en mémoire');
+      }
+
+      // Utiliser une instance axios sans intercepteur pour éviter les boucles infinies
+      const axiosInstance = axios.create({
+        baseURL: api.defaults.baseURL,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const response = await axiosInstance.post('/auth/quick-reconnect/', {
+        email: storedUser.email,
+        password: password,
+      });
+
+      if (response.data.tokens?.access) {
+        localStorage.setItem('token', response.data.tokens.access);
+        localStorage.setItem('refresh_token', response.data.tokens.refresh);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
   getStoredUser(): User | null {
     if (typeof window === 'undefined') return null; // SSR safety
     const user = localStorage.getItem('user');

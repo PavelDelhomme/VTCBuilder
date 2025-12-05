@@ -30,6 +30,21 @@ export function ReconnectProvider({ children }: { children: ReactNode }) {
         saveEditorStateBeforeReconnect(pathname, editorState)
       }
     }
+    
+    // Sauvegarder aussi l'état dans sessionStorage pour plus de sécurité
+    if (typeof window !== 'undefined' && pathname) {
+      try {
+        const stateToSave = {
+          pathname,
+          editorState,
+          timestamp: Date.now(),
+        }
+        sessionStorage.setItem('reconnect_state_backup', JSON.stringify(stateToSave))
+      } catch (e) {
+        console.warn('Impossible de sauvegarder l\'état dans sessionStorage:', e)
+      }
+    }
+    
     setIsReconnectModalOpen(true)
   }, [pathname, editorState])
 

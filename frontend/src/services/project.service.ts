@@ -18,7 +18,10 @@ export interface Project {
   status: 'active' | 'inactive' | 'archived'
   domain?: string
   metadata?: Record<string, any>
+  is_deleted?: boolean
+  deleted_at?: string | null
   pages_count?: number
+  available_pages_count?: number | null
   pages?: ProjectPage[]
   created_at: string
   updated_at: string
@@ -39,8 +42,10 @@ const projectService = {
   /**
    * Get all projects
    */
-  async getAll(): Promise<Project[]> {
-    const response = await api.get('/projects/')
+  async getAll(includeDeleted: boolean = false): Promise<Project[]> {
+    const response = await api.get('/projects/', {
+      params: { include_deleted: includeDeleted }
+    })
     return Array.isArray(response.data) ? response.data : response.data.results || []
   },
 
@@ -127,6 +132,21 @@ const projectService = {
       console.error('Erreur récupération projet tenant:', error)
       return null
     }
+  },
+
+  /**
+   * Restore a deleted project from trash
+   */
+  async restore(id: number): Promise<Project> {
+    const response = await api.post(`/projects/${id}/restore/`)
+    return response.data
+  },
+
+  /**
+   * Permanently delete a project (only if in trash)
+   */
+  async permanentDelete(id: number): Promise<void> {
+    await api.delete(`/projects/${id}/permanent_delete/`)
   },
 }
 

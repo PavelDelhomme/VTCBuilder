@@ -8,7 +8,7 @@ from rest_framework.routers import DefaultRouter
 from tenants.views import (
     TenantViewSet, UserViewSet, UserProfileView,
     FeatureViewSet, UserFeatureViewSet,
-    login_view, register_view, register_with_plan_view, logout_view, refresh_token_view,
+    login_view, quick_reconnect_view, register_view, register_with_plan_view, logout_view, refresh_token_view,
     request_password_reset_view, reset_password_view, verify_reset_token_view,
     verify_invitation_token_view, complete_invitation_view
 )
@@ -42,6 +42,22 @@ except (ImportError, RuntimeError) as e:
     logger.error(f"Failed to import ProjectViewSet: {e}", exc_info=True)
     PROJECTS_AVAILABLE = False
     ProjectViewSet = None
+try:
+    from security.views import (
+        WAFRuleViewSet, WAFLogViewSet, SecurityAlertViewSet,
+        FirewallRuleViewSet, SecuritySettingsViewSet
+    )
+    SECURITY_AVAILABLE = True
+except (ImportError, RuntimeError) as e:
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.error(f"Failed to import Security views: {e}", exc_info=True)
+    SECURITY_AVAILABLE = False
+    WAFRuleViewSet = None
+    WAFLogViewSet = None
+    SecurityAlertViewSet = None
+    FirewallRuleViewSet = None
+    SecuritySettingsViewSet = None
 from .views import DashboardView, DetailedStatsView, block_usage_tracking_view
 
 # Analytics app - conditional import
@@ -70,6 +86,17 @@ if BLOCKS_AVAILABLE and CallToActionViewSet:
     router.register(r'blocks/call-to-actions', CallToActionViewSet, basename='call-to-action')
 if PROJECTS_AVAILABLE and ProjectViewSet:
     router.register(r'projects', ProjectViewSet, basename='project')
+if SECURITY_AVAILABLE:
+    if WAFRuleViewSet:
+        router.register(r'security/waf/rules', WAFRuleViewSet, basename='waf-rule')
+    if WAFLogViewSet:
+        router.register(r'security/waf/logs', WAFLogViewSet, basename='waf-log')
+    if SecurityAlertViewSet:
+        router.register(r'security/alerts', SecurityAlertViewSet, basename='security-alert')
+    if FirewallRuleViewSet:
+        router.register(r'security/firewall/rules', FirewallRuleViewSet, basename='firewall-rule')
+    if SecuritySettingsViewSet:
+        router.register(r'security/settings', SecuritySettingsViewSet, basename='security-settings')
 router.register(r'pricing-plans', PricingPlanViewSet, basename='pricing-plan')
 router.register(r'subscriptions', SubscriptionViewSet, basename='subscription')
 router.register(r'invoices', InvoiceViewSet, basename='invoice')
@@ -106,6 +133,8 @@ urlpatterns = [
     # Authentication (support both with and without trailing slash)
     path('auth/login/', login_view, name='login-slash'),
     path('auth/login', login_view, name='login'),
+    path('auth/quick-reconnect/', quick_reconnect_view, name='quick-reconnect-slash'),
+    path('auth/quick-reconnect', quick_reconnect_view, name='quick-reconnect'),
     path('auth/refresh/', refresh_token_view, name='refresh-slash'),
     path('auth/refresh', refresh_token_view, name='refresh'),
     path('auth/logout/', logout_view, name='logout-slash'),

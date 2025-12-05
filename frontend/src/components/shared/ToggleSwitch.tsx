@@ -60,8 +60,8 @@ export default function ToggleSwitch({
     },
   }
 
-  const currentSize = sizeClasses[size]
-  const currentColor = colorClasses[color]
+  const currentSize = sizeClasses[size] || sizeClasses.md
+  const currentColor = colorClasses[color] || colorClasses.blue
 
   return (
     <label className="flex items-center gap-2 cursor-pointer group" onClick={(e) => e.stopPropagation()}>
@@ -71,7 +71,9 @@ export default function ToggleSwitch({
           checked={checked}
           onChange={(e) => {
             e.stopPropagation()
-            onChange(e.target.checked)
+            if (!disabled) {
+              onChange(e.target.checked)
+            }
           }}
           disabled={disabled}
           className="sr-only"
@@ -87,9 +89,13 @@ export default function ToggleSwitch({
           `}
           onClick={(e) => {
             e.stopPropagation()
+            e.preventDefault()
             if (!disabled) {
               onChange(!checked)
             }
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
           }}
         >
           <span

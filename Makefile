@@ -218,6 +218,13 @@ test-backend: ## Exécuter les tests backend
 	@cd backend-django && $(MAKE) test
 	@printf "$(GREEN)✅ Tests backend terminés !$(NC)\n"
 
+test-security: ## Exécuter les tests de sécurité (WAF, Firewall, Alerts, Logs, Settings)
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)🔒 Tests de Sécurité$(NC)\n"
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@cd backend-django && $(MAKE) test-security-internal
+	@printf "$(GREEN)✅ Tests de sécurité terminés !$(NC)\n"
+
 test-api: ## Tester tous les endpoints de l'API
 	@printf "$(GREEN)🧪 Tests des endpoints API...$(NC)\n"
 	@cd backend-django && $(MAKE) test-api

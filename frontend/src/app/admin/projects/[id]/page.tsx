@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import authService from '@/services/auth.service'
 import AdminLayout from '@/components/admin/AdminLayout'
@@ -26,6 +26,9 @@ export default function ProjectDetailPage() {
   const [blockTypes, setBlockTypes] = useState<any[]>([])
   const [loadingPreview, setLoadingPreview] = useState(false)
 
+  // Ref pour éviter les exécutions multiples du nettoyage
+  const cleanupExecutedRef = useRef(false)
+
   useEffect(() => {
     if (!authService.isSuperAdmin()) {
       router.push('/dashboard')
@@ -35,42 +38,58 @@ export default function ProjectDetailPage() {
       loadProject()
       loadAvailablePages()
       loadBlockTypes()
+    }
+  }, [projectId]) // Retirer 'router' des dépendances pour éviter les re-renders
+
+  // Nettoyage automatique séparé pour éviter les boucles
+  useEffect(() => {
+    if (!projectId || projectId !== 1 || cleanupExecutedRef.current || !project || loading) {
+      return
+    }
+
+    // Nettoyage automatique pour le projet système (ID 1)
+    // Garde uniquement 'home' et 'test'
+    const cleanupProject1 = async () => {
+      if (cleanupExecutedRef.current) return // Double vérification
       
-      // Nettoyage automatique pour le projet système (ID 1)
-      // Garde uniquement 'home' et 'test'
-      if (projectId === 1) {
-        const cleanupProject1 = async () => {
-          try {
-            // Attendre que le projet soit chargé
-            const project = await projectService.getById(projectId)
-            if (project.pages && project.pages.length > 0) {
-              const pagesToRemove = project.pages.filter(
-                (p: ProjectPage) => p.page_slug !== 'home' && p.page_slug !== 'test'
-              )
-              
-              if (pagesToRemove.length > 0) {
-                console.log(`🧹 Nettoyage automatique du projet 1: ${pagesToRemove.length} page(s) à retirer`)
-                for (const page of pagesToRemove) {
-                  await projectService.removePage(projectId, page.id)
-                  console.log(`   ✅ Page "${page.page_slug}" retirée`)
+      try {
+        if (project.pages && project.pages.length > 0) {
+          const pagesToRemove = project.pages.filter(
+            (p: ProjectPage) => p.page_slug !== 'home' && p.page_slug !== 'test'
+          )
+          
+          if (pagesToRemove.length > 0) {
+            console.log(`🧹 Nettoyage automatique du projet 1: ${pagesToRemove.length} page(s) à retirer`)
+            cleanupExecutedRef.current = true // Marquer comme exécuté immédiatement
+            
+            for (const page of pagesToRemove) {
+              try {
+                await projectService.removePage(projectId, page.id)
+                console.log(`   ✅ Page "${page.page_slug}" retirée`)
+              } catch (error: any) {
+                // Ignorer les erreurs 404/204 (page déjà supprimée)
+                if (error.response?.status !== 404 && error.response?.status !== 204) {
+                  console.error(`   ❌ Erreur suppression page "${page.page_slug}":`, error)
                 }
-                toast.success(`${pagesToRemove.length} page(s) retirée(s) automatiquement`)
-                // Recharger le projet après nettoyage
-                loadProject()
               }
             }
-          } catch (error) {
-            console.error('Erreur nettoyage automatique:', error)
+            toast.success(`${pagesToRemove.length} page(s) retirée(s) automatiquement`)
+            // Recharger le projet après nettoyage
+            loadProject()
           }
         }
-        
-        // Attendre un peu que le projet soit chargé
-        setTimeout(() => {
-          cleanupProject1()
-        }, 1500)
+      } catch (error) {
+        console.error('Erreur nettoyage automatique:', error)
       }
     }
-  }, [router, projectId])
+    
+    // Attendre un peu que le projet soit complètement chargé
+    const timeoutId = setTimeout(() => {
+      cleanupProject1()
+    }, 1000)
+    
+    return () => clearTimeout(timeoutId)
+  }, [projectId, project, loading]) // Ajouter project et loading comme dépendances
 
   const loadBlockTypes = async () => {
     try {
@@ -143,7 +162,10 @@ export default function ProjectDetailPage() {
       loadProject()
     } catch (error: any) {
       console.error('Erreur ajout page:', error)
-      toast.error('Erreur lors de l\'ajout de la page')
+      const errorMessage = error.response?.data?.error || 
+                           error.response?.data?.message || 
+                           'Erreur lors de l\'ajout de la page'
+      toast.error(errorMessage)
     }
   }
 
@@ -253,10 +275,37 @@ export default function ProjectDetailPage() {
     )
   }
 
+  const handleEditProject = () => {
+    if (!project.pages || project.pages.length === 0) {
+      toast.error('Ce projet n\'a pas encore de pages. Ajoutez d\'abord une page au projet.')
+      return
+    }
+    
+    // Trouver la première page active, sinon la première page
+    const firstActivePage = project.pages.find((p: ProjectPage) => p.is_active) || project.pages[0]
+    
+    if (firstActivePage.page_type === 'public') {
+      navigate(`/admin/pages-public/${firstActivePage.page_slug}/edit`)
+    } else {
+      toast.info('L\'édition des pages tenant n\'est pas encore disponible')
+    }
+  }
+
   return (
     <AdminLayout
       title={project.name}
       subtitle={`Gérer les pages du projet ${project.slug}`}
+      headerActions={
+        <button
+          onClick={handleEditProject}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-medium"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Éditer le projet
+        </button>
+      }
     >
       <div className="space-y-6">
         {/* Project Info */}
@@ -332,15 +381,13 @@ export default function ProjectDetailPage() {
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Gestion des Pages du Projet</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Gestion des pages</h2>
               <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                 <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-2">📖 Explication :</p>
                 <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1 ml-4 list-disc">
                   <li><strong>Pages publiques</strong> = pages créées dans le système (existent toujours, même si pas dans un projet)</li>
-                  <li><strong>Publiée</strong> = la page est accessible publiquement sur le site (visible par tous les visiteurs)</li>
-                  <li><strong>Visible</strong> = la page est affichée dans CE projet spécifique (peut être masquée dans un projet mais visible dans un autre)</li>
-                  <li><strong>Ajouter au projet</strong> = lier la page à ce projet (créer le lien, la page existe déjà)</li>
-                  <li><strong>Retirer</strong> = retirer la page de ce projet (la page existe toujours, juste plus liée à ce projet)</li>
+                  <li><strong>Ajouter au projet</strong> = lier la page à ce projet (une page ne peut être que dans un seul projet)</li>
+                  <li><strong>Publié</strong> = accessible publiquement sur le site • <strong>Visible</strong> = affichée dans ce projet</li>
                 </ul>
               </div>
             </div>
@@ -403,10 +450,7 @@ export default function ProjectDetailPage() {
                   // Sauvegarder la nouvelle page
                   await api.patch('/system-settings/', { public_pages: publicPages })
                   
-                  // Ajouter automatiquement la page au projet
-                  await projectService.addPage(projectId, newSlug, 'public')
-                  
-                  toast.success(`Page "${newPageTitle}" créée et ajoutée au projet !`)
+                  toast.success(`Page "${newPageTitle}" créée ! Vous pouvez maintenant l'ajouter au projet si nécessaire.`)
                   
                   // Recharger le projet pour afficher la nouvelle page
                   loadProject()

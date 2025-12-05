@@ -230,6 +230,15 @@ test: ## Exécuter les tests avec pytest
 	@docker exec $(BACKEND_CONTAINER) pytest --verbose --tb=short -v
 	@printf "$(GREEN)✅ Tests terminés !$(NC)\n"
 
+test-security-internal: ## Exécuter les tests de sécurité (WAF, Firewall, Alerts, Logs, Settings)
+	@printf "$(GREEN)🔒 Tests de Sécurité (WAF, Firewall, Alerts, Logs, Settings)...$(NC)\n"
+	@$(DOCKER_COMPOSE) up -d postgres redis backend
+	@sleep 5
+	@docker exec $(BACKEND_CONTAINER) pytest security/tests/ -v --tb=short || \
+	 (printf "$(YELLOW)⚠️  Impossible d'exécuter les tests dans le conteneur.$(NC)\n" && \
+	  printf "$(BLUE)Exécutez manuellement :$(NC)\n" && \
+	  printf "  docker exec $(BACKEND_CONTAINER) pytest security/tests/ -v\n")
+
 test-api: ## Tester tous les endpoints de l'API
 	@printf "$(GREEN)🧪 Tests des endpoints API...$(NC)\n"
 	@$(DOCKER_COMPOSE) up -d postgres redis backend

@@ -23,19 +23,39 @@ class ProjectSerializer(serializers.ModelSerializer):
     tenant = TenantSerializer(read_only=True)
     tenant_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
     pages_count = serializers.SerializerMethodField()
+    available_pages_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Project
         fields = [
             'id', 'name', 'slug', 'description', 'tenant', 'tenant_id',
             'is_system_project', 'status', 'domain', 'metadata',
-            'pages_count', 'created_at', 'updated_at'
+            'is_deleted', 'deleted_at',
+            'pages_count', 'available_pages_count', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'slug', 'created_at', 'updated_at']
     
     def get_pages_count(self, obj):
-        """Get count of pages in this project"""
+        """Get count of pages linked to this project"""
         return obj.pages.count()
+    
+    def get_available_pages_count(self, obj):
+        """Get count of available public pages (for system projects only)"""
+        if obj.is_system_project:
+            try:
+                from settings_app.models import SystemSettings
+                settings = SystemSettings.objects.first()
+                if settings:
+                    # Count homepage + public_pages
+                    count = 0
+                    if hasattr(settings, 'public_homepage_blocks') and settings.public_homepage_blocks:
+                        count += 1
+                    if hasattr(settings, 'public_pages') and settings.public_pages:
+                        count += len(settings.public_pages)
+                    return count
+            except Exception:
+                pass
+        return None
     
     def create(self, validated_data):
         """Create project with tenant_id handling"""

@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
+from django.utils import timezone
 from .models import Project, ProjectPage
 from .serializers import ProjectSerializer, ProjectDetailSerializer, ProjectPageSerializer
 from api.utils import add_cors_headers
@@ -27,18 +28,24 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if not user or not user.is_authenticated:
             return Project.objects.none()
         
+        # Filtrer les projets non supprimés par défaut
+        # (sauf si on demande explicitement les projets supprimés via query param)
+        include_deleted = self.request.query_params.get('include_deleted', 'false').lower() == 'true'
+        
+        base_queryset = Project.objects.filter(is_deleted=False) if not include_deleted else Project.objects.all()
+        
         # Super admin sees all projects
         # Vérifier d'abord is_super_admin (méthode personnalisée)
         if hasattr(user, 'is_super_admin') and callable(user.is_super_admin) and user.is_super_admin():
-            return Project.objects.all()
+            return base_queryset
         
         # Vérifier aussi is_superuser (attribut Django standard)
         if hasattr(user, 'is_superuser') and user.is_superuser:
-            return Project.objects.all()
+            return base_queryset
         
         # Tenant admin sees only their tenant's projects
         if hasattr(user, 'tenant') and user.tenant:
-            return Project.objects.filter(tenant=user.tenant)
+            return base_queryset.filter(tenant=user.tenant)
         
         return Project.objects.none()
     
@@ -122,9 +129,20 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return response
     
     def destroy(self, request, *args, **kwargs):
-        """Delete project with CORS"""
+        """Soft delete project (move to trash)"""
         try:
-            response = super().destroy(request, *args, **kwargs)
+            project = self.get_object()
+            from django.utils import timezone
+            
+            # Soft delete: marquer comme supprimé au lieu de supprimer définitivement
+            project.is_deleted = True
+            project.deleted_at = timezone.now()
+            project.save()
+            
+            response = Response(
+                {'message': 'Projet déplacé dans la corbeille'},
+                status=status.HTTP_200_OK
+            )
             add_cors_headers(response, request)
             return response
         except Exception as e:
@@ -152,16 +170,49 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 add_cors_headers(response, request)
                 return response
             
-            page, created = ProjectPage.objects.get_or_create(
+            # Vérifier si la page est déjà dans un autre projet
+            existing_page = ProjectPage.objects.filter(
+                page_slug=page_slug,
+                page_type=page_type
+            ).exclude(project=project).first()
+            
+            if existing_page:
+                response = Response(
+                    {
+                        'error': f'Cette page est déjà dans le projet "{existing_page.project.name}" (ID: {existing_page.project.id}). Une page ne peut être que dans un seul projet.',
+                        'existing_project_id': existing_page.project.id,
+                        'existing_project_name': existing_page.project.name
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                add_cors_headers(response, request)
+                return response
+            
+            # Vérifier si la page est déjà dans ce projet
+            existing_page_in_project = ProjectPage.objects.filter(
+                project=project,
+                page_slug=page_slug,
+                page_type=page_type
+            ).first()
+            
+            if existing_page_in_project:
+                # Mettre à jour l'ordre si nécessaire
+                if existing_page_in_project.order != order:
+                    existing_page_in_project.order = order
+                    existing_page_in_project.save()
+                
+                serializer = ProjectPageSerializer(existing_page_in_project)
+                response = Response(serializer.data, status=status.HTTP_200_OK)
+                add_cors_headers(response, request)
+                return response
+            
+            # Créer la nouvelle page
+            page = ProjectPage.objects.create(
                 project=project,
                 page_slug=page_slug,
                 page_type=page_type,
-                defaults={'order': order}
+                order=order
             )
-            
-            if not created:
-                page.order = order
-                page.save()
             
             serializer = ProjectPageSerializer(page)
             response = Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -202,19 +253,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 add_cors_headers(response, request)
                 return response
             
-            page = ProjectPage.objects.get(id=page_id, project=project)
-            page.delete()
-            
-            response = Response(status=status.HTTP_204_NO_CONTENT)
-            add_cors_headers(response, request)
-            return response
-        except ProjectPage.DoesNotExist:
-            response = Response(
-                {'error': 'Page not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-            add_cors_headers(response, request)
-            return response
+            try:
+                page = ProjectPage.objects.get(id=page_id, project=project)
+                page.delete()
+                
+                response = Response(status=status.HTTP_204_NO_CONTENT)
+                add_cors_headers(response, request)
+                return response
+            except ProjectPage.DoesNotExist:
+                # La page n'existe pas ou n'est pas dans ce projet
+                # Retourner 204 quand même pour éviter les erreurs si la page a déjà été supprimée
+                response = Response(
+                    {'message': 'Page déjà supprimée ou introuvable'},
+                    status=status.HTTP_204_NO_CONTENT
+                )
+                add_cors_headers(response, request)
+                return response
         except Exception as e:
             response = Response(
                 {'error': str(e)},

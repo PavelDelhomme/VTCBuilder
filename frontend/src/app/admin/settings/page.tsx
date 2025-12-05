@@ -7,6 +7,7 @@ import AdminLayout from '@/components/admin/AdminLayout'
 import settingsService, { SystemSettings } from '@/services/settings.service'
 import toast from 'react-hot-toast'
 import PageLoader from '@/components/shared/PageLoader'
+import SecurityTab from './SecurityTab'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -325,77 +326,7 @@ export default function SettingsPage() {
         )}
 
         {/* Security Tab */}
-        {activeTab === 'security' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Paramètres de Sécurité</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Longueur minimale du mot de passe
-                </label>
-                <input
-                  type="number"
-                  value={settings.password_min_length}
-                  onChange={(e) => updateSetting('password_min_length', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  min={6}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Durée de session (minutes)
-                </label>
-                <input
-                  type="number"
-                  value={settings.session_timeout_minutes}
-                  onChange={(e) => updateSetting('session_timeout_minutes', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  min={1}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Nombre maximum de tentatives de connexion
-                </label>
-                <input
-                  type="number"
-                  value={settings.max_login_attempts}
-                  onChange={(e) => updateSetting('max_login_attempts', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  min={1}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Durée de verrouillage (minutes)
-                </label>
-                <input
-                  type="number"
-                  value={settings.lockout_duration_minutes}
-                  onChange={(e) => updateSetting('lockout_duration_minutes', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  min={1}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={settings.require_email_verification}
-                  onChange={(e) => updateSetting('require_email_verification', e.target.checked)}
-                  className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded"
-                />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Exiger la vérification de l'email</span>
-              </label>
-            </div>
-          </div>
-        )}
+        {activeTab === 'security' && <SecurityTab />}
 
         {/* Billing Tab */}
         {activeTab === 'billing' && (

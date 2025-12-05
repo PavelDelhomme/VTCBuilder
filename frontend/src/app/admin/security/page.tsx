@@ -1,193 +1,1648 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import authService from '@/services/auth.service'
 import AdminLayout from '@/components/admin/AdminLayout'
+import securityService from '@/services/security.service'
 import toast from 'react-hot-toast'
+import ToggleSwitch from '@/components/shared/ToggleSwitch'
 import PageLoader from '@/components/shared/PageLoader'
+
+interface WAFRule {
+  id: number
+  name: string
+  description: string
+  rule_type: string
+  status: 'active' | 'inactive' | 'testing'
+  config: Record<string, any>
+  priority: number
+  action: 'allow' | 'block' | 'challenge' | 'log'
+  created_at: string
+  updated_at: string
+}
+
+interface WAFLog {
+  id: number
+  ip_address: string
+  request_method: string
+  request_path: string
+  action: string
+  severity: string
+  reason: string
+  timestamp: string
+  matched_rule_name?: string
+  threat_type?: string
+}
+
+interface SecurityAlert {
+  id: number
+  alert_type: string
+  severity: string
+  status: string
+  title: string
+  message: string
+  ip_address?: string
+  created_at: string
+}
+
+interface FirewallRule {
+  id: number
+  name: string
+  description: string
+  rule_type: string
+  status: 'active' | 'inactive'
+  config: Record<string, any>
+  priority: number
+  created_at: string
+}
+
+interface SecuritySettings {
+  waf_enabled: boolean
+  waf_mode: 'blocking' | 'monitoring' | 'learning'
+  rate_limit_enabled: boolean
+  rate_limit_requests_per_minute: number
+  rate_limit_requests_per_hour: number
+  ip_reputation_enabled: boolean
+  block_known_bad_ips: boolean
+  log_all_requests: boolean
+  log_retention_days: number
+  alert_on_critical: boolean
+  alert_on_high: boolean
+  alert_on_medium: boolean
+  alert_email: string
+  auto_block_after_attempts: number
+  auto_block_duration_hours: number
+}
+
+interface WAFStats {
+  total_requests: number
+  blocked: number
+  allowed: number
+  total_threats_detected?: number
+  blocked_ips?: number
+  threats_by_type?: Record<string, number>
+  top_threatening_ips?: Array<{ ip_address: string; count: number }>
+}
 
 export default function SecurityPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'waf' | 'firewall' | 'monitoring' | 'logs' | 'settings'>('waf')
+  
+  // WAF
+  const [wafRules, setWafRules] = useState<WAFRule[]>([])
+  const [wafLogs, setWafLogs] = useState<WAFLog[]>([])
+  const [wafStats, setWafStats] = useState<WAFStats | null>(null)
+  const [showWAFRuleModal, setShowWAFRuleModal] = useState(false)
+  const [editingWAFRule, setEditingWAFRule] = useState<WAFRule | null>(null)
+  
+  // Alerts
+  const [alerts, setAlerts] = useState<SecurityAlert[]>([])
+  const [alertFilter, setAlertFilter] = useState<'all' | 'new' | 'acknowledged' | 'resolved'>('new')
+  
+  // Firewall
+  const [firewallRules, setFirewallRules] = useState<FirewallRule[]>([])
+  const [showFirewallRuleModal, setShowFirewallRuleModal] = useState(false)
+  const [editingFirewallRule, setEditingFirewallRule] = useState<FirewallRule | null>(null)
+  
+  // Settings
+  const [settings, setSettings] = useState<SecuritySettings | null>(null)
+  
+  // Logs filters
+  const [logFilters, setLogFilters] = useState({
+    days: 7,
+    severity: '',
+    action: '',
+    ip_address: '',
+    threat_type: '',
+  })
 
   useEffect(() => {
-    if (!authService.isAuthenticated()) {
-      router.push('/login')
-      return
-    }
-    
     if (!authService.isSuperAdmin()) {
       router.push('/dashboard')
       return
     }
-    
-    setLoading(false)
-  }, [router])
+    loadData()
+  }, [router, activeTab, alertFilter])
 
-  if (loading) {
-    return <PageLoader />
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      if (activeTab === 'waf') {
+        await Promise.all([loadWAFRules(), loadWAFLogs(), loadWAFStats()])
+      } else if (activeTab === 'monitoring') {
+        await loadAlerts()
+      } else if (activeTab === 'firewall') {
+        await loadFirewallRules()
+      } else if (activeTab === 'logs') {
+        await loadWAFLogs()
+      } else if (activeTab === 'settings') {
+        await loadSettings()
+      }
+    } catch (error) {
+      console.error('Erreur chargement données sécurité:', error)
+      toast.error('Erreur lors du chargement des données')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadWAFRules = async () => {
+    try {
+      const rules = await securityService.getWAFRules()
+      setWafRules(rules)
+    } catch (error) {
+      console.error('Erreur chargement règles WAF:', error)
+    }
+  }
+
+  const loadWAFLogs = async () => {
+    try {
+      const params: any = { days: logFilters.days }
+      if (logFilters.severity) params.severity = logFilters.severity
+      if (logFilters.action) params.action = logFilters.action
+      if (logFilters.ip_address) params.ip_address = logFilters.ip_address
+      
+      const logs = await securityService.getWAFLogs(params)
+      setWafLogs(logs)
+    } catch (error) {
+      console.error('Erreur chargement logs WAF:', error)
+    }
+  }
+
+  const loadWAFStats = async () => {
+    try {
+      const stats = await securityService.getWAFStats(7)
+      setWafStats(stats)
+    } catch (error) {
+      console.error('Erreur chargement stats WAF:', error)
+    }
+  }
+
+  const loadAlerts = async () => {
+    try {
+      const params: any = {}
+      if (alertFilter !== 'all') {
+        params.status = alertFilter
+      }
+      const alertsData = await securityService.getAlerts(params)
+      setAlerts(alertsData)
+    } catch (error) {
+      console.error('Erreur chargement alertes:', error)
+    }
+  }
+
+  const loadFirewallRules = async () => {
+    try {
+      const rules = await securityService.getFirewallRules()
+      setFirewallRules(rules)
+    } catch (error) {
+      console.error('Erreur chargement règles firewall:', error)
+    }
+  }
+
+  const loadSettings = async () => {
+    try {
+      const settingsData = await securityService.getSettings()
+      setSettings(settingsData)
+    } catch (error) {
+      console.error('Erreur chargement paramètres:', error)
+    }
+  }
+
+  const handleSaveSettings = async () => {
+    if (!settings) return
+    
+    try {
+      await securityService.updateSettings(settings)
+      toast.success('Paramètres de sécurité sauvegardés !')
+    } catch (error) {
+      console.error('Erreur sauvegarde paramètres:', error)
+      toast.error('Erreur lors de la sauvegarde')
+    }
+  }
+
+  const handleToggleRule = async (ruleId: number) => {
+    try {
+      await securityService.toggleWAFRuleStatus(ruleId)
+      await loadWAFRules()
+      toast.success('Règle mise à jour')
+    } catch (error) {
+      console.error('Erreur toggle règle:', error)
+      toast.error('Erreur lors de la mise à jour')
+    }
+  }
+
+  const handleDeleteWAFRule = async (ruleId: number) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette règle ?')) return
+    
+    try {
+      await securityService.deleteWAFRule(ruleId)
+      await loadWAFRules()
+      toast.success('Règle supprimée')
+    } catch (error) {
+      console.error('Erreur suppression règle:', error)
+      toast.error('Erreur lors de la suppression')
+    }
+  }
+
+  const handleSaveWAFRule = async (ruleData: Partial<WAFRule>) => {
+    try {
+      if (editingWAFRule) {
+        await securityService.updateWAFRule(editingWAFRule.id, ruleData)
+        toast.success('Règle mise à jour')
+      } else {
+        await securityService.createWAFRule(ruleData)
+        toast.success('Règle créée')
+      }
+      setShowWAFRuleModal(false)
+      setEditingWAFRule(null)
+      await loadWAFRules()
+    } catch (error: any) {
+      console.error('Erreur sauvegarde règle:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+    }
+  }
+
+  const handleAcknowledgeAlert = async (alertId: number) => {
+    try {
+      await securityService.acknowledgeAlert(alertId)
+      await loadAlerts()
+      toast.success('Alerte acquittée')
+    } catch (error) {
+      console.error('Erreur acquittement alerte:', error)
+      toast.error('Erreur lors de l\'acquittement')
+    }
+  }
+
+  const handleResolveAlert = async (alertId: number) => {
+    try {
+      await securityService.resolveAlert(alertId)
+      await loadAlerts()
+      toast.success('Alerte résolue')
+    } catch (error) {
+      console.error('Erreur résolution alerte:', error)
+      toast.error('Erreur lors de la résolution')
+    }
+  }
+
+  const handleDeleteFirewallRule = async (ruleId: number) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette règle ?')) return
+    
+    try {
+      await securityService.deleteFirewallRule(ruleId)
+      await loadFirewallRules()
+      toast.success('Règle supprimée')
+    } catch (error) {
+      console.error('Erreur suppression règle:', error)
+      toast.error('Erreur lors de la suppression')
+    }
+  }
+
+  const handleSaveFirewallRule = async (ruleData: Partial<FirewallRule>) => {
+    try {
+      if (editingFirewallRule) {
+        await securityService.updateFirewallRule(editingFirewallRule.id, ruleData)
+        toast.success('Règle mise à jour')
+      } else {
+        await securityService.createFirewallRule(ruleData)
+        toast.success('Règle créée')
+      }
+      setShowFirewallRuleModal(false)
+      setEditingFirewallRule(null)
+      await loadFirewallRules()
+    } catch (error: any) {
+      console.error('Erreur sauvegarde règle:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+    }
+  }
+
+  const applyLogFilters = () => {
+    loadWAFLogs()
+  }
+
+  if (loading && activeTab === 'settings' && !settings) {
+    return (
+      <AdminLayout title="Sécurité" subtitle="Chargement...">
+        <PageLoader text="Chargement des paramètres de sécurité..." />
+      </AdminLayout>
+    )
   }
 
   return (
-    <AdminLayout title="Cybersécurité" subtitle="Gestion de la sécurité et protection du système">
+    <AdminLayout
+      title="Sécurité"
+      subtitle="Gestion du WAF, Firewall et Monitoring"
+    >
       <div className="space-y-6">
         {/* Tabs */}
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex space-x-8 overflow-x-auto">
-            <button
-              onClick={() => setActiveTab('waf')}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'waf'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-              }`}
-            >
-              🔒 WAF (Web Application Firewall)
-            </button>
-            <button
-              onClick={() => setActiveTab('firewall')}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'firewall'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-              }`}
-            >
-              🛡️ Firewall
-            </button>
-            <button
-              onClick={() => setActiveTab('monitoring')}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'monitoring'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-              }`}
-            >
-              📊 Monitoring & Alertes
-            </button>
-            <button
-              onClick={() => setActiveTab('logs')}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'logs'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-              }`}
-            >
-              📝 Logs de sécurité
-            </button>
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'settings'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-              }`}
-            >
-              ⚙️ Paramètres
-            </button>
+          <nav className="flex space-x-4 overflow-x-auto">
+            {[
+              { id: 'waf', label: 'WAF', icon: '🛡️' },
+              { id: 'firewall', label: 'Firewall', icon: '🔥' },
+              { id: 'monitoring', label: 'Monitoring & Alertes', icon: '📊' },
+              { id: 'logs', label: 'Logs de sécurité', icon: '📋' },
+              { id: 'settings', label: 'Paramètres', icon: '⚙️' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`py-3 px-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                <span className="mr-2">{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
           </nav>
         </div>
 
-        {/* Content */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          {activeTab === 'waf' && (
-            <div className="space-y-4">
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                  <span className="text-3xl">🔒</span>
+        {/* WAF Tab */}
+        {activeTab === 'waf' && (
+          <div className="space-y-6">
+            {/* Stats */}
+            {wafStats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Total Requêtes</div>
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">{wafStats.total_requests || 0}</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">7 derniers jours</div>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  WAF (Web Application Firewall)
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  Interface de gestion du WAF à venir
-                </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">
-                  Fonctionnalités prévues : règles de filtrage, protection DDoS, gestion des IPs bloquées, etc.
-                </p>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Bloquées</div>
+                    <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                  </div>
+                  <div className="text-3xl font-bold text-red-600">{wafStats.blocked || 0}</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Requêtes bloquées</div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Autorisées</div>
+                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="text-3xl font-bold text-green-600">{wafStats.allowed || 0}</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Requêtes autorisées</div>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Règles Actives</div>
+                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <div className="text-3xl font-bold text-blue-600">{wafRules.filter(r => r.status === 'active').length}</div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Sur {wafRules.length} règles</div>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {activeTab === 'firewall' && (
-            <div className="space-y-4">
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                  <span className="text-3xl">🛡️</span>
+            {/* Threats by Type */}
+            {wafStats?.threats_by_type && Object.keys(wafStats.threats_by_type).length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Menaces par Type</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(wafStats.threats_by_type).map(([type, count]: [string, any]) => (
+                    <div key={type} className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">{type.replace('_', ' ')}</div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{count}</div>
+                    </div>
+                  ))}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  Firewall
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  Interface de gestion du firewall à venir
-                </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">
-                  Fonctionnalités prévues : règles de pare-feu, gestion des ports, etc.
-                </p>
               </div>
-            </div>
-          )}
+            )}
 
-          {activeTab === 'monitoring' && (
-            <div className="space-y-4">
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                  <span className="text-3xl">📊</span>
+            {/* Top Threatening IPs */}
+            {wafStats?.top_threatening_ips && wafStats.top_threatening_ips.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">IPs les Plus Menaçantes</h3>
+                <div className="space-y-2">
+                  {wafStats.top_threatening_ips.map((item: any, index: number) => (
+                    <div key={item.ip_address || index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">#{index + 1}</span>
+                        <span className="font-mono text-sm text-gray-900 dark:text-gray-100">{item.ip_address}</span>
+                      </div>
+                      <span className="px-3 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full text-sm font-medium">
+                        {item.count} menace{item.count !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  Monitoring & Alertes
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  Interface de monitoring de sécurité à venir
-                </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">
-                  Fonctionnalités prévues : alertes en temps réel, graphiques de sécurité, etc.
-                </p>
               </div>
-            </div>
-          )}
+            )}
 
-          {activeTab === 'logs' && (
-            <div className="space-y-4">
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                  <span className="text-3xl">📝</span>
+            {/* Rules */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Règles WAF</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Configurez les règles de protection contre les attaques web
+                  </p>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  Logs de sécurité
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  Interface de consultation des logs à venir
-                </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">
-                  Fonctionnalités prévues : consultation des logs, filtres, export, etc.
-                </p>
+                <div className="flex items-center gap-2">
+                  {wafRules.filter(r => r.name.startsWith('[Défaut]')).length === 0 && (
+                    <button 
+                      onClick={async () => {
+                        try {
+                          setLoading(true)
+                          await securityService.initDefaultWAFRules(false)
+                          toast.success('Règles par défaut initialisées avec succès !')
+                          loadWAFRules()
+                        } catch (error: any) {
+                          toast.error(error.response?.data?.error || 'Erreur lors de l\'initialisation')
+                        } finally {
+                          setLoading(false)
+                        }
+                      }}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Initialiser les règles par défaut
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => {
+                      setEditingWAFRule(null)
+                      setShowWAFRuleModal(true)
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Nouvelle Règle
+                  </button>
+                </div>
+              </div>
+              <div className="p-6">
+                {loading ? (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">Chargement...</div>
+                ) : wafRules.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                    <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <p className="mb-4 text-lg">Aucune règle WAF configurée</p>
+                    <p className="mb-6 text-sm">Initialisez les règles par défaut pour une protection de base, ou créez votre première règle personnalisée</p>
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        onClick={async () => {
+                          try {
+                            setLoading(true)
+                            await securityService.initDefaultWAFRules(false)
+                            toast.success('Règles par défaut initialisées avec succès !')
+                            loadWAFRules()
+                          } catch (error: any) {
+                            toast.error(error.response?.data?.error || 'Erreur lors de l\'initialisation')
+                          } finally {
+                            setLoading(false)
+                          }
+                        }}
+                        className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Initialiser les règles par défaut
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingWAFRule(null)
+                          setShowWAFRuleModal(true)
+                        }}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                      >
+                        Créer une règle personnalisée
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {wafRules.map((rule) => (
+                      <div key={rule.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{rule.name}</h4>
+                              <span className={`px-2.5 py-1 rounded text-xs font-medium ${
+                                rule.status === 'active' 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                  : rule.status === 'testing'
+                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                              }`}>
+                                {rule.status === 'active' ? 'Actif' : rule.status === 'testing' ? 'Test' : 'Inactif'}
+                              </span>
+                              <span className="px-2.5 py-1 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-medium">
+                                {rule.rule_type.replace('_', ' ')}
+                              </span>
+                              <span className="px-2.5 py-1 rounded text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 font-medium">
+                                Priorité: {rule.priority}
+                              </span>
+                            </div>
+                            {rule.description && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{rule.description}</p>
+                            )}
+                            <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                              <span>Action: <strong className="text-gray-700 dark:text-gray-300">{rule.action}</strong></span>
+                              <span>Créé: {new Date(rule.created_at).toLocaleDateString('fr-FR')}</span>
+                              {rule.updated_at !== rule.created_at && (
+                                <span>Modifié: {new Date(rule.updated_at).toLocaleDateString('fr-FR')}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <ToggleSwitch
+                              checked={rule.status === 'active'}
+                              onChange={() => handleToggleRule(rule.id)}
+                              size="sm"
+                              color={rule.status === 'active' ? 'green' : 'gray'}
+                            />
+                            <button 
+                              onClick={() => {
+                                setEditingWAFRule(rule)
+                                setShowWAFRuleModal(true)
+                              }}
+                              className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            >
+                              Éditer
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteWAFRule(rule.id)}
+                              className="px-3 py-1.5 text-sm bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                            >
+                              Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          )}
 
-          {activeTab === 'settings' && (
-            <div className="space-y-4">
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                  <span className="text-3xl">⚙️</span>
+            {/* WAF Rule Modal */}
+            {showWAFRuleModal && (
+              <WAFRuleModal
+                rule={editingWAFRule}
+                onClose={() => {
+                  setShowWAFRuleModal(false)
+                  setEditingWAFRule(null)
+                }}
+                onSave={handleSaveWAFRule}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Firewall Tab */}
+        {activeTab === 'firewall' && (
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Règles Firewall</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Gestion des règles de filtrage réseau (IP, Pays, ASN)
+                  </p>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                  Paramètres de sécurité
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  Configuration générale de la sécurité à venir
-                </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">
-                  Fonctionnalités prévues : configuration générale, politiques de sécurité, etc.
-                </p>
+                <div className="flex items-center gap-2">
+                  {firewallRules.filter(r => r.name.startsWith('[Défaut]')).length === 0 && (
+                    <button 
+                      onClick={async () => {
+                        try {
+                          setLoading(true)
+                          await securityService.initDefaultFirewallRules(false)
+                          toast.success('Règles Firewall par défaut initialisées avec succès !')
+                          loadFirewallRules()
+                        } catch (error: any) {
+                          toast.error(error.response?.data?.error || 'Erreur lors de l\'initialisation')
+                        } finally {
+                          setLoading(false)
+                        }
+                      }}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Initialiser les règles par défaut
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => {
+                      setEditingFirewallRule(null)
+                      setShowFirewallRuleModal(true)
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Nouvelle Règle
+                  </button>
+                </div>
+              </div>
+              <div className="p-6">
+                {loading ? (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">Chargement...</div>
+                ) : firewallRules.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                    <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <p className="mb-4 text-lg">Aucune règle firewall configurée</p>
+                    <p className="mb-6 text-sm">Initialisez les règles par défaut pour une protection de base, ou créez votre première règle personnalisée</p>
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        onClick={async () => {
+                          try {
+                            setLoading(true)
+                            await securityService.initDefaultFirewallRules(false)
+                            toast.success('Règles Firewall par défaut initialisées avec succès !')
+                            loadFirewallRules()
+                          } catch (error: any) {
+                            toast.error(error.response?.data?.error || 'Erreur lors de l\'initialisation')
+                          } finally {
+                            setLoading(false)
+                          }
+                        }}
+                        className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Initialiser les règles par défaut
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingFirewallRule(null)
+                          setShowFirewallRuleModal(true)
+                        }}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                      >
+                        Créer une règle personnalisée
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {firewallRules.map((rule) => (
+                      <div key={rule.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{rule.name}</h4>
+                              <span className={`px-2.5 py-1 rounded text-xs font-medium ${
+                                rule.status === 'active' 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                              }`}>
+                                {rule.status === 'active' ? 'Actif' : 'Inactif'}
+                              </span>
+                              <span className="px-2.5 py-1 rounded text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-medium">
+                                {rule.rule_type.replace('_', ' ')}
+                              </span>
+                              <span className="px-2.5 py-1 rounded text-xs bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 font-medium">
+                                Priorité: {rule.priority}
+                              </span>
+                            </div>
+                            {rule.description && (
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{rule.description}</p>
+                            )}
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              Créé: {new Date(rule.created_at).toLocaleDateString('fr-FR')}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <button 
+                              onClick={() => {
+                                setEditingFirewallRule(rule)
+                                setShowFirewallRuleModal(true)
+                              }}
+                              className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            >
+                              Éditer
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteFirewallRule(rule.id)}
+                              className="px-3 py-1.5 text-sm bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                            >
+                              Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Firewall Rule Modal */}
+            {showFirewallRuleModal && (
+              <FirewallRuleModal
+                rule={editingFirewallRule}
+                onClose={() => {
+                  setShowFirewallRuleModal(false)
+                  setEditingFirewallRule(null)
+                }}
+                onSave={handleSaveFirewallRule}
+              />
+            )}
+          </div>
+        )}
+
+        {/* Monitoring Tab */}
+        {activeTab === 'monitoring' && (
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Alertes de Sécurité</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Surveillez les événements de sécurité en temps réel
+                  </p>
+                </div>
+                <select
+                  value={alertFilter}
+                  onChange={(e) => setAlertFilter(e.target.value as any)}
+                  className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                >
+                  <option value="all">Toutes</option>
+                  <option value="new">Nouvelles</option>
+                  <option value="acknowledged">Acquittées</option>
+                  <option value="resolved">Résolues</option>
+                </select>
+              </div>
+              <div className="p-6">
+                {loading ? (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">Chargement...</div>
+                ) : alerts.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                    <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-lg">Aucune alerte {alertFilter !== 'all' ? alertFilter : ''}</p>
+                    <p className="text-sm mt-2">Tout est calme pour le moment</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {alerts.map((alert) => (
+                      <div key={alert.id} className={`border-l-4 rounded-lg p-5 shadow-sm ${
+                        alert.severity === 'critical' ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                        : alert.severity === 'high' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                        : alert.severity === 'medium' ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
+                        : 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      }`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{alert.title}</h4>
+                              <span className={`px-2.5 py-1 rounded text-xs font-medium ${
+                                alert.severity === 'critical' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                : alert.severity === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                                : alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                              }`}>
+                                {alert.severity}
+                              </span>
+                              <span className={`px-2.5 py-1 rounded text-xs font-medium ${
+                                alert.status === 'new' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                : alert.status === 'acknowledged' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              }`}>
+                                {alert.status}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{alert.message}</p>
+                            <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                              {alert.ip_address && (
+                                <span>IP: <strong className="text-gray-700 dark:text-gray-300 font-mono">{alert.ip_address}</strong></span>
+                              )}
+                              <span>Créé: {new Date(alert.created_at).toLocaleString('fr-FR')}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            {alert.status === 'new' && (
+                              <>
+                                <button
+                                  onClick={() => handleAcknowledgeAlert(alert.id)}
+                                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                  Acquitter
+                                </button>
+                                <button
+                                  onClick={() => handleResolveAlert(alert.id)}
+                                  className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                >
+                                  Résoudre
+                                </button>
+                              </>
+                            )}
+                            {alert.status === 'acknowledged' && (
+                              <button
+                                onClick={() => handleResolveAlert(alert.id)}
+                                className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                              >
+                                Résoudre
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Logs Tab */}
+        {activeTab === 'logs' && (
+          <div className="space-y-6">
+            {/* Filters */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Filtres de Recherche</h3>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Période (jours)</label>
+                  <input
+                    type="number"
+                    value={logFilters.days}
+                    onChange={(e) => setLogFilters({ ...logFilters, days: parseInt(e.target.value) || 7 })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                    min={1}
+                    max={30}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sévérité</label>
+                  <select
+                    value={logFilters.severity}
+                    onChange={(e) => setLogFilters({ ...logFilters, severity: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                  >
+                    <option value="">Toutes</option>
+                    <option value="critical">Critique</option>
+                    <option value="high">Élevé</option>
+                    <option value="medium">Moyen</option>
+                    <option value="low">Faible</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Action</label>
+                  <select
+                    value={logFilters.action}
+                    onChange={(e) => setLogFilters({ ...logFilters, action: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                  >
+                    <option value="">Toutes</option>
+                    <option value="blocked">Bloquées</option>
+                    <option value="allowed">Autorisées</option>
+                    <option value="logged">Loggées</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type de Menace</label>
+                  <select
+                    value={logFilters.threat_type}
+                    onChange={(e) => setLogFilters({ ...logFilters, threat_type: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                  >
+                    <option value="">Tous</option>
+                    <option value="sql_injection">SQL Injection</option>
+                    <option value="xss">XSS</option>
+                    <option value="path_traversal">Path Traversal</option>
+                    <option value="command_injection">Command Injection</option>
+                    <option value="ldap_injection">LDAP Injection</option>
+                    <option value="xxe">XXE</option>
+                    <option value="ssrf">SSRF</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Adresse IP</label>
+                  <input
+                    type="text"
+                    value={logFilters.ip_address}
+                    onChange={(e) => setLogFilters({ ...logFilters, ip_address: e.target.value })}
+                    placeholder="192.168.1.1"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg font-mono text-sm"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={applyLogFilters}
+                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Appliquer les filtres
+              </button>
+            </div>
+
+            {/* Logs Table */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Logs de Sécurité</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {wafLogs.length} log{wafLogs.length !== 1 ? 's' : ''} trouvé{wafLogs.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <button
+                  onClick={loadWAFLogs}
+                  className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Actualiser
+                </button>
+              </div>
+              <div className="p-6">
+                {loading ? (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">Chargement...</div>
+                ) : wafLogs.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                    <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p className="text-lg">Aucun log disponible pour cette période</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-900">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">IP</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Méthode</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Chemin</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type Menace</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Règle</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sévérité</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Raison</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {wafLogs.slice(0, 100).map((log) => (
+                          <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                            <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                              {new Date(log.timestamp).toLocaleString('fr-FR')}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 font-mono">
+                              {log.ip_address}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                              <span className="px-2 py-1 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-medium">
+                                {log.request_method}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                              <div className="max-w-xs truncate" title={log.request_path}>
+                                {log.request_path}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              {log.threat_type ? (
+                                <span className="px-2 py-1 rounded text-xs bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 font-medium">
+                                  {log.threat_type.replace('_', ' ')}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400">-</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                              {log.matched_rule_name || '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                log.action === 'blocked' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                : log.action === 'allowed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                              }`}>
+                                {log.action}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                log.severity === 'critical' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                : log.severity === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                                : log.severity === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                              }`}>
+                                {log.severity}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-xs">
+                              <div className="truncate" title={log.reason}>
+                                {log.reason || '-'}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {wafLogs.length > 100 && (
+                      <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center border-t border-gray-200 dark:border-gray-700">
+                        Affichage des 100 premiers résultats sur {wafLogs.length}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && settings && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-8 space-y-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Paramètres de Sécurité</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Configurez les paramètres globaux de sécurité de votre application
+                </p>
+              </div>
+              <button
+                onClick={handleSaveSettings}
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Sauvegarder
+              </button>
+            </div>
+            
+            {/* WAF Settings */}
+            <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 pb-6">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base flex items-center gap-2">
+                <span>🛡️</span> Web Application Firewall (WAF)
+              </h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Activer le WAF</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Protection contre les attaques web courantes (SQL Injection, XSS, etc.)</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.waf_enabled}
+                    onChange={(checked) => setSettings({ ...settings, waf_enabled: checked })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mode WAF</label>
+                  <select
+                    value={settings.waf_mode}
+                    onChange={(e) => setSettings({ ...settings, waf_mode: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                  >
+                    <option value="blocking">Mode Blocage - Bloque les requêtes suspectes</option>
+                    <option value="monitoring">Mode Monitoring - Log uniquement, ne bloque pas</option>
+                    <option value="learning">Mode Apprentissage - Analyse et apprend les patterns</option>
+                  </select>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {settings.waf_mode === 'blocking' && 'Les requêtes suspectes seront bloquées immédiatement'}
+                    {settings.waf_mode === 'monitoring' && 'Les requêtes suspectes seront loggées mais autorisées'}
+                    {settings.waf_mode === 'learning' && 'Le système apprend les patterns normaux avant de bloquer'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Rate Limiting */}
+            <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 pb-6">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base flex items-center gap-2">
+                <span>⚡</span> Limitation de Débit
+              </h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Activer la limitation</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Protection contre les attaques DDoS et brute force</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.rate_limit_enabled}
+                    onChange={(checked) => setSettings({ ...settings, rate_limit_enabled: checked })}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Requêtes par minute</label>
+                    <input
+                      type="number"
+                      value={settings.rate_limit_requests_per_minute}
+                      onChange={(e) => setSettings({ ...settings, rate_limit_requests_per_minute: parseInt(e.target.value) || 60 })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                      min={1}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Nombre maximum de requêtes par IP par minute</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Requêtes par heure</label>
+                    <input
+                      type="number"
+                      value={settings.rate_limit_requests_per_hour}
+                      onChange={(e) => setSettings({ ...settings, rate_limit_requests_per_hour: parseInt(e.target.value) || 1000 })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                      min={1}
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Nombre maximum de requêtes par IP par heure</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* IP Reputation */}
+            <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 pb-6">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base flex items-center gap-2">
+                <span>🌐</span> Réputation IP
+              </h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Activer la réputation IP</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Vérifier la réputation des adresses IP</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.ip_reputation_enabled}
+                    onChange={(checked) => setSettings({ ...settings, ip_reputation_enabled: checked })}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bloquer les IPs connues comme malveillantes</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Bloque automatiquement les IPs dans les listes noires</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.block_known_bad_ips}
+                    onChange={(checked) => setSettings({ ...settings, block_known_bad_ips: checked })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Logging */}
+            <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 pb-6">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base flex items-center gap-2">
+                <span>📋</span> Logging
+              </h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Logger toutes les requêtes</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Attention: peut générer beaucoup de logs</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.log_all_requests}
+                    onChange={(checked) => setSettings({ ...settings, log_all_requests: checked })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rétention des logs (jours)</label>
+                  <input
+                    type="number"
+                    value={settings.log_retention_days}
+                    onChange={(e) => setSettings({ ...settings, log_retention_days: parseInt(e.target.value) || 30 })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                    min={1}
+                    max={365}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Les logs plus anciens seront automatiquement supprimés</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Alerting */}
+            <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 pb-6">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base flex items-center gap-2">
+                <span>🔔</span> Alertes
+              </h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Alerter sur Critique</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Alertes pour les événements critiques</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.alert_on_critical}
+                    onChange={(checked) => setSettings({ ...settings, alert_on_critical: checked })}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Alerter sur Élevé</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Alertes pour les événements de sévérité élevée</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.alert_on_high}
+                    onChange={(checked) => setSettings({ ...settings, alert_on_high: checked })}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Alerter sur Moyen</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Alertes pour les événements de sévérité moyenne</p>
+                  </div>
+                  <ToggleSwitch
+                    checked={settings.alert_on_medium}
+                    onChange={(checked) => setSettings({ ...settings, alert_on_medium: checked })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email pour alertes</label>
+                  <input
+                    type="email"
+                    value={settings.alert_email}
+                    onChange={(e) => setSettings({ ...settings, alert_email: e.target.value })}
+                    placeholder="admin@example.com"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Email qui recevra les notifications d'alertes</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Auto-blocking */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base flex items-center gap-2">
+                <span>🚫</span> Blocage Automatique
+              </h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bloquer après N tentatives</label>
+                  <input
+                    type="number"
+                    value={settings.auto_block_after_attempts}
+                    onChange={(e) => setSettings({ ...settings, auto_block_after_attempts: parseInt(e.target.value) || 5 })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                    min={1}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Nombre de tentatives suspectes avant blocage automatique</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Durée du blocage (heures)</label>
+                  <input
+                    type="number"
+                    value={settings.auto_block_duration_hours}
+                    onChange={(e) => setSettings({ ...settings, auto_block_duration_hours: parseInt(e.target.value) || 24 })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                    min={1}
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Durée pendant laquelle l'IP sera bloquée</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   )
 }
 
+// Modal pour créer/éditer une règle WAF
+function WAFRuleModal({ rule, onClose, onSave }: { rule: WAFRule | null, onClose: () => void, onSave: (data: Partial<WAFRule>) => void }) {
+  const [formData, setFormData] = useState<Partial<WAFRule>>({
+    name: rule?.name || '',
+    description: rule?.description || '',
+    rule_type: rule?.rule_type || 'ip_blacklist',
+    status: rule?.status || 'active',
+    priority: rule?.priority || 100,
+    action: rule?.action || 'block',
+    config: rule?.config || {},
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSave(formData)
+  }
+
+  const RULE_TYPES = [
+    { value: 'ip_whitelist', label: 'IP Whitelist', description: 'Autoriser uniquement certaines IPs' },
+    { value: 'ip_blacklist', label: 'IP Blacklist', description: 'Bloquer certaines IPs' },
+    { value: 'rate_limit', label: 'Rate Limiting', description: 'Limiter le nombre de requêtes' },
+    { value: 'sql_injection', label: 'SQL Injection Protection', description: 'Détecter et bloquer les injections SQL' },
+    { value: 'xss', label: 'XSS Protection', description: 'Détecter et bloquer les attaques XSS' },
+    { value: 'path_traversal', label: 'Path Traversal Protection', description: 'Détecter les tentatives de path traversal' },
+    { value: 'command_injection', label: 'Command Injection Protection', description: 'Détecter les tentatives d\'injection de commandes' },
+    { value: 'ldap_injection', label: 'LDAP Injection Protection', description: 'Détecter les tentatives d\'injection LDAP' },
+    { value: 'xxe', label: 'XXE Protection', description: 'Détecter les attaques XXE' },
+    { value: 'ssrf', label: 'SSRF Protection', description: 'Détecter les tentatives SSRF' },
+    { value: 'file_upload', label: 'File Upload Protection', description: 'Protection contre les uploads malveillants' },
+    { value: 'custom', label: 'Custom Rule', description: 'Règle personnalisée avec patterns regex' },
+  ]
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {rule ? 'Éditer la règle WAF' : 'Nouvelle règle WAF'}
+          </h3>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom de la règle *</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type de règle *</label>
+            <select
+              value={formData.rule_type}
+              onChange={(e) => setFormData({ ...formData, rule_type: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+              required
+            >
+              {RULE_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label} - {type.description}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Action *</label>
+            <select
+              value={formData.action}
+              onChange={(e) => setFormData({ ...formData, action: e.target.value as any })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+              required
+            >
+              <option value="allow">Allow - Autoriser</option>
+              <option value="block">Block - Bloquer</option>
+              <option value="challenge">Challenge - CAPTCHA</option>
+              <option value="log">Log Only - Logger uniquement</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priorité</label>
+              <input
+                type="number"
+                value={formData.priority}
+                onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 100 })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                min={1}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Plus bas = plus prioritaire</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Statut</label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="testing">Testing</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Configuration spécifique selon le type */}
+          {(formData.rule_type === 'ip_whitelist' || formData.rule_type === 'ip_blacklist') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Adresses IP (une par ligne)</label>
+              <textarea
+                value={Array.isArray(formData.config?.ips) ? formData.config.ips.join('\n') : ''}
+                onChange={(e) => {
+                  const ips = e.target.value.split('\n').filter(ip => ip.trim())
+                  setFormData({ ...formData, config: { ...formData.config, ips } })
+                }}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg font-mono text-sm"
+                rows={5}
+                placeholder="192.168.1.1&#10;10.0.0.1"
+              />
+            </div>
+          )}
+
+          {formData.rule_type === 'custom' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Patterns (regex, un par ligne)</label>
+              <textarea
+                value={Array.isArray(formData.config?.patterns) ? formData.config.patterns.join('\n') : ''}
+                onChange={(e) => {
+                  const patterns = e.target.value.split('\n').filter(p => p.trim())
+                  setFormData({ ...formData, config: { ...formData.config, patterns } })
+                }}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg font-mono text-sm"
+                rows={5}
+                placeholder="pattern1&#10;pattern2"
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              {rule ? 'Mettre à jour' : 'Créer'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// Modal pour créer/éditer une règle Firewall
+function FirewallRuleModal({ rule, onClose, onSave }: { rule: FirewallRule | null, onClose: () => void, onSave: (data: Partial<FirewallRule>) => void }) {
+  const [formData, setFormData] = useState<Partial<FirewallRule>>({
+    name: rule?.name || '',
+    description: rule?.description || '',
+    rule_type: rule?.rule_type || 'ip_blacklist',
+    status: rule?.status || 'active',
+    priority: rule?.priority || 100,
+    config: rule?.config || {},
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSave(formData)
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {rule ? 'Éditer la règle Firewall' : 'Nouvelle règle Firewall'}
+          </h3>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nom de la règle *</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type de règle *</label>
+            <select
+              value={formData.rule_type}
+              onChange={(e) => setFormData({ ...formData, rule_type: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+              required
+            >
+              <option value="ip_whitelist">IP Whitelist</option>
+              <option value="ip_blacklist">IP Blacklist</option>
+              <option value="country_whitelist">Country Whitelist</option>
+              <option value="country_blacklist">Country Blacklist</option>
+              <option value="asn_whitelist">ASN Whitelist</option>
+              <option value="asn_blacklist">ASN Blacklist</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priorité</label>
+              <input
+                type="number"
+                value={formData.priority}
+                onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 100 })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+                min={1}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Statut</label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Configuration spécifique */}
+          {(formData.rule_type === 'ip_whitelist' || formData.rule_type === 'ip_blacklist') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Adresses IP (une par ligne)</label>
+              <textarea
+                value={Array.isArray(formData.config?.ips) ? formData.config.ips.join('\n') : ''}
+                onChange={(e) => {
+                  const ips = e.target.value.split('\n').filter(ip => ip.trim())
+                  setFormData({ ...formData, config: { ...formData.config, ips } })
+                }}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg font-mono text-sm"
+                rows={5}
+                placeholder="192.168.1.1&#10;10.0.0.1"
+              />
+            </div>
+          )}
+
+          {(formData.rule_type === 'country_whitelist' || formData.rule_type === 'country_blacklist') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Codes pays (ISO 3166-1 alpha-2, un par ligne)</label>
+              <textarea
+                value={Array.isArray(formData.config?.countries) ? formData.config.countries.join('\n') : ''}
+                onChange={(e) => {
+                  const countries = e.target.value.split('\n').filter(c => c.trim())
+                  setFormData({ ...formData, config: { ...formData.config, countries } })
+                }}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg font-mono text-sm"
+                rows={5}
+                placeholder="FR&#10;US&#10;GB"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Exemples: FR, US, GB, DE, etc.</p>
+            </div>
+          )}
+
+          {(formData.rule_type === 'asn_whitelist' || formData.rule_type === 'asn_blacklist') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Numéros ASN (un par ligne)</label>
+              <textarea
+                value={Array.isArray(formData.config?.asns) ? formData.config.asns.join('\n') : ''}
+                onChange={(e) => {
+                  const asns = e.target.value.split('\n').filter(a => a.trim())
+                  setFormData({ ...formData, config: { ...formData.config, asns } })
+                }}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg font-mono text-sm"
+                rows={5}
+                placeholder="12345&#10;67890"
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              {rule ? 'Mettre à jour' : 'Créer'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}

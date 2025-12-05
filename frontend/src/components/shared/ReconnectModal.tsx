@@ -8,12 +8,11 @@ import { z } from 'zod'
 import authService from '@/services/auth.service'
 import toast from 'react-hot-toast'
 
-const loginSchema = z.object({
-  email: z.string().email('Email invalide'),
+const reconnectSchema = z.object({
   password: z.string().min(1, 'Mot de passe requis'),
 })
 
-type LoginForm = z.infer<typeof loginSchema>
+type ReconnectForm = z.infer<typeof reconnectSchema>
 
 interface ReconnectModalProps {
   isOpen: boolean
@@ -27,13 +26,15 @@ export default function ReconnectModal({ isOpen, onClose, onReconnect, currentPa
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
+  const [userEmail, setUserEmail] = useState<string>('')
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<ReconnectForm>({
+    resolver: zodResolver(reconnectSchema),
   })
 
   // Récupérer l'email de l'utilisateur précédemment connecté
@@ -41,29 +42,33 @@ export default function ReconnectModal({ isOpen, onClose, onReconnect, currentPa
     if (isOpen) {
       const storedUser = authService.getStoredUser()
       if (storedUser?.email) {
-        reset({ email: storedUser.email })
+        setUserEmail(storedUser.email)
+        reset({ password: '' })
+      } else {
+        // Si pas d'utilisateur stocké, fermer le modal et rediriger vers login
+        onClose()
+        router.push('/login')
       }
     }
-  }, [isOpen, reset])
+  }, [isOpen, reset, onClose, router])
 
-  const onSubmit = async (data: LoginForm) => {
+  const onSubmit = async (data: ReconnectForm) => {
     setLoading(true)
     try {
-      const response = await authService.login({
-        email: data.email || '',
-        password: data.password || ''
-      })
+      const success = await authService.quickReconnect(data.password)
       
-      if (authService.isAuthenticated()) {
+      if (success && authService.isAuthenticated()) {
         toast.success('Reconnexion réussie !')
         onReconnect()
         onClose()
         
         // Ne PAS rafraîchir la page - les requêtes seront relancées automatiquement
         // L'état de l'éditeur sera préservé
+      } else {
+        toast.error('Erreur lors de la reconnexion')
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || error.response?.data?.detail || 'Erreur lors de la reconnexion'
+      const errorMessage = error.response?.data?.error || error.response?.data?.detail || error.message || 'Erreur lors de la reconnexion'
       toast.error(errorMessage)
     } finally {
       setLoading(false)
@@ -80,26 +85,21 @@ export default function ReconnectModal({ isOpen, onClose, onReconnect, currentPa
             Session expirée
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Votre session a expiré. Veuillez vous reconnecter pour continuer.
+            Votre session a expiré. Entrez votre mot de passe pour vous reconnecter rapidement.
+            <br />
+            <span className="text-xs text-blue-600 dark:text-blue-400 mt-1 block">
+              ✨ Vos modifications sont sauvegardées automatiquement
+            </span>
           </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email
-            </label>
-            <input
-              {...register('email')}
-              type="email"
-              id="email"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="votre@email.com"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>
-            )}
-          </div>
+          {userEmail && (
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Reconnexion pour :</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{userEmail}</p>
+            </div>
+          )}
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -111,7 +111,9 @@ export default function ReconnectModal({ isOpen, onClose, onReconnect, currentPa
                 type={showPassword ? 'text' : 'password'}
                 id="password"
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
-                placeholder="••••••••"
+                placeholder="Entrez votre mot de passe"
+                autoFocus
+                autoComplete="current-password"
               />
               <button
                 type="button"

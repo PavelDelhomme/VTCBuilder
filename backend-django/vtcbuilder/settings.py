@@ -39,6 +39,7 @@ SHARED_APPS = [
     'blocks',
     'projects',
     'analytics',
+    'security',
 ]
 
 TENANT_APPS = [
@@ -55,6 +56,7 @@ MIDDLEWARE = [
     # 'django_tenants.middleware.main.TenantMainMiddleware',  # Temporairement désactivé pour les tests
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'security.middleware.WAFMiddleware',  # WAF - Must be early in the chain
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'vtcbuilder.cors_middleware.CORSAlwaysMiddleware',  # Garantir CORS même en cas d'erreur
