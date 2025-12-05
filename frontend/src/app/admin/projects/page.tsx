@@ -19,7 +19,7 @@ interface ProjectCardProps {
   isNavigating: boolean
 }
 
-// Version NOUVELLE avec toggle + badge statut en haut à droite
+// Version NOUVELLE avec toggle à la place du badge en haut à droite
 function ProjectCardNew({ project, onToggleStatus, onDelete, onOpen, isNavigating }: ProjectCardProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-shadow">
@@ -39,21 +39,23 @@ function ProjectCardNew({ project, onToggleStatus, onDelete, onOpen, isNavigatin
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                project.status === 'active'
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                  : project.status === 'archived'
-                  ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-              }`}
-            >
-              {project.status === 'active' ? '🟢 En ligne' : project.status === 'archived' ? '🔴 Archivé' : '🟡 Hors ligne'}
+            <ToggleSwitch
+              checked={project.status === 'active'}
+              onChange={() => onToggleStatus(project)}
+              size="sm"
+              color={project.status === 'active' ? 'green' : 'gray'}
+            />
+            <span className={`text-xs font-medium ${
+              project.status === 'active'
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-red-600 dark:text-red-400'
+            }`}>
+              {project.status === 'active' ? 'En ligne' : 'Hors ligne'}
             </span>
           </div>
         </div>
 
-        <div className="space-y-3 mb-4">
+        <div className="space-y-2 mb-4">
           {project.is_system_project ? (
             <div className="space-y-1">
               <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded text-xs font-medium">
@@ -68,6 +70,9 @@ function ProjectCardNew({ project, onToggleStatus, onDelete, onOpen, isNavigatin
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 <span className="font-medium">👤 Client:</span> {project.tenant.name}
               </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                Projet principal du client (créé automatiquement)
+              </p>
             </div>
           ) : (
             <p className="text-xs text-gray-500 dark:text-gray-400 italic">
@@ -76,19 +81,6 @@ function ProjectCardNew({ project, onToggleStatus, onDelete, onOpen, isNavigatin
           )}
           <div className="text-sm text-gray-500 dark:text-gray-400">
             {project.pages_count || 0} page{project.pages_count !== 1 ? 's' : ''}
-          </div>
-          
-          {/* Toggle Status */}
-          <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Statut:
-            </span>
-            <ToggleSwitch
-              checked={project.status === 'active'}
-              onChange={() => onToggleStatus(project)}
-              size="sm"
-              color={project.status === 'active' ? 'green' : 'gray'}
-            />
           </div>
         </div>
 
