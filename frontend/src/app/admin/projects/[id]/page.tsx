@@ -453,22 +453,22 @@ export default function ProjectDetailPage() {
                                   ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                                   : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                               }`}>
-                                {projectPage.is_active !== false ? 'Active' : 'Inactive'}
+                                {projectPage.is_active !== false ? 'Visible' : 'Masquée'}
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {isInProject ? (
                               <>
-                                <label className="flex items-center cursor-pointer">
-                                  <input
-                                    type="checkbox"
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <ToggleSwitch
                                     checked={projectPage.is_active !== false}
                                     onChange={() => handleToggleActive(projectPage)}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    size="sm"
+                                    color="blue"
+                                    label="Visible"
                                   />
-                                  <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Activer</span>
-                                </label>
+                                </div>
                                 <button
                                   onClick={() => handleRemovePage(projectPage.id)}
                                   className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
@@ -534,22 +534,22 @@ export default function ProjectDetailPage() {
                                   ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                                   : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                               }`}>
-                                {projectPage.is_active !== false ? 'Active' : 'Inactive'}
+                                {projectPage.is_active !== false ? 'Visible' : 'Masquée'}
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {isInProject ? (
                               <>
-                                <label className="flex items-center cursor-pointer">
-                                  <input
-                                    type="checkbox"
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <ToggleSwitch
                                     checked={projectPage.is_active !== false}
                                     onChange={() => handleToggleActive(projectPage)}
-                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    size="sm"
+                                    color="blue"
+                                    label="Visible"
                                   />
-                                  <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Activer</span>
-                                </label>
+                                </div>
                                 <button
                                   onClick={() => handleRemovePage(projectPage.id)}
                                   className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
