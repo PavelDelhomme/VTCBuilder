@@ -19,7 +19,8 @@ interface ProjectCardProps {
   isNavigating: boolean
 }
 
-function ProjectCard({ project, onToggleStatus, onDelete, onOpen, isNavigating }: ProjectCardProps) {
+// Version NOUVELLE avec toggle
+function ProjectCardNew({ project, onToggleStatus, onDelete, onOpen, isNavigating }: ProjectCardProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-shadow">
       <div className="p-6">
@@ -82,6 +83,96 @@ function ProjectCard({ project, onToggleStatus, onDelete, onOpen, isNavigating }
             }`}>
               {project.status === 'active' ? '🟢 En ligne' : '🟡 Hors ligne'}
             </span>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={onOpen}
+            disabled={isNavigating}
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isNavigating ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Chargement...</span>
+              </>
+            ) : (
+              <>📁 Ouvrir</>
+            )}
+          </button>
+          <button
+            onClick={() => onDelete(project.id)}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Version ANCIENNE avec badge statut
+function ProjectCardOld({ project, onToggleStatus, onDelete, onOpen, isNavigating }: ProjectCardProps) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-shadow">
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">
+              {project.name}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              /{project.slug}
+            </p>
+            {project.description && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                {project.description}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                project.status === 'active'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                  : project.status === 'archived'
+                  ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+              }`}
+            >
+              {project.status === 'active' ? '🟢 En ligne' : project.status === 'archived' ? '🔴 Archivé' : '🟡 Hors ligne'}
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          {project.is_system_project ? (
+            <div className="space-y-1">
+              <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded text-xs font-medium">
+                🔧 Projet Système
+              </span>
+              <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                Pages publiques de VTCBuilder (marketing, CGV, etc.)
+              </p>
+            </div>
+          ) : project.tenant ? (
+            <div className="space-y-1">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="font-medium">👤 Client:</span> {project.tenant.name}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                Projet principal du client (créé automatiquement)
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+              Projet sans client assigné
+            </p>
+          )}
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            {project.pages_count || 0} page{project.pages_count !== 1 ? 's' : ''}
           </div>
         </div>
 
@@ -277,7 +368,7 @@ export default function ProjectsManagement() {
         )
       }
     >
-      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
+      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
         <div className="flex-1 min-h-0 overflow-y-auto pb-6">
       <div className="space-y-6">
         {/* Info Banner */}
@@ -298,6 +389,44 @@ export default function ProjectsManagement() {
           </div>
         </div>
 
+        {/* Comparaison des deux versions */}
+        {groupedProjects.system.length > 0 && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+            <h3 className="text-lg font-bold text-yellow-900 dark:text-yellow-100 mb-2">
+              🔍 Comparaison des versions de cartes
+            </h3>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-4">
+              Comparez les deux versions d'affichage pour choisir celle que vous préférez
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Version Ancienne (avec badge statut)
+                </h4>
+                <ProjectCardOld
+                  project={groupedProjects.system[0]}
+                  onToggleStatus={handleToggleStatus}
+                  onDelete={handleDelete}
+                  onOpen={() => navigate(`/admin/projects/${groupedProjects.system[0].id}`)}
+                  isNavigating={isNavigating}
+                />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Version Nouvelle (avec toggle switch)
+                </h4>
+                <ProjectCardNew
+                  project={groupedProjects.system[0]}
+                  onToggleStatus={handleToggleStatus}
+                  onDelete={handleDelete}
+                  onOpen={() => navigate(`/admin/projects/${groupedProjects.system[0].id}`)}
+                  isNavigating={isNavigating}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Projects List - Grouped by Category */}
         <div className="space-y-8">
           {/* Projets Système */}
@@ -314,7 +443,7 @@ export default function ProjectsManagement() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {groupedProjects.system.map((project) => (
-                  <ProjectCard
+                  <ProjectCardNew
                     key={project.id}
                     project={project}
                     onToggleStatus={handleToggleStatus}
@@ -351,7 +480,7 @@ export default function ProjectsManagement() {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {group.projects.map((project) => (
-                        <ProjectCard
+                        <ProjectCardNew
                           key={project.id}
                           project={project}
                           onToggleStatus={handleToggleStatus}
@@ -381,7 +510,7 @@ export default function ProjectsManagement() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {groupedProjects.orphan.map((project) => (
-                  <ProjectCard
+                  <ProjectCardNew
                     key={project.id}
                     project={project}
                     onToggleStatus={handleToggleStatus}
