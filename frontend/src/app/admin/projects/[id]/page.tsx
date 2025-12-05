@@ -514,12 +514,13 @@ export default function ProjectDetailPage() {
                         <button
                           onClick={() => handleAddPage(page.slug, 'public')}
                           className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors flex items-center gap-1.5"
-                          title="Ajouter au projet"
+                          title="Ajouter cette page au projet"
                         >
                           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                           </svg>
-                          <span className="hidden sm:inline">Ajouter</span>
+                          <span className="hidden sm:inline">Ajouter au projet</span>
+                          <span className="sm:hidden">Ajouter</span>
                         </button>
                       )}
                     </div>
