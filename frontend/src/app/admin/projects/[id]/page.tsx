@@ -277,6 +277,36 @@ export default function ProjectDetailPage() {
                 Pages ajoutées à ce projet. Activez/désactivez pour les afficher ou non sur le site.
               </p>
             </div>
+            {project.pages && project.pages.length > 2 && (
+              <button
+                onClick={async () => {
+                  if (confirm(`Voulez-vous retirer toutes les pages sauf "home" et "test" ?\n\n${project.pages.length - 2} page(s) seront retirées.`)) {
+                    try {
+                      const pagesToRemove = project.pages.filter(
+                        (p: ProjectPage) => p.page_slug !== 'home' && p.page_slug !== 'test'
+                      )
+                      
+                      for (const page of pagesToRemove) {
+                        await projectService.removePage(projectId, page.id)
+                      }
+                      
+                      toast.success(`${pagesToRemove.length} page(s) retirée(s) avec succès !`)
+                      loadProject()
+                    } catch (error: any) {
+                      console.error('Erreur nettoyage:', error)
+                      toast.error('Erreur lors du nettoyage des pages')
+                    }
+                  }
+                }}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2 text-sm"
+                title="Retirer toutes les pages sauf home et test"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Nettoyer (garder home + test)
+              </button>
+            )}
             <button
               onClick={async () => {
                 try {
