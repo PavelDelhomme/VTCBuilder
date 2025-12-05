@@ -161,11 +161,35 @@ export default function ProjectDetailPage() {
   const handleToggleActive = async (page: ProjectPage) => {
     try {
       await projectService.updatePage(projectId, page.id, { is_active: !page.is_active })
-      toast.success(`Page ${!page.is_active ? 'activée' : 'désactivée'} !`)
+      toast.success(`Page ${!page.is_active ? 'affichée' : 'masquée'} dans le projet`)
       loadProject()
     } catch (error: any) {
       console.error('Erreur mise à jour page:', error)
       toast.error('Erreur lors de la mise à jour')
+    }
+  }
+
+  const handleTogglePublished = async (pageSlug: string, currentStatus: boolean) => {
+    try {
+      const settingsResponse = await api.get('/system-settings/')
+      const settings = settingsResponse.data
+      const publicPages = settings.public_pages || {}
+      
+      if (pageSlug === 'home') {
+        toast.info('La page d\'accueil est toujours publiée')
+        return
+      }
+      
+      if (publicPages[pageSlug]) {
+        publicPages[pageSlug].is_active = !currentStatus
+        await api.patch('/system-settings/', { public_pages: publicPages })
+        toast.success(`Page ${!currentStatus ? 'publiée' : 'dépubliée'}`)
+        loadAvailablePages()
+        loadProject()
+      }
+    } catch (error: any) {
+      console.error('Erreur toggle published:', error)
+      toast.error('Erreur lors de la modification')
     }
   }
 
@@ -394,263 +418,124 @@ export default function ProjectDetailPage() {
             </button>
           </div>
           
-          {project.pages && project.pages.length > 0 ? (
+          {publicPages.length > 0 ? (
             <div className="space-y-2">
-              {project.pages.map((page: ProjectPage) => (
-                <div
-                  key={page.id}
-                  className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <ToggleSwitch
-                        checked={page.is_active !== false}
-                        onChange={() => handleToggleActive(page)}
-                        size="md"
-                        color="green"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-gray-900 dark:text-gray-100 break-words">{page.page_slug}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          page.is_active !== false
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                        }`}>
-                          {page.is_active !== false ? 'Visible' : 'Masquée'}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                          {page.page_type === 'public' ? 'Publique' : 'Tenant'}
-                        </span>
+              {publicPages.map((page) => {
+                const projectPage = project.pages?.find((p: ProjectPage) => p.page_slug === page.slug && p.page_type === 'public')
+                const isInProject = !!projectPage
+                const isPublished = page.is_active !== false
+                
+                return (
+                  <div
+                    key={page.slug}
+                    className={`flex items-center justify-between p-3 sm:p-4 rounded-lg border transition-colors ${
+                      isInProject
+                        ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+                        : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700'
+                    } hover:bg-gray-100 dark:hover:bg-gray-800`}
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {/* Toggle Publié */}
+                      <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-1">
+                        <ToggleSwitch
+                          checked={isPublished}
+                          onChange={() => handleTogglePublished(page.slug, isPublished)}
+                          size="sm"
+                          color="green"
+                        />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Publié</span>
+                      </div>
+                      
+                      {/* Toggle Visible (si dans le projet) */}
+                      {isInProject ? (
+                        <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-1">
+                          <ToggleSwitch
+                            checked={projectPage.is_active !== false}
+                            onChange={() => handleToggleActive(projectPage)}
+                            size="sm"
+                            color="blue"
+                          />
+                          <span className="text-xs text-gray-500 dark:text-gray-400">Visible</span>
+                        </div>
+                      ) : (
+                        <div className="w-11" /> // Espaceur pour alignement
+                      )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-gray-900 dark:text-gray-100 break-words">{page.title}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">({page.slug})</span>
+                          
+                          {/* Badge Publié */}
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            isPublished
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                          }`}>
+                            {isPublished ? 'Publiée' : 'Non publiée'}
+                          </span>
+                          
+                          {/* Badge Visible (si dans le projet) */}
+                          {isInProject && (
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              projectPage.is_active !== false
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                            }`}>
+                              {projectPage.is_active !== false ? 'Visible' : 'Masquée'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    
+                    <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => {
+                          if (page.slug === 'home') {
+                            navigate('/admin/homepage')
+                          } else {
+                            navigate(`/admin/pages-public/${page.slug}/edit`)
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                        title="Éditer"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        <span className="hidden sm:inline">Éditer</span>
+                      </button>
+                      
+                      {isInProject ? (
+                        <button
+                          onClick={() => handleRemovePage(projectPage.id)}
+                          className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                          title="Retirer du projet"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          <span className="hidden sm:inline">Retirer</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAddPage(page.slug, 'public')}
+                          className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                          title="Ajouter au projet"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          <span className="hidden sm:inline">Ajouter</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => handlePreview(page)}
-                      className="px-3 py-1.5 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-200 rounded hover:bg-purple-200 dark:hover:bg-purple-800 text-sm font-medium transition-colors flex items-center gap-1.5"
-                      title="Prévisualiser"
-                    >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                      <span className="hidden sm:inline">Voir</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (page.page_type === 'public') {
-                          navigate(`/admin/pages-public/${page.page_slug}/edit`)
-                        } else {
-                          // TODO: Navigate to tenant page editor
-                        }
-                      }}
-                      className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium transition-colors flex items-center gap-1.5"
-                      title="Éditer"
-                    >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      <span className="hidden sm:inline">Éditer</span>
-                    </button>
-                    <button
-                      onClick={() => handleRemovePage(page.id)}
-                      className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
-                      title="Retirer"
-                    >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      <span className="hidden sm:inline">Retirer</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-              Aucune page dans ce projet
-            </p>
-          )}
-        </div>
-
-        {/* Available Pages to Add */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
-          <div className="mb-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Pages Disponibles</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Ajoutez des pages à ce projet. <strong>Publié</strong> = accessible publiquement. <strong>Visible</strong> = affichée dans ce projet.
-            </p>
-          </div>
-          
-          {publicPages.length > 0 && (
-            <div className="space-y-4">
-              {/* Pages Publiques (publiées) - Sous-catégorie */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  Pages Publiques (Publiées sur le site)
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 ml-4">
-                  Ces pages sont publiées et accessibles publiquement sur le site
-                </p>
-                <div className="space-y-2">
-                  {publicPages
-                    .filter((page) => page.is_active !== false)
-                    .map((page) => {
-                      const projectPage = project.pages?.find((p: ProjectPage) => p.page_slug === page.slug && p.page_type === 'public')
-                      const isInProject = !!projectPage
-                      return (
-                        <div
-                          key={page.slug}
-                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <span className="font-medium text-gray-900 dark:text-gray-100 break-words">{page.title}</span>
-                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                              Publiée
-                            </span>
-                            {isInProject && (
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                projectPage.is_active !== false
-                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                              }`}>
-                                {projectPage.is_active !== false ? 'Visible' : 'Masquée'}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {isInProject ? (
-                              <>
-                                <div onClick={(e) => e.stopPropagation()}>
-                                  <ToggleSwitch
-                                    checked={projectPage.is_active !== false}
-                                    onChange={() => handleToggleActive(projectPage)}
-                                    size="sm"
-                                    color="blue"
-                                    label="Visible"
-                                  />
-                                </div>
-                                <button
-                                  onClick={() => handleRemovePage(projectPage.id)}
-                                  className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
-                                  title="Retirer du projet"
-                                >
-                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                  <span className="hidden sm:inline">Retirer</span>
-                                </button>
-                              </>
-                            ) : (
-                              <button
-                                onClick={() => handleAddPage(page.slug, 'public')}
-                                className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors flex items-center gap-1.5"
-                              >
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                <span>Ajouter</span>
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  {publicPages.filter((page) => page.is_active !== false).length === 0 && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                      Aucune page publique publiée
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Pages Disponibles (non publiées) */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
-                  Pages Disponibles (Non publiées)
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 ml-4">
-                  Ces pages existent mais ne sont pas encore publiées publiquement
-                </p>
-                <div className="space-y-2">
-                  {publicPages
-                    .filter((page) => page.is_active === false)
-                    .map((page) => {
-                      const projectPage = project.pages?.find((p: ProjectPage) => p.page_slug === page.slug && p.page_type === 'public')
-                      const isInProject = !!projectPage
-                      return (
-                        <div
-                          key={page.slug}
-                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700"
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <span className="font-medium text-gray-900 dark:text-gray-100 break-words">{page.title}</span>
-                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                              Non publiée
-                            </span>
-                            {isInProject && (
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                                projectPage.is_active !== false
-                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                  : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
-                              }`}>
-                                {projectPage.is_active !== false ? 'Visible' : 'Masquée'}
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {isInProject ? (
-                              <>
-                                <div onClick={(e) => e.stopPropagation()}>
-                                  <ToggleSwitch
-                                    checked={projectPage.is_active !== false}
-                                    onChange={() => handleToggleActive(projectPage)}
-                                    size="sm"
-                                    color="blue"
-                                    label="Visible"
-                                  />
-                                </div>
-                                <button
-                                  onClick={() => handleRemovePage(projectPage.id)}
-                                  className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
-                                  title="Retirer du projet"
-                                >
-                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                  <span className="hidden sm:inline">Retirer</span>
-                                </button>
-                              </>
-                            ) : (
-                              <button
-                                onClick={() => handleAddPage(page.slug, 'public')}
-                                className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors flex items-center gap-1.5"
-                              >
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                <span>Ajouter</span>
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  {publicPages.filter((page) => page.is_active === false).length === 0 && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                      Toutes les pages sont publiées
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {publicPages.length === 0 && (
             <p className="text-gray-500 dark:text-gray-400 text-center py-4">
               Aucune page disponible
             </p>
