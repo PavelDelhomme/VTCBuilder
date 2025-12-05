@@ -19,7 +19,7 @@ interface ProjectCardProps {
   isNavigating: boolean
 }
 
-// Version NOUVELLE avec toggle
+// Version NOUVELLE avec toggle + badge statut en haut à droite
 function ProjectCardNew({ project, onToggleStatus, onDelete, onOpen, isNavigating }: ProjectCardProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-shadow">
@@ -37,6 +37,19 @@ function ProjectCardNew({ project, onToggleStatus, onDelete, onOpen, isNavigatin
                 {project.description}
               </p>
             )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                project.status === 'active'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                  : project.status === 'archived'
+                  ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+              }`}
+            >
+              {project.status === 'active' ? '🟢 En ligne' : project.status === 'archived' ? '🔴 Archivé' : '🟡 Hors ligne'}
+            </span>
           </div>
         </div>
 
@@ -76,13 +89,6 @@ function ProjectCardNew({ project, onToggleStatus, onDelete, onOpen, isNavigatin
               size="sm"
               color={project.status === 'active' ? 'green' : 'gray'}
             />
-            <span className={`text-xs font-medium ${
-              project.status === 'active'
-                ? 'text-green-600 dark:text-green-400'
-                : 'text-gray-500 dark:text-gray-400'
-            }`}>
-              {project.status === 'active' ? '🟢 En ligne' : '🟡 Hors ligne'}
-            </span>
           </div>
         </div>
 
