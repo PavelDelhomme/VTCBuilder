@@ -48,13 +48,17 @@ function ProjectCard({ project, onToggleStatus, onDelete, onOpen, isNavigating }
                   : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
               }`}
             >
-              <ToggleSwitch
-                checked={project.status === 'active'}
-                onChange={() => onToggleStatus(project)}
-                size="sm"
-                color={project.status === 'active' ? 'green' : 'gray'}
-              />
-              {project.status === 'active' ? 'En ligne' : project.status === 'archived' ? 'Archivé' : 'Hors ligne'}
+              <div className="relative z-10" onClick={(e) => e.stopPropagation()}>
+                <ToggleSwitch
+                  checked={project.status === 'active'}
+                  onChange={() => onToggleStatus(project)}
+                  size="sm"
+                  color={project.status === 'active' ? 'green' : 'gray'}
+                />
+              </div>
+              <span className="select-none">
+                {project.status === 'active' ? 'En ligne' : project.status === 'archived' ? 'Archivé' : 'Hors ligne'}
+              </span>
             </span>
           </div>
         </div>

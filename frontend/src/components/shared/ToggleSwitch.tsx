@@ -64,12 +64,15 @@ export default function ToggleSwitch({
   const currentColor = colorClasses[color]
 
   return (
-    <label className="flex items-center gap-2 cursor-pointer group">
+    <label className="flex items-center gap-2 cursor-pointer group" onClick={(e) => e.stopPropagation()}>
       <div className="relative inline-flex items-center">
         <input
           type="checkbox"
           checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
+          onChange={(e) => {
+            e.stopPropagation()
+            onChange(e.target.checked)
+          }}
           disabled={disabled}
           className="sr-only"
         />
@@ -82,7 +85,12 @@ export default function ToggleSwitch({
             ${!disabled && 'group-hover:shadow-lg'}
             ${checked ? 'shadow-md' : ''}
           `}
-          onClick={() => !disabled && onChange(!checked)}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (!disabled) {
+              onChange(!checked)
+            }
+          }}
         >
           <span
             className={`
