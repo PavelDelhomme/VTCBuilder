@@ -11,6 +11,7 @@ import PageLoader from '@/components/shared/PageLoader'
 import BlockPreview from '@/components/editor/BlockPreview'
 import blocksService from '@/services/blocks.service'
 import { useNavigationLoading } from '@/hooks/useNavigationLoading'
+import ToggleSwitch from '@/components/shared/ToggleSwitch'
 
 export default function ProjectDetailPage() {
   const router = useRouter()
@@ -270,7 +271,12 @@ export default function ProjectDetailPage() {
         {/* Pages in Project */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Pages du Projet</h2>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Pages du Projet</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Pages ajoutées à ce projet. Activez/désactivez pour les afficher ou non sur le site.
+              </p>
+            </div>
             <button
               onClick={async () => {
                 try {
@@ -332,15 +338,14 @@ export default function ProjectDetailPage() {
                   className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <label className="flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <ToggleSwitch
                         checked={page.is_active !== false}
                         onChange={() => handleToggleActive(page)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        size="md"
+                        color="green"
                       />
-                    </label>
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-gray-900 dark:text-gray-100 break-words">{page.page_slug}</span>
@@ -349,7 +354,7 @@ export default function ProjectDetailPage() {
                             ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                             : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                         }`}>
-                          {page.is_active !== false ? 'Actif' : 'Inactif'}
+                          {page.is_active !== false ? 'Visible' : 'Masquée'}
                         </span>
                         <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                           {page.page_type === 'public' ? 'Publique' : 'Tenant'}
@@ -408,16 +413,24 @@ export default function ProjectDetailPage() {
 
         {/* Available Pages to Add */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Pages Disponibles</h2>
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Pages Disponibles</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Ajoutez des pages à ce projet. <strong>Publié</strong> = accessible publiquement. <strong>Visible</strong> = affichée dans ce projet.
+            </p>
+          </div>
           
           {publicPages.length > 0 && (
             <div className="space-y-4">
               {/* Pages Publiques (publiées) - Sous-catégorie */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  Pages Publiques (Publiées)
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  Pages Publiques (Publiées sur le site)
                 </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 ml-4">
+                  Ces pages sont publiées et accessibles publiquement sur le site
+                </p>
                 <div className="space-y-2">
                   {publicPages
                     .filter((page) => page.is_active !== false)
@@ -496,6 +509,9 @@ export default function ProjectDetailPage() {
                   <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
                   Pages Disponibles (Non publiées)
                 </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 ml-4">
+                  Ces pages existent mais ne sont pas encore publiées publiquement
+                </p>
                 <div className="space-y-2">
                   {publicPages
                     .filter((page) => page.is_active === false)
