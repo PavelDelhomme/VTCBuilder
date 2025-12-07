@@ -49,8 +49,13 @@ sleep 10
 
 # Exécuter les migrations automatiquement
 echo "🗄️  Exécution des migrations Django..."
-docker-compose -f ../docker-compose.simple.yml exec -T backend python manage.py migrate --noinput || {
-    echo "⚠️  Erreur lors des migrations, mais on continue..."
+# Migrer le schéma public d'abord
+docker-compose -f ../docker-compose.simple.yml exec -T backend python manage.py migrate_schemas --schema=public --noinput || {
+    echo "⚠️  Erreur lors des migrations public, mais on continue..."
+}
+# Migrer tous les schémas des tenants
+docker-compose -f ../docker-compose.simple.yml exec -T backend python manage.py migrate_schemas --noinput || {
+    echo "⚠️  Erreur lors des migrations tenants, mais on continue..."
 }
 
 # Créer le super admin s'il n'existe pas

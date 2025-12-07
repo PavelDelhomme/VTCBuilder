@@ -288,12 +288,6 @@ init-blocks: ## Initialiser uniquement les blocs de base
 	@docker exec $(BACKEND_CONTAINER) python manage.py create_default_block_types
 	@printf "$(GREEN)✅ Blocs initialisés !$(NC)\n"
 
-init-templates: ## Initialiser uniquement les templates de base
-	@printf "$(GREEN)📄 Initialisation des templates de base...$(NC)\n"
-	@$(DOCKER_COMPOSE) up -d postgres redis backend
-	@sleep 5
-	@docker exec $(BACKEND_CONTAINER) python manage.py create_default_templates
-	@printf "$(GREEN)✅ Templates initialisés !$(NC)\n"
 
 init-features: ## Initialiser les fonctionnalités avec leurs plans associés
 	@printf "$(GREEN)🎯 Initialisation des fonctionnalités...$(NC)\n"
