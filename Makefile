@@ -325,6 +325,12 @@ logs-db: ## Logs PostgreSQL
 logs-redis: ## Logs Redis
 	@cd backend-django && $(MAKE) logs-redis
 
+logs-frontend: ## Logs Frontend
+	@cd backend-django && $(MAKE) logs-frontend
+
+logs-pgadmin: ## Logs PgAdmin
+	@cd backend-django && $(MAKE) logs-pgadmin
+
 ##@ Frontend (frontend/)
 
 npm-install: ## Installer les dépendances npm

@@ -366,14 +366,20 @@ format: ## Formatage du code avec black
 
 ##@ Logs
 
-logs: ## Afficher tous les logs
-	@$(DOCKER_COMPOSE) logs -f backend
+logs: ## Afficher tous les logs (tous les services)
+	@$(DOCKER_COMPOSE) logs -f
 
 logs-db: ## Logs PostgreSQL
 	@$(DOCKER_COMPOSE) logs -f postgres
 
 logs-redis: ## Logs Redis
 	@$(DOCKER_COMPOSE) logs -f redis
+
+logs-frontend: ## Logs Frontend
+	@$(DOCKER_COMPOSE) logs -f frontend
+
+logs-pgadmin: ## Logs PgAdmin
+	@$(DOCKER_COMPOSE) logs -f pgadmin
 
 ##@ Utilitaires
 
