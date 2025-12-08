@@ -125,6 +125,10 @@ DATABASE_ROUTERS = ['django_tenants.routers.TenantSyncRouter']
 TENANT_MODEL = 'tenants.Tenant'
 TENANT_DOMAIN_MODEL = 'tenants.Domain'
 
+# Configuration pour que le middleware utilise le schéma public par défaut
+# quand aucun tenant n'est trouvé (pour les routes API)
+SHOW_PUBLIC_IF_NO_TENANT_FOUND = True
+
 # Custom User Model
 AUTH_USER_MODEL = 'tenants.User'
 

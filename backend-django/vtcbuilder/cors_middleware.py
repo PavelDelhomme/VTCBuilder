@@ -14,6 +14,14 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
     même si une exception est levée avant que corsheaders ne puisse les ajouter
     """
     
+    def process_request(self, request):
+        """Gérer les requêtes OPTIONS (preflight) avant qu'elles n'atteignent les vues"""
+        if request.method == 'OPTIONS':
+            from django.http import JsonResponse
+            response = JsonResponse({}, status=200)
+            return self._add_cors_headers(response, request)
+        return None
+    
     def _add_cors_headers(self, response, request):
         """Ajouter les headers CORS à une réponse"""
         try:
