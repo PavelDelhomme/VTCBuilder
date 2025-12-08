@@ -96,6 +96,16 @@ api.interceptors.response.use(
     const url = error.config?.url || '';
     const status = error.response?.status;
     
+    // Marquer les erreurs 401 pour les endpoints silencieux comme silencieuses
+    const isSilentError = SILENT_ERROR_ENDPOINTS.some(endpoint => url.includes(endpoint));
+    if (status === 401 && isSilentError && !localStorage.getItem('token')) {
+      // Supprimer l'erreur de la console en interceptant avant qu'elle soit loggée
+      error.silent = true;
+      // Ne pas afficher l'erreur dans la console
+      error.config = error.config || {};
+      error.config.silent = true;
+    }
+    
     // ERR_BLOCKED_BY_CLIENT est généralement causé par un bloqueur de publicité
     // Ne pas logger ces erreurs comme des erreurs critiques pour certains endpoints
     const silentEndpoints = [
