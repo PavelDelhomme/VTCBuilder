@@ -50,11 +50,14 @@ sleep 10
 # Exécuter les migrations automatiquement
 echo "🗄️  Exécution des migrations Django..."
 # Migrer le schéma public d'abord (pour les modèles partagés)
+echo "   📦 Migration du schéma public (shared)..."
 docker-compose -f ../docker-compose.simple.yml exec -T backend python manage.py migrate_schemas --shared --noinput || {
     echo "⚠️  Erreur lors des migrations shared, mais on continue..."
 }
-# Migrer tous les schémas des tenants
-docker-compose -f ../docker-compose.simple.yml exec -T backend python manage.py migrate_schemas --tenant --noinput || {
+
+# Migrer tous les schémas des tenants existants
+echo "   📦 Migration des schémas des tenants..."
+docker-compose -f ../docker-compose.simple.yml exec -T backend python manage.py migrate_all_tenant_schemas || {
     echo "⚠️  Erreur lors des migrations tenants, mais on continue..."
 }
 
