@@ -148,6 +148,8 @@ api.interceptors.response.use(
       // Ces erreurs sont attendues et gérées gracieusement dans les composants
       if (isSilentError && !hasToken) {
         // Ne rien logger, c'est attendu - rejeter silencieusement
+        // Supprimer l'erreur de la console en interceptant avant qu'elle soit loggée
+        error.silent = true;
         return Promise.reject(error);
       }
       

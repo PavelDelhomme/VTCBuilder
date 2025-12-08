@@ -93,11 +93,14 @@ class BillingService {
   // Pricing Plans
   async getPricingPlans() {
     try {
-      const response = await api.get('/pricing-plans/');
+      const response = await api.get('/pricing-plans/', {
+        validateStatus: (status) => status < 500 // Accepter 401, 404, etc. sans erreur
+      });
       return Array.isArray(response.data) ? response.data : response.data.results || [];
     } catch (error: any) {
-      // Retourner un tableau vide en cas d'erreur (CORS, 500, etc.)
-      if (error.response?.status === 404 || error.response?.status === 500 || error.code === 'ERR_FAILED') {
+      // Retourner un tableau vide en cas d'erreur (401, 404, 500, CORS, etc.)
+      // Ne pas logger les erreurs 401/404 (normal si non connecté)
+      if (error.response?.status === 401 || error.response?.status === 404 || error.response?.status === 500 || error.code === 'ERR_FAILED' || error.silent) {
         return [];
       }
       throw error;

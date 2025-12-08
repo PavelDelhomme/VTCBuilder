@@ -56,8 +56,9 @@ class SettingsService {
       });
       return response.data;
     } catch (error: any) {
-      // Si 401 ou 404, retourner des settings par défaut
-      if (error.response?.status === 401 || error.response?.status === 404) {
+      // Si 401 ou 404, retourner des settings par défaut sans logger l'erreur
+      if (error.response?.status === 401 || error.response?.status === 404 || error.silent) {
+        // Ne pas logger les erreurs 401/404 pour cet endpoint (normal si non connecté)
         return {
           id: 1,
           site_name: 'VTCBuilder',

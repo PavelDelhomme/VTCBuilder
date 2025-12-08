@@ -63,8 +63,11 @@ export default function HomePage() {
           // Si pas de blocs, ne pas utiliser l'éditeur
           setUseBlocks(false)
         }
-      } catch (error) {
-        console.error('Erreur chargement blocs homepage:', error)
+      } catch (error: any) {
+        // Ne pas logger les erreurs 401 (normal si non connecté sur page publique)
+        if (error.response?.status !== 401 && !error.silent) {
+          console.error('Erreur chargement blocs homepage:', error)
+        }
         setUseBlocks(false)
       }
     }
@@ -87,8 +90,11 @@ export default function HomePage() {
       
       // If not in maintenance, load pricing plans
       loadPricingPlans()
-    } catch (error) {
-      console.error('Erreur vérification mode maintenance:', error)
+    } catch (error: any) {
+      // Ne pas logger les erreurs 401 (normal si non connecté sur page publique)
+      if (error.response?.status !== 401 && !error.silent) {
+        console.error('Erreur vérification mode maintenance:', error)
+      }
       // Continue loading if error
       loadPricingPlans()
     } finally {
@@ -115,8 +121,11 @@ export default function HomePage() {
     try {
       const plans = await billingService.getPricingPlans()
       setPricingPlans(Array.isArray(plans) ? plans : [])
-    } catch (error) {
-      console.error('Erreur chargement plans:', error)
+    } catch (error: any) {
+      // Ne pas logger les erreurs 401 (normal si non connecté sur page publique)
+      if (error.response?.status !== 401 && !error.silent) {
+        console.error('Erreur chargement plans:', error)
+      }
     } finally {
       setLoading(false)
     }
