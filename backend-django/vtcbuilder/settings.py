@@ -53,7 +53,7 @@ TENANT_APPS = [
 INSTALLED_APPS = SHARED_APPS + TENANT_APPS
 
 MIDDLEWARE = [
-    # 'django_tenants.middleware.main.TenantMainMiddleware',  # Temporairement désactivé pour les tests
+    'django_tenants.middleware.main.TenantMainMiddleware',  # Réactivé pour gérer correctement les schémas des tenants
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'security.middleware.WAFMiddleware',  # WAF - Must be early in the chain
