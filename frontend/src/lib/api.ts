@@ -140,9 +140,6 @@ api.interceptors.response.use(
       }
     }
     
-    // Ne pas logger les erreurs attendues pour certains endpoints
-    const isSilentError = SILENT_ERROR_ENDPOINTS.some(endpoint => url.includes(endpoint));
-    
     // Liste des routes publiques où on ne doit PAS rediriger vers /login
     const publicRoutes = ['/', '/templates', '/pricing', '/about', '/contact'];
     const isPublicRoute = typeof window !== 'undefined' && publicRoutes.some(route => 
@@ -156,6 +153,7 @@ api.interceptors.response.use(
       
       // Pour les endpoints silencieux avec 401, ne pas logger (c'est normal si non connecté)
       // Ces erreurs sont attendues et gérées gracieusement dans les composants
+      // Utiliser isSilentError défini plus haut (ligne 100)
       if (isSilentError && !hasToken) {
         // Ne rien logger, c'est attendu - rejeter silencieusement
         // Supprimer l'erreur de la console en interceptant avant qu'elle soit loggée
