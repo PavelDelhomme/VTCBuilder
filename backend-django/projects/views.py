@@ -34,6 +34,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
         
         base_queryset = Project.objects.filter(is_deleted=False) if not include_deleted else Project.objects.all()
         
+        # Optimiser les requêtes avec prefetch_related pour le comptage des pages
+        base_queryset = base_queryset.prefetch_related('pages')
+        
         # Super admin sees all projects
         # Vérifier d'abord is_super_admin (méthode personnalisée)
         if hasattr(user, 'is_super_admin') and callable(user.is_super_admin) and user.is_super_admin():

@@ -65,6 +65,7 @@ import PageSelector from './PageSelector'
 import ImageSelector from './ImageSelector'
 import { useHistory } from '@/hooks/useHistory'
 import { useBlockTracking } from '@/hooks/useBlockTracking'
+import { quickHash } from '@/lib/memory-utils'
 import { Block } from './types'
 
 // Re-export Block type for backward compatibility

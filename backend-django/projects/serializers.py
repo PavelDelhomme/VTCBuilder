@@ -37,6 +37,9 @@ class ProjectSerializer(serializers.ModelSerializer):
     
     def get_pages_count(self, obj):
         """Get count of pages linked to this project"""
+        # Utiliser len() si les pages sont déjà préchargées, sinon count()
+        if hasattr(obj, '_prefetched_objects_cache') and 'pages' in obj._prefetched_objects_cache:
+            return len(obj.pages.all())
         return obj.pages.count()
     
     def get_available_pages_count(self, obj):
