@@ -404,7 +404,7 @@ export default function StatsPage() {
           {/* Desktop: Onglets horizontaux */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
             <div className="border-b border-gray-200 dark:border-gray-700">
-              <nav className="hidden lg:flex flex-wrap -mb-px overflow-x-auto">
+              <nav className="hidden lg:flex flex-wrap -mb-px overflow-x-auto w-full">
               {[
                 { id: 'overview', label: 'Vue d\'ensemble', icon: '📊' },
                 { id: 'actions', label: 'Actions', icon: '⚡' },
