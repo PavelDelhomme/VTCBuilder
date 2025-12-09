@@ -245,6 +245,13 @@ export default function ProjectsManagement() {
   }
 
   const handleDelete = async (id: number) => {
+    // Empêcher la suppression des projets système
+    const project = projects.find(p => p.id === id)
+    if (project?.is_system_project) {
+      toast.error('Les projets système ne peuvent pas être supprimés')
+      return
+    }
+    
     if (!confirm('Êtes-vous sûr de vouloir déplacer ce projet dans la corbeille ?')) {
       return
     }
@@ -271,6 +278,13 @@ export default function ProjectsManagement() {
   }
 
   const handlePermanentDelete = async (id: number) => {
+    // Empêcher la suppression définitive des projets système
+    const project = trashProjects.find(p => p.id === id)
+    if (project?.is_system_project) {
+      toast.error('Les projets système ne peuvent pas être supprimés')
+      return
+    }
+    
     if (!confirm('⚠️ ATTENTION : Cette action est irréversible !\n\nÊtes-vous sûr de vouloir supprimer définitivement ce projet ?')) {
       return
     }
