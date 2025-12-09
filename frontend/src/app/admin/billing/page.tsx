@@ -190,7 +190,7 @@ function SubscriptionRow({
                   {subscription.status === 'cancelled' && (
                     <button
                       onClick={() => handleAction('reactivate')}
-                      className="block w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-green-50"
+                      className="block w-full text-left px-4 py-2 text-sm text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
                       role="menuitem"
                     >
                       ✅ Réactiver
@@ -200,7 +200,7 @@ function SubscriptionRow({
                   {subscription.status === 'trial' && (
                     <button
                       onClick={() => handleAction('activate')}
-                      className="block w-full text-left px-4 py-2 text-sm text-blue-700 hover:bg-blue-50"
+                      className="block w-full text-left px-4 py-2 text-sm text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                       role="menuitem"
                     >
                       ▶️ Activer
@@ -211,14 +211,14 @@ function SubscriptionRow({
                     <>
                       <button
                         onClick={() => handleAction('suspend')}
-                        className="block w-full text-left px-4 py-2 text-sm text-yellow-700 hover:bg-yellow-50"
+                        className="block w-full text-left px-4 py-2 text-sm text-yellow-700 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
                         role="menuitem"
                       >
                         ⏸️ Suspendre
                       </button>
                       <button
                         onClick={() => handleAction('cancel')}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                        className="block w-full text-left px-4 py-2 text-sm text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                         role="menuitem"
                       >
                         ❌ Annuler
@@ -230,14 +230,14 @@ function SubscriptionRow({
                     <>
                       <button
                         onClick={() => handleAction('activate')}
-                        className="block w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-green-50"
+                        className="block w-full text-left px-4 py-2 text-sm text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
                         role="menuitem"
                       >
                         ✅ Réactiver
                       </button>
                       <button
                         onClick={() => handleAction('cancel')}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                        className="block w-full text-left px-4 py-2 text-sm text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                         role="menuitem"
                       >
                         ❌ Annuler
@@ -419,11 +419,11 @@ export default function BillingPage() {
       title="Facturation"
       subtitle="Gestion complète de la facturation et des paiements"
     >
-      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
+      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
       {/* Tabs */}
-      <div className="flex-shrink-0 mb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex-shrink-0 mb-4 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8">
         {/* Mobile: Menu déroulant */}
-        <div className="lg:hidden mb-4">
+        <div className="lg:hidden mb-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
           <select
             value={activeTab}
             onChange={(e) => {
@@ -438,7 +438,8 @@ export default function BillingPage() {
                   })
               }
             }}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            className="w-full max-w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 box-border"
+            style={{ width: '100%', maxWidth: '100%' }}
           >
             <option value="overview">Vue d&apos;ensemble</option>
             <option value="subscriptions">Abonnements ({subscriptions.length})</option>
@@ -544,7 +545,7 @@ export default function BillingPage() {
       </div>
 
       {/* Content Area - Scrollable */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 lg:px-8">
         {/* Overview Tab - Dashboard Complet */}
         {activeTab === 'overview' && stats && (
           <div className="space-y-6 pb-6">

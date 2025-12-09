@@ -10,6 +10,15 @@ class Command(BaseCommand):
     help = 'Sync all public pages to the default system project'
 
     def handle(self, *args, **options):
+        # Get the public website tenant
+        from tenants.models import Tenant
+        public_tenant = Tenant.objects.filter(slug='vtcbuilder-public-website').first()
+        
+        if not public_tenant:
+            self.stdout.write(self.style.ERROR('❌ Tenant public (vtcbuilder-public-website) non trouvé!'))
+            self.stdout.write(self.style.WARNING('💡 Exécutez: python manage.py setup_public_website_tenant'))
+            return
+        
         # Get or create the default system project
         system_project, created = Project.objects.get_or_create(
             slug='vtcbuilder-public-site',
@@ -17,10 +26,16 @@ class Command(BaseCommand):
                 'name': 'VTCBuilder - Site Public',
                 'description': 'Projet par défaut pour les pages publiques du site VTCBuilder.',
                 'is_system_project': True,
-                'tenant': None,
+                'tenant': public_tenant,
                 'status': 'active',
             }
         )
+        
+        # Update tenant if it was None
+        if not created and system_project.tenant != public_tenant:
+            system_project.tenant = public_tenant
+            system_project.save()
+            self.stdout.write(self.style.SUCCESS(f'✅ Projet système mis à jour avec le tenant: {public_tenant.name}'))
         
         if created:
             self.stdout.write(self.style.SUCCESS(f'✅ Projet système créé: {system_project.name}'))

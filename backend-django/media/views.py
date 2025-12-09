@@ -425,29 +425,24 @@ class TemplateViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]  # Support pour upload d'images
 
     def _get_reference_tenant(self):
-        """Get a reference tenant for super admin template management"""
+        """Get the public website tenant for super admin template management"""
         from tenants.models import Tenant
-        # Use first active tenant as reference for templates
-        tenant = Tenant.objects.filter(deleted_at__isnull=True, status='active').first()
+        # Use the public website tenant (vtcbuilder-public-website) for templates
+        tenant = Tenant.objects.filter(
+            slug='vtcbuilder-public-website',
+            deleted_at__isnull=True
+        ).first()
         if not tenant:
-            # Fallback to any tenant (even inactive) if no active tenant
-            tenant = Tenant.objects.filter(deleted_at__isnull=True).first()
+            # Fallback to first active tenant (exclude public schema)
+            tenant = Tenant.objects.filter(
+                deleted_at__isnull=True, 
+                status='active'
+            ).exclude(schema_name='public').first()
         if not tenant:
-            # Create a default reference tenant if none exists
-            try:
-                tenant, created = Tenant.objects.get_or_create(
-                    slug='reference-tenant',
-                    defaults={
-                        'name': 'Reference Tenant',
-                        'email': 'reference@vtcbuilder.com',
-                        'status': 'active',
-                    }
-                )
-                if created:
-                    logger.info(f"Created reference tenant for template management: {tenant.id}")
-            except Exception as e:
-                logger.error(f"Error creating reference tenant: {e}", exc_info=True)
-                return None
+            # Fallback to any tenant (even inactive) if no active tenant (exclude public)
+            tenant = Tenant.objects.filter(
+                deleted_at__isnull=True
+            ).exclude(schema_name='public').first()
         return tenant
 
     def get_queryset(self):
@@ -808,7 +803,10 @@ class TemplateViewSet(viewsets.ModelViewSet):
                                 add_cors_headers(response, request)
                                 return response
                         except Exception as e:
-                            logger.error(f"Error listing templates for super admin with tenant {tenant.id}: {str(e)}", exc_info=True)
+                            # Silently ignore "relation does not exist" errors (normal for public schema)
+                            error_msg = str(e).lower()
+                            if 'relation' not in error_msg or 'does not exist' not in error_msg:
+                                logger.error(f"Error listing templates for super admin with tenant {tenant.id}: {str(e)}", exc_info=True)
                             # Return empty array on error instead of 500
                             response = Response([], status=status.HTTP_200_OK)
                             add_cors_headers(response, request)

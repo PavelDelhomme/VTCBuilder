@@ -173,24 +173,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 add_cors_headers(response, request)
                 return response
             
-            # Vérifier si la page est déjà dans un autre projet
-            existing_page = ProjectPage.objects.filter(
-                page_slug=page_slug,
-                page_type=page_type
-            ).exclude(project=project).first()
-            
-            if existing_page:
-                response = Response(
-                    {
-                        'error': f'Cette page est déjà dans le projet "{existing_page.project.name}" (ID: {existing_page.project.id}). Une page ne peut être que dans un seul projet.',
-                        'existing_project_id': existing_page.project.id,
-                        'existing_project_name': existing_page.project.name
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-                add_cors_headers(response, request)
-                return response
-            
             # Vérifier si la page est déjà dans ce projet
             existing_page_in_project = ProjectPage.objects.filter(
                 project=project,
@@ -219,6 +201,43 @@ class ProjectViewSet(viewsets.ModelViewSet):
             
             serializer = ProjectPageSerializer(page)
             response = Response(serializer.data, status=status.HTTP_201_CREATED)
+            add_cors_headers(response, request)
+            return response
+        except Exception as e:
+            response = Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            add_cors_headers(response, request)
+            return response
+    
+    @action(detail=False, methods=['get'], url_path='page-projects/(?P<page_slug>[^/]+)')
+    def page_projects(self, request, page_slug=None):
+        """Get all projects where a page is linked"""
+        try:
+            page_type = request.query_params.get('page_type', 'public')
+            
+            # Get all projects where this page is linked
+            project_pages = ProjectPage.objects.filter(
+                page_slug=page_slug,
+                page_type=page_type
+            ).select_related('project')
+            
+            projects = [
+                {
+                    'id': pp.project.id,
+                    'name': pp.project.name,
+                    'slug': pp.project.slug,
+                }
+                for pp in project_pages
+            ]
+            
+            response = Response({
+                'page_slug': page_slug,
+                'page_type': page_type,
+                'projects': projects,
+                'count': len(projects)
+            }, status=status.HTTP_200_OK)
             add_cors_headers(response, request)
             return response
         except Exception as e:

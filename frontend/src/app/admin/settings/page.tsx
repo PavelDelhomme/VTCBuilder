@@ -155,13 +155,14 @@ export default function SettingsPage() {
         <div className="flex-1 min-h-0 overflow-y-auto pb-6">
       <div className="space-y-6">
         {/* Tabs */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-gray-200 px-4 sm:px-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8">
           {/* Mobile: Menu déroulant */}
-          <div className="lg:hidden mb-4">
+          <div className="lg:hidden mb-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
             <select
               value={activeTab}
               onChange={(e) => setActiveTab(e.target.value as any)}
-              className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+              className="block w-full max-w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm box-border"
+              style={{ width: '100%', maxWidth: '100%' }}
             >
               {[
                 { id: 'general', label: 'Général', icon: '⚙️' },
@@ -269,23 +270,23 @@ export default function SettingsPage() {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Configuration Email</h2>
             
             {/* Info Box - Configuration simplifiée */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <div className="flex items-start">
                 <svg className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <div className="text-sm text-blue-800">
+                <div className="text-sm text-blue-800 dark:text-blue-200">
                   <p className="font-medium mb-1">Configuration Email Automatique</p>
-                  <p className="text-blue-700">
+                  <p className="text-blue-700 dark:text-blue-300">
                     Les emails sont envoyés automatiquement depuis <strong>noreply@vtcbuilder.com</strong> pour :
                   </p>
-                  <ul className="list-disc list-inside mt-2 text-blue-700 space-y-1">
+                  <ul className="list-disc list-inside mt-2 text-blue-700 dark:text-blue-300 space-y-1">
                     <li>Réinitialisation de mot de passe</li>
                     <li>Validation de création de compte</li>
                     <li>Factures et notifications de paiement</li>
                     <li>Notifications système</li>
                   </ul>
-                  <p className="text-blue-700 mt-2">
+                  <p className="text-blue-700 dark:text-blue-300 mt-2">
                     La configuration SMTP est gérée via les variables d'environnement dans le fichier <code className="bg-blue-100 px-1 rounded">.env</code> du backend.
                   </p>
                 </div>

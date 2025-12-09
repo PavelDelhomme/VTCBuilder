@@ -24,24 +24,25 @@ declare global {
  *   - Sur sous-domaine tenant : http://localhost:9495 (même backend)
  */
 function getApiUrl(): string {
-  // Si l'URL est définie via env, l'utiliser
-  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  
-  // En développement, toujours utiliser localhost:9495
-  // car le backend Django écoute sur ce port quel que soit le sous-domaine
+  // En développement, détecter l'IP/hostname et utiliser le backend correspondant
+  // Cette détection est prioritaire sur la variable d'environnement pour permettre l'accès depuis le réseau local
   if (typeof window !== 'undefined') {
-    // Détecte si on est sur un sous-domaine tenant ou localhost
     const hostname = window.location.hostname;
-    const port = window.location.port;
     
-    // Le backend Django est toujours accessible sur localhost:9495
-    // même si le frontend est sur un sous-domaine tenant
+    // Si on est sur 192.168.1.134, utiliser le backend sur la même IP
+    if (hostname === '192.168.1.134' || hostname.includes('192.168.1.134')) {
+      return `http://192.168.1.134:9495`;
+    }
+    
+    // Si on est sur localhost ou 127.0.0.1, utiliser localhost:9495
     if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
-      // Utilise le même port pour le backend (9495)
       return `http://localhost:9495`;
     }
+  }
+  
+  // Si l'URL est définie via env et qu'on n'a pas détecté d'IP spécifique, l'utiliser
+  if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
   }
   
   // Fallback par défaut

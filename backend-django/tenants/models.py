@@ -191,7 +191,7 @@ class User(GuardianUserMixin, AbstractUser):
     def can_use_feature(self, feature):
         """
         Vérifie si l'utilisateur peut utiliser une feature.
-        Le super admin a accès à toutes les features sans exception.
+        Le super admin et les tenants système ont accès à toutes les features sans exception.
         """
         # Super admin a accès à tout
         if self.is_super_admin():
@@ -200,6 +200,11 @@ class User(GuardianUserMixin, AbstractUser):
         # Si l'utilisateur n'a pas de tenant, pas d'accès
         if not self.tenant:
             return False
+        
+        # Les tenants système ont accès à toutes les fonctionnalités
+        from tenants.utils import is_system_tenant
+        if is_system_tenant(self.tenant):
+            return True
         
         # Vérifier si le tenant a un abonnement actif
         try:

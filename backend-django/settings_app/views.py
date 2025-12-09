@@ -16,40 +16,53 @@ logger = logging.getLogger(__name__)
 def add_cors_headers(response, request):
     """Helper function to add CORS headers to a response"""
     try:
-        origin = request.META.get('HTTP_ORIGIN')
-        if origin:
+        origin = request.META.get('HTTP_ORIGIN') or request.META.get('HTTP_REFERER', '').split('/')[0:3]
+        if isinstance(origin, list):
+            origin = '/'.join(origin)
+        
+        # Si pas d'origin, essayer de le déduire de la requête
+        if not origin or not origin.startswith('http'):
+            # En développement, autoriser par défaut
             if settings.DEBUG:
-                # En développement, autoriser tous les localhost, 127.0.0.1 et 192.168.1.134
-                if (origin.startswith('http://localhost') or 
-                    origin.startswith('http://127.0.0.1') or
-                    origin.startswith('http://192.168.1.134') or
-                    origin.startswith('https://localhost') or
-                    origin.startswith('https://127.0.0.1') or
-                    origin.startswith('https://192.168.1.134')):
-                    response['Access-Control-Allow-Origin'] = origin
-                    response['Access-Control-Allow-Credentials'] = 'true'
-                    response['Access-Control-Allow-Methods'] = ', '.join(settings.CORS_ALLOW_METHODS)
-                    response['Access-Control-Allow-Headers'] = ', '.join(settings.CORS_ALLOW_HEADERS)
+                origin = 'http://localhost:9494'
             else:
-                if hasattr(settings, 'CORS_ALLOWED_ORIGINS') and origin in settings.CORS_ALLOWED_ORIGINS:
-                    response['Access-Control-Allow-Origin'] = origin
-                    response['Access-Control-Allow-Credentials'] = 'true'
+                return response
+        
+        if settings.DEBUG:
+            # En développement, autoriser tous les localhost, 127.0.0.1 et 192.168.1.134
+            if (origin.startswith('http://localhost') or 
+                origin.startswith('http://127.0.0.1') or
+                origin.startswith('http://192.168.1.134') or
+                origin.startswith('https://localhost') or
+                origin.startswith('https://127.0.0.1') or
+                origin.startswith('https://192.168.1.134')):
+                response['Access-Control-Allow-Origin'] = origin
+                response['Access-Control-Allow-Credentials'] = 'true'
+                response['Access-Control-Allow-Methods'] = ', '.join(settings.CORS_ALLOW_METHODS)
+                response['Access-Control-Allow-Headers'] = ', '.join(settings.CORS_ALLOW_HEADERS)
+        else:
+            if hasattr(settings, 'CORS_ALLOWED_ORIGINS') and origin in settings.CORS_ALLOWED_ORIGINS:
+                response['Access-Control-Allow-Origin'] = origin
+                response['Access-Control-Allow-Credentials'] = 'true'
+                response['Access-Control-Allow-Methods'] = ', '.join(settings.CORS_ALLOW_METHODS)
+                response['Access-Control-Allow-Headers'] = ', '.join(settings.CORS_ALLOW_HEADERS)
     except Exception as e:
         logger.warning(f"Error adding CORS headers: {e}")
+    
+    return response
 
 
 @api_view(['GET', 'POST', 'PATCH', 'PUT', 'OPTIONS'])
-@permission_classes([IsAuthenticated])
 def system_settings_view(request):
     """Get, create or update system settings (singleton)"""
     try:
-        # Handle OPTIONS request for CORS preflight
+        # Handle OPTIONS request for CORS preflight (before authentication check)
         if request.method == 'OPTIONS':
-            response = Response()
+            response = Response({}, status=status.HTTP_200_OK)
             add_cors_headers(response, request)
             return response
         
-        # Check authentication
+        # Check authentication for non-OPTIONS requests
         if not request.user or not request.user.is_authenticated:
             error_response = Response(
                 {'error': 'Authentication required'},

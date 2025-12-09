@@ -840,6 +840,14 @@ class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = InvoiceSerializer
     permission_classes = [IsAuthenticated]
 
+    def dispatch(self, request, *args, **kwargs):
+        """Handle OPTIONS requests for CORS preflight"""
+        if request.method == 'OPTIONS':
+            response = Response({}, status=status.HTTP_200_OK)
+            add_cors_headers(response, request)
+            return response
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         """Filter invoices based on user role and query parameters"""
         try:
@@ -929,25 +937,44 @@ class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
             add_cors_headers(error_response, request)
             return error_response
 
+    def retrieve(self, request, *args, **kwargs):
+        """Retrieve a single invoice with error handling"""
+        try:
+            response = super().retrieve(request, *args, **kwargs)
+            add_cors_headers(response, request)
+            return response
+        except Exception as e:
+            logger.error(f"Error in InvoiceViewSet.retrieve: {e}", exc_info=True)
+            error_response = Response({
+                'error': 'An error occurred while fetching the invoice',
+                'message': str(e) if settings.DEBUG else 'Unable to load invoice'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            add_cors_headers(error_response, request)
+            return error_response
+
     @action(detail=True, methods=['post'])
     def mark_paid(self, request, pk=None):
         """Mark an invoice as paid (admin only)"""
         invoice = self.get_object()
         
         if not request.user.is_super_admin():
-            return Response(
+            error_response = Response(
                 {'error': 'Only super admin can mark invoices as paid'},
                 status=status.HTTP_403_FORBIDDEN
             )
+            add_cors_headers(error_response, request)
+            return error_response
         
         invoice.status = 'paid'
         invoice.paid_at = timezone.now()
         invoice.save(update_fields=['status', 'paid_at'])
         
-        return Response({
+        response = Response({
             'status': 'Invoice marked as paid',
             'invoice': InvoiceSerializer(invoice).data
         })
+        add_cors_headers(response, request)
+        return response
 
     @action(detail=True, methods=['post'])
     def send_reminder(self, request, pk=None):
@@ -955,16 +982,20 @@ class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
         invoice = self.get_object()
         
         if not request.user.is_super_admin():
-            return Response(
+            error_response = Response(
                 {'error': 'Only super admin can send payment reminders'},
                 status=status.HTTP_403_FORBIDDEN
             )
+            add_cors_headers(error_response, request)
+            return error_response
         
         if invoice.status == 'paid':
-            return Response(
+            error_response = Response(
                 {'error': 'Invoice is already paid'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+            add_cors_headers(error_response, request)
+            return error_response
         
         try:
             from django.core.mail import send_mail
@@ -1014,18 +1045,22 @@ L'équipe VTCBuilder
                 fail_silently=False,
             )
             
-            return Response({
+            response = Response({
                 'status': 'Reminder email sent successfully',
                 'message': f'Email de rappel envoyé à {invoice.tenant.email}'
             })
+            add_cors_headers(response, request)
+            return response
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Error sending reminder email: {str(e)}")
-            return Response(
+            error_response = Response(
                 {'error': f'Erreur lors de l\'envoi de l\'email: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            add_cors_headers(error_response, request)
+            return error_response
 
     @action(detail=True, methods=['get'])
     def download_pdf(self, request, pk=None):

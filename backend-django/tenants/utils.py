@@ -6,9 +6,87 @@ from tenants.models import Tenant, User, Feature, UserFeature
 from billing.models import Subscription
 
 
+def is_system_tenant(tenant):
+    """
+    Vérifie si un tenant est un tenant système VTCBuilder.
+    Les tenants système ont accès à toutes les fonctionnalités.
+    """
+    if not tenant:
+        return False
+    return (
+        tenant.slug == 'vtcbuilder-public-website' or
+        tenant.slug == 'public' or
+        tenant.schema_name == 'public' or
+        tenant.slug == 'reference-tenant' or
+        getattr(tenant, 'is_system', False)
+    )
+
+
+def enable_all_features_for_system_tenant(tenant):
+    """
+    Active toutes les fonctionnalités pour un tenant système.
+    Les tenants système ont accès à toutes les fonctionnalités sans restriction.
+    
+    Args:
+        tenant: Instance du Tenant (doit être un tenant système)
+    
+    Returns:
+        dict: Statistiques sur les fonctionnalités activées
+    """
+    if not is_system_tenant(tenant):
+        return {
+            'enabled': 0,
+            'skipped': 0,
+            'error': 'Tenant is not a system tenant'
+        }
+    
+    # Récupérer toutes les fonctionnalités actives
+    all_features = Feature.objects.filter(is_active=True)
+    
+    enabled_count = 0
+    skipped_count = 0
+    users_count = 0
+    
+    with tenant_context(tenant):
+        # Récupérer tous les utilisateurs du tenant
+        users = User.objects.filter(tenant=tenant, status='active')
+        users_count = users.count()
+        
+        for user in users:
+            for feature in all_features:
+                # Créer ou mettre à jour UserFeature
+                user_feature, created = UserFeature.objects.get_or_create(
+                    user=user,
+                    feature=feature,
+                    defaults={
+                        'is_enabled': True,
+                        'enabled_by': user if user.is_tenant_admin() else None,
+                    }
+                )
+                
+                if not created and not user_feature.is_enabled:
+                    # Réactiver si elle était désactivée
+                    user_feature.is_enabled = True
+                    user_feature.save()
+                    enabled_count += 1
+                elif created:
+                    enabled_count += 1
+                else:
+                    skipped_count += 1
+    
+    return {
+        'enabled': enabled_count,
+        'skipped': skipped_count,
+        'features_count': len(all_features),
+        'users_count': users_count,
+        'tenant': tenant.name
+    }
+
+
 def enable_features_for_tenant(tenant, plan=None):
     """
     Active automatiquement les fonctionnalités d'un tenant en fonction de son plan d'abonnement.
+    Les tenants système ont automatiquement accès à toutes les fonctionnalités.
     
     Args:
         tenant: Instance du Tenant
@@ -18,6 +96,10 @@ def enable_features_for_tenant(tenant, plan=None):
         dict: Statistiques sur les fonctionnalités activées
     """
     from django_tenants.utils import tenant_context
+    
+    # Les tenants système ont accès à toutes les fonctionnalités
+    if is_system_tenant(tenant):
+        return enable_all_features_for_system_tenant(tenant)
     
     # Récupérer le plan depuis l'abonnement si non fourni
     if not plan:
@@ -104,6 +186,7 @@ def sync_tenant_features(tenant):
     """
     Synchronise les fonctionnalités d'un tenant avec son plan actuel.
     Désactive les fonctionnalités qui ne sont plus disponibles et active celles qui le sont.
+    Les tenants système ont toujours accès à toutes les fonctionnalités.
     
     Args:
         tenant: Instance du Tenant
@@ -112,6 +195,10 @@ def sync_tenant_features(tenant):
         dict: Statistiques sur la synchronisation
     """
     from django_tenants.utils import tenant_context
+    
+    # Les tenants système ont toujours accès à toutes les fonctionnalités
+    if is_system_tenant(tenant):
+        return enable_all_features_for_system_tenant(tenant)
     
     try:
         subscription = Subscription.objects.filter(

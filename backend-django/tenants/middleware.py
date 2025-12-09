@@ -4,6 +4,7 @@ Middleware to check user status and block access for suspended/inactive users
 from django.http import JsonResponse
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.conf import settings
 
 
 class UserStatusMiddleware:
@@ -52,7 +53,7 @@ class UserStatusMiddleware:
                         
                         # Check user status
                         if user.status == 'suspended':
-                            return JsonResponse(
+                            response = JsonResponse(
                                 {
                                     'error': 'Compte suspendu',
                                     'detail': 'Votre compte a été suspendu. Veuillez contacter l\'administrateur.',
@@ -60,9 +61,21 @@ class UserStatusMiddleware:
                                 },
                                 status=403
                             )
+                            # Add CORS headers
+                            origin = request.META.get('HTTP_ORIGIN')
+                            if origin and settings.DEBUG:
+                                if (origin.startswith('http://localhost') or 
+                                    origin.startswith('http://127.0.0.1') or
+                                    origin.startswith('http://192.168.1.134') or
+                                    origin.startswith('https://localhost') or
+                                    origin.startswith('https://127.0.0.1') or
+                                    origin.startswith('https://192.168.1.134')):
+                                    response['Access-Control-Allow-Origin'] = origin
+                                    response['Access-Control-Allow-Credentials'] = 'true'
+                            return response
                         
                         if user.status == 'inactive':
-                            return JsonResponse(
+                            response = JsonResponse(
                                 {
                                     'error': 'Compte désactivé',
                                     'detail': 'Votre compte a été désactivé. Veuillez contacter l\'administrateur.',
@@ -70,6 +83,18 @@ class UserStatusMiddleware:
                                 },
                                 status=403
                             )
+                            # Add CORS headers
+                            origin = request.META.get('HTTP_ORIGIN')
+                            if origin and settings.DEBUG:
+                                if (origin.startswith('http://localhost') or 
+                                    origin.startswith('http://127.0.0.1') or
+                                    origin.startswith('http://192.168.1.134') or
+                                    origin.startswith('https://localhost') or
+                                    origin.startswith('https://127.0.0.1') or
+                                    origin.startswith('https://192.168.1.134')):
+                                    response['Access-Control-Allow-Origin'] = origin
+                                    response['Access-Control-Allow-Credentials'] = 'true'
+                            return response
 
         except (InvalidToken, TokenError, AttributeError, TypeError, KeyError, ValueError):
             # If no valid token or user, let the normal authentication handle it

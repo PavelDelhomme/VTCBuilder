@@ -365,26 +365,45 @@ class DetailedStatsView(APIView):
                 from media.models import Template
                 from django_tenants.utils import tenant_context
                 
-                # Get templates from reference tenant or any tenant
+                # Get templates from the public website tenant (vtcbuilder-public-website)
                 templates_usage = []
                 # Use TenantModel (imported at the start of get() method)
-                reference_tenant = TenantModel.objects.filter(deleted_at__isnull=True).first()
+                # Use the public website tenant for templates
+                reference_tenant = TenantModel.objects.filter(
+                    slug='vtcbuilder-public-website',
+                    deleted_at__isnull=True
+                ).first()
+                if not reference_tenant:
+                    # Fallback to first active tenant (exclude public schema)
+                    reference_tenant = TenantModel.objects.filter(
+                        deleted_at__isnull=True,
+                        status='active'
+                    ).exclude(schema_name='public').first()
                 if reference_tenant:
-                    with tenant_context(reference_tenant):
-                        templates = Template.objects.filter(is_active=True).order_by('-usage_count')[:10]
-                        templates_usage = [
-                            {
-                                'id': t.id,
-                                'name': t.name,
-                                'slug': t.slug,
-                                'category': t.category,
-                                'usage_count': t.usage_count,
-                            }
-                            for t in templates
-                        ]
+                    try:
+                        with tenant_context(reference_tenant):
+                            templates = Template.objects.filter(is_active=True).order_by('-usage_count')[:10]
+                            templates_usage = [
+                                {
+                                    'id': t.id,
+                                    'name': t.name,
+                                    'slug': t.slug,
+                                    'category': t.category,
+                                    'usage_count': t.usage_count,
+                                }
+                                for t in templates
+                            ]
+                    except Exception as e:
+                        # Silently ignore "relation does not exist" errors (normal for public schema)
+                        error_msg = str(e).lower()
+                        if 'relation' not in error_msg or 'does not exist' not in error_msg:
+                            logger.warning(f"Error calculating templates usage for tenant {reference_tenant.id}: {e}")
                 stats['templates_usage'] = templates_usage
             except Exception as e:
-                logger.warning(f"Error calculating templates usage: {e}")
+                # Silently ignore "relation does not exist" errors (normal for public schema)
+                error_msg = str(e).lower()
+                if 'relation' not in error_msg or 'does not exist' not in error_msg:
+                    logger.warning(f"Error calculating templates usage: {e}")
                 stats['templates_usage'] = []
             
             # Add pages statistics - aggregate across all tenant schemas
@@ -403,8 +422,8 @@ class DetailedStatsView(APIView):
                     'created_this_month': 0,
                 }
                 
-                # Iterate through all active tenants and aggregate stats
-                active_tenants = TenantModel.objects.filter(deleted_at__isnull=True)
+                # Iterate through all active tenants and aggregate stats (exclude public schema)
+                active_tenants = TenantModel.objects.filter(deleted_at__isnull=True).exclude(schema_name='public')
                 for tenant in active_tenants:
                     try:
                         with tenant_context(tenant):
@@ -417,13 +436,10 @@ class DetailedStatsView(APIView):
                             pages_stats['created_this_week'] += Page.objects.filter(created_at__gte=timezone.now() - timedelta(days=7)).count()
                             pages_stats['created_this_month'] += Page.objects.filter(created_at__gte=timezone.now() - timedelta(days=30)).count()
                     except Exception as e:
-                        # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
+                        # Silently ignore "relation does not exist" errors (shouldn't happen if we exclude public, but just in case)
                         error_msg = str(e).lower()
-                        # Vérifier si c'est une erreur "relation does not exist" (normale dans public schema)
-                        if 'relation' in error_msg and 'does not exist' in error_msg:
-                            # Ne pas logger, c'est normal dans le contexte multi-tenant
-                            continue
-                        logger.warning(f"Error calculating pages stats for tenant {tenant.id}: {e}")
+                        if 'relation' not in error_msg or 'does not exist' not in error_msg:
+                            logger.warning(f"Error calculating pages stats for tenant {tenant.id}: {e}")
                         continue
                 
                 stats['pages_stats'] = pages_stats
@@ -451,8 +467,8 @@ class DetailedStatsView(APIView):
                     'created_this_month': 0,
                 }
                 
-                # Iterate through all active tenants and aggregate stats
-                active_tenants = TenantModel.objects.filter(deleted_at__isnull=True)
+                # Iterate through all active tenants and aggregate stats (exclude public schema)
+                active_tenants = TenantModel.objects.filter(deleted_at__isnull=True).exclude(schema_name='public')
                 for tenant in active_tenants:
                     try:
                         with tenant_context(tenant):
@@ -462,13 +478,10 @@ class DetailedStatsView(APIView):
                             services_stats['created_this_week'] += Service.objects.filter(created_at__gte=timezone.now() - timedelta(days=7)).count()
                             services_stats['created_this_month'] += Service.objects.filter(created_at__gte=timezone.now() - timedelta(days=30)).count()
                     except Exception as e:
-                        # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
+                        # Silently ignore "relation does not exist" errors (shouldn't happen if we exclude public, but just in case)
                         error_msg = str(e).lower()
-                        # Vérifier si c'est une erreur "relation does not exist" (normale dans public schema)
-                        if 'relation' in error_msg and 'does not exist' in error_msg:
-                            # Ne pas logger, c'est normal dans le contexte multi-tenant
-                            continue
-                        logger.warning(f"Error calculating services stats for tenant {tenant.id}: {e}")
+                        if 'relation' not in error_msg or 'does not exist' not in error_msg:
+                            logger.warning(f"Error calculating services stats for tenant {tenant.id}: {e}")
                         continue
                 
                 stats['services_stats'] = services_stats
@@ -499,8 +512,8 @@ class DetailedStatsView(APIView):
                     'this_month': 0,
                 }
                 
-                # Iterate through all active tenants and aggregate stats
-                active_tenants = TenantModel.objects.filter(deleted_at__isnull=True)
+                # Iterate through all active tenants and aggregate stats (exclude public schema)
+                active_tenants = TenantModel.objects.filter(deleted_at__isnull=True).exclude(schema_name='public')
                 for tenant in active_tenants:
                     try:
                         with tenant_context(tenant):
@@ -513,13 +526,10 @@ class DetailedStatsView(APIView):
                             bookings_stats['this_week'] += Booking.objects.filter(pickup_datetime__gte=timezone.now() - timedelta(days=7)).count()
                             bookings_stats['this_month'] += Booking.objects.filter(pickup_datetime__gte=timezone.now() - timedelta(days=30)).count()
                     except Exception as e:
-                        # Ne logger que si ce n'est pas une erreur "relation does not exist" (normale dans public schema)
+                        # Silently ignore "relation does not exist" errors (shouldn't happen if we exclude public, but just in case)
                         error_msg = str(e).lower()
-                        # Vérifier si c'est une erreur "relation does not exist" (normale dans public schema)
-                        if 'relation' in error_msg and 'does not exist' in error_msg:
-                            # Ne pas logger, c'est normal dans le contexte multi-tenant
-                            continue
-                        logger.warning(f"Error calculating bookings stats for tenant {tenant.id}: {e}")
+                        if 'relation' not in error_msg or 'does not exist' not in error_msg:
+                            logger.warning(f"Error calculating bookings stats for tenant {tenant.id}: {e}")
                         continue
                 
                 stats['bookings_stats'] = bookings_stats

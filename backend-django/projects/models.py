@@ -135,8 +135,8 @@ class ProjectPage(models.Model):
     class Meta:
         db_table = 'project_pages'
         ordering = ['order', '-created_at']
-        # Une page ne peut être que dans un seul projet (page_slug + page_type unique)
-        unique_together = [('page_slug', 'page_type')]
+        # Une page peut être dans plusieurs projets, mais pas deux fois dans le même projet
+        unique_together = [('project', 'page_slug', 'page_type')]
         verbose_name = 'Page de Projet'
         verbose_name_plural = 'Pages de Projet'
     

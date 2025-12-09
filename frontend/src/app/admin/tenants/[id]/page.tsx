@@ -558,7 +558,14 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
                 </select>
               </td>
               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                {user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : '-'}
+                {user.created_at ? (() => {
+                  try {
+                    const date = new Date(user.created_at)
+                    return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('fr-FR')
+                  } catch {
+                    return '-'
+                  }
+                })() : '-'}
               </td>
               <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                 {editingPassword === user.id ? (
@@ -625,14 +632,14 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
                     </button>
                     <button
                       onClick={() => handleEditPassword(user.id)}
-                      className="text-green-600 hover:text-green-900"
+                      className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300"
                       title="Modifier le mot de passe directement"
                     >
                       🔒 Modifier MDP
                     </button>
                     <button
                       onClick={() => handleResetPassword(user.id, user.email)}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
                       title="Envoyer un email de réinitialisation"
                     >
                       🔑 Reset Email
@@ -640,7 +647,7 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
                     {user.role !== 'tenant-admin' && user.role !== 'super-admin' && (
                       <button
                         onClick={() => handleDeleteUser(user.id, user.email)}
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                         title="Supprimer l'utilisateur"
                       >
                         🗑️
@@ -862,10 +869,23 @@ export default function TenantDetailPage() {
 
   const loadTenant = async () => {
     try {
+      // Vérifier si l'utilisateur est authentifié avant de charger
+      if (!authService.isAuthenticated()) {
+        router.push('/login')
+        return
+      }
+      
       const data = await tenantService.getById(tenantId!)
       setTenant(data)
-    } catch (error) {
-      // Erreur chargement tenant - redirection vers liste
+    } catch (error: any) {
+      // Si erreur 401, rediriger vers login
+      if (error?.response?.status === 401) {
+        authService.logout()
+        router.push('/login')
+        return
+      }
+      // Autre erreur - redirection vers liste
+      console.error('Erreur chargement tenant:', error)
       router.push('/admin/tenants')
     } finally {
       setLoading(false)
@@ -927,14 +947,15 @@ export default function TenantDetailPage() {
         </div>
       }
     >
-      {/* Tabs - Responsive */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-6">
-        {/* Mobile: Select dropdown */}
-        <div className="lg:hidden py-4">
+      {/* Tabs - Responsive amélioré */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 -mx-4 sm:-mx-6 lg:-mx-8 mb-4 sm:mb-6 overflow-x-hidden">
+        {/* Mobile/Tablet: Select dropdown */}
+        <div className="md:hidden py-3 px-4 sm:px-6 lg:px-8 w-full">
           <select
             value={activeTab}
             onChange={(e) => setActiveTab(e.target.value as Tab)}
-            className="w-full px-3 py-2 border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full max-w-full px-3 py-2.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white box-border"
+            style={{ width: '100%', maxWidth: '100%' }}
           >
             {tabs.map((tab) => (
               <option key={tab.id} value={tab.id}>
@@ -944,27 +965,42 @@ export default function TenantDetailPage() {
           </select>
         </div>
         
-        {/* Desktop: Horizontal tabs */}
-        <nav className="hidden lg:flex -mb-px space-x-4 sm:space-x-8 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`${
-                activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-              } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
-            >
-              <span className="mr-2">{tab.icon}</span>
-              {tab.name}
-            </button>
-          ))}
-        </nav>
+        {/* Desktop: Horizontal tabs - Design moderne et responsive */}
+        <div className="hidden md:block px-2 sm:px-4 lg:px-8">
+          <nav className="flex -mb-px space-x-0.5 sm:space-x-1 overflow-x-auto scrollbar-hide pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`${
+                  activeTab === tab.id
+                    ? 'bg-gradient-to-b from-blue-50 to-white dark:from-blue-900/40 dark:to-gray-800 text-blue-700 dark:text-blue-300 border-blue-500 dark:border-blue-400 shadow-sm font-semibold'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-transparent font-medium'
+                } whitespace-nowrap py-2.5 sm:py-3 px-3 sm:px-4 lg:px-5 xl:px-6 border-b-2 text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 flex-shrink-0 transition-all duration-200 rounded-t-lg relative group`}
+              >
+                <span className="text-base sm:text-lg transition-transform group-hover:scale-110">{tab.icon}</span>
+                <span className="relative hidden sm:inline">
+                  {tab.name}
+                  {activeTab === tab.id && (
+                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-500 dark:bg-blue-400 rounded-full"></span>
+                  )}
+                </span>
+                <span className="relative sm:hidden">
+                  {tab.name.length > 8 ? tab.name.substring(0, 8) + '...' : tab.name}
+                </span>
+              </button>
+            ))}
+          </nav>
+        </div>
+        <style jsx>{`
+          nav.scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
       </div>
 
       {/* Tab Content */}
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 w-full overflow-x-hidden">
           {activeTab === 'overview' && (
             <div className="space-y-6">
               <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6">
@@ -993,7 +1029,14 @@ export default function TenantDetailPage() {
                   <div>
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Créé le</dt>
                     <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                      {new Date(tenant.created_at).toLocaleDateString('fr-FR')}
+                      {tenant.created_at ? (() => {
+                        try {
+                          const date = new Date(tenant.created_at)
+                          return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('fr-FR')
+                        } catch {
+                          return '-'
+                        }
+                      })() : '-'}
                     </dd>
                 </div>
               </dl>

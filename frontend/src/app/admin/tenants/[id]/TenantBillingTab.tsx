@@ -125,12 +125,19 @@ export default function TenantBillingTab({ tenantId, tenantName }: TenantBilling
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency }).format(amount)
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return '-'
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return '-'
+      return date.toLocaleDateString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    } catch (error) {
+      return '-'
+    }
   }
 
   const getStatusBadge = (status: string, type: 'subscription' | 'invoice' | 'payment') => {

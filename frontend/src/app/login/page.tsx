@@ -38,10 +38,26 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Détecter si on est sur un sous-domaine tenant
-    if (isTenantSubdomain()) {
-      const slug = getTenantSlug()
-      setTenantSlug(slug)
-      // Ne pas afficher la config de domaine par défaut, seulement si l'utilisateur le demande
+    // Ne pas traiter les adresses IP comme des sous-domaines tenant
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      // Vérifier explicitement que ce n'est pas une IP
+      const isIP = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) && 
+                   hostname.split('.').every(part => {
+                     const num = parseInt(part, 10)
+                     return num >= 0 && num <= 255
+                   })
+      
+      if (!isIP && isTenantSubdomain()) {
+        const slug = getTenantSlug()
+        // Ne définir le tenantSlug que si c'est un vrai sous-domaine (pas une IP)
+        if (slug && !/^\d+$/.test(slug)) {
+          setTenantSlug(slug)
+        }
+      } else {
+        // S'assurer que tenantSlug est null pour les IPs
+        setTenantSlug(null)
+      }
     }
   }, [])
 

@@ -17,9 +17,28 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
     def process_request(self, request):
         """Gérer les requêtes OPTIONS (preflight) avant qu'elles n'atteignent les vues"""
         if request.method == 'OPTIONS':
-            from django.http import JsonResponse
-            response = JsonResponse({}, status=200)
-            return self._add_cors_headers(response, request)
+            from django.http import HttpResponse
+            origin = request.META.get('HTTP_ORIGIN', 'http://localhost:9494')
+            response = HttpResponse('', status=200)
+            
+            # Toujours ajouter les headers CORS pour OPTIONS en développement
+            if settings.DEBUG:
+                if (origin.startswith('http://localhost') or 
+                    origin.startswith('http://127.0.0.1') or
+                    origin.startswith('http://192.168.1.134') or
+                    origin.startswith('https://localhost') or
+                    origin.startswith('https://127.0.0.1') or
+                    origin.startswith('https://192.168.1.134')):
+                    response['Access-Control-Allow-Origin'] = origin
+                    response['Access-Control-Allow-Credentials'] = 'true'
+                    response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+                    response['Access-Control-Allow-Headers'] = 'accept, accept-encoding, authorization, content-type, dnt, origin, user-agent, x-csrftoken, x-requested-with'
+                    response['Access-Control-Max-Age'] = '86400'
+            else:
+                # En production, utiliser la logique normale
+                response = self._add_cors_headers(response, request)
+            
+            return response
         return None
     
     def _add_cors_headers(self, response, request):
@@ -72,8 +91,8 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
     
     def process_response(self, request, response):
         """Ajouter les headers CORS à toutes les réponses"""
-        # Supprimer les logs "Unauthorized" pour les endpoints attendus
-        if response.status_code == 401:
+        # Supprimer les logs "Unauthorized" et "Forbidden" pour les endpoints attendus
+        if response.status_code in [401, 403]:
             silent_endpoints = [
                 '/api/users/impersonation-status',
                 '/api/system-settings',
@@ -88,6 +107,7 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
                     response._suppress_logging = True
                     break
         
+        # Toujours ajouter les headers CORS, même pour les erreurs
         return self._add_cors_headers(response, request)
     
     def process_exception(self, request, exception):

@@ -342,12 +342,12 @@ export default function StatsPage() {
 
   const getAlertColor = (type: string, severity: string) => {
     if (type === 'error' || severity === 'high') {
-      return 'bg-red-50 border-red-200 text-red-800'
+      return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
     }
     if (type === 'warning' || severity === 'medium') {
-      return 'bg-yellow-50 border-yellow-200 text-yellow-800'
+      return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200'
     }
-    return 'bg-blue-50 border-blue-200 text-blue-800'
+    return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200'
   }
 
   if (loading) {
@@ -361,8 +361,8 @@ export default function StatsPage() {
   if (!stats || !stats.overview) {
     return (
       <AdminLayout title="Statistiques Détaillées" subtitle="Erreur">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <p className="text-red-800">Erreur lors du chargement des statistiques.</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <p className="text-red-800 dark:text-red-200">Erreur lors du chargement des statistiques.</p>
         </div>
       </AdminLayout>
     )
@@ -374,9 +374,9 @@ export default function StatsPage() {
       subtitle="Analyses et métriques de la plateforme avec monitoring complet et IA maison"
     >
       <div className="flex-1 min-h-0 overflow-y-auto pb-6">
-        <div className="w-full min-h-0 flex flex-col">
+        <div className="w-full min-h-0 flex flex-col px-4 sm:px-6 lg:px-8">
           {/* Onglets de navigation */}
-          <div className="flex-shrink-0 mb-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex-shrink-0 mb-6 border-b border-gray-200 dark:border-gray-700">
           {/* Mobile: Menu déroulant */}
           <div className="lg:hidden mb-4">
             <select
@@ -435,12 +435,12 @@ export default function StatsPage() {
         </div>
 
         {/* Content Area - Scrollable */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 lg:px-8">
           {/* Cartes Statistiques Billing - Même style que /admin/billing */}
           {billingStats && (
           <>
             {/* Première rangée - Cartes principales avec gradients */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-8">
               {/* Revenus Totaux */}
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-4 sm:p-6 text-white">
                 <div className="flex items-center justify-between mb-2">
@@ -504,7 +504,7 @@ export default function StatsPage() {
             </div>
 
             {/* Deuxième rangée - Cartes secondaires */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-10">
               {/* Total Factures */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <div className="flex items-center justify-between mb-2">
@@ -569,7 +569,7 @@ export default function StatsPage() {
             </div>
 
             {/* Statistiques Abonnements et Tenants */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {/* Abonnements par statut */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Abonnements par Statut</h3>
@@ -685,7 +685,7 @@ export default function StatsPage() {
 
         {/* Alertes et Problèmes */}
         {stats.alerts && stats.alerts.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
               <svg className="h-6 w-6 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -734,36 +734,36 @@ export default function StatsPage() {
 
         {/* Activité Récente */}
         {stats && stats.activity && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Activité Récente</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <p className="text-2xl font-bold text-blue-600">{stats.activity.users_today}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Utilisateurs<br />Aujourd'hui</p>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Activité Récente</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 sm:gap-6">
+              <div className="text-center p-4 sm:p-5 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/50 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.activity.users_today}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2">Utilisateurs<br />Aujourd'hui</p>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <p className="text-2xl font-bold text-green-600">{stats.activity.users_this_week}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Utilisateurs<br />Cette semaine</p>
+              <div className="text-center p-4 sm:p-5 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800/50 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">{stats.activity.users_this_week}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2">Utilisateurs<br />Cette semaine</p>
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <p className="text-2xl font-bold text-purple-600">{stats.activity.users_this_month}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Utilisateurs<br />Ce mois</p>
+              <div className="text-center p-4 sm:p-5 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800/50 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.activity.users_this_month}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2">Utilisateurs<br />Ce mois</p>
               </div>
-              <div className="text-center p-4 bg-indigo-50 rounded-lg">
-                <p className="text-2xl font-bold text-indigo-600">{stats.activity.tenants_today}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Tenants<br />Aujourd'hui</p>
+              <div className="text-center p-4 sm:p-5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-100 dark:border-indigo-800/50 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-bold text-indigo-600 dark:text-indigo-400">{stats.activity.tenants_today}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2">Tenants<br />Aujourd'hui</p>
               </div>
-              <div className="text-center p-4 bg-pink-50 rounded-lg">
-                <p className="text-2xl font-bold text-pink-600">{stats.activity.tenants_this_week}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Tenants<br />Cette semaine</p>
+              <div className="text-center p-4 sm:p-5 bg-pink-50 dark:bg-pink-900/20 rounded-lg border border-pink-100 dark:border-pink-800/50 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-bold text-pink-600 dark:text-pink-400">{stats.activity.tenants_this_week}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2">Tenants<br />Cette semaine</p>
               </div>
-              <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                <p className="text-2xl font-bold text-yellow-600">{stats.activity.tenants_this_month}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Tenants<br />Ce mois</p>
+              <div className="text-center p-4 sm:p-5 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-100 dark:border-yellow-800/50 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-bold text-yellow-600 dark:text-yellow-400">{stats.activity.tenants_this_month}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2">Tenants<br />Ce mois</p>
               </div>
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <p className="text-2xl font-bold text-orange-600">{stats.activity.password_resets_last_week}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Reset mot de passe<br />7 derniers jours</p>
+              <div className="text-center p-4 sm:p-5 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-100 dark:border-orange-800/50 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-bold text-orange-600 dark:text-orange-400">{stats.activity.password_resets_last_week}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2">Reset mot de passe<br />7 derniers jours</p>
               </div>
             </div>
           </div>
@@ -934,14 +934,14 @@ export default function StatsPage() {
         {/* Cartes supplémentaires pour les statuts */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           {(stats.overview?.suspended_tenants || 0) > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-lg shadow p-6">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg shadow p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-red-700">Tenants Suspendus</p>
-                  <p className="text-3xl font-bold text-red-900 mt-2">{formatNumber(stats.overview.suspended_tenants)}</p>
+                  <p className="text-sm font-medium text-red-700 dark:text-red-300">Tenants Suspendus</p>
+                  <p className="text-3xl font-bold text-red-900 dark:text-red-200 mt-2">{formatNumber(stats.overview.suspended_tenants)}</p>
                 </div>
-                <div className="p-3 bg-red-100 rounded-full">
-                  <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-full">
+                  <svg className="h-8 w-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                   </svg>
                 </div>
@@ -949,14 +949,14 @@ export default function StatsPage() {
             </div>
           )}
           {(stats.overview?.cancelled_tenants || 0) > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg shadow p-6">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg shadow p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-yellow-700">Tenants Annulés</p>
-                  <p className="text-3xl font-bold text-yellow-900 mt-2">{formatNumber(stats.overview.cancelled_tenants)}</p>
+                  <p className="text-sm font-medium text-yellow-700 dark:text-yellow-300">Tenants Annulés</p>
+                  <p className="text-3xl font-bold text-yellow-900 dark:text-yellow-200 mt-2">{formatNumber(stats.overview.cancelled_tenants)}</p>
                 </div>
-                <div className="p-3 bg-yellow-100 rounded-full">
-                  <svg className="h-8 w-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
+                  <svg className="h-8 w-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </div>
@@ -964,14 +964,14 @@ export default function StatsPage() {
             </div>
           )}
           {stats.registrations && stats.registrations.pending_invitations > 0 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg shadow p-6">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg shadow p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-700">Invitations en Attente</p>
-                  <p className="text-3xl font-bold text-blue-900 mt-2">{formatNumber(stats.registrations.pending_invitations)}</p>
+                  <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Invitations en Attente</p>
+                  <p className="text-3xl font-bold text-blue-900 dark:text-blue-200 mt-2">{formatNumber(stats.registrations.pending_invitations)}</p>
                 </div>
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <svg className="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                  <svg className="h-8 w-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
@@ -1279,9 +1279,9 @@ export default function StatsPage() {
                   </div>
                   <div className="text-right">
                     <span className={`text-xs px-2 py-1 rounded ${
-                      tenant.status === 'active' ? 'bg-green-100 text-green-800' :
-                      tenant.status === 'trial' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
+                      tenant.status === 'active' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' :
+                      tenant.status === 'trial' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200' :
+                      'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                     }`}>
                       {tenant.status}
                     </span>
@@ -1308,7 +1308,7 @@ export default function StatsPage() {
                     )}
                   </div>
                   <div className="text-right">
-                    <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800 capitalize">
+                    <span className="text-xs px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 capitalize">
                       {user.role}
                     </span>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formatDay(user.created_at)}</p>

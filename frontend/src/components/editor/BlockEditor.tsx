@@ -639,7 +639,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   // Gérer la fermeture des paramètres - revenir aux blocs disponibles
   const handleCloseProperties = useCallback(() => {
     setSelectedBlock(null)
-    setPropertiesTab('content') // Réinitialiser l'onglet
+    setPropertiesTab('layout') // Réinitialiser l'onglet à layout (comme défini initialement)
   }, [])
 
   // Mémoriser le bloc sélectionné pour éviter les recherches répétées (OPTIMISATION PERFORMANCE)

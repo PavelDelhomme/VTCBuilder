@@ -13,14 +13,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS('🎨 Création des templates par défaut...\n'))
 
-        # Get or create reference tenant
-        tenant = Tenant.objects.filter(slug='reference-tenant').first()
+        # Get or create public website tenant (vtcbuilder-public-website)
+        tenant = Tenant.objects.filter(slug='vtcbuilder-public-website').first()
         if not tenant:
             tenant, created = Tenant.objects.get_or_create(
-                slug='reference-tenant',
+                slug='vtcbuilder-public-website',
                 defaults={
-                    'name': 'Reference Tenant',
-                    'email': 'reference@vtcbuilder.com',
+                    'name': 'VTCBuilder - Site Public',
+                    'email': 'public@vtcbuilder.com',
                     'status': 'active',
                 }
             )

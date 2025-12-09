@@ -442,7 +442,14 @@ export default function TenantSettingsTab({ tenantId, tenantName }: TenantSettin
           <div>
             <dt className="font-medium text-gray-700 dark:text-gray-300">Créé le</dt>
             <dd className="mt-1 text-gray-900 dark:text-gray-100">
-              {tenant?.created_at ? new Date(tenant.created_at).toLocaleDateString('fr-FR') : '-'}
+              {tenant?.created_at ? (() => {
+                try {
+                  const date = new Date(tenant.created_at)
+                  return isNaN(date.getTime()) ? '-' : date.toLocaleDateString('fr-FR')
+                } catch {
+                  return '-'
+                }
+              })() : '-'}
             </dd>
           </div>
         </dl>

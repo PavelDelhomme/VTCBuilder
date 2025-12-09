@@ -267,6 +267,120 @@ class TenantViewSet(viewsets.ModelViewSet):
         tenant.save(update_fields=['status'])
         return Response({'status': 'Tenant suspended'})
     
+    @action(detail=True, methods=['post'], url_path='enable-all-features')
+    def enable_all_features(self, request, pk=None):
+        """
+        Active toutes les fonctionnalités pour un tenant système.
+        Seuls les super admins peuvent activer toutes les fonctionnalités.
+        """
+        if not request.user.is_super_admin():
+            response = Response(
+                {'error': 'Only super admin can enable all features'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        tenant = self.get_object()
+        
+        from tenants.utils import is_system_tenant, enable_all_features_for_system_tenant
+        
+        # Vérifier si c'est un tenant système
+        if not is_system_tenant(tenant):
+            response = Response(
+                {
+                    'error': 'This action is only available for system tenants',
+                    'message': f'Tenant "{tenant.name}" is not a system tenant. Only system tenants (vtcbuilder-public-website, public schema, reference-tenant) can have all features enabled.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        try:
+            result = enable_all_features_for_system_tenant(tenant)
+            
+            if 'error' in result:
+                response = Response(
+                    {'error': result['error']},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                add_cors_headers(response, request)
+                return response
+            
+            response = Response({
+                'status': 'success',
+                'message': f'All features enabled for {tenant.name}',
+                'result': result
+            })
+            add_cors_headers(response, request)
+            return response
+        except Exception as e:
+            logger.error(f"Error enabling all features for tenant {tenant.id}: {e}", exc_info=True)
+            response = Response(
+                {'error': f'Error enabling features: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            add_cors_headers(response, request)
+            return response
+    
+    @action(detail=True, methods=['post'], url_path='enable-all-features')
+    def enable_all_features(self, request, pk=None):
+        """
+        Active toutes les fonctionnalités pour un tenant système.
+        Seuls les super admins peuvent activer toutes les fonctionnalités.
+        """
+        if not request.user.is_super_admin():
+            response = Response(
+                {'error': 'Only super admin can enable all features'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        tenant = self.get_object()
+        
+        from tenants.utils import is_system_tenant, enable_all_features_for_system_tenant
+        
+        # Vérifier si c'est un tenant système
+        if not is_system_tenant(tenant):
+            response = Response(
+                {
+                    'error': 'This action is only available for system tenants',
+                    'message': f'Tenant "{tenant.name}" is not a system tenant. Only system tenants (vtcbuilder-public-website, public schema, reference-tenant) can have all features enabled.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        try:
+            result = enable_all_features_for_system_tenant(tenant)
+            
+            if 'error' in result:
+                response = Response(
+                    {'error': result['error']},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                add_cors_headers(response, request)
+                return response
+            
+            response = Response({
+                'status': 'success',
+                'message': f'All features enabled for {tenant.name}',
+                'result': result
+            })
+            add_cors_headers(response, request)
+            return response
+        except Exception as e:
+            logger.error(f"Error enabling all features for tenant {tenant.id}: {e}", exc_info=True)
+            response = Response(
+                {'error': f'Error enabling features: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            add_cors_headers(response, request)
+            return response
+    
     @action(detail=True, methods=['post'])
     def reset_admin_password(self, request, pk=None):
         """
@@ -1169,25 +1283,33 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
-@api_view(['POST'])
+@api_view(['POST', 'OPTIONS'])
 @permission_classes([AllowAny])
 def login_view(request):
     """Login endpoint"""
+    # Handle OPTIONS request for CORS preflight
+    if request.method == 'OPTIONS':
+        response = Response({}, status=status.HTTP_200_OK)
+        add_cors_headers(response, request)
+        return response
+    
     email = request.data.get('email')
     password = request.data.get('password')
 
     if not email or not password:
-        return Response(
+        error_response = Response(
             {'error': 'Email and password are required'},
             status=status.HTTP_400_BAD_REQUEST
         )
+        add_cors_headers(error_response, request)
+        return error_response
 
     user = authenticate(email=email, password=password)
 
     if user:
         # Check user status and provide specific error messages
         if user.status == 'suspended':
-            return Response(
+            error_response = Response(
                 {
                     'error': 'Compte suspendu',
                     'detail': 'Votre compte a été suspendu. Veuillez contacter l\'administrateur.',
@@ -1195,8 +1317,10 @@ def login_view(request):
                 },
                 status=status.HTTP_403_FORBIDDEN
             )
+            add_cors_headers(error_response, request)
+            return error_response
         elif user.status == 'inactive':
-            return Response(
+            error_response = Response(
                 {
                     'error': 'Compte désactivé',
                     'detail': 'Votre compte a été désactivé. Veuillez contacter l\'administrateur.',
@@ -1204,8 +1328,10 @@ def login_view(request):
                 },
                 status=status.HTTP_403_FORBIDDEN
             )
+            add_cors_headers(error_response, request)
+            return error_response
         elif not user.is_active_user():
-            return Response(
+            error_response = Response(
                 {
                     'error': 'Compte non actif',
                     'detail': 'Votre compte n\'est pas actif. Veuillez contacter l\'administrateur.',
@@ -1213,20 +1339,26 @@ def login_view(request):
                 },
                 status=status.HTTP_403_FORBIDDEN
             )
+            add_cors_headers(error_response, request)
+            return error_response
 
         refresh = RefreshToken.for_user(user)
-        return Response({
+        success_response = Response({
             'user': UserSerializer(user).data,
             'tokens': {
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             }
         })
+        add_cors_headers(success_response, request)
+        return success_response
 
-    return Response(
+    error_response = Response(
         {'error': 'Invalid credentials'},
         status=status.HTTP_401_UNAUTHORIZED
     )
+    add_cors_headers(error_response, request)
+    return error_response
 
 
 @api_view(['POST'])
@@ -2143,6 +2275,63 @@ class UserFeatureViewSet(viewsets.ModelViewSet):
         response = Response(serializer.data)
         add_cors_headers(response, request)
         return response
+    
+    @action(detail=True, methods=['post'], url_path='enable-all-features')
+    def enable_all_features(self, request, pk=None):
+        """
+        Active toutes les fonctionnalités pour un tenant système.
+        Seuls les super admins peuvent activer toutes les fonctionnalités.
+        """
+        if not request.user.is_super_admin():
+            response = Response(
+                {'error': 'Only super admin can enable all features'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        tenant = self.get_object()
+        
+        from tenants.utils import is_system_tenant, enable_all_features_for_system_tenant
+        
+        # Vérifier si c'est un tenant système
+        if not is_system_tenant(tenant):
+            response = Response(
+                {
+                    'error': 'This action is only available for system tenants',
+                    'message': f'Tenant "{tenant.name}" is not a system tenant. Only system tenants (vtcbuilder-public-website, public schema, reference-tenant) can have all features enabled.'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        try:
+            result = enable_all_features_for_system_tenant(tenant)
+            
+            if 'error' in result:
+                response = Response(
+                    {'error': result['error']},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                add_cors_headers(response, request)
+                return response
+            
+            response = Response({
+                'status': 'success',
+                'message': f'All features enabled for {tenant.name}',
+                'result': result
+            })
+            add_cors_headers(response, request)
+            return response
+        except Exception as e:
+            logger.error(f"Error enabling all features for tenant {tenant.id}: {e}", exc_info=True)
+            response = Response(
+                {'error': f'Error enabling features: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            add_cors_headers(response, request)
+            return response
     
     @action(detail=True, methods=['post'])
     def enable(self, request, pk=None):

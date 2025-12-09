@@ -21,9 +21,13 @@ class ProjectPageSerializer(serializers.ModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     """Serializer for Project"""
     tenant = TenantSerializer(read_only=True)
-    tenant_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    tenant_id = serializers.SerializerMethodField()
     pages_count = serializers.SerializerMethodField()
     available_pages_count = serializers.SerializerMethodField()
+    
+    def get_tenant_id(self, obj):
+        """Get tenant ID from tenant object"""
+        return obj.tenant.id if obj.tenant else None
     
     class Meta:
         model = Project
@@ -62,7 +66,8 @@ class ProjectSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         """Create project with tenant_id handling"""
-        tenant_id = validated_data.pop('tenant_id', None)
+        # Récupérer tenant_id depuis initial_data (avant validation)
+        tenant_id = self.initial_data.get('tenant_id')
         if tenant_id:
             from tenants.models import Tenant
             validated_data['tenant'] = Tenant.objects.get(id=tenant_id)
@@ -70,7 +75,8 @@ class ProjectSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         """Update project with tenant_id handling"""
-        tenant_id = validated_data.pop('tenant_id', None)
+        # Récupérer tenant_id depuis initial_data (avant validation)
+        tenant_id = self.initial_data.get('tenant_id')
         if tenant_id is not None:
             if tenant_id:
                 from tenants.models import Tenant

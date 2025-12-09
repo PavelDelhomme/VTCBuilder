@@ -7,6 +7,17 @@ set -e
 
 echo "🚀 Démarrage de VTCBuilder Django..."
 
+# Créer le réseau Docker s'il n'existe pas
+echo "🔧 Vérification du réseau Docker..."
+if ! docker network ls | grep -q "vtcbuilder_network"; then
+    echo "   📦 Création du réseau vtcbuilder_network..."
+    docker network create vtcbuilder_network || {
+        echo "⚠️  Le réseau existe peut-être déjà, on continue..."
+    }
+else
+    echo "   ✅ Le réseau vtcbuilder_network existe déjà"
+fi
+
 # Fonction pour attendre qu'un service soit prêt
 wait_for_service() {
     local service=$1

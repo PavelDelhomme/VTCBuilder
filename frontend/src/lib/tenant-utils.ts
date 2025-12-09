@@ -3,8 +3,29 @@
  */
 
 /**
+ * Check if a hostname is an IP address
+ */
+export function isIPAddress(hostname: string): boolean {
+  // IPv4 pattern: xxx.xxx.xxx.xxx (where xxx is 0-255)
+  const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (ipv4Pattern.test(hostname)) {
+    // Verify it's a valid IP (each part between 0-255)
+    const parts = hostname.split('.');
+    return parts.every(part => {
+      const num = parseInt(part, 10);
+      return num >= 0 && num <= 255;
+    });
+  }
+  // IPv6 pattern (simplified check)
+  if (hostname.includes(':')) {
+    return true; // Likely IPv6
+  }
+  return false;
+}
+
+/**
  * Check if the current domain is a tenant subdomain
- * Returns true if we're on a tenant subdomain (not localhost or main domain)
+ * Returns true if we're on a tenant subdomain (not localhost, IP address, or main domain)
  */
 export function isTenantSubdomain(): boolean {
   if (typeof window === 'undefined') return false; // SSR safety
@@ -13,6 +34,11 @@ export function isTenantSubdomain(): boolean {
   
   // Localhost is always the main platform
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return false;
+  }
+  
+  // IP addresses are always the main platform (not tenant subdomains)
+  if (isIPAddress(hostname)) {
     return false;
   }
   
@@ -43,11 +69,22 @@ export function isTenantSubdomain(): boolean {
 export function getTenantSlug(): string | null {
   if (typeof window === 'undefined') return null; // SSR safety
   
+  const hostname = window.location.hostname;
+  
+  // IP addresses are never tenant subdomains
+  if (isIPAddress(hostname)) {
+    return null;
+  }
+  
+  // Localhost is never a tenant subdomain
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return null;
+  }
+  
   if (!isTenantSubdomain()) {
     return null;
   }
   
-  const hostname = window.location.hostname;
   const parts = hostname.split('.');
   
   // The first part is usually the tenant slug
@@ -56,7 +93,8 @@ export function getTenantSlug(): string | null {
   if (parts.length > 0) {
     const slug = parts[0];
     // Filter out common prefixes that aren't tenant slugs
-    if (slug && slug !== 'www' && slug !== 'api' && slug !== 'admin') {
+    // Also filter out numeric-only slugs (likely IP addresses)
+    if (slug && slug !== 'www' && slug !== 'api' && slug !== 'admin' && !/^\d+$/.test(slug)) {
       return slug;
     }
   }
