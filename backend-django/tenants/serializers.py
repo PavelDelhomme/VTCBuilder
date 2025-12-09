@@ -17,6 +17,7 @@ class DomainSerializer(serializers.ModelSerializer):
 class TenantSerializer(serializers.ModelSerializer):
     """Serializer for Tenant model"""
     domains = DomainSerializer(many=True, read_only=True)
+    enabled_features = serializers.SerializerMethodField()
 
     class Meta:
         model = Tenant
@@ -24,9 +25,36 @@ class TenantSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'email', 'plan', 'status',
             'trial_ends_at', 'subscribed_at', 'logo', 'primary_color',
             'secondary_color', 'settings', 'metadata', 'domains',
-            'created_at', 'updated_at', 'deleted_at'
+            'enabled_features', 'created_at', 'updated_at', 'deleted_at'
         ]
-        read_only_fields = ['id', 'slug', 'created_at', 'updated_at', 'deleted_at']
+        read_only_fields = ['id', 'slug', 'created_at', 'updated_at', 'deleted_at', 'enabled_features']
+    
+    def get_enabled_features(self, obj):
+        """Retourne la liste des fonctionnalités activées pour ce tenant"""
+        from .utils import is_system_tenant
+        
+        # Si c'est un tenant système, retourner toutes les fonctionnalités actives
+        if is_system_tenant(obj):
+            all_features = Feature.objects.filter(is_active=True)
+            return [f.name for f in all_features]
+        
+        # Sinon, récupérer depuis settings ou depuis les UserFeatures
+        if obj.settings and isinstance(obj.settings, dict) and 'enabled_features' in obj.settings:
+            return obj.settings.get('enabled_features', [])
+        
+        # Si pas dans settings, essayer de récupérer depuis les UserFeatures du tenant
+        try:
+            from django_tenants.utils import tenant_context
+            with tenant_context(obj):
+                # Récupérer les fonctionnalités activées pour les utilisateurs du tenant
+                user_features = UserFeature.objects.filter(
+                    user__tenant=obj,
+                    is_enabled=True
+                ).select_related('feature').distinct('feature')
+                return [uf.feature.name for uf in user_features if uf.feature.is_active]
+        except Exception:
+            # En cas d'erreur, retourner une liste vide
+            return []
 
     def update(self, instance, validated_data):
         """Update tenant, merging settings JSON instead of replacing"""
@@ -38,7 +66,16 @@ class TenantSerializer(serializers.ModelSerializer):
             if isinstance(new_settings, dict) and isinstance(current_settings, dict):
                 validated_data['settings'] = {**current_settings, **new_settings}
         
-        return super().update(instance, validated_data)
+        tenant = super().update(instance, validated_data)
+        
+        # Si enabled_features est dans settings, s'assurer qu'il est bien sauvegardé
+        if tenant.settings and isinstance(tenant.settings, dict) and 'enabled_features' in tenant.settings:
+            # Pour les tenants système, activer automatiquement toutes les fonctionnalités
+            from .utils import is_system_tenant, enable_all_features_for_system_tenant
+            if is_system_tenant(tenant):
+                enable_all_features_for_system_tenant(tenant)
+        
+        return tenant
 
     def create(self, validated_data):
         """Create tenant with auto-generated slug and schema_name, and create admin with invitation"""

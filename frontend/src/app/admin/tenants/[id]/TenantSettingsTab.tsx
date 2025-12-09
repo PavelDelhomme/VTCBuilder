@@ -160,8 +160,8 @@ export default function TenantSettingsTab({ tenantId, tenantName }: TenantSettin
         secondary_color: data.secondary_color || '#10B981',
       })
       
-      // Load enabled features from tenant.settings
-      const features = data.settings?.enabled_features || []
+      // Load enabled features from tenant.enabled_features or tenant.settings
+      const features = data.enabled_features || data.settings?.enabled_features || []
       setEnabledFeatures(new Set(features))
     } catch (error) {
       console.error('Erreur chargement tenant:', error)
@@ -376,8 +376,8 @@ export default function TenantSettingsTab({ tenantId, tenantName }: TenantSettin
                       key={feature.id}
                       className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                         isEnabled
-                          ? 'border-green-500 bg-green-50'
-                          : 'border-gray-200 bg-gray-50 dark:bg-gray-900 hover:border-gray-300'
+                          ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/20'
+                          : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600'
                       }`}
                       onClick={() => toggleFeature(feature.id)}
                     >
@@ -407,13 +407,13 @@ export default function TenantSettingsTab({ tenantId, tenantName }: TenantSettin
           ))}
         </div>
 
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <span className="text-xl">💡</span>
               <div>
-                <h4 className="font-semibold text-blue-900 mb-1">À propos des fonctionnalités</h4>
-                <p className="text-sm text-blue-800">
+                <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-1">À propos des fonctionnalités</h4>
+                <p className="text-sm text-blue-800 dark:text-blue-300">
                   Les fonctionnalités désactivées seront masquées dans l'interface du tenant. 
                   Le tenant ne pourra pas accéder à ces fonctionnalités tant qu'elles ne sont pas activées.
                 </p>
