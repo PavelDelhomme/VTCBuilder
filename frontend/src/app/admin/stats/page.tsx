@@ -1546,7 +1546,7 @@ export default function StatsPage() {
                 {usageStats.actions_by_user && usageStats.actions_by_user.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Utilisateurs les Plus Actifs</h3>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto w-full">
                       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-900">
                           <tr>
@@ -1603,7 +1603,7 @@ export default function StatsPage() {
                 {usageStats.buttons_by_user && usageStats.buttons_by_user.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Boutons Cliqués par Utilisateur</h3>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto w-full">
                       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-900">
                           <tr>
@@ -1651,7 +1651,7 @@ export default function StatsPage() {
                 {usageStats.actions_by_tenant && usageStats.actions_by_tenant.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tenants les Plus Actifs</h3>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto w-full">
                       <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-900">
                           <tr>
@@ -1824,8 +1824,8 @@ export default function StatsPage() {
                     {usageStats.docs_stats.views_by_day && usageStats.docs_stats.views_by_day.length > 0 && (
                       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Vues Documentation (30 derniers jours)</h3>
-                        <div className="overflow-x-auto">
-                          <div className="flex items-end justify-between space-x-1 h-48">
+                        <div className="overflow-x-auto w-full">
+                          <div className="flex items-end justify-between space-x-1 h-48 min-w-full">
                             {usageStats.docs_stats.views_by_day.map((day, index) => {
                               const maxCount = Math.max(...usageStats.docs_stats.views_by_day.map(d => d.count))
                               const height = maxCount > 0 ? (day.count / maxCount) * 100 : 0
