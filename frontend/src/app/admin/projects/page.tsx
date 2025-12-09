@@ -129,12 +129,15 @@ function ProjectCard({ project, onToggleStatus, onDelete, onOpen, isNavigating }
               <>📁 Ouvrir</>
             )}
           </button>
-          <button
-            onClick={() => onDelete(project.id)}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
-          >
-            🗑️
-          </button>
+          {!project.is_system_project && (
+            <button
+              onClick={() => onDelete(project.id)}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+              title="Mettre à la corbeille"
+            >
+              🗑️
+            </button>
+          )}
         </div>
       </div>
     </div>
