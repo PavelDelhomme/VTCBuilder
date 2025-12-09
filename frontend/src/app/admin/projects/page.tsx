@@ -327,8 +327,12 @@ export default function ProjectsManagement() {
 
   // Grouper les projets par catégorie
   const groupedProjects = useMemo(() => {
-    const systemProjects = projects.filter(p => p.is_system_project)
-    const tenantProjects = projects.filter(p => !p.is_system_project && p.tenant)
+    // Filtrer les projets système : exclure ceux liés au tenant reference-tenant (qui ne sert à rien)
+    const systemProjects = projects.filter(p => 
+      p.is_system_project && 
+      (!p.tenant || p.tenant.slug !== 'reference-tenant')
+    )
+    const tenantProjects = projects.filter(p => !p.is_system_project && p.tenant && p.tenant.slug !== 'reference-tenant')
     const orphanProjects = projects.filter(p => !p.is_system_project && !p.tenant)
     
     // Grouper les projets tenant par tenant
