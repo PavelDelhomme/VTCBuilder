@@ -373,8 +373,8 @@ export default function StatsPage() {
       title="Statistiques Détaillées" 
       subtitle="Analyses et métriques de la plateforme avec monitoring complet et IA maison"
     >
-      <div className="flex-1 min-h-0 overflow-y-auto pb-6">
-        <div className="w-full min-h-0 flex flex-col px-4 sm:px-6 lg:px-8">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
+        <div className="w-full min-h-0 flex flex-col px-4 sm:px-6 lg:px-8 overflow-x-hidden">
           {/* Onglets de navigation */}
           <div className="flex-shrink-0 mb-6 border-b border-gray-200 dark:border-gray-700">
           {/* Mobile: Menu déroulant */}
@@ -1398,8 +1398,8 @@ export default function StatsPage() {
                 {usageStats.actions_timeline && usageStats.actions_timeline.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Timeline des Actions (30 derniers jours)</h3>
-                    <div className="overflow-x-auto">
-                      <div className="flex items-end justify-between space-x-1 h-48" style={{ minWidth: 'max-content' }}>
+                    <div className="overflow-x-auto w-full">
+                      <div className="flex items-end justify-between space-x-1 h-48 min-w-full">
                         {usageStats.actions_timeline.map((day, index) => {
                           const maxCount = Math.max(...usageStats.actions_timeline.map(d => d.count))
                           const height = maxCount > 0 ? (day.count / maxCount) * 100 : 0
@@ -1469,8 +1469,8 @@ export default function StatsPage() {
                 {usageStats.actions_by_hour && usageStats.actions_by_hour.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Actions par Heure de la Journée</h3>
-                    <div className="overflow-x-auto">
-                      <div className="flex items-end justify-between space-x-1 h-48">
+                    <div className="overflow-x-auto w-full">
+                      <div className="flex items-end justify-between space-x-1 h-48 min-w-full">
                         {usageStats.actions_by_hour.map((hour, index) => {
                           const maxCount = Math.max(...usageStats.actions_by_hour.map(h => h.count))
                           const height = maxCount > 0 ? (hour.count / maxCount) * 100 : 0

@@ -151,13 +151,13 @@ export default function SettingsPage() {
       title="Paramètres"
       subtitle="Configuration de la plateforme VTCBuilder"
     >
-      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-y-auto pb-6">
+      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden overflow-x-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
       <div className="space-y-6">
         {/* Tabs */}
-        <div className="border-b border-gray-200 px-4 sm:px-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8">
+        <div className="border-b border-gray-200 dark:border-gray-700 w-full overflow-x-hidden">
           {/* Mobile: Menu déroulant */}
-          <div className="lg:hidden mb-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+          <div className="lg:hidden mb-4 w-full">
             <select
               value={activeTab}
               onChange={(e) => setActiveTab(e.target.value as any)}

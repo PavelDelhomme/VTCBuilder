@@ -948,7 +948,7 @@ export default function TenantDetailPage() {
       }
     >
       {/* Tabs - Responsive amélioré */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 -mx-4 sm:-mx-6 lg:-mx-8 mb-4 sm:mb-6 overflow-x-hidden">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 mb-4 sm:mb-6 overflow-x-hidden w-full">
         {/* Mobile/Tablet: Select dropdown */}
         <div className="md:hidden py-3 px-4 sm:px-6 lg:px-8 w-full">
           <select
@@ -966,7 +966,7 @@ export default function TenantDetailPage() {
         </div>
         
         {/* Desktop: Horizontal tabs - Design moderne et responsive */}
-        <div className="hidden md:block px-2 sm:px-4 lg:px-8">
+        <div className="hidden md:block w-full">
           <nav className="flex -mb-px space-x-0.5 sm:space-x-1 overflow-x-auto scrollbar-hide pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
             {tabs.map((tab) => (
               <button

@@ -419,11 +419,11 @@ export default function BillingPage() {
       title="Facturation"
       subtitle="Gestion complète de la facturation et des paiements"
     >
-      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
+      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden overflow-x-hidden">
       {/* Tabs */}
-      <div className="flex-shrink-0 mb-4 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8">
+      <div className="flex-shrink-0 mb-4 border-b border-gray-200 dark:border-gray-700 w-full overflow-x-hidden">
         {/* Mobile: Menu déroulant */}
-        <div className="lg:hidden mb-4 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+        <div className="lg:hidden mb-4 w-full">
           <select
             value={activeTab}
             onChange={(e) => {
@@ -686,7 +686,7 @@ export default function BillingPage() {
           {stats.monthly_revenues_chart && stats.monthly_revenues_chart.length > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Revenus des 12 Derniers Mois</h3>
-              <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+              <div className="overflow-x-auto w-full">
                 <div className="flex items-end justify-between space-x-1 sm:space-x-2 h-48 sm:h-64" style={{ minWidth: 'max-content' }}>
                   {stats.monthly_revenues_chart.map((month: any, index: number) => {
                     const maxRevenue = Math.max(...stats.monthly_revenues_chart.map((m: any) => m.revenue || 0))
@@ -883,7 +883,7 @@ export default function BillingPage() {
             </button>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden w-full max-w-full">
-            <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+            <div className="overflow-x-auto w-full">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
@@ -1031,7 +1031,7 @@ export default function BillingPage() {
                   <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
                     <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Abonnements en Retard de Paiement</h2>
                   </div>
-                  <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+                  <div className="overflow-x-auto w-full">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                       <thead className="bg-gray-50 dark:bg-gray-900">
                         <tr>
@@ -1123,7 +1123,7 @@ export default function BillingPage() {
                   <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
                     <h2 className="text-base sm:text-lg font-semibold text-red-900 dark:text-red-100">⚠️ Factures en Retard ({unpaidItems.overdue_invoices.length})</h2>
                   </div>
-                  <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+                  <div className="overflow-x-auto w-full">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                       <thead className="bg-gray-50 dark:bg-gray-900">
                         <tr>
@@ -1235,7 +1235,7 @@ export default function BillingPage() {
                   <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
                     <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">Toutes les Factures Impayées</h2>
                   </div>
-                  <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 xl:-mx-8 px-3 sm:px-4 lg:px-6 xl:px-8">
+                  <div className="overflow-x-auto w-full">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                       <thead className="bg-gray-50 dark:bg-gray-900">
                         <tr>

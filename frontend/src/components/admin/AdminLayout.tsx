@@ -115,7 +115,7 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
   }, [sidebarOpen])
 
   return (
-    <div className="h-screen bg-gray-100 dark:bg-gray-900 flex flex-col overflow-hidden">
+    <div className="h-screen bg-gray-100 dark:bg-gray-900 flex flex-col overflow-hidden overflow-x-hidden">
       {/* Impersonation Banner */}
       <ImpersonationBanner />
       
@@ -212,8 +212,8 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
           )}
 
           {/* Content - Utilise tout l'espace disponible avec scroll */}
-          <main className="flex-1 w-full min-w-0 overflow-hidden flex flex-col">
-            <div className="w-full min-w-0 flex-1 min-h-0 overflow-y-auto py-4 sm:py-6">
+          <main className="flex-1 w-full min-w-0 overflow-hidden overflow-x-hidden flex flex-col">
+            <div className="w-full min-w-0 flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4 sm:py-6">
               {children}
             </div>
           </main>
