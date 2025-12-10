@@ -1198,15 +1198,28 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                       </div>
                                       {isPremium && (
                                         <div className="flex items-center gap-1 flex-wrap">
-                                          <span className="px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full flex-shrink-0">
+                                          <span className="px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full flex-shrink-0" title="Bloc premium">
                                             ⭐ Premium
                                           </span>
-                                          {authService.isSuperAdmin() && blockType.plan_names && blockType.plan_names.length > 0 && (
-                                            <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full flex-shrink-0" title={`Plans requis: ${blockType.plan_names.join(', ')}`}>
-                                              {blockType.plan_names.join(', ')}
-                                            </span>
+                                          {authService.isSuperAdmin() && (
+                                            <>
+                                              {blockType.plan_names && blockType.plan_names.length > 0 ? (
+                                                <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full flex-shrink-0" title={`Plans requis: ${blockType.plan_names.join(', ')}`}>
+                                                  {blockType.plan_names.join(', ')}
+                                                </span>
+                                              ) : (
+                                                <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full flex-shrink-0" title="Plans non définis">
+                                                  Plans non définis
+                                                </span>
+                                              )}
+                                            </>
                                           )}
                                         </div>
+                                      )}
+                                      {!isPremium && authService.isSuperAdmin() && (
+                                        <span className="px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full flex-shrink-0" title="Bloc gratuit">
+                                          🆓 Gratuit
+                                        </span>
                                       )}
                                     </div>
                                     {blockType.description && (
@@ -1299,15 +1312,28 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                         </div>
                                         {isPremium && (
                                           <div className="flex items-center gap-1 flex-wrap">
-                                            <span className="px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full flex-shrink-0">
+                                            <span className="px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full flex-shrink-0" title="Bloc premium">
                                               ⭐ Premium
                                             </span>
-                                            {authService.isSuperAdmin() && blockType.plan_names && blockType.plan_names.length > 0 && (
-                                              <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full flex-shrink-0" title={`Plans requis: ${blockType.plan_names.join(', ')}`}>
-                                                {blockType.plan_names.join(', ')}
-                                              </span>
+                                            {authService.isSuperAdmin() && (
+                                              <>
+                                                {blockType.plan_names && blockType.plan_names.length > 0 ? (
+                                                  <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full flex-shrink-0" title={`Plans requis: ${blockType.plan_names.join(', ')}`}>
+                                                    {blockType.plan_names.join(', ')}
+                                                  </span>
+                                                ) : (
+                                                  <span className="px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full flex-shrink-0" title="Plans non définis">
+                                                    Plans non définis
+                                                  </span>
+                                                )}
+                                              </>
                                             )}
                                           </div>
+                                        )}
+                                        {!isPremium && authService.isSuperAdmin() && (
+                                          <span className="px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full flex-shrink-0" title="Bloc gratuit">
+                                            🆓 Gratuit
+                                          </span>
                                         )}
                                       </div>
                                       {blockType.description && (
