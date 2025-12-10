@@ -93,6 +93,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const [categoryFilter, setCategoryFilter] = useState<string>('all') // Filtre par catégorie
   const [searchQuery, setSearchQuery] = useState<string>('') // Recherche par nom
   
+  
   // État pour les blocs réduits (collapsed) dans l'éditeur
   const [collapsedBlocks, setCollapsedBlocks] = useState<Set<string>>(new Set())
   
@@ -171,17 +172,39 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   )
 
   // Synchroniser l'historique avec les blocks externes (optimisé avec hash)
+  // Et créer un conteneur par défaut si nécessaire
   useEffect(() => {
     if (!isHistoryUpdate.current && !isInternalUpdate.current) {
       const blocksHash = quickHash(blocks)
       if (blocksHash !== lastBlocksHashRef.current) {
-        history.reset(blocks)
-        lastBlocksHashRef.current = blocksHash
+        // Vérifier si on doit ajouter un conteneur par défaut
+        let blocksToUse = blocks
+        if (blocks.length === 0 || !hasContainer(blocks)) {
+          // Créer un conteneur par défaut
+          const defaultContainer: Block = {
+            id: `block-container-${Date.now()}`,
+            type: 'container',
+            data: {},
+            styles: {},
+            layout: 12,
+            container: 'container',
+            children: []
+          }
+          blocksToUse = [defaultContainer]
+          // Mettre à jour via onChange pour que le parent soit notifié
+          isInternalUpdate.current = true
+          onChange(blocksToUse)
+          history.reset(blocksToUse)
+          lastBlocksHashRef.current = quickHash(blocksToUse)
+        } else {
+          history.reset(blocks)
+          lastBlocksHashRef.current = blocksHash
+        }
       }
     }
     isHistoryUpdate.current = false
     isInternalUpdate.current = false
-  }, [blocks, history])
+  }, [blocks, history, hasContainer, onChange])
 
   // Synchroniser onChange avec l'historique (avec debounce et protection contre les boucles, optimisé avec hash)
   useEffect(() => {
