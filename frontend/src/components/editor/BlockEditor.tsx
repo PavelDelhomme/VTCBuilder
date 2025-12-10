@@ -60,6 +60,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import { useFeatures } from '@/contexts/FeaturesContext'
+import authService from '@/services/auth.service'
 import UrlInputWithSuggestions from './UrlInputWithSuggestions'
 import PageSelector from './PageSelector'
 import ImageSelector from './ImageSelector'
@@ -1168,12 +1169,31 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                     {blockType.icon}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
-                                      {blockType.label}
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
+                                        {blockType.label}
+                                      </div>
+                                      {isPremium && (
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          <span className="px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full flex-shrink-0">
+                                            ⭐ Premium
+                                          </span>
+                                          {authService.isSuperAdmin() && blockType.plan_names && blockType.plan_names.length > 0 && (
+                                            <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full flex-shrink-0" title={`Plans requis: ${blockType.plan_names.join(', ')}`}>
+                                              {blockType.plan_names.join(', ')}
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
                                     </div>
                                     {blockType.description && (
                                       <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
                                         {blockType.description}
+                                      </div>
+                                    )}
+                                    {authService.isSuperAdmin() && isPremium && (
+                                      <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                        ✓ Accès super admin
                                       </div>
                                     )}
                                   </div>
@@ -1255,9 +1275,16 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                           {blockType.label}
                                         </div>
                                         {isPremium && (
-                                          <span className="px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full flex-shrink-0">
-                                            ⭐ Premium
-                                          </span>
+                                          <div className="flex items-center gap-1 flex-wrap">
+                                            <span className="px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full flex-shrink-0">
+                                              ⭐ Premium
+                                            </span>
+                                            {authService.isSuperAdmin() && blockType.plan_names && blockType.plan_names.length > 0 && (
+                                              <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full flex-shrink-0" title={`Plans requis: ${blockType.plan_names.join(', ')}`}>
+                                                {blockType.plan_names.join(', ')}
+                                              </span>
+                                            )}
+                                          </div>
                                         )}
                                       </div>
                                       {blockType.description && (
@@ -1267,9 +1294,17 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                           {blockType.description}
                                         </div>
                                       )}
-                                      {!canUse && isPremium && (
+                                      {!canUse && isPremium && !authService.isSuperAdmin() && (
                                         <div className="text-xs text-orange-600 dark:text-orange-400 mt-1 hidden sm:block">
-                                          Nécessite un abonnement premium
+                                          {blockType.plan_names && blockType.plan_names.length > 0 
+                                            ? `Nécessite: ${blockType.plan_names.join(', ')}`
+                                            : 'Nécessite un abonnement premium'
+                                          }
+                                        </div>
+                                      )}
+                                      {authService.isSuperAdmin() && isPremium && (
+                                        <div className="text-xs text-green-600 dark:text-green-400 mt-1 hidden sm:block">
+                                          ✓ Accès super admin - Tous les blocs disponibles
                                         </div>
                                       )}
                                     </div>

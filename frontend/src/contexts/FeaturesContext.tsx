@@ -210,6 +210,12 @@ export function FeaturesProvider({ children }: { children: ReactNode }) {
   }
 
   const canUseBlockType = (blockType: string, requiresPremium: boolean): boolean => {
+    // Les super admins ont toujours accès à tous les blocs
+    const isSuperAdmin = authService.isSuperAdmin()
+    if (isSuperAdmin) {
+      return true
+    }
+    
     if (!features) return true // Par défaut, autoriser si features non chargées
     
     // Si le bloc nécessite premium et que l'utilisateur n'a pas accès
