@@ -71,7 +71,16 @@ def system_settings_view(request):
             add_cors_headers(error_response, request)
             return error_response
         
-        if not hasattr(request.user, 'is_super_admin') or not request.user.is_super_admin():
+        # Vérifier si l'utilisateur est super admin (avec plusieurs méthodes de vérification)
+        is_super_admin = False
+        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
+            is_super_admin = request.user.is_super_admin()
+        elif hasattr(request.user, 'is_superuser'):
+            is_super_admin = request.user.is_superuser
+        elif hasattr(request.user, 'is_staff'):
+            is_super_admin = request.user.is_staff
+        
+        if not is_super_admin:
             error_response = Response(
                 {'error': 'Only super admin can manage system settings'},
                 status=status.HTTP_403_FORBIDDEN
@@ -384,18 +393,39 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
             instance.save()
             return instance
     
+    def dispatch(self, request, *args, **kwargs):
+        """Handle OPTIONS requests for CORS preflight"""
+        if request.method == 'OPTIONS':
+            response = Response({}, status=status.HTTP_200_OK)
+            add_cors_headers(response, request)
+            return response
+        return super().dispatch(request, *args, **kwargs)
+    
     def list(self, request, *args, **kwargs):
         """Return the singleton settings instance"""
-        if not request.user.is_super_admin():
-            return Response(
+        # Vérifier si l'utilisateur est super admin
+        is_super_admin = False
+        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
+            is_super_admin = request.user.is_super_admin()
+        elif hasattr(request.user, 'is_superuser'):
+            is_super_admin = request.user.is_superuser
+        elif hasattr(request.user, 'is_staff'):
+            is_super_admin = request.user.is_staff
+        
+        if not is_super_admin:
+            error_response = Response(
                 {'error': 'Only super admin can view system settings'},
                 status=status.HTTP_403_FORBIDDEN
             )
+            add_cors_headers(error_response, request)
+            return error_response
         try:
             # get_or_create will create if doesn't exist
             instance = SystemSettings.get_settings()
             serializer = self.get_serializer(instance)
-            return Response(serializer.data)
+            response = Response(serializer.data)
+            add_cors_headers(response, request)
+            return response
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
@@ -405,31 +435,59 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
                 instance = SystemSettings()
                 instance.save()
                 serializer = self.get_serializer(instance)
-                return Response(serializer.data)
+                response = Response(serializer.data)
+                add_cors_headers(response, request)
+                return response
             except Exception as create_error:
                 logger.error(f"Error creating default system settings: {create_error}", exc_info=True)
                 # Return error details for debugging
-                return Response(
+                error_response = Response(
                     {'error': f'Erreur lors de la récupération des paramètres système: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
+                add_cors_headers(error_response, request)
+                return error_response
     
     def retrieve(self, request, *args, **kwargs):
         """Get settings instance"""
-        if not request.user.is_super_admin():
-            return Response(
+        # Vérifier si l'utilisateur est super admin
+        is_super_admin = False
+        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
+            is_super_admin = request.user.is_super_admin()
+        elif hasattr(request.user, 'is_superuser'):
+            is_super_admin = request.user.is_superuser
+        elif hasattr(request.user, 'is_staff'):
+            is_super_admin = request.user.is_staff
+        
+        if not is_super_admin:
+            error_response = Response(
                 {'error': 'Only super admin can view system settings'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        return super().retrieve(request, *args, **kwargs)
+            add_cors_headers(error_response, request)
+            return error_response
+        response = super().retrieve(request, *args, **kwargs)
+        add_cors_headers(response, request)
+        return response
     
     def create(self, request, *args, **kwargs):
         """Create or update system settings (singleton pattern)"""
-        if not request.user.is_super_admin():
-            return Response(
+        # Vérifier si l'utilisateur est super admin
+        is_super_admin = False
+        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
+            is_super_admin = request.user.is_super_admin()
+        elif hasattr(request.user, 'is_superuser'):
+            is_super_admin = request.user.is_superuser
+        elif hasattr(request.user, 'is_staff'):
+            is_super_admin = request.user.is_staff
+        
+        if not is_super_admin:
+            error_response = Response(
                 {'error': 'Only super admin can manage system settings'},
                 status=status.HTTP_403_FORBIDDEN
             )
+            add_cors_headers(error_response, request)
+            return error_response
         
         try:
             instance = self.get_object()
@@ -440,35 +498,63 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED if not instance.pk else status.HTTP_200_OK)
+        response = Response(serializer.data, status=status.HTTP_201_CREATED if not instance.pk else status.HTTP_200_OK)
+        add_cors_headers(response, request)
+        return response
     
     def update(self, request, *args, **kwargs):
         """Update system settings"""
-        if not request.user.is_super_admin():
-            return Response(
+        # Vérifier si l'utilisateur est super admin
+        is_super_admin = False
+        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
+            is_super_admin = request.user.is_super_admin()
+        elif hasattr(request.user, 'is_superuser'):
+            is_super_admin = request.user.is_superuser
+        elif hasattr(request.user, 'is_staff'):
+            is_super_admin = request.user.is_staff
+        
+        if not is_super_admin:
+            error_response = Response(
                 {'error': 'Only super admin can manage system settings'},
                 status=status.HTTP_403_FORBIDDEN
             )
+            add_cors_headers(error_response, request)
+            return error_response
         
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        response = Response(serializer.data)
+        add_cors_headers(response, request)
+        return response
     
     def partial_update(self, request, *args, **kwargs):
         """Partially update system settings"""
-        if not request.user.is_super_admin():
-            return Response(
+        # Vérifier si l'utilisateur est super admin
+        is_super_admin = False
+        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
+            is_super_admin = request.user.is_super_admin()
+        elif hasattr(request.user, 'is_superuser'):
+            is_super_admin = request.user.is_superuser
+        elif hasattr(request.user, 'is_staff'):
+            is_super_admin = request.user.is_staff
+        
+        if not is_super_admin:
+            error_response = Response(
                 {'error': 'Only super admin can manage system settings'},
                 status=status.HTTP_403_FORBIDDEN
             )
+            add_cors_headers(error_response, request)
+            return error_response
         
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data)
+        response = Response(serializer.data)
+        add_cors_headers(response, request)
+        return response
     
     @action(detail=False, methods=['get'])
     def test_email(self, request):
