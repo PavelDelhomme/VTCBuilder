@@ -53,6 +53,7 @@ def add_cors_headers(response, request):
 
 
 @api_view(['GET', 'POST', 'PATCH', 'PUT', 'OPTIONS'])
+@permission_classes([IsAuthenticated])
 def system_settings_view(request):
     """Get, create or update system settings (singleton)"""
     try:
@@ -64,6 +65,7 @@ def system_settings_view(request):
         
         # Check authentication for non-OPTIONS requests
         if not request.user or not request.user.is_authenticated:
+            logger.warning(f"Unauthenticated request to system-settings from {request.META.get('HTTP_ORIGIN', 'unknown')}")
             error_response = Response(
                 {'error': 'Authentication required'},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -71,18 +73,37 @@ def system_settings_view(request):
             add_cors_headers(error_response, request)
             return error_response
         
+        # Log user info for debugging
+        logger.info(f"System settings request - User: {getattr(request.user, 'email', 'unknown')}, Authenticated: {request.user.is_authenticated}")
+        
         # Vérifier si l'utilisateur est super admin (avec plusieurs méthodes de vérification)
         is_super_admin = False
+        user_info = {}
+        
         if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
             is_super_admin = request.user.is_super_admin()
+            user_info['is_super_admin_method'] = is_super_admin
         elif hasattr(request.user, 'is_superuser'):
             is_super_admin = request.user.is_superuser
+            user_info['is_superuser'] = is_super_admin
         elif hasattr(request.user, 'is_staff'):
             is_super_admin = request.user.is_staff
+            user_info['is_staff'] = is_super_admin
+        
+        # Log pour débogage
+        if hasattr(request.user, 'email'):
+            user_info['email'] = request.user.email
+        if hasattr(request.user, 'role'):
+            user_info['role'] = request.user.role
+        if hasattr(request.user, 'id'):
+            user_info['id'] = request.user.id
+        
+        logger.info(f"System settings access check - User: {user_info}, is_super_admin: {is_super_admin}")
         
         if not is_super_admin:
+            logger.warning(f"Access denied to system settings - User: {user_info}")
             error_response = Response(
-                {'error': 'Only super admin can manage system settings'},
+                {'error': 'Only super admin can manage system settings', 'user_info': user_info if settings.DEBUG else None},
                 status=status.HTTP_403_FORBIDDEN
             )
             add_cors_headers(error_response, request)
