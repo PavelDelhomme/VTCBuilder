@@ -106,10 +106,18 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """Retrieve project with CORS"""
         try:
-            response = super().retrieve(request, *args, **kwargs)
+            # Précharger les pages pour éviter les requêtes N+1
+            instance = self.get_object()
+            instance = Project.objects.prefetch_related('pages').get(pk=instance.pk)
+            
+            serializer = self.get_serializer(instance)
+            response = Response(serializer.data)
             add_cors_headers(response, request)
             return response
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Error retrieving project: {str(e)}', exc_info=True)
             response = Response(
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
