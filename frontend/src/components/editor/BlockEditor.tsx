@@ -154,6 +154,27 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   
   const { canUseBlockType } = useFeatures()
   
+  // Fonction pour vérifier si un bloc est un conteneur (définie avant les useEffect qui l'utilisent)
+  const isContainerType = useCallback((blockTypeName: string): boolean => {
+    const containerTypes = ['container', 'flex-container', 'grid-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows', 'columns']
+    return containerTypes.includes(blockTypeName)
+  }, [])
+  
+  // Fonction pour vérifier si les blocs contiennent un conteneur (définie avant les useEffect qui l'utilisent)
+  const hasContainer = useCallback((blocks: Block[]): boolean => {
+    for (const block of blocks) {
+      if (isContainerType(block.type)) {
+        return true
+      }
+      if (block.children && block.children.length > 0) {
+        if (hasContainer(block.children)) {
+          return true
+        }
+      }
+    }
+    return false
+  }, [isContainerType])
+  
   // Historique avec undo/redo (réduit à 20 pour économiser la mémoire)
   const history = useHistory<Block[]>(blocks, 20)
   const isHistoryUpdate = useRef(false)
@@ -383,28 +404,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     })
   }, [])
 
-  // Vérifier si un type de bloc est un conteneur (défini avant handleDragEnd car utilisé dedans)
-  const isContainerType = useCallback((blockTypeName: string): boolean => {
-    const containerTypes = ['container', 'grid-container', 'flex-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
-    return containerTypes.includes(blockTypeName)
-  }, [])
-
-  // Vérifier si un conteneur existe dans les blocs (défini avant handleDragEnd car utilisé dedans)
-  const hasContainer = useCallback((blocks: Block[]): boolean => {
-    const containerTypes = ['container', 'grid-container', 'flex-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
-    for (const block of blocks) {
-      if (containerTypes.includes(block.type)) {
-        return true
-      }
-      // Vérifier récursivement dans les enfants
-      if (block.children && block.children.length > 0) {
-        if (hasContainer(block.children)) {
-          return true
-        }
-      }
-    }
-    return false
-  }, [])
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
