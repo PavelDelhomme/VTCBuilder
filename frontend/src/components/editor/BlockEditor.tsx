@@ -6007,7 +6007,7 @@ function BlockRenderer({
           </div>
         </div>
       )
-    case 'hero':
+    case 'hero': {
       // Initialiser les boutons par défaut si aucun bouton n'existe
       const defaultButtons = [
         { text: 'Démarrer gratuitement', url: '/register', style: 'primary' },
@@ -6018,7 +6018,7 @@ function BlockRenderer({
         : defaultButtons
       
       // Initialiser le type de fond si non défini
-      const backgroundType = safeBlock.data.background_type || (safeBlock.data.background_image ? 'image' : 'gradient')
+      const heroBackgroundType = safeBlock.data.background_type || (safeBlock.data.background_image ? 'image' : 'gradient')
       
       return (
         <div className="space-y-3">
@@ -6053,7 +6053,7 @@ function BlockRenderer({
               Type de fond
             </label>
             <select
-              value={backgroundType}
+              value={heroBackgroundType}
               onChange={(e) => {
                 const newType = e.target.value
                 const newData: any = { ...safeBlock.data, background_type: newType }
@@ -6085,7 +6085,7 @@ function BlockRenderer({
           </div>
           
           {/* Image de fond */}
-          {backgroundType === 'image' && (
+          {heroBackgroundType === 'image' && (
             <div>
               <ImageSelector
                 value={safeBlock.data.background_image || ''}
@@ -6098,7 +6098,7 @@ function BlockRenderer({
           )}
           
           {/* Couleur de fond */}
-          {backgroundType === 'color' && (
+          {heroBackgroundType === 'color' && (
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Couleur de fond
@@ -6122,7 +6122,7 @@ function BlockRenderer({
           )}
           
           {/* Gradient de fond */}
-          {backgroundType === 'gradient' && (
+          {heroBackgroundType === 'gradient' && (
             <div>
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Dégradé (format Tailwind)
@@ -6222,6 +6222,7 @@ function BlockRenderer({
           </div>
         </div>
       )
+    }
     case 'image':
       return (
         <div className="space-y-3">
