@@ -1,0 +1,50 @@
+{
+  "timestamp": "20251211_231745",
+  "date": "2025-12-11T23:18:28+01:00",
+  "containers": {
+    "backend": "vtcbuilder-backend,0.00%,0B / 0B,0.00%,0B / 0B,0B / 0B",
+    "frontend": "vtcbuilder-frontend,0.00%,155.5MiB / 768MiB,20.25%,15.4kB / 4.19kB,0B / 49.2kB",
+    "postgres": "vtcbuilder-postgres,0.01%,28.8MiB / 512MiB,5.63%,3.47kB / 126B,279kB / 1.53MB",
+    "redis": "vtcbuilder-redis,0.27%,15.12MiB / 256MiB,5.91%,23.4kB / 126B,3.96MB / 0B"
+  },
+  "totals": {
+    "memory_mb": "3333.04",
+    "cpu_percent": "8.77",
+    "disk_usage": "101.1GB"
+  },
+  "docker_limits": {
+    "backend": {
+      "memory_limit": "1GB",
+      "cpu_limit": "1.5",
+      "memory_reservation": "512MB",
+      "cpu_reservation": "0.5"
+    },
+    "frontend": {
+      "memory_limit": "768MB",
+      "cpu_limit": "1.0",
+      "memory_reservation": "256MB",
+      "cpu_reservation": "0.25"
+    },
+    "postgres": {
+      "memory_limit": "512MB",
+      "cpu_limit": "1.0",
+      "memory_reservation": "256MB",
+      "cpu_reservation": "0.25"
+    },
+    "redis": {
+      "memory_limit": "256MB",
+      "cpu_limit": "0.5",
+      "memory_reservation": "64MB",
+      "cpu_reservation": "0.1"
+    }
+  },
+  "optimizations": {
+    "gunicorn_workers": 2,
+    "postgres_max_connections": 50,
+    "postgres_shared_buffers": "128MB",
+    "redis_maxmemory": "128MB",
+    "node_memory_limit": "512MB",
+    "logging_level": "WARNING",
+    "cache_enabled": true
+  }
+}
