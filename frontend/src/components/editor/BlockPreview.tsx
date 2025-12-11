@@ -22,6 +22,7 @@ interface BlockPreviewProps {
   onNavigate?: (url: string) => void // Callback pour navigation dans l'éditeur
   inspectorMode?: boolean // Mode inspecteur activé
   onInspectorModeChange?: (enabled: boolean) => void // Callback pour activer/désactiver le mode inspecteur
+  theme?: 'light' | 'dark' // Thème de la prévisualisation
 }
 
 function BlockPreview({ 
@@ -36,7 +37,8 @@ function BlockPreview({
   isEditable = false,
   onNavigate,
   inspectorMode = false,
-  onInspectorModeChange
+  onInspectorModeChange,
+  theme = 'light'
 }: BlockPreviewProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -284,9 +286,13 @@ function BlockPreview({
   const activeBlock = activeId ? blocks.find(b => b.id === activeId) : null
 
   return (
-    <div className="w-full h-full bg-white dark:bg-gray-900 overflow-y-auto flex flex-col block-preview-container">
+    <div className="w-full h-full bg-white dark:bg-gray-900 overflow-y-auto flex flex-col block-preview-container" data-theme-isolated>
       {/* Preview Header - Simulated Browser Bar */}
-      <div className="bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 px-4 py-2 flex items-center gap-2 flex-shrink-0">
+      <div className={`border-b px-4 py-2 flex items-center gap-2 flex-shrink-0 ${
+        theme === 'dark' 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-gray-50 border-gray-200'
+      }`}>
         <div className="flex gap-1.5">
           <div className="w-3 h-3 rounded-full bg-red-400"></div>
           <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
@@ -343,6 +349,8 @@ function BlockPreview({
                     key={block.id}
                     block={block}
                     blockType={blockTypes.find((bt: BlockType) => bt.name === block.type)}
+                    blockTypes={blockTypes}
+                    theme={theme}
                     isSelected={selectedBlockId === block.id}
                     isInteractive={isInteractive}
                     isEditable={isEditable}
@@ -361,6 +369,8 @@ function BlockPreview({
               <BlockPreviewRenderer
                 block={activeBlock}
                 blockType={blockTypes.find((bt: BlockType) => bt.name === activeBlock.type)}
+                blockTypes={blockTypes}
+                theme={theme}
               />
             </div>
           ) : null}
@@ -392,6 +402,8 @@ export default MemoizedBlockPreview
 function SortablePreviewBlock({
   block,
   blockType,
+  blockTypes,
+  theme,
   isSelected,
   isInteractive,
   isEditable,
@@ -401,6 +413,8 @@ function SortablePreviewBlock({
 }: {
   block: Block
   blockType?: BlockType
+  blockTypes: BlockType[]
+  theme?: 'light' | 'dark'
   isSelected: boolean
   isInteractive: boolean
   isEditable: boolean
@@ -447,7 +461,7 @@ function SortablePreviewBlock({
           Double-clic pour éditer
         </div>
       )}
-      <BlockPreviewRenderer block={block} blockType={blockType} />
+      <BlockPreviewRenderer block={block} blockType={blockType} blockTypes={blockTypes || []} theme={theme || 'light'} />
     </div>
   )
 }
@@ -498,7 +512,7 @@ function FAQSectionPreview({ title, items, wrapperStyles }: { title?: string; it
   )
 }
 
-function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; blockType?: BlockType; blockTypes?: BlockType[] }) {
+function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }: { block: Block; blockType?: BlockType; blockTypes?: BlockType[]; theme?: 'light' | 'dark' }) {
   // Liste des blocs qui ont un rendu hardcodé et doivent toujours utiliser le switch case
   const blocksWithHardcodedRender = [
     'hero', 'progress-bar', 'cta-section', 'features-grid', 'features_grid', 'pricing', 'pricing_cards', 
@@ -652,8 +666,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
     background: block.styles?.background && block.styles?.background.includes('gradient')
       ? block.styles?.background
       : block.styles?.background_color || block.styles?.backgroundColor || undefined,
-    // Couleur de texte du wrapper
-    color: block.styles?.color,
+    // Couleur de texte du wrapper - Ne pas appliquer si le thème est actif pour laisser les classes dark: gérer
+    color: theme === 'dark' ? undefined : block.styles?.color,
     // Padding du wrapper - Utiliser uniquement les propriétés individuelles pour éviter les conflits
     // Ne jamais utiliser padding shorthand si on a des propriétés individuelles
     ...(hasIndividualPadding ? {
@@ -685,8 +699,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
     background: block.styles?.background && block.styles?.background.includes('gradient')
       ? block.styles?.background
       : block.styles?.background_color || block.styles?.backgroundColor || undefined,
-    // Couleur de texte
-    color: block.styles?.color,
+    // Couleur de texte - Ne pas appliquer si le thème est actif pour laisser les classes dark: gérer
+    color: theme === 'dark' ? undefined : block.styles?.color,
     // Typographie
     fontFamily: block.styles?.font_family || block.styles?.fontFamily || undefined,
     fontSize: block.styles?.font_size || block.styles?.fontSize || undefined,
@@ -763,7 +777,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
             fontSize: block.styles?.font_size || '2rem',
             fontWeight: block.styles?.font_weight || 'bold',
             marginBottom: block.styles?.margin_bottom || '1rem',
-            color: block.data.color || contentStyles.color || undefined
+            color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
           }}>
             {block.data.text || 'Titre'}
           </h1>}
@@ -773,7 +787,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               fontSize: block.styles?.font_size || '2rem',
               fontWeight: block.styles?.font_weight || 'bold',
               marginBottom: block.styles?.margin_bottom || '1rem',
-              color: block.data.color || contentStyles.color || undefined
+              color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
             }}>
               {block.data.text || 'Titre'}
             </h2>
@@ -784,7 +798,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               fontSize: block.styles?.font_size || '2rem',
               fontWeight: block.styles?.font_weight || 'bold',
               marginBottom: block.styles?.margin_bottom || '1rem',
-              color: block.data.color || contentStyles.color || undefined
+              color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
             }}>
               {block.data.text || 'Titre'}
             </h3>
@@ -795,7 +809,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               fontSize: block.styles?.font_size || '2rem',
               fontWeight: block.styles?.font_weight || 'bold',
               marginBottom: block.styles?.margin_bottom || '1rem',
-              color: block.data.color || contentStyles.color || undefined
+              color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
             }}>
               {block.data.text || 'Titre'}
             </h4>
@@ -889,7 +903,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                 : {}),
               borderRadius: contentStyles.borderRadius || block.styles?.border_radius || '0.5rem',
               backgroundColor: block.data.bg_color || contentStyles.backgroundColor || undefined,
-              color: block.data.text_color || contentStyles.color || undefined,
+              color: theme === 'dark' ? undefined : (block.data.text_color || contentStyles.color || undefined),
             }}
           >
             {block.data.text || 'Bouton'}
@@ -1215,6 +1229,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                   block={childBlock}
                   blockType={blockTypes?.find((bt: BlockType) => bt.name === childBlock.type)}
                   blockTypes={blockTypes}
+                  theme={theme}
                 />
               ))}
             </div>
@@ -1317,6 +1332,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                   block={childBlock}
                   blockType={blockTypes?.find((bt: BlockType) => bt.name === childBlock.type)}
                   blockTypes={blockTypes}
+                  theme={theme}
                 />
               </div>
             ))
@@ -1680,8 +1696,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                             {priceYearly && priceYearly > 0 && (
                               <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                 ou {formatPrice(priceYearly)}/an 
-                                {priceMonthly > 0 && (
-                                  <span className="ml-1">
+                                {block.data?.show_discount !== false && priceMonthly > 0 && priceYearly < (priceMonthly * 12) && (
+                                  <span className="ml-1 text-green-600 dark:text-green-400 font-semibold">
                                     (-{Math.round((1 - (priceYearly / (priceMonthly * 12))) * 100)}%)
                                   </span>
                                 )}
@@ -1972,7 +1988,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                               {priceYearly && priceYearly > 0 && (
                                 <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                   ou {formatPrice(priceYearly)}/an 
-                                  {priceMonthly > 0 && priceYearly < (priceMonthly * 12) && (
+                                  {block.data?.show_discount !== false && priceMonthly > 0 && priceYearly < (priceMonthly * 12) && (
                                     <span className="ml-1 text-green-600 dark:text-green-400 font-semibold">
                                       (économisez {Math.round((1 - (priceYearly / (priceMonthly * 12))) * 100)}%)
                                     </span>
@@ -3269,29 +3285,31 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       const currentYear = new Date().getFullYear()
       const defaultCopyright = block.data.copyright || `© ${currentYear} VTCBuilder. Tous droits réservés.`
       const defaultAdditionalText = block.data.additional_text || 'vtcbuilder.com - Développé avec ❤️ en France'
+      const supportDarkMode = block.styles?.support_dark_mode !== false
+      const isDark = theme === 'dark' && supportDarkMode
       
       return (
-        <footer style={wrapperStyles} className="mb-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-8 sm:py-12 w-full min-w-0 overflow-hidden">
+        <footer style={wrapperStyles} className={`mb-0 ${isDark ? 'bg-gray-800' : 'bg-gray-100'} ${isDark ? 'text-gray-100' : 'text-gray-900'} py-8 sm:py-12 w-full min-w-0 overflow-hidden`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full min-w-0">
             {footerColumns.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 w-full min-w-0 mb-8">
                 {footerColumns.map((column: any, colIndex: number) => (
                   <div key={colIndex} className="min-w-0 overflow-hidden">
                     {column.title && (
-                      <h3 className={`${colIndex === 0 ? 'text-lg sm:text-xl font-bold' : 'font-bold text-base sm:text-lg'} mb-3 sm:mb-4 text-gray-900 dark:text-gray-100 break-words`}>
+                      <h3 className={`${colIndex === 0 ? 'text-lg sm:text-xl font-bold' : 'font-bold text-base sm:text-lg'} mb-3 sm:mb-4 ${isDark ? 'text-gray-100' : 'text-gray-900'} break-words`}>
                         {column.title}
                       </h3>
                     )}
                     {column.description && (
-                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 break-words">{column.description}</p>
+                      <p className={`text-sm sm:text-base ${isDark ? 'text-gray-300' : 'text-gray-600'} mb-3 sm:mb-4 break-words`}>{column.description}</p>
                     )}
                     {(column.links || []).length > 0 && (
-                      <ul className="space-y-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
+                      <ul className={`space-y-2 text-sm sm:text-base ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                         {column.links.map((link: any, linkIndex: number) => (
                           <li key={linkIndex} className="break-words">
                             <a
                               href={link.url || '#'}
-                              className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors break-words"
+                              className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors break-words`}
                             >
                               {link.label || 'Lien'}
                             </a>
@@ -3306,38 +3324,38 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
               // Footer par défaut si aucune colonne n'est configurée
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
                 <div>
-                  <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">VTCBuilder</h3>
-                  <p className="text-gray-600 dark:text-gray-300">
+                  <h3 className={`text-xl font-bold mb-4 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>VTCBuilder</h3>
+                  <p className={isDark ? 'text-gray-300' : 'text-gray-600'}>
                     La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-bold mb-4 text-gray-900 dark:text-gray-100">Produit</h4>
-                  <ul className="space-y-2 text-gray-600 dark:text-gray-300">
-                    <li><a href="/#pricing" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Tarifs</a></li>
-                    <li><a href="/features" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Fonctionnalités</a></li>
-                    <li><a href="/templates" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Templates</a></li>
+                  <h4 className={`font-bold mb-4 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Produit</h4>
+                  <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <li><a href="/#pricing" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Tarifs</a></li>
+                    <li><a href="/features" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Fonctionnalités</a></li>
+                    <li><a href="/templates" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Templates</a></li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-bold mb-4 text-gray-900 dark:text-gray-100">Support</h4>
-                  <ul className="space-y-2 text-gray-600 dark:text-gray-300">
-                    <li><a href="/docs" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Documentation</a></li>
-                    <li><a href="/contact" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Contact</a></li>
-                    <li><a href="/faq" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">FAQ</a></li>
+                  <h4 className={`font-bold mb-4 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Support</h4>
+                  <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <li><a href="/docs" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Documentation</a></li>
+                    <li><a href="/contact" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Contact</a></li>
+                    <li><a href="/faq" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>FAQ</a></li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-bold mb-4 text-gray-900 dark:text-gray-100">Légal</h4>
-                  <ul className="space-y-2 text-gray-600 dark:text-gray-300">
-                    <li><a href="/legal/terms" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">CGV</a></li>
-                    <li><a href="/legal/privacy" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Confidentialité</a></li>
+                  <h4 className={`font-bold mb-4 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Légal</h4>
+                  <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <li><a href="/legal/terms" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>CGV</a></li>
+                    <li><a href="/legal/privacy" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Confidentialité</a></li>
                   </ul>
                 </div>
               </div>
             )}
             {/* Copyright et texte additionnel - toujours affichés */}
-            <div className="border-t border-gray-300 dark:border-gray-700 mt-8 pt-8 text-center text-gray-600 dark:text-gray-400">
+            <div className={`border-t ${isDark ? 'border-gray-700' : 'border-gray-300'} mt-8 pt-8 text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               <p className="text-sm sm:text-base">{defaultCopyright}</p>
               {defaultAdditionalText && (
                 <p className="mt-2 text-xs sm:text-sm">{defaultAdditionalText}</p>
@@ -3380,6 +3398,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                     block={childBlock}
                     blockType={blockTypes?.find((bt: BlockType) => bt.name === childBlock.type)}
                     blockTypes={blockTypes}
+                    theme={theme}
                   />
                 </div>
               ))

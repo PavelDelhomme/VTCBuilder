@@ -135,14 +135,21 @@ class SuppressExpected401Middleware(MiddlewareMixin):
     
     def process_request(self, request):
         """
-        Log all requests to page-projects for debugging
+        Log all requests to page-projects and system-settings for debugging
         """
-        if '/page-projects' in request.path:
+        if '/page-projects' in request.path or '/system-settings' in request.path:
+            has_auth = 'Authorization' in request.headers or 'HTTP_AUTHORIZATION' in request.META
+            auth_preview = ''
+            if has_auth:
+                auth_header = request.headers.get('Authorization') or request.META.get('HTTP_AUTHORIZATION', '')
+                auth_preview = auth_header[:50] if auth_header else 'empty'
             logger.info(
                 f"SuppressExpected401Middleware.process_request: {request.method} {request.path}. "
                 f"User: {request.user.email if request.user and hasattr(request.user, 'email') else 'anonymous'}, "
                 f"is_authenticated: {request.user.is_authenticated if request.user else False}, "
-                f"auth_header={'present' if 'Authorization' in request.headers else 'missing'}"
+                f"auth_header={'present' if has_auth else 'missing'}, "
+                f"auth_preview: {auth_preview}, "
+                f"Content-Type: {request.META.get('CONTENT_TYPE', 'not set')}"
             )
         return None
     

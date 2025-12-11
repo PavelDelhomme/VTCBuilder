@@ -55,7 +55,7 @@ function EditorResizableLayout({ children }: { children: (props: {
 
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
-  }, [])
+  }, [setSidebarWidth])
 
   return (
     <>
@@ -324,76 +324,8 @@ export default function HomepageEditorPage() {
     return false
   }) // État de la palette (réduite ou non)
 
-  // Sauvegarde automatique
-  const { isSaving: isAutoSaving, lastSaved, updateLastSaved } = useAutoSave({
-    data: { 
-      blocks, 
-      metaTitle, 
-      metaDescription,
-      ogTitle,
-      ogDescription,
-      ogImage,
-      twitterCardType,
-      twitterImage,
-      metaKeywords,
-      canonicalUrl,
-      robots,
-      pageStatus,
-    },
-    onSave: async (data) => {
-      // Vérifier si l'utilisateur est super admin avant de sauvegarder
-      const user = authService.getStoredUser()
-      const isSuperAdmin = user?.roles?.some((role: any) => role === 'super-admin' || role.name === 'super-admin')
-      
-      if (!isSuperAdmin) {
-        // Ne pas sauvegarder si l'utilisateur n'est pas super admin
-        // Ne pas logger pour éviter de polluer la console
-        return
-      }
-      
-      try {
-        const response = await api.patch('/system-settings/', {
-          public_homepage_blocks: data.blocks,
-          public_homepage_meta_title: data.metaTitle,
-          public_homepage_meta_description: data.metaDescription,
-          public_homepage_og_title: data.ogTitle,
-          public_homepage_og_description: data.ogDescription,
-          public_homepage_og_image: data.ogImage,
-          public_homepage_twitter_card_type: data.twitterCardType,
-          public_homepage_twitter_image: data.twitterImage,
-          public_homepage_meta_keywords: data.metaKeywords,
-          public_homepage_canonical_url: data.canonicalUrl,
-          public_homepage_robots: data.robots,
-          public_homepage_status: data.pageStatus,
-        })
-        // Si la réponse est un 403 silencieux, ne rien faire
-        if (response.status === 403) {
-          return
-        }
-      } catch (error: any) {
-        // Ne pas logger les erreurs 403 - c'est normal si l'utilisateur n'est pas super admin
-        // L'intercepteur devrait déjà les gérer silencieusement, mais on s'assure ici aussi
-        if (error.response?.status === 403 || error.status === 403) {
-          // Erreur 403 silencieuse - ne rien faire
-          return
-        }
-        // Pour les autres erreurs, les logger
-        console.error('Erreur lors de la sauvegarde automatique:', error)
-      }
-    },
-    debounceMs: 2000,
-    enabled: true,
-  })
-
-  useEffect(() => {
-    if (!authService.isSuperAdmin()) {
-      router.push('/dashboard')
-      return
-    }
-    loadData()
-  }, [router])
-
-  const loadData = async () => {
+  // Fonction pour charger les données
+  const loadData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -466,7 +398,94 @@ export default function HomepageEditorPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  // Fonction de sauvegarde automatique
+  const handleAutoSave = useCallback(async (data: any) => {
+    // Vérifier si l'utilisateur est super admin avant de sauvegarder
+    if (!authService.isSuperAdmin()) {
+      // Ne pas sauvegarder si l'utilisateur n'est pas super admin
+      // Ne pas logger pour éviter de polluer la console
+      return
+    }
+    
+    // Vérifier que le token est présent
+    const token = localStorage.getItem('token')
+    if (!token) {
+      console.warn('Token manquant pour la sauvegarde automatique')
+      return
+    }
+    
+    try {
+      const response = await api.patch('/system-settings/', {
+        public_homepage_blocks: data.blocks,
+        public_homepage_meta_title: data.metaTitle,
+        public_homepage_meta_description: data.metaDescription,
+        public_homepage_og_title: data.ogTitle,
+        public_homepage_og_description: data.ogDescription,
+        public_homepage_og_image: data.ogImage,
+        public_homepage_twitter_card_type: data.twitterCardType,
+        public_homepage_twitter_image: data.twitterImage,
+        public_homepage_meta_keywords: data.metaKeywords,
+        public_homepage_canonical_url: data.canonicalUrl,
+        public_homepage_robots: data.robots,
+        public_homepage_status: data.pageStatus,
+      })
+      // Si la réponse est un 403 silencieux, ne rien faire
+      if (response.status === 403) {
+        return
+      }
+    } catch (error: any) {
+      // Ne pas logger les erreurs 403 - c'est normal si l'utilisateur n'est pas super admin
+      // L'intercepteur devrait déjà les gérer silencieusement, mais on s'assure ici aussi
+      if (error.response?.status === 403 || error.status === 403) {
+        // Erreur 403 silencieuse - ne rien faire
+        // Mais vérifier si le token est valide
+        const token = localStorage.getItem('token')
+        if (token) {
+          // Le token existe mais on a un 403 - peut-être que le token a expiré
+          // Essayer de rafraîchir le token
+          try {
+            await authService.refreshToken()
+          } catch (refreshError) {
+            // Si le refresh échoue, ne rien faire (l'utilisateur devra se reconnecter)
+          }
+        }
+        return
+      }
+      // Pour les autres erreurs, les logger
+      console.error('Erreur lors de la sauvegarde automatique:', error)
+    }
+  }, [])
+
+  // Sauvegarde automatique
+  const { isSaving: isAutoSaving, lastSaved, updateLastSaved } = useAutoSave({
+    data: { 
+      blocks, 
+      metaTitle, 
+      metaDescription,
+      ogTitle,
+      ogDescription,
+      ogImage,
+      twitterCardType,
+      twitterImage,
+      metaKeywords,
+      canonicalUrl,
+      robots,
+      pageStatus,
+    },
+    onSave: handleAutoSave,
+    debounceMs: 2000,
+    enabled: true,
+  })
+
+  useEffect(() => {
+    if (!authService.isSuperAdmin()) {
+      router.push('/dashboard')
+      return
+    }
+    loadData()
+  }, [router, loadData])
 
   const handleSave = useCallback(async () => {
     setSaving(true)
@@ -628,7 +647,7 @@ export default function HomepageEditorPage() {
             </label>
           </div>
 
-          {/* Toggle palette de blocs */}
+          {/* Toggle palette de blocs - Positionné à droite avant le bouton Sauvegarder */}
           <button
             onClick={() => {
               const newState = !isPaletteCollapsed
@@ -925,6 +944,12 @@ export default function HomepageEditorPage() {
                       selectedBlockId={selectedBlockId}
                       showBlocksPalette={true}
                       showOnlyPalette={true} // Toujours afficher uniquement la palette
+                      onPaletteToggle={() => {
+                        setIsPaletteCollapsed(true)
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem('palette-collapsed', 'true')
+                        }
+                      }}
                     />
                   </div>
                 )}
@@ -1003,22 +1028,27 @@ export default function HomepageEditorPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* Toggle thème pour la prévisualisation uniquement */}
-                    <button
-                      onClick={() => setPreviewTheme(previewTheme === 'light' ? 'dark' : 'light')}
-                      className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                      title={previewTheme === 'dark' ? 'Passer en mode clair (prévisualisation)' : 'Passer en mode sombre (prévisualisation)'}
-                    >
-                      {previewTheme === 'dark' ? (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                        </svg>
-                      )}
-                    </button>
+                    {/* Toggle thème pour la prévisualisation uniquement - Amélioré avec label visible */}
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600">
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                        {previewTheme === 'dark' ? '🌙' : '☀️'} {previewTheme === 'dark' ? 'Sombre' : 'Clair'}
+                      </span>
+                      <button
+                        onClick={() => setPreviewTheme(previewTheme === 'light' ? 'dark' : 'light')}
+                        className="p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                        title={previewTheme === 'dark' ? 'Passer en mode clair (prévisualisation uniquement)' : 'Passer en mode sombre (prévisualisation uniquement)'}
+                      >
+                        {previewTheme === 'dark' ? (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                     <select
                       value={previewMode}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPreviewMode(e.target.value as 'desktop' | 'tablet' | 'mobile')}
@@ -1030,71 +1060,83 @@ export default function HomepageEditorPage() {
                     </select>
                   </div>
                 </div>
-                <div className="flex-1 overflow-hidden relative bg-gray-50 dark:bg-gray-900 p-4">
-              {/* Device Frame */}
-              <div className={`h-full mx-auto transition-all duration-300 ${
-                previewMode === 'desktop' 
-                  ? 'w-full max-w-full' 
-                  : previewMode === 'tablet' 
-                  ? 'w-full max-w-[768px]' 
-                  : 'w-full max-w-[375px]'
-              }`}>
-                {/* Device Frame Border */}
-                <div className={`h-full bg-white dark:bg-gray-800 rounded-lg shadow-2xl overflow-hidden ${
-                  previewMode === 'desktop' 
-                    ? 'border-0' 
-                    : previewMode === 'tablet' 
-                    ? 'border-8 border-gray-800 dark:border-gray-700 rounded-t-3xl' 
-                    : 'border-8 border-gray-800 dark:border-gray-700 rounded-[2.5rem]'
+                <div className={`flex-1 overflow-hidden relative p-4 ${
+                  previewTheme === 'dark' ? 'bg-gray-900' : 'bg-white'
                 }`}>
-                  {/* Device Notch (Mobile) */}
-                  {previewMode === 'mobile' && (
-                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-gray-800 dark:bg-gray-700 rounded-b-2xl z-10"></div>
-                  )}
-                  {/* Preview Content - Editable */}
-                  <div className={`h-full overflow-auto ${
-                    previewMode === 'tablet' ? 'px-4' : previewMode === 'mobile' ? 'px-2' : ''
+                  {/* Device Frame */}
+                  <div className={`h-full mx-auto transition-all duration-300 ${
+                    previewMode === 'desktop' 
+                      ? 'w-full max-w-full' 
+                      : previewMode === 'tablet' 
+                      ? 'w-full max-w-[768px]' 
+                      : 'w-full max-w-[375px]'
                   }`}>
-                    {/* Isoler le thème de la prévisualisation de l'éditeur */}
-                    {/* Utiliser un wrapper avec data-theme pour forcer le thème indépendamment de l'éditeur */}
-                    <div 
-                      className={`min-h-full ${
-                        previewMode === 'tablet' ? 'max-w-[768px] mx-auto' : 
-                        previewMode === 'mobile' ? 'max-w-[375px] mx-auto' : 
-                        'w-full'
-                      }`}
-                      data-preview-theme={previewTheme}
-                    >
-                      {/* Wrapper avec classe dark conditionnelle - isolé de l'éditeur */}
-                      {/* Ce div force le thème uniquement pour son contenu */}
-                      {/* Utiliser un contexte isolé pour le thème de la prévisualisation */}
-                      {/* Le thème est contrôlé uniquement par previewTheme, indépendamment de l'éditeur */}
-                      {/* Important: La classe 'dark' ici force le thème sombre uniquement pour ce conteneur */}
-                      <div 
-                        className={previewTheme === 'dark' ? 'dark' : ''}
-                        data-preview-theme-isolated={previewTheme}
-                        style={{
-                          // Forcer le colorScheme pour isoler le thème
-                          colorScheme: previewTheme === 'dark' ? 'dark' : 'light',
-                        }}
-                      >
-                        <BlockPreview 
-                          blocks={blocks} 
-                          blockTypes={blockTypes}
-                          isEditable={false} // Désactiver l'édition dans la prévisualisation
-                          isInteractive={previewLinksEnabled} // Activer/désactiver les interactions selon le toggle
-                          selectedBlockId={selectedBlockId}
-                          onBlockSelect={setSelectedBlockId}
-                          onBlockDoubleClick={(blockId) => {
-                            setSelectedBlockId(blockId)
-                          }}
-                          onBlocksChange={setBlocks}
-                        />
+                    {/* Device Frame Border */}
+                    <div className={`h-full rounded-lg shadow-2xl overflow-hidden ${
+                      previewTheme === 'dark' ? 'bg-gray-800' : 'bg-white'
+                    } ${
+                      previewMode === 'desktop' 
+                        ? 'border-0' 
+                        : previewMode === 'tablet' 
+                        ? `border-8 ${previewTheme === 'dark' ? 'border-gray-700' : 'border-gray-300'} rounded-t-3xl` 
+                        : `border-8 ${previewTheme === 'dark' ? 'border-gray-700' : 'border-gray-300'} rounded-[2.5rem]`
+                    }`}>
+                      {/* Device Notch (Mobile) */}
+                      {previewMode === 'mobile' && (
+                        <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 rounded-b-2xl z-10 ${
+                          previewTheme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'
+                        }`}></div>
+                      )}
+                      {/* Preview Content - Editable */}
+                      <div className={`h-full overflow-auto ${
+                        previewMode === 'tablet' ? 'px-4' : previewMode === 'mobile' ? 'px-2' : ''
+                      }`}>
+                        {/* Isoler le thème de la prévisualisation de l'éditeur */}
+                        {/* Utiliser un wrapper avec data-theme pour forcer le thème indépendamment de l'éditeur */}
+                        <div 
+                          className={`min-h-full ${
+                            previewMode === 'tablet' ? 'max-w-[768px] mx-auto' : 
+                            previewMode === 'mobile' ? 'max-w-[375px] mx-auto' : 
+                            'w-full'
+                          }`}
+                          data-preview-theme={previewTheme}
+                        >
+                          {/* Wrapper avec classe dark conditionnelle - isolé de l'éditeur */}
+                          {/* Ce div force le thème uniquement pour son contenu */}
+                          {/* Utiliser un contexte isolé pour le thème de la prévisualisation */}
+                          {/* Le thème est contrôlé uniquement par previewTheme, indépendamment de l'éditeur */}
+                          {/* Important: La classe 'dark' ici force le thème sombre uniquement pour ce conteneur */}
+                          <div 
+                            className={`${previewTheme === 'dark' ? 'dark' : ''} min-h-full`}
+                            data-preview-theme-isolated={previewTheme}
+                            style={{
+                              // Forcer le colorScheme pour isoler le thème
+                              colorScheme: previewTheme === 'dark' ? 'dark' : 'light',
+                              // Forcer le background pour que le thème soit visible
+                              backgroundColor: previewTheme === 'dark' ? '#111827' : '#ffffff',
+                              color: previewTheme === 'dark' ? '#f9fafb' : '#111827',
+                            }}
+                            // Forcer le thème sur tous les enfants via CSS
+                            data-theme={previewTheme}
+                          >
+                            <BlockPreview 
+                              blocks={blocks} 
+                              blockTypes={blockTypes}
+                              isEditable={false} // Désactiver l'édition dans la prévisualisation
+                              isInteractive={previewLinksEnabled} // Activer/désactiver les interactions selon le toggle
+                              selectedBlockId={selectedBlockId}
+                              onBlockSelect={setSelectedBlockId}
+                              theme={previewTheme} // Passer le thème à BlockPreview
+                              onBlockDoubleClick={(blockId) => {
+                                setSelectedBlockId(blockId)
+                              }}
+                              onBlocksChange={setBlocks}
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
                 </div>
               </div>
             </div>

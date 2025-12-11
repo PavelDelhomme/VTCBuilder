@@ -67,6 +67,8 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
+  // Log supprimé pour éviter le bruit dans la console
+  
   // Si on envoie un FormData, supprimer le Content-Type pour que le navigateur
   // définisse automatiquement le bon Content-Type avec le boundary
   if (config.data instanceof FormData) {
@@ -98,28 +100,98 @@ api.interceptors.response.use(
   (error) => {
     const url = error.config?.url || '';
     const status = error.response?.status;
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const hasToken = localStorage.getItem('token');
+    const refreshToken = localStorage.getItem('refresh_token');
     
     // Marquer les erreurs 401/403 pour les endpoints silencieux comme silencieuses
     const isSilentError = SILENT_ERROR_ENDPOINTS.some(endpoint => url.includes(endpoint));
+    
+    // Pour les erreurs 403 sur system-settings avec un token, essayer de rafraîchir le token
+    // car cela peut indiquer que le token a expiré
+    if (status === 403 && url.includes('/system-settings/') && hasToken && refreshToken && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      // Si on est déjà en train de rafraîchir, mettre en queue
+      if (window.__isRefreshingToken) {
+        return new Promise((resolve, reject) => {
+          if (!window.__failedQueue) {
+            window.__failedQueue = [];
+          }
+          window.__failedQueue.push({ resolve, reject, config: originalRequest });
+        }).then((token) => {
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+          }
+          return api(originalRequest);
+        }).catch((err) => {
+          return Promise.reject(err);
+        });
+      }
+      
+      window.__isRefreshingToken = true;
+      
+      return authService.refreshToken().then((success) => {
+        window.__isRefreshingToken = false;
+        
+        if (success) {
+          // Traiter la queue des requêtes en attente
+          if (window.__failedQueue) {
+            window.__failedQueue.forEach(({ resolve }) => {
+              const newToken = localStorage.getItem('token');
+              resolve(newToken);
+            });
+            window.__failedQueue = [];
+          }
+          
+          // Réessayer la requête originale avec le nouveau token
+          const newToken = localStorage.getItem('token');
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          }
+          return api(originalRequest);
+        } else {
+          // Refresh token invalide, retourner une promesse résolue silencieusement
+          error.silent = true;
+          return Promise.resolve({ 
+            data: {}, 
+            status: 403, 
+            statusText: 'Forbidden', 
+            headers: {}, 
+            config: error.config 
+          });
+        }
+      }).catch((refreshError) => {
+        window.__isRefreshingToken = false;
+        
+        // Traiter la queue des requêtes en attente avec erreur
+        if (window.__failedQueue) {
+          window.__failedQueue.forEach(({ reject }) => {
+            reject(refreshError);
+          });
+          window.__failedQueue = [];
+        }
+        
+        error.silent = true;
+        return Promise.reject(error);
+      });
+    }
+    
     if ((status === 401 || status === 403) && isSilentError) {
       // Supprimer l'erreur de la console en interceptant avant qu'elle soit loggée
       error.silent = true;
       // Ne pas afficher l'erreur dans la console
       error.config = error.config || {};
       error.config.silent = true;
-      // Pour les erreurs 403 sur system-settings, retourner une promesse résolue silencieusement
-      // pour éviter que l'erreur remonte et pollue la console
-      if (status === 403 && url.includes('/system-settings/')) {
-        return Promise.resolve({ 
-          data: {}, 
-          status: 403, 
-          statusText: 'Forbidden', 
-          headers: {}, 
-          config: error.config 
-        });
-      }
-      // Pour les autres erreurs silencieuses, rejeter silencieusement
-      return Promise.reject(error);
+      // Pour toutes les erreurs 401/403 sur les endpoints silencieux, retourner une promesse résolue silencieusement
+      // Cela évite que l'erreur soit loggée dans la console
+      return Promise.resolve({ 
+        data: {}, 
+        status: status, 
+        statusText: status === 401 ? 'Unauthorized' : 'Forbidden', 
+        headers: {}, 
+        config: error.config 
+      });
     }
     
     // ERR_BLOCKED_BY_CLIENT est généralement causé par un bloqueur de publicité

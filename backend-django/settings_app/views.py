@@ -165,7 +165,12 @@ def system_settings_view(request):
         # Log user info for debugging
         user_email = getattr(request.user, 'email', 'unknown')
         user_id = getattr(request.user, 'id', None)
-        logger.info(f"System settings request ({request.method}) - User: {user_email} (ID: {user_id})")
+        has_auth_header = 'HTTP_AUTHORIZATION' in request.META
+        auth_header = request.META.get('HTTP_AUTHORIZATION', 'not present')[:50] if has_auth_header else 'not present'
+        logger.info(
+            f"System settings request ({request.method}) - User: {user_email} (ID: {user_id}), "
+            f"Auth header present: {has_auth_header}, Auth header preview: {auth_header}"
+        )
         
         # GET - Retrieve settings
         if request.method == 'GET':
@@ -228,6 +233,12 @@ def system_settings_view(request):
         
         # POST/PATCH/PUT - Create or update settings
         else:
+            # Log détaillé pour les requêtes PATCH
+            logger.info(
+                f"System settings {request.method} request - User: {user_email} (ID: {user_id}), "
+                f"Auth header present: {has_auth_header}, Auth header preview: {auth_header}, "
+                f"Data keys: {list(request.data.keys()) if hasattr(request.data, 'keys') else 'no data'}"
+            )
             # Try to get existing instance
             try:
                 instance = SystemSettings.get_settings()
@@ -241,6 +252,11 @@ def system_settings_view(request):
             
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            
+            logger.info(
+                f"System settings {request.method} successful - User: {user_email} (ID: {user_id}), "
+                f"Updated fields: {list(request.data.keys()) if hasattr(request.data, 'keys') else 'unknown'}"
+            )
             
             # Synchroniser les pages publiques avec le projet système après sauvegarde
             try:
@@ -624,12 +640,27 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     
     def partial_update(self, request, *args, **kwargs):
         """Partially update system settings"""
-        # Vérification sécurisée depuis le token JWT uniquement
-        is_super_admin = is_super_admin_from_token(request)
-        
+        # Log dès l'entrée dans la méthode
         user_email = 'unknown'
         if request.user and hasattr(request.user, 'email'):
             user_email = request.user.email
+        
+        has_auth_header = 'HTTP_AUTHORIZATION' in request.META or 'Authorization' in request.headers
+        auth_header_preview = ''
+        if has_auth_header:
+            auth_header = request.META.get('HTTP_AUTHORIZATION', '') or request.headers.get('Authorization', '')
+            auth_header_preview = auth_header[:50] if auth_header else 'empty'
+        
+        logger.info(
+            f"SystemSettingsViewSet.partial_update ENTRY: user={user_email}, "
+            f"method={request.method}, path={request.path}, "
+            f"auth_header={'present' if has_auth_header else 'missing'}, "
+            f"auth_preview: {auth_header_preview}, "
+            f"data_keys: {list(request.data.keys()) if hasattr(request.data, 'keys') else 'no data'}"
+        )
+        
+        # Vérification sécurisée depuis le token JWT uniquement
+        is_super_admin = is_super_admin_from_token(request)
         
         logger.info(
             f"SystemSettingsViewSet.partial_update: user={user_email}, "

@@ -82,9 +82,10 @@ interface BlockEditorProps {
   selectedBlockId?: string | null
   showBlocksPalette?: boolean // Afficher ou non la sidebar de blocs (désactivée si popup externe)
   showOnlyPalette?: boolean // Afficher uniquement la palette (pour popup)
+  onPaletteToggle?: () => void // Callback pour masquer/afficher la palette
 }
 
-export default function BlockEditor({ blocks, onChange, availableBlockTypes, onBlockSelect, selectedBlockId: externalSelectedBlockId, showBlocksPalette = true, showOnlyPalette = false }: BlockEditorProps) {
+export default function BlockEditor({ blocks, onChange, availableBlockTypes, onBlockSelect, selectedBlockId: externalSelectedBlockId, showBlocksPalette = true, showOnlyPalette = false, onPaletteToggle }: BlockEditorProps) {
   const { resolvedTheme, toggleTheme } = useTheme()
   const [blockTypes, setBlockTypes] = useState<BlockType[]>([])
   const [selectedBlock, setSelectedBlock] = useState<string | null>(externalSelectedBlockId || null)
@@ -695,141 +696,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
 
   return (
     <div className="flex h-full w-full flex-col relative min-h-0 overflow-hidden">
-      {/* Toolbar - Enhanced with History Navigation */}
-      <div className="flex items-center justify-between px-4 lg:px-6 xl:px-8 py-2.5 lg:py-3 bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <div className="flex items-center gap-3 lg:gap-4 flex-wrap">
-          {/* Mobile: Menu button */}
-          <button
-            onClick={() => {
-              setSidebarOpen(!sidebarOpen)
-              // Fermer les paramètres si on ferme la sidebar
-              if (!sidebarOpen) {
-                setSelectedBlock(null)
-              }
-            }}
-            className="lg:hidden p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            aria-label="Menu"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-
-          {/* Block Count with Undo/Redo */}
-          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-2 py-1.5">
-            {/* History Navigation Buttons */}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={handleUndo}
-                disabled={!history.canUndo}
-                className={`p-1.5 rounded transition-all ${
-                  history.canUndo
-                    ? 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400'
-                    : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
-                }`}
-                title="Annuler (Ctrl+Z)"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                </svg>
-              </button>
-              <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
-              <button
-                onClick={handleRedo}
-                disabled={!history.canRedo}
-                className={`p-1.5 rounded transition-all ${
-                  history.canRedo
-                    ? 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400'
-                    : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
-                }`}
-                title="Refaire (Ctrl+Shift+Z)"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
-                </svg>
-              </button>
-            </div>
-            <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
-            {/* Block Count */}
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
-              </svg>
-              <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                {(() => {
-                  // Compter récursivement tous les blocs (y compris les enfants)
-                  const countBlocks = (blocks: Block[]): number => {
-                    let count = blocks.length
-                    blocks.forEach(block => {
-                      if (block.children && block.children.length > 0) {
-                        count += countBlocks(block.children)
-                      }
-                    })
-                    return count
-                  }
-                  const totalBlocks = countBlocks(history.state)
-                  return `${totalBlocks} bloc${totalBlocks > 1 ? 's' : ''}`
-                })()}
-              </span>
-            </div>
-          </div>
-
-          {/* Export/Import buttons */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => {
-                const dataStr = JSON.stringify(history.state, null, 2)
-                const dataBlob = new Blob([dataStr], { type: 'application/json' })
-                const url = URL.createObjectURL(dataBlob)
-                const link = document.createElement('a')
-                link.href = url
-                link.download = `blocks-${new Date().toISOString().split('T')[0]}.json`
-                link.click()
-                URL.revokeObjectURL(url)
-              }}
-              className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              title="Exporter les blocs"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </button>
-            <label className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-colors cursor-pointer" title="Importer des blocs">
-              <input
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  const file = e.target.files?.[0]
-                  if (file) {
-                    const reader = new FileReader()
-                    reader.onload = (event) => {
-                      try {
-                        const imported = JSON.parse(event.target?.result as string)
-                        if (Array.isArray(imported)) {
-                          const newBlocks = imported.map((b: Block) => ({
-                            ...b,
-                            id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                          }))
-                          history.set([...history.state, ...newBlocks])
-                          onChange([...history.state, ...newBlocks])
-                        }
-                      } catch (error) {
-                        alert('Erreur lors de l\'importation du fichier')
-                      }
-                    }
-                    reader.readAsText(file)
-                  }
-                }}
-              />
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-            </label>
-          </div>
-        </div>
-      </div>
-
       <div className="flex flex-1 overflow-hidden relative w-full h-full min-h-0">
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
@@ -1029,7 +895,20 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
               <div className={`flex-1 overflow-y-auto min-h-0 flex flex-col ${!blocksPaletteOpen ? 'hidden' : ''}`} style={{ scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch', maxHeight: '100%' }}>
                 {/* Header avec recherche et filtres - Fixe en haut */}
                 <div className="flex-shrink-0 p-4 sm:p-5 lg:p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3">Blocs disponibles</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Blocs disponibles</h3>
+                    {onPaletteToggle && (
+                      <button
+                        onClick={onPaletteToggle}
+                        className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        title="Masquer la palette de blocs"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                   
                   {/* Barre de recherche */}
                   <div className="relative mb-3">
@@ -1444,7 +1323,20 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={history.state.map((b: Block) => b.id)} strategy={verticalListSortingStrategy}>
-              <div className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 max-w-full min-h-0">
+              <div 
+                className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 max-w-full min-h-0"
+                onClick={(e) => {
+                  // Désélectionner le bloc si on clique en dehors d'un bloc
+                  // Vérifier que le clic n'est pas sur un bloc ou un élément enfant d'un bloc
+                  const target = e.target as HTMLElement
+                  const clickedBlock = target.closest('[data-block-id], [data-block-list-id], [data-child-block-id]')
+                  
+                  // Si on n'a pas cliqué sur un bloc, désélectionner
+                  if (!clickedBlock && selectedBlock) {
+                    setSelectedBlock(null)
+                  }
+                }}
+              >
                 {history.state.length === 0 ? (
                   <div className="text-center py-12 lg:py-20">
                       <div className="max-w-md mx-auto">
@@ -1488,7 +1380,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                     onSelect={() => handleSelectBlock(block.id)}
                     onSelectChild={(childId) => {
                       // Trouver le bloc enfant dans l'arbre et le sélectionner
-                      const findBlockById = (blocks: Block[], id: string): Block | null => {
+                      const findBlockById = (blocks: Block[] | undefined, id: string): Block | null => {
+                        if (!blocks || !Array.isArray(blocks)) return null
                         for (const b of blocks) {
                           if (b.id === id) return b
                           if (b.children) {
@@ -1498,7 +1391,9 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                         }
                         return null
                       }
-                      const childBlock = findBlockById(history.state, childId)
+                      // Utiliser blocks directement au lieu de history.state pour éviter les erreurs
+                      const blocksToSearch = Array.isArray(history.state) ? history.state : blocks
+                      const childBlock = findBlockById(blocksToSearch, childId)
                       if (childBlock) {
                         handleSelectBlock(childId)
                       }
@@ -1506,10 +1401,21 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                     onUpdate={(updates) => updateBlock(block.id, updates)}
                     onDelete={() => removeBlock(block.id)}
                     onDuplicate={() => {
-                      const newBlock: Block = {
-                        ...block,
-                        id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                      // Fonction récursive pour dupliquer un bloc et tous ses enfants
+                      const duplicateBlockRecursive = (bloc: Block): Block => {
+                        const newId = `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                        const duplicated: Block = {
+                          ...bloc,
+                          id: newId,
+                        }
+                        // Dupliquer récursivement les enfants si le bloc en a
+                        if (bloc.children && bloc.children.length > 0) {
+                          duplicated.children = bloc.children.map(child => duplicateBlockRecursive(child))
+                        }
+                        return duplicated
                       }
+                      
+                      const newBlock = duplicateBlockRecursive(block)
                       const currentIndex = history.state.findIndex((b: Block) => b.id === block.id)
                       const newBlocks = [...history.state]
                       newBlocks.splice(currentIndex + 1, 0, newBlock)
@@ -1737,7 +1643,16 @@ const SortableBlock = React.memo(function SortableBlock({
     onSelect()
   }
 
-  // Gérer le clic droit pour afficher le menu contextuel (optionnel)
+  // Gérer le double-clic pour ouvrir les paramètres
+  const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation()
+    e.preventDefault()
+    // Ouvrir les paramètres en sélectionnant le bloc
+    onSelect()
+    onSelect()
+  }
+
+  // Gérer le clic droit pour afficher le menu contextuel
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
     // Vérifier si on fait un clic droit sur un enfant
     const childElement = (e.target as HTMLElement).closest('[data-child-block-id]')
@@ -1761,14 +1676,19 @@ const SortableBlock = React.memo(function SortableBlock({
     
     e.preventDefault()
     e.stopPropagation()
-    // Fermer le menu précédent s'il existe
+    // Toujours fermer le menu précédent avant d'en ouvrir un nouveau
     if (showMenu) {
       closeContextMenu()
-      return
+      // Attendre un peu avant de rouvrir pour éviter les conflits
+      setTimeout(() => {
+        setContextMenu({ x: e.clientX, y: e.clientY })
+        setShowMenu(true)
+      }, 50)
+    } else {
+      // Ouvrir le menu contextuel
+      setContextMenu({ x: e.clientX, y: e.clientY })
+      setShowMenu(true)
     }
-    // Ouvrir le menu contextuel
-    setContextMenu({ x: e.clientX, y: e.clientY })
-    setShowMenu(true)
   }
 
   // Fermer le menu contextuel
@@ -1810,9 +1730,11 @@ const SortableBlock = React.memo(function SortableBlock({
             (blockRef as React.MutableRefObject<HTMLDivElement | null>).current = node
           }
         }}
+        data-block-id={block.id}
         style={style}
         className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] ${isResizing ? 'select-none' : ''} group cursor-pointer`}
         onClick={handleBlockClick}
+        onDoubleClick={handleDoubleClick}
         onContextMenu={handleContextMenu}
         onMouseDown={(e) => {
           // Empêcher le menu contextuel de se rouvrir après un clic gauche
@@ -1909,8 +1831,11 @@ const SortableBlock = React.memo(function SortableBlock({
             )}
           </div>
         </div>
-        {/* Actions rapides - toujours visibles */}
-        <div className="flex items-center gap-1 flex-shrink-0 z-10 relative">
+        {/* Indicateur clic pour paramètres et bouton Supprimer - visible au survol */}
+        <div className="flex items-center gap-2 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700" title="Clic droit pour ouvrir les paramètres du bloc">
+            <span className="text-blue-600 dark:text-blue-400">⚙️</span> Clic droit paramètres
+          </div>
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -1926,12 +1851,6 @@ const SortableBlock = React.memo(function SortableBlock({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
           </button>
-        </div>
-        {/* Indicateur clic pour paramètres - visible au survol */}
-        <div className="flex items-center gap-1 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700" title="Clic droit pour les options du bloc">
-            <span className="text-blue-600 dark:text-blue-400">⚙️</span> Clic droit options
-          </div>
         </div>
         {/* Aide contextuelle pour drag and drop */}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -1979,7 +1898,8 @@ const SortableBlock = React.memo(function SortableBlock({
               }}
               onSelectChild={(childId) => {
                 // Sélectionner l'enfant en trouvant son ID dans l'arbre
-                const findBlockById = (blocks: Block[], id: string): Block | null => {
+                const findBlockById = (blocks: Block[] | undefined, id: string): Block | null => {
+                  if (!blocks || !Array.isArray(blocks)) return null
                   for (const b of blocks) {
                     if (b.id === id) return b
                     if (b.children) {
@@ -1989,10 +1909,12 @@ const SortableBlock = React.memo(function SortableBlock({
                   }
                   return null
                 }
-                // Trouver le bloc dans l'arbre complet
-                const childBlock = findBlockById(history.state, childId)
+                // Trouver le bloc dans l'arbre complet - utiliser history.state directement
+                const blocksToSearch = Array.isArray(history.state) ? history.state : []
+                const childBlock = findBlockById(blocksToSearch, childId)
                 if (childBlock) {
                   setSelectedBlock(childId)
+                  setSidebarOpen(true) // Ouvrir la sidebar pour afficher les paramètres
                   // Notifier le parent si nécessaire
                   if (onBlockSelect) {
                     onBlockSelect(childId)
@@ -2245,7 +2167,7 @@ function ContainerChildrenRenderer({
                       onSelectChild(child.id)
                     }}
                     onContextMenu={(e) => {
-                      // Gérer le clic droit sur les enfants
+                      // Gérer le clic droit sur les enfants pour ouvrir le menu contextuel
                       e.preventDefault()
                       e.stopPropagation()
                       // Sélectionner l'enfant d'abord
@@ -2253,9 +2175,23 @@ function ContainerChildrenRenderer({
                       // Ouvrir le menu contextuel pour l'enfant
                       if (showMenu && contextMenu?.childId === child.id) {
                         closeContextMenu()
+                        // Attendre un peu avant de rouvrir pour éviter les conflits
+                        setTimeout(() => {
+                          setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
+                          setShowMenu(true)
+                        }, 50)
                       } else {
-                        setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
-                        setShowMenu(true)
+                        // Fermer le menu précédent s'il existe
+                        if (showMenu) {
+                          closeContextMenu()
+                          setTimeout(() => {
+                            setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
+                            setShowMenu(true)
+                          }, 50)
+                        } else {
+                          setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
+                          setShowMenu(true)
+                        }
                       }
                     }}
                   >
@@ -2311,11 +2247,40 @@ function ContainerChildrenRenderer({
                           e.stopPropagation()
                         }}
                       >
-                        <BlockRenderer 
-                          block={{ ...child, data: child.data || {} }} 
-                          blockType={childBlockType} 
-                          onUpdate={(updates) => onUpdateChild(child.id, updates)} 
-                        />
+                        {/* Si l'enfant est un conteneur, utiliser ContainerChildrenRenderer pour avoir le menu contextuel */}
+                        {(child.type === 'container' || child.type === 'flex-container' || child.type === 'grid-container' || 
+                          child.type === 'flexbox' || child.type === 'grid' || child.type === 'stack' || 
+                          child.type === 'inline' || child.type === 'group' || child.type === 'wrapper' || child.type === 'section' || child.type === 'rows') ? (
+                          <ContainerChildrenRenderer
+                            block={child}
+                            blockTypes={blockTypes}
+                            allBlocks={allBlocks}
+                            onAddChild={(newChildBlock) => {
+                              const newChildren = [...(child.children || []), newChildBlock]
+                              onUpdateChild(child.id, { children: newChildren })
+                            }}
+                            onUpdateChild={(grandChildId, updates) => {
+                              const newChildren = (child.children || []).map((grandChild) =>
+                                grandChild.id === grandChildId ? { ...grandChild, ...updates } : grandChild
+                              )
+                              onUpdateChild(child.id, { children: newChildren })
+                            }}
+                            onDeleteChild={(grandChildId) => {
+                              const newChildren = (child.children || []).filter((grandChild) => grandChild.id !== grandChildId)
+                              onUpdateChild(child.id, { children: newChildren })
+                            }}
+                            onSelectChild={(grandChildId) => {
+                              // Sélectionner le petit-enfant récursivement
+                              onSelectChild(grandChildId)
+                            }}
+                          />
+                        ) : (
+                          <BlockRenderer 
+                            block={{ ...child, data: child.data || {} }} 
+                            blockType={childBlockType} 
+                            onUpdate={(updates) => onUpdateChild(child.id, updates)} 
+                          />
+                        )}
                       </div>
                     )}
                     {collapsedChildren.has(child.id) && (
@@ -2361,10 +2326,17 @@ function ContainerChildrenRenderer({
           <button
             onClick={(e) => {
               e.stopPropagation()
+              e.preventDefault()
               if (contextMenu.childId) {
+                // Sélectionner l'enfant et ouvrir les paramètres
                 onSelectChild(contextMenu.childId)
+                // Attendre un peu pour s'assurer que la sélection est bien effectuée
+                setTimeout(() => {
+                  closeContextMenu()
+                }, 100)
+              } else {
+                closeContextMenu()
               }
-              closeContextMenu()
             }}
             className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
           >
@@ -2399,10 +2371,21 @@ function ContainerChildrenRenderer({
               if (contextMenu.childId) {
                 const child = children.find(c => c.id === contextMenu.childId)
                 if (child) {
-                  const newChild: Block = {
-                    ...child,
-                    id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  // Fonction récursive pour dupliquer un bloc et tous ses enfants
+                  const duplicateBlockRecursive = (bloc: Block): Block => {
+                    const newId = `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+                    const duplicated: Block = {
+                      ...bloc,
+                      id: newId,
+                    }
+                    // Dupliquer récursivement les enfants si le bloc en a
+                    if (bloc.children && bloc.children.length > 0) {
+                      duplicated.children = bloc.children.map(child => duplicateBlockRecursive(child))
+                    }
+                    return duplicated
                   }
+                  
+                  const newChild = duplicateBlockRecursive(child)
                   const childIndex = children.findIndex(c => c.id === contextMenu.childId)
                   const newChildren = [...children]
                   newChildren.splice(childIndex + 1, 0, newChild)
@@ -4282,6 +4265,20 @@ function BlockRenderer({
       return (
         <div className="space-y-3">
           <div>
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={safeBlock.data.support_dark_mode !== false}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, support_dark_mode: e.target.checked } })}
+                className="w-3 h-3"
+              />
+              <span className="text-gray-700 dark:text-gray-300">Support du mode sombre</span>
+            </label>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+              Activez cette option pour que le bloc s'adapte automatiquement au mode sombre. Désactivez pour forcer le mode clair.
+            </p>
+          </div>
+          <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Titre de la section
             </label>
@@ -4307,6 +4304,22 @@ function BlockRenderer({
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Style prédéfini
+            </label>
+            <select
+              value={safeBlock.data.style || 'pricing-plans'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, style: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            >
+              <option value="pricing-plans">Plans tarifaires (avec fonctionnalités)</option>
+              <option value="services">Services/Prestations (avec tarifs)</option>
+            </select>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+              Choisissez le style d'affichage : plans tarifaires (pour abonnements) ou services/prestations (pour VTC, etc.)
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Source des plans
             </label>
             <select
@@ -4317,6 +4330,17 @@ function BlockRenderer({
               <option value="dynamic">API (chargement automatique)</option>
               <option value="manual">Manuel (saisie)</option>
             </select>
+          </div>
+          <div>
+            <label className="flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={safeBlock.data.show_discount !== false}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_discount: e.target.checked } })}
+                className="w-3 h-3"
+              />
+              <span className="text-gray-700 dark:text-gray-300">Afficher la réduction (si prix annuel disponible)</span>
+            </label>
           </div>
           {pricingCardsSource === 'dynamic' ? (
             <div className="space-y-3">
@@ -4432,18 +4456,19 @@ function BlockRenderer({
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] text-gray-600 dark:text-gray-400">Prix annuel (€)</label>
+                            <label className="text-[10px] text-gray-600 dark:text-gray-400">Prix annuel (€) <span className="text-gray-400">(optionnel)</span></label>
                             <input
                               type="number"
                               step="0.01"
                               value={plan.price_yearly || ''}
                               onChange={(e) => {
                                 const newPlans = [...pricingCardsPlans]
-                                newPlans[index] = { ...plan, price_yearly: parseFloat(e.target.value) || 0 }
+                                const value = e.target.value
+                                newPlans[index] = { ...plan, price_yearly: value ? parseFloat(value) : undefined }
                                 onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
                               }}
                               className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                              placeholder="299.99"
+                              placeholder="299.99 (optionnel)"
                             />
                           </div>
                         </div>
@@ -8871,6 +8896,22 @@ export function BlockStylePanel({
 
   return (
     <div className="space-y-2.5 pb-4">
+      {/* Support du mode sombre */}
+      <div>
+        <label className="flex items-center gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={block.data?.support_dark_mode !== false}
+            onChange={(e) => onUpdate({ data: { ...block.data, support_dark_mode: e.target.checked } })}
+            className="w-3 h-3"
+          />
+          <span className="text-gray-700 dark:text-gray-300">Support du mode sombre</span>
+        </label>
+        <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+          Activez cette option pour que le bloc s'adapte automatiquement au mode sombre. Désactivez pour forcer le mode clair.
+        </p>
+      </div>
+      
       {/* Couleur de fond */}
       <div>
         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">

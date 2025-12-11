@@ -112,6 +112,20 @@ def is_super_admin_from_token(request):
     Returns:
         bool: True si l'utilisateur est super admin, False sinon
     """
+    # Log pour diagnostiquer les problèmes
+    has_auth_header = 'HTTP_AUTHORIZATION' in request.META or 'Authorization' in request.headers
+    auth_header_preview = ''
+    if has_auth_header:
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '') or request.headers.get('Authorization', '')
+        auth_header_preview = auth_header[:50] if auth_header else 'empty'
+    
+    logger.debug(
+        f"is_super_admin_from_token: {request.method} {request.path}, "
+        f"has_auth_header: {has_auth_header}, "
+        f"auth_preview: {auth_header_preview}, "
+        f"request.user: {request.user.email if request.user and hasattr(request.user, 'email') else 'not set'}"
+    )
+    
     # Essayer d'abord de récupérer l'utilisateur depuis le token JWT directement
     user, error = get_authenticated_user_from_token(request)
     
@@ -123,7 +137,7 @@ def is_super_admin_from_token(request):
             user = request.user
             logger.debug(f"is_super_admin_from_token: Using DRF-authenticated user {user.email if hasattr(user, 'email') else 'unknown'}")
         else:
-            logger.warning(f"is_super_admin_from_token: Cannot verify user - {error}")
+            logger.warning(f"is_super_admin_from_token: Cannot verify user - {error} (method: {request.method}, path: {request.path})")
             return False
     
     try:
@@ -131,19 +145,19 @@ def is_super_admin_from_token(request):
         # Cette méthode vérifie le rôle dans la base de données
         if hasattr(user, 'is_super_admin') and callable(user.is_super_admin):
             result = user.is_super_admin()
-            logger.debug(f"is_super_admin_from_token: user.is_super_admin() = {result} for user {user.email if hasattr(user, 'email') else 'unknown'}")
+            logger.debug(f"is_super_admin_from_token: user.is_super_admin() = {result} for user {user.email if hasattr(user, 'email') else 'unknown'} (method: {request.method})")
             return result
         elif hasattr(user, 'is_superuser'):
             result = user.is_superuser
-            logger.debug(f"is_super_admin_from_token: user.is_superuser = {result} for user {user.email if hasattr(user, 'email') else 'unknown'}")
+            logger.debug(f"is_super_admin_from_token: user.is_superuser = {result} for user {user.email if hasattr(user, 'email') else 'unknown'} (method: {request.method})")
             return result
         elif hasattr(user, 'is_staff'):
             result = user.is_staff
-            logger.debug(f"is_super_admin_from_token: user.is_staff = {result} for user {user.email if hasattr(user, 'email') else 'unknown'}")
+            logger.debug(f"is_super_admin_from_token: user.is_staff = {result} for user {user.email if hasattr(user, 'email') else 'unknown'} (method: {request.method})")
             return result
         
-        logger.warning(f"is_super_admin_from_token: No super admin check method found for user {user.email if hasattr(user, 'email') else 'unknown'}")
+        logger.warning(f"is_super_admin_from_token: No super admin check method found for user {user.email if hasattr(user, 'email') else 'unknown'} (method: {request.method})")
         return False
     except Exception as e:
-        logger.error(f"Error checking is_super_admin: {e}", exc_info=True)
+        logger.error(f"Error checking is_super_admin: {e} (method: {request.method}, path: {request.path})", exc_info=True)
         return False
