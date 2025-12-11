@@ -47,10 +47,12 @@ class TenantSerializer(serializers.ModelSerializer):
             from django_tenants.utils import tenant_context
             with tenant_context(obj):
                 # Récupérer les fonctionnalités activées pour les utilisateurs du tenant
+                # IMPORTANT: Pour DISTINCT ON, le premier champ ORDER BY doit être celui du DISTINCT
+                # Utiliser 'feature_id' car DISTINCT ON utilise le nom de colonne de la base de données
                 user_features = UserFeature.objects.filter(
                     user__tenant=obj,
                     is_enabled=True
-                ).select_related('feature').distinct('feature')
+                ).select_related('feature').order_by('feature_id', '-enabled_at').distinct('feature_id')
                 return [uf.feature.name for uf in user_features if uf.feature.is_active]
         except Exception:
             # En cas d'erreur, retourner une liste vide

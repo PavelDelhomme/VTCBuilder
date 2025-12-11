@@ -437,7 +437,8 @@ export default function StatsPage() {
         {/* Content Area - Scrollable */}
         <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 lg:px-8">
           {/* Cartes Statistiques Billing - Même style que /admin/billing */}
-          {billingStats && (
+          {/* Contenu de l'onglet Vue d'ensemble - Revenus et Statistiques Générales */}
+          {activeTab === 'overview' && billingStats && (
           <>
             {/* Première rangée - Cartes principales avec gradients */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-8">
@@ -683,8 +684,8 @@ export default function StatsPage() {
           </>
         )}
 
-        {/* Alertes et Problèmes */}
-        {stats.alerts && stats.alerts.length > 0 && (
+        {/* Alertes et Problèmes - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats.alerts && stats.alerts.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
               <svg className="h-6 w-6 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -732,8 +733,8 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Activité Récente */}
-        {stats && stats.activity && (
+        {/* Activité Récente - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats && stats.activity && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-6">Activité Récente</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 sm:gap-6">
@@ -769,8 +770,8 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Demandes d'inscription */}
-        {stats && stats.registrations && (
+        {/* Demandes d'inscription - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats && stats.registrations && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Demandes d'Inscription</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -849,8 +850,8 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Overview Cards */}
-        {stats.overview && (
+        {/* Overview Cards - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats.overview && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
@@ -931,7 +932,8 @@ export default function StatsPage() {
         </div>
         )}
 
-        {/* Cartes supplémentaires pour les statuts */}
+        {/* Cartes supplémentaires pour les statuts - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           {(stats.overview?.suspended_tenants || 0) > 0 && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg shadow p-6">
@@ -979,9 +981,11 @@ export default function StatsPage() {
             </div>
           )}
         </div>
+        )}
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Charts Section - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
           {/* Users by Status */}
           {stats.users_by_status && stats.users_by_status.length > 0 && (
@@ -1054,10 +1058,10 @@ export default function StatsPage() {
             </div>
           )}
         </div>
+        )}
 
-
-        {/* Revenue Chart */}
-        {stats.revenue?.by_month && stats.revenue.by_month.length > 0 && (
+        {/* Revenue Chart - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats.revenue?.by_month && stats.revenue.by_month.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Revenu par Mois (12 derniers mois)</h3>
             <div className="space-y-4">
@@ -1081,8 +1085,8 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Blocs les plus utilisés */}
-        {stats.blocks_usage && stats.blocks_usage.length > 0 && (
+        {/* Blocs les plus utilisés - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats.blocks_usage && stats.blocks_usage.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
               <svg className="h-6 w-6 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1113,8 +1117,8 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Templates les plus utilisés */}
-        {stats.templates_usage && stats.templates_usage.length > 0 && (
+        {/* Templates les plus utilisés - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats.templates_usage && stats.templates_usage.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
               <svg className="h-6 w-6 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1139,8 +1143,8 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Statistiques Pages */}
-        {stats.pages_stats && (
+        {/* Statistiques Pages - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats.pages_stats && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
               <svg className="h-6 w-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1169,8 +1173,8 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Statistiques Services */}
-        {stats.services_stats && (
+        {/* Statistiques Services - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats.services_stats && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
               <svg className="h-6 w-6 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1195,8 +1199,8 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Statistiques Réservations */}
-        {stats.bookings_stats && (
+        {/* Statistiques Réservations - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats.bookings_stats && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
               <svg className="h-6 w-6 text-orange-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1239,8 +1243,8 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Tenants par Plan */}
-        {stats.tenants_by_plan && stats.tenants_by_plan.length > 0 && (
+        {/* Tenants par Plan - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats.tenants_by_plan && stats.tenants_by_plan.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tenants par Plan</h3>
             <div className="space-y-4">
@@ -1266,8 +1270,8 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Tenants Récemment Créés */}
-        {stats.recent_tenants && stats.recent_tenants.length > 0 && (
+        {/* Tenants Récemment Créés - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats.recent_tenants && stats.recent_tenants.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Tenants Récemment Créés</h3>
             <div className="space-y-2">
@@ -1293,8 +1297,8 @@ export default function StatsPage() {
           </div>
         )}
 
-        {/* Utilisateurs Récemment Inscrits */}
-        {stats.recent_users && stats.recent_users.length > 0 && (
+        {/* Utilisateurs Récemment Inscrits - Vue d'ensemble uniquement */}
+        {activeTab === 'overview' && stats.recent_users && stats.recent_users.length > 0 && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Utilisateurs Récemment Inscrits</h3>
             <div className="space-y-2">
@@ -1324,36 +1328,53 @@ export default function StatsPage() {
             {/* Onglet: Vue d'ensemble */}
             {activeTab === 'overview' && (
               <>
-                {/* Résumé des Actions */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
-                    <svg className="h-6 w-6 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    Résumé des Actions
-                  </h2>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-                      <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{formatNumber(usageStats.summary.total_actions)}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Actions</p>
-                    </div>
-                    <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatNumber(usageStats.summary.actions_today)}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Aujourd'hui</p>
-                    </div>
-                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatNumber(usageStats.summary.actions_this_week)}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Cette Semaine</p>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                      <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{formatNumber(usageStats.summary.actions_this_month)}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Ce Mois</p>
+                {/* Message si pas de données dans Vue d'ensemble */}
+                {!usageStats && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div className="text-center py-12">
+                      <p className="text-gray-500 dark:text-gray-400">Les statistiques de vue d'ensemble sont affichées ci-dessus.</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Utilisez les autres onglets pour voir les détails spécifiques.</p>
                     </div>
                   </div>
-                </div>
+                )}
+              </>
+            )}
+
+            {/* Onglet: Actions */}
+            {activeTab === 'actions' && (
+              <>
+                {/* Résumé des Actions */}
+                {usageStats && usageStats.summary && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+                      <svg className="h-6 w-6 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      Résumé des Actions
+                    </h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                        <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{formatNumber(usageStats.summary.total_actions)}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total Actions</p>
+                      </div>
+                      <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatNumber(usageStats.summary.actions_today)}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Aujourd'hui</p>
+                      </div>
+                      <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatNumber(usageStats.summary.actions_this_week)}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Cette Semaine</p>
+                      </div>
+                      <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                        <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{formatNumber(usageStats.summary.actions_this_month)}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Ce Mois</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Actions par catégorie */}
-                {usageStats.actions_by_category && (
+                {usageStats && usageStats.actions_by_category && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Actions par Catégorie</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1368,7 +1389,7 @@ export default function StatsPage() {
                 )}
 
                 {/* Statistiques anonymes vs authentifiés */}
-                {usageStats.user_type_stats && (
+                {usageStats && usageStats.user_type_stats && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Utilisateurs Anonymes vs Authentifiés</h3>
                     <div className="grid grid-cols-2 gap-4">
@@ -1376,7 +1397,7 @@ export default function StatsPage() {
                         <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{formatNumber(usageStats.user_type_stats.anonymous)}</p>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Anonymes</p>
                         <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                          {usageStats.summary.total_actions > 0 
+                          {usageStats.summary && usageStats.summary.total_actions > 0 
                             ? `${((usageStats.user_type_stats.anonymous / usageStats.summary.total_actions) * 100).toFixed(1)}%`
                             : '0%'}
                         </p>
@@ -1385,7 +1406,7 @@ export default function StatsPage() {
                         <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatNumber(usageStats.user_type_stats.authenticated)}</p>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Authentifiés</p>
                         <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                          {usageStats.summary.total_actions > 0 
+                          {usageStats.summary && usageStats.summary.total_actions > 0 
                             ? `${((usageStats.user_type_stats.authenticated / usageStats.summary.total_actions) * 100).toFixed(1)}%`
                             : '0%'}
                         </p>
@@ -1395,7 +1416,7 @@ export default function StatsPage() {
                 )}
 
                 {/* Timeline des Actions */}
-                {usageStats.actions_timeline && usageStats.actions_timeline.length > 0 && (
+                {usageStats && usageStats.actions_timeline && usageStats.actions_timeline.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Timeline des Actions (30 derniers jours)</h3>
                     <div className="overflow-x-auto w-full">
@@ -1419,13 +1440,8 @@ export default function StatsPage() {
                     </div>
                   </div>
                 )}
-              </>
-            )}
 
-            {/* Onglet: Actions */}
-            {activeTab === 'actions' && (
-              <>
-                {usageStats.most_used_actions && usageStats.most_used_actions.length > 0 && (
+                {usageStats && usageStats.most_used_actions && usageStats.most_used_actions.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Actions les Plus Utilisées</h3>
                     <div className="space-y-3">

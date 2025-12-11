@@ -13,6 +13,60 @@ import blocksService, { BlockType } from '@/services/blocks.service'
 import PageLoader from '@/components/shared/PageLoader'
 import { useAutoSave } from '@/hooks/useAutoSave'
 
+// Composant pour gérer le redimensionnement de l'éditeur
+function EditorResizableLayout({ children }: { children: (props: {
+  sidebarWidth: number
+  setSidebarWidth: (width: number) => void
+  isResizing: boolean
+  startResize: (e: React.MouseEvent) => void
+}) => React.ReactNode }) {
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('editor-sidebar-width')
+      if (saved) return parseInt(saved, 10)
+    }
+    return 400 // Largeur par défaut plus grande
+  })
+  const [isResizing, setIsResizing] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('editor-sidebar-width', sidebarWidth.toString())
+    }
+  }, [sidebarWidth])
+
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsResizing(true)
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const newWidth = moveEvent.clientX
+      const minWidth = 300
+      const maxWidth = window.innerWidth * 0.5 // Maximum 50% de la largeur
+      const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth))
+      setSidebarWidth(clampedWidth)
+    }
+
+    const handleMouseUp = () => {
+      setIsResizing(false)
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }, [])
+
+  return (
+    <>
+      {children({ sidebarWidth, setSidebarWidth, isResizing, startResize })}
+      {isResizing && (
+        <div className="fixed inset-0 z-50 cursor-col-resize" style={{ userSelect: 'none' }} />
+      )}
+    </>
+  )
+}
+
 interface PublicHomepageData {
   public_homepage_blocks: Block[]
   public_homepage_meta_title: string
@@ -148,7 +202,7 @@ function createDefaultHomepageBlocks(): Block[] {
         title: '',
         show_title: false,
         source: 'dynamic',
-        api_endpoint: '/api/billing/pricing-plans/',
+        api_endpoint: '/api/pricing-plans/',
       },
       styles: {
         background_color: '#f9fafb',
@@ -164,7 +218,7 @@ function createDefaultHomepageBlocks(): Block[] {
       type: 'cta-section',
       data: {
         title: 'Prêt à démarrer ?',
-        subtitle: 'Créez votre site VTC professionnel dès aujourd\'hui. Essai gratuit de 14 jours.',
+        description: 'Créez votre site VTC professionnel dès aujourd\'hui. Essai gratuit de 14 jours.',
         button_text: '🚀 Créer mon compte gratuitement',
         button_url: '/register',
         background_type: 'gradient',
@@ -174,8 +228,54 @@ function createDefaultHomepageBlocks(): Block[] {
         background_color: 'transparent',
         color: '#ffffff',
         text_align: 'center',
-        padding_top: '5rem',
-        padding_bottom: '5rem',
+        padding_top: '6rem',
+        padding_bottom: '6rem',
+      },
+      layout: 12,
+      container: 'container',
+    },
+    // Footer
+    {
+      id: `block-${now}-8`,
+      type: 'footer',
+      data: {
+        columns: [
+          {
+            title: 'VTCBuilder',
+            description: 'La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.',
+            links: [],
+          },
+          {
+            title: 'Produit',
+            links: [
+              { label: 'Tarifs', url: '/#pricing' },
+              { label: 'Fonctionnalités', url: '/features' },
+              { label: 'Templates', url: '/templates' },
+            ],
+          },
+          {
+            title: 'Support',
+            links: [
+              { label: 'Documentation', url: '/docs' },
+              { label: 'Contact', url: '/contact' },
+              { label: 'FAQ', url: '/faq' },
+            ],
+          },
+          {
+            title: 'Légal',
+            links: [
+              { label: 'CGV', url: '/legal/terms' },
+              { label: 'Confidentialité', url: '/legal/privacy' },
+            ],
+          },
+        ],
+        copyright: `© ${new Date().getFullYear()} VTCBuilder. Tous droits réservés.`,
+        additional_text: 'vtcbuilder.com - Développé avec ❤️ en France',
+      },
+      styles: {
+        background_color: '#f3f4f6',
+        padding_top: '3rem',
+        padding_bottom: '2rem',
       },
       layout: 12,
       container: 'container',
@@ -195,6 +295,7 @@ export default function HomepageEditorPage() {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const [showSeoExpanded, setShowSeoExpanded] = useState(false)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
+  const [availablePages, setAvailablePages] = useState<Array<{ slug: string; title: string }>>([])
   // SEO avancé
   const [ogTitle, setOgTitle] = useState('')
   const [ogDescription, setOgDescription] = useState('')
@@ -205,6 +306,23 @@ export default function HomepageEditorPage() {
   const [canonicalUrl, setCanonicalUrl] = useState('')
   const [robots, setRobots] = useState('index, follow')
   const [pageStatus, setPageStatus] = useState<'draft' | 'published'>('draft')
+  const [editorWidth, setEditorWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('editor-width')
+      if (saved) return parseInt(saved, 10)
+    }
+    return 600 // Largeur par défaut plus grande pour la zone de placement
+  })
+  const [isResizingEditor, setIsResizingEditor] = useState(false)
+  const [previewLinksEnabled, setPreviewLinksEnabled] = useState(false) // Par défaut, les liens sont désactivés
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light') // Thème de la prévisualisation uniquement
+  const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('palette-collapsed')
+      return saved === 'true'
+    }
+    return false
+  }) // État de la palette (réduite ou non)
 
   // Sauvegarde automatique
   const { isSaving: isAutoSaving, lastSaved, updateLastSaved } = useAutoSave({
@@ -223,20 +341,45 @@ export default function HomepageEditorPage() {
       pageStatus,
     },
     onSave: async (data) => {
-      await api.patch('/system-settings/', {
-        public_homepage_blocks: data.blocks,
-        public_homepage_meta_title: data.metaTitle,
-        public_homepage_meta_description: data.metaDescription,
-        public_homepage_og_title: data.ogTitle,
-        public_homepage_og_description: data.ogDescription,
-        public_homepage_og_image: data.ogImage,
-        public_homepage_twitter_card_type: data.twitterCardType,
-        public_homepage_twitter_image: data.twitterImage,
-        public_homepage_meta_keywords: data.metaKeywords,
-        public_homepage_canonical_url: data.canonicalUrl,
-        public_homepage_robots: data.robots,
-        public_homepage_status: data.pageStatus,
-      })
+      // Vérifier si l'utilisateur est super admin avant de sauvegarder
+      const user = authService.getStoredUser()
+      const isSuperAdmin = user?.roles?.some((role: any) => role === 'super-admin' || role.name === 'super-admin')
+      
+      if (!isSuperAdmin) {
+        // Ne pas sauvegarder si l'utilisateur n'est pas super admin
+        // Ne pas logger pour éviter de polluer la console
+        return
+      }
+      
+      try {
+        const response = await api.patch('/system-settings/', {
+          public_homepage_blocks: data.blocks,
+          public_homepage_meta_title: data.metaTitle,
+          public_homepage_meta_description: data.metaDescription,
+          public_homepage_og_title: data.ogTitle,
+          public_homepage_og_description: data.ogDescription,
+          public_homepage_og_image: data.ogImage,
+          public_homepage_twitter_card_type: data.twitterCardType,
+          public_homepage_twitter_image: data.twitterImage,
+          public_homepage_meta_keywords: data.metaKeywords,
+          public_homepage_canonical_url: data.canonicalUrl,
+          public_homepage_robots: data.robots,
+          public_homepage_status: data.pageStatus,
+        })
+        // Si la réponse est un 403 silencieux, ne rien faire
+        if (response.status === 403) {
+          return
+        }
+      } catch (error: any) {
+        // Ne pas logger les erreurs 403 - c'est normal si l'utilisateur n'est pas super admin
+        // L'intercepteur devrait déjà les gérer silencieusement, mais on s'assure ici aussi
+        if (error.response?.status === 403 || error.status === 403) {
+          // Erreur 403 silencieuse - ne rien faire
+          return
+        }
+        // Pour les autres erreurs, les logger
+        console.error('Erreur lors de la sauvegarde automatique:', error)
+      }
     },
     debounceMs: 2000,
     enabled: true,
@@ -290,6 +433,33 @@ export default function HomepageEditorPage() {
       setRobots(data.public_homepage_robots || 'index, follow')
       setPageStatus(data.public_homepage_status || 'draft')
       setBlockTypes(blockTypesData)
+      
+      // Charger les pages publiques disponibles
+      const allPages: Array<{ slug: string; title: string }> = []
+      
+      // Homepage
+      if (data.public_homepage_blocks !== undefined) {
+        allPages.push({
+          slug: 'home',
+          title: 'Page d\'accueil',
+        })
+      }
+      
+      // Autres pages publiques
+      if (data.public_pages && Array.isArray(data.public_pages)) {
+        data.public_pages.forEach((slug: string) => {
+          if (slug !== 'home') {
+            // Extraire le titre depuis le slug
+            const title = slug
+              .split('/')
+              .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+              .join(' / ')
+            allPages.push({ slug, title })
+          }
+        })
+      }
+      
+      setAvailablePages(allPages)
     } catch (error: any) {
       console.error('Erreur chargement:', error)
       toast.error('Erreur lors du chargement des données')
@@ -341,24 +511,8 @@ export default function HomepageEditorPage() {
       subtitle="Créez et personnalisez votre site public avec l'éditeur de blocs complet"
       headerActions={
         <div className="flex gap-2 flex-wrap">
-          {/* Preview Toggle */}
-          <button
-            onClick={() => setShowPreview(!showPreview)}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-              showPreview 
-                ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
-            }`}
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            {showPreview ? 'Masquer' : 'Afficher'} Prévisualisation
-          </button>
-
-          {/* Preview Mode Selector */}
-          {showPreview && (
+          {/* Preview Mode Selector - Toujours visible */}
+          <div className="flex items-center gap-2">
             <div className="flex gap-1 bg-gray-100 dark:bg-gray-900 rounded-lg p-1">
               <button
                 onClick={() => setPreviewMode('desktop')}
@@ -394,7 +548,7 @@ export default function HomepageEditorPage() {
                 📱
               </button>
             </div>
-          )}
+          </div>
 
           {/* External Preview */}
           <button
@@ -422,6 +576,33 @@ export default function HomepageEditorPage() {
             </div>
           ) : null}
 
+          {/* Page Selector - Quick Navigation */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Page:</span>
+            <select
+              value="home"
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                if (e.target.value !== 'home') {
+                  router.push(`/admin/pages-public/edit/${e.target.value}`)
+                }
+              }}
+              className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 min-w-[180px]"
+            >
+              <option value="home">Page d'accueil</option>
+              {availablePages.map((page) => (
+                <option key={page.slug} value={page.slug}>
+                  {page.title}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => router.push('/admin/pages-public')}
+              className="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
+            >
+              Gérer toutes les pages →
+            </button>
+          </div>
+
           {/* Status Selector */}
           <select
             value={pageStatus}
@@ -431,6 +612,44 @@ export default function HomepageEditorPage() {
             <option value="draft">📝 Brouillon</option>
             <option value="published">✅ Publié</option>
           </select>
+
+          {/* Toggle liens dans la prévisualisation */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={previewLinksEnabled}
+                onChange={(e) => setPreviewLinksEnabled(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                {previewLinksEnabled ? '🔗 Liens actifs' : '🔒 Liens désactivés'}
+              </span>
+            </label>
+          </div>
+
+          {/* Toggle palette de blocs */}
+          <button
+            onClick={() => {
+              const newState = !isPaletteCollapsed
+              setIsPaletteCollapsed(newState)
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('palette-collapsed', newState.toString())
+              }
+            }}
+            className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            title={isPaletteCollapsed ? 'Afficher la palette de blocs' : 'Masquer la palette de blocs'}
+          >
+            {isPaletteCollapsed ? (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            )}
+          </button>
 
           {/* Save Button */}
           <button
@@ -445,7 +664,7 @@ export default function HomepageEditorPage() {
               </>
             ) : (
               <>
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 {pageStatus === 'draft' ? 'Sauvegarder brouillon' : 'Publier'}
@@ -456,32 +675,6 @@ export default function HomepageEditorPage() {
       }
     >
       <div className="flex flex-col h-[calc(100vh-180px)]">
-        {/* Page Selector - Quick Navigation */}
-        <div className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Page:</span>
-            <select
-              value="home"
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                if (e.target.value !== 'home') {
-                  router.push(`/admin/pages-public/${e.target.value}/edit`)
-                }
-              }}
-              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-            >
-              <option value="home">Page d'accueil</option>
-              <option value="docs">Documentation</option>
-              <option value="contact">Contact</option>
-              <option value="faq">FAQ</option>
-            </select>
-            <button
-              onClick={() => router.push('/admin/pages-public')}
-              className="ml-auto px-3 py-1 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-            >
-              Gérer toutes les pages →
-            </button>
-          </div>
-        </div>
         {/* SEO Settings Bar - Expandable */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="p-4">
@@ -666,40 +859,178 @@ export default function HomepageEditorPage() {
           )}
         </div>
 
-        {/* Main Editor Area - Preview as Main Editing Space */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar - Block Palette */}
-          <div className="w-64 lg:w-72 xl:w-80 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto">
-              <BlockEditor 
-                blocks={blocks}
-                onChange={setBlocks}
-                availableBlockTypes={blockTypes.length > 0 ? blockTypes : undefined}
-                onBlockSelect={setSelectedBlockId}
-                selectedBlockId={selectedBlockId}
-              />
-            </div>
-          </div>
+        {/* Main Editor Area - 3 colonnes : Palette | Éditeur | Prévisualisation */}
+        <EditorResizableLayout>
+          {({ sidebarWidth, setSidebarWidth, isResizing, startResize }) => {
+            const startResizeEditor = (e: React.MouseEvent) => {
+              setIsResizingEditor(true)
+              const startX = e.clientX
+              const startWidth = editorWidth
 
-          {/* Preview Section - Main Editing Space */}
-          <div className="flex-1 border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
-            <div className="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Édition en direct
-              </span>
-              <div className="flex items-center gap-2">
-                <select
-                  value={previewMode}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPreviewMode(e.target.value as 'desktop' | 'tablet' | 'mobile')}
-                  className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-                >
-                  <option value="desktop">💻 Desktop</option>
-                  <option value="tablet">📱 Tablette</option>
-                  <option value="mobile">📱 Mobile</option>
-                </select>
+              const handleMouseMove = (e: MouseEvent) => {
+                const diff = e.clientX - startX
+                const newWidth = Math.max(400, Math.min(800, startWidth + diff))
+                setEditorWidth(newWidth)
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('editor-width', newWidth.toString())
+                }
+              }
+
+              const handleMouseUp = () => {
+                setIsResizingEditor(false)
+                document.removeEventListener('mousemove', handleMouseMove)
+                document.removeEventListener('mouseup', handleMouseUp)
+              }
+
+              document.addEventListener('mousemove', handleMouseMove)
+              document.addEventListener('mouseup', handleMouseUp)
+            }
+
+            return (
+            <div className="flex-1 flex overflow-hidden">
+              {/* Colonne 1 - Palette de blocs */}
+              <div 
+                className="border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col flex-shrink-0 bg-white dark:bg-gray-900 transition-all duration-300"
+                style={{ 
+                  width: isPaletteCollapsed ? '48px' : `${sidebarWidth}px`, 
+                  minWidth: isPaletteCollapsed ? '48px' : '300px', 
+                  maxWidth: isPaletteCollapsed ? '48px' : '40%' 
+                }}
+              >
+                {isPaletteCollapsed ? (
+                  // Palette réduite - juste une icône
+                  <div className="flex flex-col items-center py-4 gap-2">
+                    <button
+                      onClick={() => {
+                        setIsPaletteCollapsed(false)
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem('palette-collapsed', 'false')
+                        }
+                      }}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      title="Afficher la palette de blocs"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-hidden flex flex-col">
+                    <BlockEditor 
+                      blocks={blocks}
+                      onChange={setBlocks}
+                      availableBlockTypes={blockTypes.length > 0 ? blockTypes : undefined}
+                      onBlockSelect={setSelectedBlockId}
+                      selectedBlockId={selectedBlockId}
+                      showBlocksPalette={true}
+                      showOnlyPalette={true} // Toujours afficher uniquement la palette
+                    />
+                  </div>
+                )}
               </div>
-            </div>
-            <div className="flex-1 overflow-hidden relative bg-gray-100 dark:bg-gray-900 p-4">
+
+              {/* Resize Handle 1 - Entre Palette et Éditeur */}
+              {!isPaletteCollapsed && (
+                <div
+                  onMouseDown={startResize}
+                  className={`w-2 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-col-resize flex-shrink-0 transition-colors ${
+                    isResizing ? 'bg-blue-500 dark:bg-blue-600' : ''
+                  }`}
+                  style={{ userSelect: 'none' }}
+                  title="Redimensionner la palette"
+                >
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="w-1 h-16 bg-gray-400 dark:bg-gray-500 rounded"></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Colonne 2 - Zone de placement des blocs (zone centrale principale) */}
+              <div 
+                className="border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col flex-shrink-0 bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"
+                style={{ width: `${editorWidth}px`, minWidth: '500px', maxWidth: '60%' }}
+              >
+                <div className="bg-white dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      📝 Zone de placement des blocs
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded">
+                      Glissez-déposez les blocs ici
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <BlockEditor 
+                    blocks={blocks}
+                    onChange={setBlocks}
+                    availableBlockTypes={blockTypes.length > 0 ? blockTypes : undefined}
+                    onBlockSelect={setSelectedBlockId}
+                    selectedBlockId={selectedBlockId}
+                    showBlocksPalette={false} // Masquer la palette (déjà dans la colonne 1)
+                  />
+                </div>
+              </div>
+
+              {/* Resize Handle 2 - Entre Éditeur et Prévisualisation */}
+              <div
+                onMouseDown={startResizeEditor}
+                className={`w-2 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-col-resize flex-shrink-0 transition-colors ${
+                  isResizingEditor ? 'bg-blue-500 dark:bg-blue-600' : ''
+                }`}
+                style={{ userSelect: 'none' }}
+                title="Redimensionner l'éditeur"
+              >
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-1 h-16 bg-gray-400 dark:bg-gray-500 rounded"></div>
+                </div>
+              </div>
+
+              {/* Colonne 3 - Prévisualisation (toujours visible) */}
+              <div className="flex-1 overflow-hidden flex flex-col bg-white dark:bg-gray-900">
+                <div className="bg-white dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      ✨ Édition en direct
+                    </span>
+                    {selectedBlockId && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded">
+                        Bloc sélectionné
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {/* Toggle thème pour la prévisualisation uniquement */}
+                    <button
+                      onClick={() => setPreviewTheme(previewTheme === 'light' ? 'dark' : 'light')}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      title={previewTheme === 'dark' ? 'Passer en mode clair (prévisualisation)' : 'Passer en mode sombre (prévisualisation)'}
+                    >
+                      {previewTheme === 'dark' ? (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                      )}
+                    </button>
+                    <select
+                      value={previewMode}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPreviewMode(e.target.value as 'desktop' | 'tablet' | 'mobile')}
+                      className="text-xs px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="desktop">💻 Desktop</option>
+                      <option value="tablet">📱 Tablette</option>
+                      <option value="mobile">📱 Mobile</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-hidden relative bg-gray-50 dark:bg-gray-900 p-4">
               {/* Device Frame */}
               <div className={`h-full mx-auto transition-all duration-300 ${
                 previewMode === 'desktop' 
@@ -724,31 +1055,52 @@ export default function HomepageEditorPage() {
                   <div className={`h-full overflow-auto ${
                     previewMode === 'tablet' ? 'px-4' : previewMode === 'mobile' ? 'px-2' : ''
                   }`}>
-                    <div className={`min-h-full ${
-                      previewMode === 'tablet' ? 'max-w-[768px] mx-auto' : 
-                      previewMode === 'mobile' ? 'max-w-[375px] mx-auto' : 
-                      'w-full'
-                    }`}>
-                      <BlockPreview 
-                        blocks={blocks} 
-                        blockTypes={blockTypes}
-                        isEditable={true}
-                        isInteractive={true}
-                        selectedBlockId={selectedBlockId}
-                        onBlockSelect={setSelectedBlockId}
-                        onBlockDoubleClick={(blockId) => {
-                          setSelectedBlockId(blockId)
-                          // Le BlockEditor ouvrira automatiquement le panneau de paramètres
+                    {/* Isoler le thème de la prévisualisation de l'éditeur */}
+                    {/* Utiliser un wrapper avec data-theme pour forcer le thème indépendamment de l'éditeur */}
+                    <div 
+                      className={`min-h-full ${
+                        previewMode === 'tablet' ? 'max-w-[768px] mx-auto' : 
+                        previewMode === 'mobile' ? 'max-w-[375px] mx-auto' : 
+                        'w-full'
+                      }`}
+                      data-preview-theme={previewTheme}
+                    >
+                      {/* Wrapper avec classe dark conditionnelle - isolé de l'éditeur */}
+                      {/* Ce div force le thème uniquement pour son contenu */}
+                      {/* Utiliser un contexte isolé pour le thème de la prévisualisation */}
+                      {/* Le thème est contrôlé uniquement par previewTheme, indépendamment de l'éditeur */}
+                      {/* Important: La classe 'dark' ici force le thème sombre uniquement pour ce conteneur */}
+                      <div 
+                        className={previewTheme === 'dark' ? 'dark' : ''}
+                        data-preview-theme-isolated={previewTheme}
+                        style={{
+                          // Forcer le colorScheme pour isoler le thème
+                          colorScheme: previewTheme === 'dark' ? 'dark' : 'light',
                         }}
-                        onBlocksChange={setBlocks}
-                      />
+                      >
+                        <BlockPreview 
+                          blocks={blocks} 
+                          blockTypes={blockTypes}
+                          isEditable={false} // Désactiver l'édition dans la prévisualisation
+                          isInteractive={previewLinksEnabled} // Activer/désactiver les interactions selon le toggle
+                          selectedBlockId={selectedBlockId}
+                          onBlockSelect={setSelectedBlockId}
+                          onBlockDoubleClick={(blockId) => {
+                            setSelectedBlockId(blockId)
+                          }}
+                          onBlocksChange={setBlocks}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+            )
+          }}
+        </EditorResizableLayout>
       </div>
     </AdminLayout>
   )

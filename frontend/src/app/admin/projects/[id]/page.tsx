@@ -26,6 +26,8 @@ export default function ProjectDetailPage() {
   const [blockTypes, setBlockTypes] = useState<any[]>([])
   const [loadingPreview, setLoadingPreview] = useState(false)
   const [searchQuery, setSearchQuery] = useState<string>('')
+  const [creatingSubPage, setCreatingSubPage] = useState<string | null>(null)
+  const [subPageName, setSubPageName] = useState<string>('')
 
   // Ref pour éviter les exécutions multiples du nettoyage (désactivé - nettoyage automatique supprimé)
   // const cleanupExecutedRef = useRef(false)
@@ -37,10 +39,17 @@ export default function ProjectDetailPage() {
     }
     if (projectId) {
       loadProject()
-      loadAvailablePages()
       loadBlockTypes()
     }
   }, [projectId]) // Retirer 'router' des dépendances pour éviter les re-renders
+
+  // Load available pages when project is loaded
+  useEffect(() => {
+    if (project) {
+      loadAvailablePages()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.id, project?.is_system_project, project?.tenant_id])
 
   // Nettoyage automatique DÉSACTIVÉ
   // Le nettoyage automatique qui retirait toutes les pages sauf "home" et "test" 
@@ -81,64 +90,90 @@ export default function ProjectDetailPage() {
 
   const loadAvailablePages = async () => {
     try {
-      // Load public pages
-      const settingsResponse = await api.get('/system-settings/')
-      const settings = settingsResponse.data
-      const allPages: any[] = []
-      
-      // Homepage
-      if (settings.public_homepage_blocks !== undefined) {
-        allPages.push({
-          slug: 'home',
-          title: 'Page d\'accueil',
-          type: 'public',
-          is_active: true, // Homepage is always active
+      // Only load public pages if this is a system project
+      if (project?.is_system_project) {
+        const settingsResponse = await api.get('/system-settings/')
+        const settings = settingsResponse.data
+        const allPages: any[] = []
+        
+        // Homepage
+        if (settings.public_homepage_blocks !== undefined) {
+          allPages.push({
+            slug: 'home',
+            title: 'Page d\'accueil',
+            type: 'public',
+            is_active: true, // Homepage is always active
+          })
+        }
+        
+        // Other public pages
+        const publicPagesData = settings.public_pages || {}
+        Object.entries(publicPagesData).forEach(([slug, pageData]: [string, any]) => {
+          allPages.push({
+            slug,
+            title: pageData.title || slug,
+            type: 'public',
+            is_active: pageData.is_active !== false, // Default to true if not specified
+          })
         })
+        
+        // Load projects where each page is linked (excluding current project)
+        const pagesWithProjects = await Promise.all(
+          allPages.map(async (page) => {
+            try {
+              // Use query parameter instead of URL path to handle slashes (e.g., "legal/terms")
+              const response = await api.get(`/projects/page-projects/?page_slug=${encodeURIComponent(page.slug)}&page_type=public`)
+              const otherProjects = response.data.projects.filter(
+                (p: any) => p.id !== projectId
+              )
+              return {
+                ...page,
+                otherProjects: otherProjects,
+              }
+            } catch (error: any) {
+              // Si l'endpoint n'existe pas encore ou erreur, retourner la page sans projets
+              // Ne logger que les erreurs non-404 (404 est normal si la page n'est dans aucun projet)
+              if (error.response?.status !== 404 && error.response?.status !== 403) {
+                console.warn(`Erreur chargement projets pour page ${page.slug}:`, error.response?.status || error.message)
+              }
+              return {
+                ...page,
+                otherProjects: [],
+              }
+            }
+          })
+        )
+        
+        setPublicPages(pagesWithProjects)
+      } else {
+        // Clear public pages for non-system projects
+        setPublicPages([])
       }
       
-      // Other public pages
-      const publicPagesData = settings.public_pages || {}
-      Object.entries(publicPagesData).forEach(([slug, pageData]: [string, any]) => {
-        allPages.push({
-          slug,
-          title: pageData.title || slug,
-          type: 'public',
-          is_active: pageData.is_active !== false, // Default to true if not specified
-        })
-      })
-      
-      // Load projects where each page is linked (excluding current project)
-      const pagesWithProjects = await Promise.all(
-        allPages.map(async (page) => {
-          try {
-            const response = await api.get(`/projects/page-projects/${page.slug}/?page_type=public`)
-            const otherProjects = response.data.projects.filter(
-              (p: any) => p.id !== projectId
-            )
-            return {
-              ...page,
-              otherProjects: otherProjects,
-            }
-          } catch (error) {
-            // Si l'endpoint n'existe pas encore ou erreur, retourner la page sans projets
-            return {
-              ...page,
-              otherProjects: [],
-            }
-          }
-        })
-      )
-      
-      setPublicPages(pagesWithProjects)
-      
-      // TODO: Load tenant pages if project has a tenant
+      // Load tenant pages if project has a tenant
       if (project?.tenant_id) {
-        // Load tenant pages
-        // const tenantPagesData = await pageService.getAll({ tenant_id: project.tenant_id })
-        // setTenantPages(tenantPagesData)
+        try {
+          const pageService = (await import('@/services/page.service')).default
+          const tenantPagesData = await pageService.getAll({ tenant_id: project.tenant_id })
+          setTenantPages(tenantPagesData.map((page: any) => ({
+            slug: page.slug,
+            title: page.title,
+            type: 'tenant',
+            id: page.id,
+            is_active: page.status === 'published',
+          })))
+        } catch (error: any) {
+          console.error('Erreur chargement pages tenant:', error)
+          setTenantPages([])
+        }
+      } else {
+        // Clear tenant pages for system projects
+        setTenantPages([])
       }
     } catch (error: any) {
       console.error('Erreur chargement pages disponibles:', error)
+      setPublicPages([])
+      setTenantPages([])
     }
   }
 
@@ -168,8 +203,51 @@ export default function ProjectDetailPage() {
 
   const handleRemovePage = async (pageId: number) => {
     try {
-      await projectService.removePage(projectId, pageId)
-      toast.success('Page retirée du projet !')
+      // Trouver la page à retirer dans le projet
+      const pageToRemove = project?.pages?.find((p: ProjectPage) => p.id === pageId)
+      if (!pageToRemove) {
+        toast.error('Page introuvable dans le projet')
+        return
+      }
+
+      const pageSlug = pageToRemove.page_slug
+      const slugParts = pageSlug.split('/')
+      const isSubPage = slugParts.length > 1
+
+      if (isSubPage) {
+        // C'est une sous-page : retirer uniquement cette sous-page
+        await projectService.removePage(projectId, pageId)
+        toast.success('Sous-page retirée du projet !')
+      } else {
+        // C'est une page principale : retirer la page principale ET toutes ses sous-pages
+        const parentSlug = slugParts[0]
+        
+        // Trouver toutes les sous-pages de cette page principale
+        const subPages = project?.pages?.filter((p: ProjectPage) => {
+          const pSlugParts = p.page_slug.split('/')
+          return pSlugParts.length > 1 && pSlugParts[0] === parentSlug
+        }) || []
+
+        // Retirer toutes les sous-pages d'abord
+        for (const subPage of subPages) {
+          try {
+            await projectService.removePage(projectId, subPage.id)
+          } catch (error: any) {
+            console.warn(`Erreur retrait sous-page ${subPage.page_slug}:`, error)
+          }
+        }
+
+        // Puis retirer la page principale
+        await projectService.removePage(projectId, pageId)
+
+        const totalRemoved = 1 + subPages.length
+        if (subPages.length > 0) {
+          toast.success(`Page principale et ${subPages.length} sous-page(s) retirée(s) du projet !`)
+        } else {
+          toast.success('Page retirée du projet !')
+        }
+      }
+
       loadProject()
       loadAvailablePages() // Recharger les pages disponibles
     } catch (error: any) {
@@ -205,6 +283,135 @@ export default function ProjectDetailPage() {
     } catch (error: any) {
       console.error('Erreur suppression page:', error)
       toast.error(error.response?.data?.error || 'Erreur lors de la suppression de la page')
+    }
+  }
+
+  // Fonction pour organiser les pages par hiérarchie
+  const organizePagesByHierarchy = (pages: ProjectPage[]) => {
+    const organized: { parent: ProjectPage | null; children: ProjectPage[] }[] = []
+    const processed = new Set<number>()
+    
+    // Séparer les pages publiques et tenant
+    const publicPagesList = pages.filter(p => p.page_type === 'public')
+    const tenantPagesList = pages.filter(p => p.page_type === 'tenant')
+    
+    // Organiser les pages publiques (avec hiérarchie)
+    const sortedPublicPages = [...publicPagesList].sort((a, b) => a.page_slug.localeCompare(b.page_slug))
+    
+    sortedPublicPages.forEach((page) => {
+      if (processed.has(page.id)) return
+      
+      const slugParts = page.page_slug.split('/')
+      
+      // Si c'est une page principale (pas de sous-page)
+      if (slugParts.length === 1) {
+        // Trouver toutes les sous-pages de cette page
+        const children = sortedPublicPages.filter((p) => {
+          const childSlugParts = p.page_slug.split('/')
+          return (
+            childSlugParts.length > 1 &&
+            childSlugParts[0] === slugParts[0] &&
+            !processed.has(p.id)
+          )
+        })
+        
+        children.forEach((child) => processed.add(child.id))
+        processed.add(page.id)
+        
+        organized.push({
+          parent: page,
+          children: children,
+        })
+      } else {
+        // C'est une sous-page orpheline (pas de parent dans le projet)
+        // On la traite comme une page principale
+        if (!processed.has(page.id)) {
+          processed.add(page.id)
+          organized.push({
+            parent: page,
+            children: [],
+          })
+        }
+      }
+    })
+    
+    // Ajouter les pages tenant (pas de hiérarchie pour l'instant, juste l'ordre)
+    const sortedTenantPages = [...tenantPagesList].sort((a, b) => {
+      // Trier par order si disponible, sinon par ID
+      if (a.order !== undefined && b.order !== undefined) {
+        return a.order - b.order
+      }
+      return parseInt(a.page_slug) - parseInt(b.page_slug)
+    })
+    
+    sortedTenantPages.forEach((page) => {
+      organized.push({
+        parent: page,
+        children: [],
+      })
+    })
+    
+    return organized
+  }
+
+  // Fonction pour créer une sous-page
+  const handleCreateSubPage = async (parentSlug: string) => {
+    if (!subPageName.trim()) {
+      toast.error('Veuillez entrer un nom pour la sous-page')
+      return
+    }
+    
+    // Nettoyer le nom pour créer un slug valide
+    const cleanName = subPageName.trim().toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+    
+    if (!cleanName) {
+      toast.error('Le nom de la sous-page n\'est pas valide')
+      return
+    }
+    
+    const newSlug = `${parentSlug}/${cleanName}`
+    
+    try {
+      // Vérifier si la sous-page existe déjà
+      const settingsResponse = await api.get('/system-settings/')
+      const publicPages = settingsResponse.data.public_pages || {}
+      
+      if (publicPages[newSlug]) {
+        toast.error(`La sous-page "${newSlug}" existe déjà`)
+        return
+      }
+      
+      // Créer la nouvelle sous-page
+      publicPages[newSlug] = {
+        title: subPageName.trim(),
+        blocks: [],
+        meta_title: `${subPageName.trim()} - ${publicPages[parentSlug]?.title || parentSlug}`,
+        meta_description: '',
+        is_active: true,
+        order: Object.keys(publicPages).length + 1,
+      }
+      
+      // Sauvegarder
+      await api.patch('/system-settings/', { public_pages: publicPages })
+      
+      toast.success(`Sous-page "${newSlug}" créée !`)
+      
+      // Recharger les pages
+      loadAvailablePages()
+      
+      // Ajouter automatiquement au projet
+      await projectService.addPage(projectId, newSlug, 'public')
+      toast.success('Sous-page ajoutée au projet !')
+      loadProject()
+      
+      // Réinitialiser
+      setCreatingSubPage(null)
+      setSubPageName('')
+    } catch (error: any) {
+      console.error('Erreur création sous-page:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la création de la sous-page')
     }
   }
 
@@ -268,7 +475,7 @@ export default function ProjectDetailPage() {
       const publicPages = settings.public_pages || {}
       
       if (pageSlug === 'home') {
-        toast.info('La page d\'accueil est toujours publiée')
+        toast('La page d\'accueil est toujours publiée')
         return
       }
       
@@ -326,8 +533,44 @@ export default function ProjectDetailPage() {
           toast.error('Page non trouvée')
         }
       } else {
-        // TODO: Load tenant page
-        toast.error('Prévisualisation des pages tenant non encore implémentée')
+        // Load tenant page
+        try {
+          const pageService = (await import('@/services/page.service')).default
+          
+          // Get tenant_id from project
+          if (!project?.tenant_id) {
+            toast.error('Impossible de charger la page : tenant non trouvé')
+            return
+          }
+          
+          // pageSlug can be:
+          // - Old format: just page ID (e.g., "1")
+          // - New format: tenant_id:page_id (e.g., "5:1")
+          let pageId: number
+          if (pageSlug.includes(':')) {
+            // New format: tenant_id:page_id
+            const [, id] = pageSlug.split(':')
+            pageId = parseInt(id)
+          } else {
+            // Old format: just page ID
+            pageId = parseInt(pageSlug)
+          }
+          
+          const pageData = await pageService.getById(pageId, project.tenant_id)
+          
+          if (pageData) {
+            setPreviewPage({
+              slug: pageSlug,
+              blocks: Array.isArray(pageData.blocks) ? pageData.blocks : [],
+              title: pageData.title,
+            })
+          } else {
+            toast.error('Page non trouvée')
+          }
+        } catch (error: any) {
+          console.error('Erreur chargement page tenant:', error)
+          toast.error(error.response?.data?.error || 'Erreur lors du chargement de la page tenant')
+        }
       }
     } catch (error: any) {
       console.error('Erreur chargement prévisualisation:', error)
@@ -355,9 +598,9 @@ export default function ProjectDetailPage() {
     const firstActivePage = project.pages.find((p: ProjectPage) => p.is_active) || project.pages[0]
     
     if (firstActivePage.page_type === 'public') {
-      navigate(`/admin/pages-public/${firstActivePage.page_slug}/edit`)
+      navigate(`/admin/pages-public/edit/${firstActivePage.page_slug}?projectId=${projectId}`)
     } else {
-      toast.info('L\'édition des pages tenant n\'est pas encore disponible')
+      toast('L\'édition des pages tenant n\'est pas encore disponible', { icon: 'ℹ️' })
     }
   }
 
@@ -534,7 +777,7 @@ export default function ProjectDetailPage() {
                       loadAvailablePages()
                       
                       // Naviguer vers l'éditeur de la nouvelle page
-                      navigate(`/admin/pages-public/${newSlug}/edit`)
+                      navigate(`/admin/pages-public/edit/${newSlug}?projectId=${projectId}`)
                     } catch (error: any) {
                       console.error('Erreur création nouvelle page:', error)
                       toast.error(error.response?.data?.error || 'Erreur lors de la création de la nouvelle page')
@@ -550,48 +793,130 @@ export default function ProjectDetailPage() {
               </div>
             </div>
             
-            {/* Liste des pages liées */}
+            {/* Liste des pages liées - Organisées par hiérarchie */}
             {project.pages && project.pages.length > 0 ? (
-              <div className="space-y-2">
-                {project.pages.map((projectPage: ProjectPage) => {
-                  const page = publicPages.find((p: any) => p.slug === projectPage.page_slug)
-                  if (!page) return null
+              <div className="space-y-3">
+                {organizePagesByHierarchy(project.pages).map(({ parent, children }) => {
+                  // Find page data based on page_type
+                  let parentPage: any = null
+                  if (parent.page_type === 'public') {
+                    parentPage = publicPages.find((p: any) => p.slug === parent.page_slug)
+                  } else if (parent.page_type === 'tenant') {
+                    // For tenant pages, page_slug can be:
+                    // - Old format: just page ID (e.g., "1")
+                    // - New format: tenant_id:page_id (e.g., "5:1")
+                    let pageId: number
+                    if (parent.page_slug.includes(':')) {
+                      // New format: tenant_id:page_id
+                      const [, id] = parent.page_slug.split(':')
+                      pageId = parseInt(id)
+                    } else {
+                      // Old format: just page ID
+                      pageId = parseInt(parent.page_slug)
+                    }
+                    parentPage = tenantPages.find((p: any) => p.id === pageId)
+                  }
                   
-                  const isPublished = page.is_active !== false
+                  if (!parentPage) {
+                    // Page not found in available pages - might be deleted or not loaded
+                    return (
+                      <div key={parent.id} className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500 dark:text-gray-400">Page introuvable</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                              ({parent.page_type}: {parent.page_slug})
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleRemovePage(parent.id)}
+                            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                          >
+                            Retirer
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  }
+                  
+                  const isPublished = parentPage.is_active !== false
+                  const isSubPage = parent.page_slug.includes('/')
                   
                   // Fonction pour naviguer vers l'édition de la page
                   const handlePageClick = () => {
-                    if (page.slug === 'home') {
-                      navigate('/admin/homepage')
-                    } else {
-                      navigate(`/admin/pages-public/${page.slug}/edit`)
+                    if (parent.page_type === 'public') {
+                      if (parentPage.slug === 'home') {
+                        navigate(`/admin/homepage?projectId=${projectId}`)
+                      } else {
+                        navigate(`/admin/pages-public/edit/${parentPage.slug}?projectId=${projectId}`)
+                      }
+                    } else if (parent.page_type === 'tenant') {
+                      // Navigate to tenant page editor
+                      navigate(`/dashboard/pages/${parentPage.id}/edit`)
                     }
                   }
                   
                   return (
-                    <div
-                      key={projectPage.id}
-                      onClick={handlePageClick}
-                      className="flex items-center justify-between p-3 sm:p-4 rounded-lg border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 cursor-pointer transition-all group"
-                      title="Double-cliquer pour éditer"
-                    >
+                    <div key={parent.id} className="space-y-2">
+                      {/* Page principale ou sous-page orpheline */}
+                      <div
+                        onClick={handlePageClick}
+                        className={`flex items-center justify-between p-3 sm:p-4 rounded-lg border cursor-pointer transition-all group ${
+                          isSubPage
+                            ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 ml-6'
+                            : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                        }`}
+                        title="Double-cliquer pour éditer"
+                      >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {/* Indicateur de hiérarchie pour les sous-pages */}
+                        {isSubPage && (
+                          <div className="flex-shrink-0 text-purple-600 dark:text-purple-400">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        )}
+                        
                         {/* Toggle Publié */}
-                        <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-1">
-                          <ToggleSwitch
-                            checked={isPublished}
-                            onChange={() => handleTogglePublished(page.slug, isPublished)}
-                            size="sm"
-                            color="green"
-                          />
-                          <span className="text-xs text-gray-500 dark:text-gray-400">Publié</span>
-                        </div>
+                        {parent.page_type === 'public' && (
+                          <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-1">
+                            <ToggleSwitch
+                              checked={isPublished}
+                              onChange={() => handleTogglePublished(parentPage.slug, isPublished)}
+                              size="sm"
+                              color="green"
+                            />
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Publié</span>
+                          </div>
+                        )}
+                        {parent.page_type === 'tenant' && (
+                          <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-1">
+                            <ToggleSwitch
+                              checked={isPublished}
+                              onChange={async () => {
+                                try {
+                                  const pageService = (await import('@/services/page.service')).default
+                                  await pageService.update(parentPage.id, { status: !isPublished ? 'published' : 'draft' })
+                                  toast.success(`Page ${!isPublished ? 'publiée' : 'dépubliée'} !`)
+                                  loadAvailablePages()
+                                } catch (error: any) {
+                                  console.error('Erreur publication page tenant:', error)
+                                  toast.error('Erreur lors de la publication')
+                                }
+                              }}
+                              size="sm"
+                              color="green"
+                            />
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Publié</span>
+                          </div>
+                        )}
                         
                         {/* Toggle Visible */}
                         <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-1">
                           <ToggleSwitch
-                            checked={projectPage.is_active !== false}
-                            onChange={() => handleToggleActive(projectPage)}
+                            checked={parent.is_active !== false}
+                            onChange={() => handleToggleActive(parent)}
                             size="sm"
                             color="blue"
                           />
@@ -600,24 +925,43 @@ export default function ProjectDetailPage() {
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium text-gray-900 dark:text-gray-100 break-words">{page.title}</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">({page.slug})</span>
+                            {!isSubPage && (
+                              <svg className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                              </svg>
+                            )}
+                            <span className="font-medium text-gray-900 dark:text-gray-100 break-words">{parentPage.title}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              ({parent.page_type === 'tenant' ? parentPage.slug : parentPage.slug})
+                            </span>
+                            {parent.page_type === 'tenant' && (
+                              <span className="px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-xs font-medium">
+                                Tenant
+                              </span>
+                            )}
+                            
+                            {/* Badge pour indiquer si c'est une page principale avec sous-pages */}
+                            {!isSubPage && children.length > 0 && (
+                              <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-200 rounded-full text-xs font-medium">
+                                {children.length} sous-page{children.length > 1 ? 's' : ''}
+                              </span>
+                            )}
                             
                             {/* Indicateur autres projets */}
-                            {page.otherProjects && page.otherProjects.length > 0 && (
+                            {parentPage.otherProjects && parentPage.otherProjects.length > 0 && (
                               <div className="group relative">
                                 <div className="flex items-center gap-1 px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-full text-xs font-medium cursor-help">
                                   <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                                   </svg>
-                                  <span>{page.otherProjects.length} autre{page.otherProjects.length > 1 ? 's' : ''}</span>
+                                  <span>{parentPage.otherProjects.length} autre{parentPage.otherProjects.length > 1 ? 's' : ''}</span>
                                 </div>
                                 {/* Tooltip avec liste des projets */}
                                 <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-10 w-64">
                                   <div className="bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg p-3 border border-gray-700">
                                     <div className="font-semibold mb-2">Aussi dans :</div>
                                     <ul className="space-y-1">
-                                      {page.otherProjects.map((p: any) => (
+                                      {parentPage.otherProjects.map((p: any) => (
                                         <li key={p.id} className="text-gray-300 dark:text-gray-400">
                                           • {p.name} (ID: {p.id})
                                         </li>
@@ -639,21 +983,47 @@ export default function ProjectDetailPage() {
                             
                             {/* Badge Visible */}
                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              projectPage.is_active !== false
+                              parent.is_active !== false
                                 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                                 : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                             }`}>
-                              {projectPage.is_active !== false ? 'Visible' : 'Masquée'}
+                              {parent.is_active !== false ? 'Visible' : 'Masquée'}
                             </span>
                           </div>
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        {/* Bouton pour créer une sous-page (uniquement pour les pages principales) */}
+                        {!isSubPage && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setCreatingSubPage(parentPage.slug)
+                              setSubPageName('')
+                            }}
+                            className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                            title="Créer une sous-page"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span className="hidden sm:inline">Sous-page</span>
+                          </button>
+                        )}
+                        
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            handlePreviewPage(page.slug, 'public')
+                            if (parent.page_type === 'public') {
+                              handlePreviewPage(parentPage.slug, 'public')
+                            } else if (parent.page_type === 'tenant') {
+                              // Use tenant_id:page_id format for consistency
+                              const pageReference = project?.tenant_id 
+                                ? `${project.tenant_id}:${parentPage.id}` 
+                                : parentPage.id.toString()
+                              handlePreviewPage(pageReference, 'tenant')
+                            }
                           }}
                           className="px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-medium transition-colors flex items-center gap-1.5"
                           title="Aperçu de la page"
@@ -668,10 +1038,22 @@ export default function ProjectDetailPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            window.open(`/${page.slug === 'home' ? '' : page.slug}`, '_blank')
+                            if (parent.page_type === 'public') {
+                              // Public page: use current domain
+                              window.open(`/${parentPage.slug === 'home' ? '' : parentPage.slug}`, '_blank')
+                            } else if (parent.page_type === 'tenant' && project?.tenant_domain) {
+                              // Tenant page: use tenant domain
+                              const protocol = window.location.protocol
+                              const tenantUrl = `${protocol}//${project.tenant_domain}`
+                              const pageSlug = parentPage.slug || ''
+                              const pagePath = pageSlug === 'accueil' || pageSlug === 'home' ? '' : `/${pageSlug}`
+                              window.open(`${tenantUrl}${pagePath}`, '_blank')
+                            } else {
+                              toast.error('URL du tenant non disponible')
+                            }
                           }}
                           className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors flex items-center gap-1.5"
-                          title="Voir la page en public"
+                          title={parent.page_type === 'tenant' ? 'Voir la page sur le site du tenant' : 'Voir la page en public'}
                         >
                           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -696,7 +1078,7 @@ export default function ProjectDetailPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleRemovePage(projectPage.id)
+                            handleRemovePage(parent.id)
                           }}
                           className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
                           title="Retirer cette page du projet (la page existe toujours)"
@@ -708,6 +1090,261 @@ export default function ProjectDetailPage() {
                         </button>
                       </div>
                     </div>
+                    
+                    {/* Formulaire pour créer une sous-page */}
+                    {creatingSubPage === parentPage.slug && !isSubPage && (
+                      <div className="ml-6 p-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                          <span className="font-medium text-indigo-900 dark:text-indigo-100">Créer une sous-page de "{parentPage.title}"</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={subPageName}
+                            onChange={(e) => setSubPageName(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleCreateSubPage(parentPage.slug)
+                              }
+                            }}
+                            placeholder="Nom de la sous-page (ex: getting-started)"
+                            className="flex-1 px-3 py-2 border border-indigo-300 dark:border-indigo-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleCreateSubPage(parentPage.slug)}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                          >
+                            Créer
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCreatingSubPage(null)
+                              setSubPageName('')
+                            }}
+                            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                        <p className="text-xs text-indigo-700 dark:text-indigo-300 mt-2">
+                          La sous-page sera accessible à : <code className="bg-indigo-100 dark:bg-indigo-900 px-1 rounded">/{parentPage.slug}/[nom]</code>
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Affichage des sous-pages */}
+                    {children.length > 0 && (
+                      <div className="ml-6 space-y-2 border-l-2 border-indigo-200 dark:border-indigo-800 pl-4">
+                        {children.map((childPage: ProjectPage) => {
+                          // Find child page data based on page_type
+                          let childPageData: any = null
+                          if (childPage.page_type === 'public') {
+                            childPageData = publicPages.find((p: any) => p.slug === childPage.page_slug)
+                          } else if (childPage.page_type === 'tenant') {
+                            // For tenant pages, page_slug can be:
+                            // - Old format: just page ID (e.g., "1")
+                            // - New format: tenant_id:page_id (e.g., "5:1")
+                            let pageId: number
+                            if (childPage.page_slug.includes(':')) {
+                              // New format: tenant_id:page_id
+                              const [, id] = childPage.page_slug.split(':')
+                              pageId = parseInt(id)
+                            } else {
+                              // Old format: just page ID
+                              pageId = parseInt(childPage.page_slug)
+                            }
+                            childPageData = tenantPages.find((p: any) => p.id === pageId)
+                          }
+                          
+                          if (!childPageData) return null
+                          
+                          const childIsPublished = childPageData.is_active !== false
+                          
+                          const handleChildPageClick = () => {
+                            if (childPage.page_type === 'public') {
+                              navigate(`/admin/pages-public/edit/${childPageData.slug}?projectId=${projectId}`)
+                            } else if (childPage.page_type === 'tenant') {
+                              navigate(`/dashboard/pages/${childPageData.id}/edit`)
+                            }
+                          }
+                          
+                          return (
+                            <div
+                              key={childPage.id}
+                              onClick={handleChildPageClick}
+                              className="flex items-center justify-between p-3 sm:p-4 rounded-lg border bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 cursor-pointer transition-all group"
+                              title="Double-cliquer pour éditer"
+                            >
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="flex-shrink-0 text-purple-600 dark:text-purple-400">
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </div>
+                                
+                                {childPage.page_type === 'public' && (
+                                  <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-1">
+                                    <ToggleSwitch
+                                      checked={childIsPublished}
+                                      onChange={() => handleTogglePublished(childPageData.slug, childIsPublished)}
+                                      size="sm"
+                                      color="green"
+                                    />
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">Publié</span>
+                                  </div>
+                                )}
+                                {childPage.page_type === 'tenant' && (
+                                  <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-1">
+                                    <ToggleSwitch
+                                      checked={childIsPublished}
+                                      onChange={async () => {
+                                        try {
+                                          const pageService = (await import('@/services/page.service')).default
+                                          await pageService.update(childPageData.id, { status: !childIsPublished ? 'published' : 'draft' })
+                                          toast.success(`Page ${!childIsPublished ? 'publiée' : 'dépubliée'} !`)
+                                          loadAvailablePages()
+                                        } catch (error: any) {
+                                          console.error('Erreur publication page tenant:', error)
+                                          toast.error('Erreur lors de la publication')
+                                        }
+                                      }}
+                                      size="sm"
+                                      color="green"
+                                    />
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">Publié</span>
+                                  </div>
+                                )}
+                                
+                                <div onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-1">
+                                  <ToggleSwitch
+                                    checked={childPage.is_active !== false}
+                                    onChange={() => handleToggleActive(childPage)}
+                                    size="sm"
+                                    color="blue"
+                                  />
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">Visible</span>
+                                </div>
+                                
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-medium text-gray-900 dark:text-gray-100 break-words">{childPageData.title}</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">({childPageData.slug})</span>
+                                    
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                      childIsPublished
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                                    }`}>
+                                      {childIsPublished ? 'Publiée' : 'Non publiée'}
+                                    </span>
+                                    
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                      childPage.is_active !== false
+                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                                    }`}>
+                                      {childPage.is_active !== false ? 'Visible' : 'Masquée'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (childPage.page_type === 'public') {
+                                      handlePreviewPage(childPageData.slug, 'public')
+                                    } else if (childPage.page_type === 'tenant') {
+                                      // Use tenant_id:page_id format for consistency
+                                      const pageReference = project?.tenant_id 
+                                        ? `${project.tenant_id}:${childPageData.id}` 
+                                        : childPageData.id.toString()
+                                      handlePreviewPage(pageReference, 'tenant')
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                                  title="Aperçu"
+                                >
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                  </svg>
+                                  <span className="hidden sm:inline">Aperçu</span>
+                                </button>
+                                
+                                {childPage.page_type === 'tenant' && project?.tenant_domain && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      const protocol = window.location.protocol
+                                      const tenantUrl = `${protocol}//${project.tenant_domain}`
+                                      const pagePath = childPageData.slug === 'accueil' || childPageData.slug === 'home' ? '' : `/${childPageData.slug}`
+                                      window.open(`${tenantUrl}${pagePath}`, '_blank')
+                                    }}
+                                    className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                                    title="Voir sur le site du tenant"
+                                  >
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    <span className="hidden sm:inline">Voir</span>
+                                  </button>
+                                )}
+                                {childPage.page_type === 'public' && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      window.open(`/${childPageData.slug}`, '_blank')
+                                    }}
+                                    className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                                    title="Voir en public"
+                                  >
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    <span className="hidden sm:inline">Voir</span>
+                                  </button>
+                                )}
+                                
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleChildPageClick()
+                                  }}
+                                  className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                                  title="Éditer"
+                                >
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                  <span className="hidden sm:inline">Éditer</span>
+                                </button>
+                                
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleRemovePage(childPage.id)
+                                  }}
+                                  className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium transition-colors flex items-center gap-1.5"
+                                  title="Retirer"
+                                >
+                                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                  <span className="hidden sm:inline">Retirer</span>
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                   )
                 })}
               </div>
@@ -804,9 +1441,9 @@ export default function ProjectDetailPage() {
                     // Fonction pour naviguer vers l'édition de la page
                     const handlePageClick = () => {
                       if (page.slug === 'home') {
-                        navigate('/admin/homepage')
+                        navigate(`/admin/homepage?projectId=${projectId}`)
                       } else {
-                        navigate(`/admin/pages-public/${page.slug}/edit`)
+                        navigate(`/admin/pages-public/edit/${page.slug}?projectId=${projectId}`)
                       }
                     }
                     
@@ -875,7 +1512,22 @@ export default function ProjectDetailPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              handlePreviewPage(page.slug, 'public')
+                              const pageProjectPage = project?.pages?.find((p: ProjectPage) => p.page_slug === page.slug && p.page_type === 'public')
+                              if (pageProjectPage) {
+                                handlePreviewPage(page.slug, 'public')
+                              } else {
+                                // Try tenant page
+                                const tenantPageProjectPage = project?.pages?.find((p: ProjectPage) => {
+                                  const pageId = parseInt(p.page_slug)
+                                  return p.page_type === 'tenant' && tenantPages.find(tp => tp.id === pageId)?.slug === page.slug
+                                })
+                                if (tenantPageProjectPage) {
+                                  const tenantPage = tenantPages.find(tp => tp.id === parseInt(tenantPageProjectPage.page_slug))
+                                  if (tenantPage) {
+                                    handlePreviewPage(tenantPage.id.toString(), 'tenant')
+                                  }
+                                }
+                              }
                             }}
                             className="px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-medium transition-colors flex items-center gap-1.5"
                             title="Aperçu de la page"
@@ -890,10 +1542,31 @@ export default function ProjectDetailPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              window.open(`/${page.slug === 'home' ? '' : page.slug}`, '_blank')
+                              const pageProjectPage = project?.pages?.find((p: ProjectPage) => p.page_slug === page.slug && p.page_type === 'public')
+                              if (pageProjectPage) {
+                                // Public page: use current domain
+                                window.open(`/${page.slug === 'home' ? '' : page.slug}`, '_blank')
+                              } else {
+                                // Try tenant page
+                                const tenantPageProjectPage = project?.pages?.find((p: ProjectPage) => {
+                                  const pageId = parseInt(p.page_slug)
+                                  return p.page_type === 'tenant' && tenantPages.find(tp => tp.id === pageId)?.slug === page.slug
+                                })
+                                if (tenantPageProjectPage && project?.tenant_domain) {
+                                  const tenantPage = tenantPages.find(tp => tp.id === parseInt(tenantPageProjectPage.page_slug))
+                                  if (tenantPage) {
+                                    const protocol = window.location.protocol
+                                    const tenantUrl = `${protocol}//${project.tenant_domain}`
+                                    const pagePath = tenantPage.slug === 'accueil' || tenantPage.slug === 'home' ? '' : `/${tenantPage.slug}`
+                                    window.open(`${tenantUrl}${pagePath}`, '_blank')
+                                  }
+                                } else {
+                                  toast.error('URL du tenant non disponible')
+                                }
+                              }
                             }}
                             className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium transition-colors flex items-center gap-1.5"
-                            title="Voir la page en public"
+                            title="Voir la page"
                           >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -920,7 +1593,7 @@ export default function ProjectDetailPage() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handleDuplicatePage(page.slug, page.title)
+                                handleDuplicatePage(page.slug)
                               }}
                               className="px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm font-medium transition-colors flex items-center gap-1.5"
                               title="Dupliquer cette page pour ce projet"
@@ -1010,8 +1683,14 @@ export default function ProjectDetailPage() {
                   </div>
                 </div>
               ) : previewPage.blocks && previewPage.blocks.length > 0 ? (
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                  <BlockPreview blocks={previewPage.blocks} blockTypes={blockTypes} />
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                  {/* Remove padding to allow full-width blocks like hero */}
+                  <BlockPreview 
+                    blocks={previewPage.blocks} 
+                    blockTypes={blockTypes} 
+                    isInteractive={false}
+                    isEditable={false}
+                  />
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full">
@@ -1031,7 +1710,7 @@ export default function ProjectDetailPage() {
                   if (previewPage) {
                     const page = project?.pages?.find((p: ProjectPage) => p.page_slug === previewPage.slug)
                     if (page && page.page_type === 'public') {
-                      navigate(`/admin/pages-public/${previewPage.slug}/edit`)
+                      navigate(`/admin/pages-public/edit/${previewPage.slug}?projectId=${projectId}`)
                     }
                   }
                 }}

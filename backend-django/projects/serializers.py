@@ -22,6 +22,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     """Serializer for Project"""
     tenant = TenantSerializer(read_only=True)
     tenant_id = serializers.SerializerMethodField()
+    tenant_domain = serializers.SerializerMethodField()
     pages_count = serializers.SerializerMethodField()
     available_pages_count = serializers.SerializerMethodField()
     
@@ -29,10 +30,22 @@ class ProjectSerializer(serializers.ModelSerializer):
         """Get tenant ID from tenant object"""
         return obj.tenant.id if obj.tenant else None
     
+    def get_tenant_domain(self, obj):
+        """Get primary domain for tenant"""
+        if obj.tenant:
+            try:
+                from tenants.models import Domain
+                domain = Domain.objects.filter(tenant=obj.tenant, is_primary=True).first()
+                if domain:
+                    return domain.domain
+            except Exception:
+                pass
+        return None
+    
     class Meta:
         model = Project
         fields = [
-            'id', 'name', 'slug', 'description', 'tenant', 'tenant_id',
+            'id', 'name', 'slug', 'description', 'tenant', 'tenant_id', 'tenant_domain',
             'is_system_project', 'status', 'domain', 'metadata',
             'is_deleted', 'deleted_at',
             'pages_count', 'available_pages_count', 'created_at', 'updated_at'

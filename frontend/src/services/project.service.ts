@@ -14,6 +14,7 @@ export interface Project {
     slug: string
   } | null
   tenant_id?: number | null
+  tenant_domain?: string | null
   is_system_project: boolean
   status: 'active' | 'inactive' | 'archived'
   domain?: string

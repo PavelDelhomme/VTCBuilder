@@ -68,6 +68,7 @@ import { useHistory } from '@/hooks/useHistory'
 import { useBlockTracking } from '@/hooks/useBlockTracking'
 import { quickHash } from '@/lib/memory-utils'
 import { Block } from './types'
+import { useTheme } from '@/contexts/ThemeContext'
 
 // Re-export Block type for backward compatibility
 export type { Block }
@@ -84,6 +85,7 @@ interface BlockEditorProps {
 }
 
 export default function BlockEditor({ blocks, onChange, availableBlockTypes, onBlockSelect, selectedBlockId: externalSelectedBlockId, showBlocksPalette = true, showOnlyPalette = false }: BlockEditorProps) {
+  const { resolvedTheme, toggleTheme } = useTheme()
   const [blockTypes, setBlockTypes] = useState<BlockType[]>([])
   const [selectedBlock, setSelectedBlock] = useState<string | null>(externalSelectedBlockId || null)
   
@@ -713,48 +715,63 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             </svg>
           </button>
 
-          {/* History Navigation Buttons - Clear and Prominent */}
-          <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm p-1">
-            <button
-              onClick={handleUndo}
-              disabled={!history.canUndo}
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all text-sm font-medium ${
-                history.canUndo
-                  ? 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400'
-                  : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
-              }`}
-              title="Annuler (Ctrl+Z)"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+          {/* Block Count with Undo/Redo */}
+          <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-2 py-1.5">
+            {/* History Navigation Buttons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleUndo}
+                disabled={!history.canUndo}
+                className={`p-1.5 rounded transition-all ${
+                  history.canUndo
+                    ? 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400'
+                    : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
+                }`}
+                title="Annuler (Ctrl+Z)"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                </svg>
+              </button>
+              <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
+              <button
+                onClick={handleRedo}
+                disabled={!history.canRedo}
+                className={`p-1.5 rounded transition-all ${
+                  history.canRedo
+                    ? 'text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400'
+                    : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
+                }`}
+                title="Refaire (Ctrl+Shift+Z)"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+                </svg>
+              </button>
+            </div>
+            <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
+            {/* Block Count */}
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
               </svg>
-              <span className="hidden sm:inline">Annuler</span>
-            </button>
-            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600"></div>
-            <button
-              onClick={handleRedo}
-              disabled={!history.canRedo}
-              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all text-sm font-medium ${
-                history.canRedo
-                  ? 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400'
-                  : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
-              }`}
-              title="Refaire (Ctrl+Shift+Z)"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
-              </svg>
-              <span className="hidden sm:inline">Refaire</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
-            </svg>
-            <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
-              {history.state.length} bloc{history.state.length > 1 ? 's' : ''}
-            </span>
+              <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                {(() => {
+                  // Compter récursivement tous les blocs (y compris les enfants)
+                  const countBlocks = (blocks: Block[]): number => {
+                    let count = blocks.length
+                    blocks.forEach(block => {
+                      if (block.children && block.children.length > 0) {
+                        count += countBlocks(block.children)
+                      }
+                    })
+                    return count
+                  }
+                  const totalBlocks = countBlocks(history.state)
+                  return `${totalBlocks} bloc${totalBlocks > 1 ? 's' : ''}`
+                })()}
+              </span>
+            </div>
           </div>
 
           {/* Export/Import buttons */}
@@ -824,7 +841,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
 
         {/* Sidebar - Properties Panel uniquement (blocs disponibles dans popup externe) */}
         {showBlocksPalette && (
-          <div className={`${sidebarOpen ? 'fixed left-0 top-0 h-screen z-50' : 'hidden'} lg:static lg:block w-64 lg:w-72 xl:w-80 2xl:w-96 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out shadow-lg lg:shadow-none flex-shrink-0 flex flex-col lg:h-full relative overflow-hidden`}>
+          <div className={`${sidebarOpen ? 'fixed left-0 top-0 h-screen z-50' : 'hidden'} lg:static lg:block w-full lg:w-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out shadow-lg lg:shadow-none flex-shrink-0 flex flex-col lg:h-full relative overflow-hidden`}>
             {/* Afficher le panneau de paramètres si un bloc est sélectionné, sinon la palette de blocs */}
             {selectedBlock ? (
             /* Properties Panel dans la sidebar */
@@ -1416,7 +1433,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           </div>
         )}
 
-      {/* Main Editor Area */}
+      {/* Main Editor Area - Masquer si showOnlyPalette est true */}
+      {!showOnlyPalette && (
       <div className="flex-1 flex min-w-0 w-full h-full border-r border-gray-200 dark:border-gray-700">
         {/* Editor Panel */}
         <div className={`flex-1 flex flex-col min-w-0 h-full transition-all duration-300 w-full ${!blocksPaletteOpen ? 'ml-0' : ''}`}>
@@ -1468,6 +1486,23 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                     blockTypes={blockTypes}
                     isSelected={selectedBlock === block.id}
                     onSelect={() => handleSelectBlock(block.id)}
+                    onSelectChild={(childId) => {
+                      // Trouver le bloc enfant dans l'arbre et le sélectionner
+                      const findBlockById = (blocks: Block[], id: string): Block | null => {
+                        for (const b of blocks) {
+                          if (b.id === id) return b
+                          if (b.children) {
+                            const found = findBlockById(b.children, id)
+                            if (found) return found
+                          }
+                        }
+                        return null
+                      }
+                      const childBlock = findBlockById(history.state, childId)
+                      if (childBlock) {
+                        handleSelectBlock(childId)
+                      }
+                    }}
                     onUpdate={(updates) => updateBlock(block.id, updates)}
                     onDelete={() => removeBlock(block.id)}
                     onDuplicate={() => {
@@ -1495,6 +1530,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           </DndContext>
         </div>
       </div>
+      )}
     </div>
     </div>
   )
@@ -1506,6 +1542,7 @@ const SortableBlock = React.memo(function SortableBlock({
   blockTypes,
   isSelected,
   onSelect,
+  onSelectChild,
   onUpdate,
   onDelete,
   onDuplicate,
@@ -1516,6 +1553,7 @@ const SortableBlock = React.memo(function SortableBlock({
   blockTypes: BlockType[]
   isSelected: boolean
   onSelect: () => void
+  onSelectChild?: (childId: string) => void
   onUpdate: (updates: Partial<Block>) => void
   onDelete: () => void
   onDuplicate: () => void
@@ -1663,12 +1701,64 @@ const SortableBlock = React.memo(function SortableBlock({
       return
     }
     
+    // Ignorer si on clique sur le bouton collapse
+    if ((e.target as HTMLElement).closest('[data-collapse-button]')) {
+      return
+    }
+    
+    // Vérifier si on clique sur un enfant dans un conteneur
+    // Les enfants sont dans des divs avec data-child-block-id
+    const childElement = (e.target as HTMLElement).closest('[data-child-block-id]')
+    if (childElement) {
+      // Si onSelectChild est disponible, l'utiliser
+      if (onSelectChild) {
+        const childId = childElement.getAttribute('data-child-block-id')
+        if (childId) {
+          e.stopPropagation()
+          e.preventDefault()
+          onSelectChild(childId)
+          return
+        }
+      }
+      // Sinon, arrêter la propagation pour ne pas sélectionner le conteneur
+      e.stopPropagation()
+      return
+    }
+    
+    // Vérifier aussi si on clique dans le contenu d'un enfant (même si pas directement sur data-child-block-id)
+    // Cela peut arriver si on clique sur BlockRenderer à l'intérieur d'un enfant
+    const clickedInChildContent = (e.target as HTMLElement).closest('[data-child-block-id]')
+    if (clickedInChildContent) {
+      e.stopPropagation()
+      return
+    }
+    
     // Ouvrir les paramètres directement
     onSelect()
   }
 
   // Gérer le clic droit pour afficher le menu contextuel (optionnel)
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Vérifier si on fait un clic droit sur un enfant
+    const childElement = (e.target as HTMLElement).closest('[data-child-block-id]')
+    if (childElement && onSelectChild) {
+      const childId = childElement.getAttribute('data-child-block-id')
+      if (childId) {
+        e.preventDefault()
+        e.stopPropagation()
+        // Sélectionner l'enfant d'abord
+        onSelectChild(childId)
+        // Puis ouvrir le menu contextuel pour l'enfant
+        // Fermer le menu précédent s'il existe
+        if (showMenu) {
+          closeContextMenu()
+        }
+        setContextMenu({ x: e.clientX, y: e.clientY })
+        setShowMenu(true)
+        return
+      }
+    }
+    
     e.preventDefault()
     e.stopPropagation()
     // Fermer le menu précédent s'il existe
@@ -1819,6 +1909,24 @@ const SortableBlock = React.memo(function SortableBlock({
             )}
           </div>
         </div>
+        {/* Actions rapides - toujours visibles */}
+        <div className="flex items-center gap-1 flex-shrink-0 z-10 relative">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              if (window.confirm(`Êtes-vous sûr de vouloir supprimer "${blockType?.label || block.type}" ?`)) {
+                onDelete()
+              }
+            }}
+            className="p-1.5 sm:p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+            title="Supprimer le bloc"
+          >
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
         {/* Indicateur clic pour paramètres - visible au survol */}
         <div className="flex items-center gap-1 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700" title="Clic droit pour les options du bloc">
@@ -1834,8 +1942,18 @@ const SortableBlock = React.memo(function SortableBlock({
       </div>
 
       {/* Block Content - Simple and Clean */}
-      {isExpanded && (
-        <div className={`${isSmall ? 'p-2 sm:p-3' : 'p-4 sm:p-6'} bg-white dark:bg-gray-800 min-h-[120px]`}>
+      {isExpanded ? (
+        <div 
+          className={`${isSmall ? 'p-2 sm:p-3' : 'p-4 sm:p-6'} bg-white dark:bg-gray-800 min-h-[120px]`}
+          onClick={(e) => {
+            // Empêcher la sélection du conteneur si on clique dans le contenu
+            // Sauf si on clique directement sur le conteneur (pas sur un enfant)
+            const target = e.target as HTMLElement
+            if (target.closest('[data-child-block-id]')) {
+              e.stopPropagation()
+            }
+          }}
+        >
           {/* Conteneur avec enfants */}
           {(block.type === 'container' || block.type === 'flex-container' || block.type === 'grid-container' || 
             block.type === 'flexbox' || block.type === 'grid' || block.type === 'stack' || 
@@ -1860,12 +1978,52 @@ const SortableBlock = React.memo(function SortableBlock({
                 onUpdate({ children: newChildren })
               }}
               onSelectChild={(childId) => {
-                // TODO: Gérer la sélection des enfants
+                // Sélectionner l'enfant en trouvant son ID dans l'arbre
+                const findBlockById = (blocks: Block[], id: string): Block | null => {
+                  for (const b of blocks) {
+                    if (b.id === id) return b
+                    if (b.children) {
+                      const found = findBlockById(b.children, id)
+                      if (found) return found
+                    }
+                  }
+                  return null
+                }
+                // Trouver le bloc dans l'arbre complet
+                const childBlock = findBlockById(history.state, childId)
+                if (childBlock) {
+                  setSelectedBlock(childId)
+                  // Notifier le parent si nécessaire
+                  if (onBlockSelect) {
+                    onBlockSelect(childId)
+                  }
+                }
               }}
             />
           ) : (
             <BlockRenderer block={block} blockType={blockType} onUpdate={onUpdate} />
           )}
+        </div>
+      ) : (
+        // Vue réduite : afficher uniquement un indicateur compact
+        <div className={`${isSmall ? 'p-2' : 'p-3'} bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700`}>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 dark:text-gray-400 italic">
+              Bloc réduit - Cliquez sur la flèche pour développer
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                if (onToggleCollapse) {
+                  onToggleCollapse()
+                }
+              }}
+              className="px-2 py-1 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+              title="Développer le bloc"
+            >
+              Développer
+            </button>
+          </div>
         </div>
       )}
 
@@ -1974,6 +2132,44 @@ function ContainerChildrenRenderer({
 }) {
   const children = block.children || []
   const [showAddMenu, setShowAddMenu] = useState(false)
+  const [collapsedChildren, setCollapsedChildren] = useState<Set<string>>(new Set())
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; childId: string } | null>(null)
+  const [showMenu, setShowMenu] = useState(false)
+  
+  const toggleChildCollapse = useCallback((childId: string) => {
+    setCollapsedChildren(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(childId)) {
+        newSet.delete(childId)
+      } else {
+        newSet.add(childId)
+      }
+      return newSet
+    })
+  }, [])
+  
+  const closeContextMenu = useCallback(() => {
+    setContextMenu(null)
+    setShowMenu(false)
+  }, [])
+  
+  // Fermer le menu si on clique ailleurs
+  useEffect(() => {
+    if (showMenu) {
+      const handleClickOutside = (e: MouseEvent) => {
+        const target = e.target as HTMLElement
+        if (!target.closest('[data-context-menu]') && !target.closest('[data-child-block-id]')) {
+          closeContextMenu()
+        }
+      }
+      document.addEventListener('click', handleClickOutside, true)
+      document.addEventListener('contextmenu', handleClickOutside, true)
+      return () => {
+        document.removeEventListener('click', handleClickOutside, true)
+        document.removeEventListener('contextmenu', handleClickOutside, true)
+      }
+    }
+  }, [showMenu, closeContextMenu])
 
   const handleAddBlock = useCallback((blockType: BlockType) => {
     const newChild: Block = {
@@ -2041,13 +2237,50 @@ function ContainerChildrenRenderer({
                 return (
                   <div
                     key={child.id}
-                    className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer"
-                    onClick={() => onSelectChild(child.id)}
+                    data-child-block-id={child.id}
+                    className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer overflow-hidden"
+                    onClick={(e) => {
+                      // Empêcher la propagation vers le conteneur parent
+                      e.stopPropagation()
+                      onSelectChild(child.id)
+                    }}
+                    onContextMenu={(e) => {
+                      // Gérer le clic droit sur les enfants
+                      e.preventDefault()
+                      e.stopPropagation()
+                      // Sélectionner l'enfant d'abord
+                      onSelectChild(child.id)
+                      // Ouvrir le menu contextuel pour l'enfant
+                      if (showMenu && contextMenu?.childId === child.id) {
+                        closeContextMenu()
+                      } else {
+                        setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
+                        setShowMenu(true)
+                      }
+                    }}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{childBlockType?.icon || '📦'}</span>
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {/* Header du bloc enfant */}
+                    <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleChildCollapse(child.id)
+                          }}
+                          className="flex-shrink-0 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                          title={collapsedChildren.has(child.id) ? "Développer" : "Réduire"}
+                        >
+                          <svg 
+                            className={`w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-200 ${collapsedChildren.has(child.id) ? '' : 'rotate-90'}`} 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                        <span className="text-lg flex-shrink-0">{childBlockType?.icon || '📦'}</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                           {childBlockType?.label || child.type}
                         </span>
                       </div>
@@ -2056,20 +2289,50 @@ function ContainerChildrenRenderer({
                           e.stopPropagation()
                           onDeleteChild(child.id)
                         }}
-                        className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                        className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded flex-shrink-0"
                         title="Supprimer"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
                     </div>
-                    {childBlockType && (
-                      <BlockRenderer 
-                        block={{ ...child, data: child.data || {} }} 
-                        blockType={childBlockType} 
-                        onUpdate={(updates) => onUpdateChild(child.id, updates)} 
-                      />
+                    {/* Contenu du bloc enfant */}
+                    {!collapsedChildren.has(child.id) && childBlockType && (
+                      <div 
+                        className="p-3" 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          // Sélectionner l'enfant si on clique dans son contenu
+                          onSelectChild(child.id)
+                        }}
+                        onMouseDown={(e) => {
+                          // Empêcher la propagation même au mousedown
+                          e.stopPropagation()
+                        }}
+                      >
+                        <BlockRenderer 
+                          block={{ ...child, data: child.data || {} }} 
+                          blockType={childBlockType} 
+                          onUpdate={(updates) => onUpdateChild(child.id, updates)} 
+                        />
+                      </div>
+                    )}
+                    {collapsedChildren.has(child.id) && (
+                      <div 
+                        className="p-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onSelectChild(child.id)
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation()
+                        }}
+                      >
+                        <span className="text-xs text-gray-500 dark:text-gray-400 italic">
+                          Bloc réduit - Cliquez sur la flèche pour développer
+                        </span>
+                      </div>
                     )}
                   </div>
                 )
@@ -2078,6 +2341,103 @@ function ContainerChildrenRenderer({
           )}
         </div>
       </ContainerDropZone>
+
+      {/* Menu contextuel pour les enfants */}
+      {contextMenu && showMenu && (
+        <div
+          data-context-menu
+          className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl py-1 min-w-[180px]"
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`,
+          }}
+          onClick={(e) => {
+            e.stopPropagation()
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+          }}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (contextMenu.childId) {
+                onSelectChild(contextMenu.childId)
+              }
+              closeContextMenu()
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Paramètres
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (contextMenu.childId) {
+                toggleChildCollapse(contextMenu.childId)
+              }
+              closeContextMenu()
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {contextMenu.childId && collapsedChildren.has(contextMenu.childId) ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              )}
+            </svg>
+            {contextMenu.childId && collapsedChildren.has(contextMenu.childId) ? 'Étendre' : 'Réduire'}
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (contextMenu.childId) {
+                const child = children.find(c => c.id === contextMenu.childId)
+                if (child) {
+                  const newChild: Block = {
+                    ...child,
+                    id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  }
+                  const childIndex = children.findIndex(c => c.id === contextMenu.childId)
+                  const newChildren = [...children]
+                  newChildren.splice(childIndex + 1, 0, newChild)
+                  onAddChild(newChild)
+                }
+              }
+              closeContextMenu()
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            Dupliquer
+          </button>
+          <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (contextMenu.childId) {
+                if (window.confirm('Êtes-vous sûr de vouloir supprimer ce bloc ?')) {
+                  onDeleteChild(contextMenu.childId)
+                }
+              }
+              closeContextMenu()
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Supprimer
+          </button>
+        </div>
+      )}
 
       {/* Bouton pour ajouter un bloc */}
       <button
@@ -2482,6 +2842,261 @@ function DraggableBlockItem({
 }
 
 // Block Renderer Component
+// Fonction utilitaire pour convertir le gradient Tailwind en CSS
+function getGradientFromTailwindCTA(gradient: string): string {
+  if (!gradient) return 'linear-gradient(to right, #2563eb, #9333ea)'
+  
+  const fromMatch = gradient.match(/from-(\w+)-(\d+)/)
+  const viaMatch = gradient.match(/via-(\w+)-(\d+)/)
+  const toMatch = gradient.match(/to-(\w+)-(\d+)/)
+  
+  const colorMap: Record<string, Record<string, string>> = {
+    blue: { '600': '#2563eb', '500': '#3b82f6' },
+    purple: { '600': '#9333ea', '500': '#a855f7' },
+    pink: { '500': '#ec4899', '600': '#db2777' },
+  }
+  
+  const fromColor = fromMatch ? (colorMap[fromMatch[1]]?.[fromMatch[2]] || '#2563eb') : '#2563eb'
+  const viaColor = viaMatch ? (colorMap[viaMatch[1]]?.[viaMatch[2]] || '#9333ea') : null
+  const toColor = toMatch ? (colorMap[toMatch[1]]?.[toMatch[2]] || '#9333ea') : '#9333ea'
+  
+  if (viaColor) {
+    return `linear-gradient(to right, ${fromColor} 0%, ${viaColor} 50%, ${toColor} 100%)`
+  }
+  return `linear-gradient(to right, ${fromColor} 0%, ${toColor} 100%)`
+}
+
+function renderCTASectionEditor(block: Block, onUpdate: (updates: Partial<Block>) => void) {
+  const safeBlock = { ...block, data: block.data || {} }
+  
+  // Déterminer le style d'arrière-plan
+  const backgroundType = safeBlock.data?.background_type || 'gradient'
+  let backgroundStyle: React.CSSProperties = {}
+  
+  if (backgroundType === 'image' && safeBlock.data?.background_image) {
+    backgroundStyle = {
+      backgroundImage: safeBlock.data.background_overlay 
+        ? `url(${safeBlock.data.background_image}), ${safeBlock.data.background_overlay}`
+        : `url(${safeBlock.data.background_image})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }
+    if (safeBlock.data.background_image_opacity !== undefined) {
+      backgroundStyle.opacity = safeBlock.data.background_image_opacity
+    }
+  } else if (backgroundType === 'solid') {
+    backgroundStyle.backgroundColor = safeBlock.data?.background_color || '#2563eb'
+  } else {
+    // Gradient par défaut - convertir depuis Tailwind si nécessaire
+    const gradientValue = safeBlock.data?.background_gradient
+    if (gradientValue && (gradientValue.includes('from-') || gradientValue.includes('to-'))) {
+      backgroundStyle.background = getGradientFromTailwindCTA(gradientValue)
+    } else {
+      backgroundStyle.background = gradientValue || 'linear-gradient(to right, #2563eb, #9333ea)'
+    }
+  }
+
+  const buttonUrl = safeBlock.data?.button_url || safeBlock.data?.button_link
+  const buttonText = safeBlock.data?.button_text
+
+  return (
+    <div className="space-y-4">
+      {/* Prévisualisation */}
+      <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+        <div
+          style={{
+            ...backgroundStyle,
+            padding: '3rem 2rem',
+            minHeight: '200px',
+          }}
+          className="rounded-lg"
+        >
+          <div className="max-w-4xl mx-auto text-center">
+            {safeBlock.data.title && (
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+                {safeBlock.data.title}
+              </h2>
+            )}
+            {(safeBlock.data.description || safeBlock.data.subtitle) && (
+              <p className="text-base sm:text-lg text-white/90 mb-6 max-w-2xl mx-auto">
+                {safeBlock.data.description || safeBlock.data.subtitle}
+              </p>
+            )}
+            {buttonText && buttonUrl && (
+              <div className="inline-block px-8 py-3 rounded-lg font-bold text-base transition-all shadow-xl bg-white text-blue-600">
+                {buttonText}
+              </div>
+            )}
+            {(!safeBlock.data.title && !safeBlock.data.description && !buttonText) && (
+              <p className="text-white/70 text-sm">Aperçu du bloc CTA - Configurez les champs ci-dessous</p>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Formulaire d'édition */}
+      <div className="space-y-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Titre
+          </label>
+          <input
+            type="text"
+            value={safeBlock.data.title || ''}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            placeholder="Prêt à démarrer ?"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Description
+          </label>
+          <textarea
+            value={safeBlock.data.description || ''}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, description: e.target.value } })}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            rows={3}
+            placeholder="Créez votre site VTC professionnel dès aujourd'hui..."
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Texte du bouton
+          </label>
+          <input
+            type="text"
+            value={safeBlock.data.button_text || ''}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_text: e.target.value } })}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            placeholder="🚀 Créer mon compte gratuitement"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            URL du bouton
+          </label>
+          <UrlInputWithSuggestions
+            value={safeBlock.data.button_url || ''}
+            onChange={(url) => onUpdate({ data: { ...safeBlock.data, button_url: url } })}
+            placeholder="/register"
+            className="text-xs"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Style du bouton
+          </label>
+          <select
+            value={safeBlock.data.button_style || 'light'}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_style: e.target.value } })}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          >
+            <option value="light">Clair (blanc sur fond coloré)</option>
+            <option value="dark">Sombre (gris foncé)</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Type d'arrière-plan
+          </label>
+          <select
+            value={safeBlock.data.background_type || 'gradient'}
+            onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_type: e.target.value } })}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 mb-2"
+          >
+            <option value="gradient">Dégradé de couleur</option>
+            <option value="image">Image</option>
+            <option value="solid">Couleur unie</option>
+          </select>
+        </div>
+
+        {safeBlock.data.background_type === 'gradient' && (
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Dégradé de fond
+            </label>
+            <input
+              type="text"
+              value={safeBlock.data.background_gradient || 'linear-gradient(to right, #2563eb, #9333ea)'}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_gradient: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono"
+              placeholder="linear-gradient(to right, #2563eb, #9333ea)"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Exemples: linear-gradient(to right, #2563eb, #9333ea) ou radial-gradient(circle, #2563eb, #9333ea)
+            </p>
+          </div>
+        )}
+
+        {safeBlock.data.background_type === 'image' && (
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Image de fond
+            </label>
+            <ImageSelector
+              value={safeBlock.data.background_image || ''}
+              onChange={(imageUrl) => onUpdate({ data: { ...safeBlock.data, background_image: imageUrl } })}
+              className="text-sm"
+              projectId={1}
+            />
+            <div className="mt-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Opacité de l'image (0-1)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="1"
+                step="0.1"
+                value={safeBlock.data.background_image_opacity || 1}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_image_opacity: parseFloat(e.target.value) || 1 } })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+              />
+            </div>
+            <div className="mt-2">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Dégradé par-dessus l'image (optionnel)
+              </label>
+              <input
+                type="text"
+                value={safeBlock.data.background_overlay || ''}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_overlay: e.target.value } })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-mono"
+                placeholder="linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7))"
+              />
+            </div>
+          </div>
+        )}
+
+        {safeBlock.data.background_type === 'solid' && (
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Couleur de fond
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="color"
+                value={safeBlock.data.background_color || '#2563eb'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_color: e.target.value } })}
+                className="h-8 w-16 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+              />
+              <input
+                type="text"
+                value={safeBlock.data.background_color || '#2563eb'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_color: e.target.value } })}
+                className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-mono"
+                placeholder="#2563eb"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function BlockRenderer({
   block,
   blockType,
@@ -3555,6 +4170,7 @@ function BlockRenderer({
         </div>
       )
     case 'features-grid':
+    case 'features_grid': // Alias pour compatibilité
       const features = safeBlock.data.features || [
         { icon: '🎨', title: 'Site Professionnel', description: 'Designs modernes et responsive. Personnalisez votre site sans coder.' },
         { icon: '📅', title: 'Réservations en Ligne', description: 'Système de réservation complet avec calendrier et notifications.' },
@@ -3657,6 +4273,313 @@ function BlockRenderer({
         </div>
       )
     
+    case 'pricing_cards':
+    case 'pricing-cards':
+      // Configuration pour pricing_cards - similaire à features_grid mais pour les plans tarifaires
+      const pricingCardsSource = safeBlock.data.source || 'dynamic'
+      const pricingCardsPlans = safeBlock.data.plans || []
+      
+      return (
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Titre de la section
+            </label>
+            <input
+              type="text"
+              value={safeBlock.data.title || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="Nos tarifs"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Sous-titre (optionnel)
+            </label>
+            <input
+              type="text"
+              value={safeBlock.data.subtitle || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, subtitle: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="Choisissez le plan adapté à vos besoins"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Source des plans
+            </label>
+            <select
+              value={pricingCardsSource}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, source: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            >
+              <option value="dynamic">API (chargement automatique)</option>
+              <option value="manual">Manuel (saisie)</option>
+            </select>
+          </div>
+          {pricingCardsSource === 'dynamic' ? (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Endpoint API
+                </label>
+                <input
+                  type="text"
+                  value={safeBlock.data.api_endpoint || '/api/pricing-plans/'}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, api_endpoint: e.target.value } })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="/api/pricing-plans/"
+                />
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                  Les plans seront chargés automatiquement depuis l'API
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Plan "Populaire" (override)
+                </label>
+                <input
+                  type="text"
+                  value={safeBlock.data.featured_plan_override || ''}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, featured_plan_override: e.target.value } })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="ID ou slug du plan (ex: 2, starter, business)"
+                />
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                  Indiquez l'ID ou le slug du plan qui sera marqué comme "Populaire". Laissez vide pour utiliser le plan marqué comme featured dans l'API.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Plans tarifaires ({pricingCardsPlans.length})
+                </label>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {pricingCardsPlans.map((plan: any, index: number) => (
+                    <div key={index} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          Plan {index + 1}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <label className="flex items-center gap-1 text-xs">
+                            <input
+                              type="checkbox"
+                              checked={plan.is_featured || false}
+                              onChange={(e) => {
+                                const newPlans = [...pricingCardsPlans]
+                                newPlans[index] = { ...plan, is_featured: e.target.checked }
+                                onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                              }}
+                              className="w-3 h-3"
+                            />
+                            <span className="text-gray-600 dark:text-gray-400">Mis en avant</span>
+                          </label>
+                          <button
+                            onClick={() => {
+                              const newPlans = pricingCardsPlans.filter((_: any, i: number) => i !== index)
+                              onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                            }}
+                            className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                            title="Supprimer ce plan"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={plan.name || ''}
+                          onChange={(e) => {
+                            const newPlans = [...pricingCardsPlans]
+                            newPlans[index] = { ...plan, name: e.target.value }
+                            onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                          }}
+                          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                          placeholder="Nom du plan (ex: Starter)"
+                        />
+                        <textarea
+                          value={plan.description || ''}
+                          onChange={(e) => {
+                            const newPlans = [...pricingCardsPlans]
+                            newPlans[index] = { ...plan, description: e.target.value }
+                            onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                          }}
+                          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                          placeholder="Description du plan"
+                          rows={2}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] text-gray-600 dark:text-gray-400">Prix mensuel (€)</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={plan.price_monthly || ''}
+                              onChange={(e) => {
+                                const newPlans = [...pricingCardsPlans]
+                                newPlans[index] = { ...plan, price_monthly: parseFloat(e.target.value) || 0 }
+                                onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                              }}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                              placeholder="29.99"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-gray-600 dark:text-gray-400">Prix annuel (€)</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={plan.price_yearly || ''}
+                              onChange={(e) => {
+                                const newPlans = [...pricingCardsPlans]
+                                newPlans[index] = { ...plan, price_yearly: parseFloat(e.target.value) || 0 }
+                                onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                              }}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                              placeholder="299.99"
+                            />
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          value={plan.badge || ''}
+                          onChange={(e) => {
+                            const newPlans = [...pricingCardsPlans]
+                            newPlans[index] = { ...plan, badge: e.target.value }
+                            onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                          }}
+                          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                          placeholder="Badge (ex: POPULAIRE)"
+                        />
+                        <div>
+                          <label className="text-[10px] text-gray-600 dark:text-gray-400 mb-1 block">Fonctionnalités</label>
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {(plan.features || []).map((feature: string, fIndex: number) => (
+                              <div key={fIndex} className="flex items-center gap-1">
+                                <input
+                                  type="text"
+                                  value={feature}
+                                  onChange={(e) => {
+                                    const newPlans = [...pricingCardsPlans]
+                                    const newFeatures = [...(plan.features || [])]
+                                    newFeatures[fIndex] = e.target.value
+                                    newPlans[index] = { ...plan, features: newFeatures }
+                                    onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                                  }}
+                                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                                  placeholder="Fonctionnalité"
+                                />
+                                <button
+                                  onClick={() => {
+                                    const newPlans = [...pricingCardsPlans]
+                                    const newFeatures = (plan.features || []).filter((_: string, i: number) => i !== fIndex)
+                                    newPlans[index] = { ...plan, features: newFeatures }
+                                    onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                                  }}
+                                  className="px-1.5 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              onClick={() => {
+                                const newPlans = [...pricingCardsPlans]
+                                const newFeatures = [...(plan.features || []), '']
+                                newPlans[index] = { ...plan, features: newFeatures }
+                                onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                              }}
+                              className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                            >
+                              + Ajouter une fonctionnalité
+                            </button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-[10px] text-gray-600 dark:text-gray-400">Texte du bouton</label>
+                            <input
+                              type="text"
+                              value={plan.button_text || ''}
+                              onChange={(e) => {
+                                const newPlans = [...pricingCardsPlans]
+                                newPlans[index] = { ...plan, button_text: e.target.value }
+                                onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                              }}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                              placeholder="Choisir ce plan"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-gray-600 dark:text-gray-400">URL du bouton</label>
+                            <input
+                              type="text"
+                              value={plan.button_url || ''}
+                              onChange={(e) => {
+                                const newPlans = [...pricingCardsPlans]
+                                newPlans[index] = { ...plan, button_url: e.target.value }
+                                onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                              }}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                              placeholder="/register?plan=starter"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-gray-600 dark:text-gray-400">Style du bouton</label>
+                          <select
+                            value={plan.button_style || 'primary'}
+                            onChange={(e) => {
+                              const newPlans = [...pricingCardsPlans]
+                              newPlans[index] = { ...plan, button_style: e.target.value }
+                              onUpdate({ data: { ...safeBlock.data, plans: newPlans } })
+                            }}
+                            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+                          >
+                            <option value="primary">Principal (bleu)</option>
+                            <option value="secondary">Secondaire (gris)</option>
+                            <option value="outline">Contour (transparent)</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => onUpdate({ 
+                    data: { 
+                      ...safeBlock.data, 
+                      plans: [...pricingCardsPlans, { 
+                        name: '', 
+                        description: '', 
+                        price_monthly: 0, 
+                        price_yearly: 0,
+                        badge: '',
+                        is_featured: false,
+                        features: [], 
+                        button_text: 'Choisir ce plan', 
+                        button_url: '/register',
+                        button_style: 'primary'
+                      }] 
+                    } 
+                  })}
+                  className="mt-2 px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 w-full"
+                >
+                  + Ajouter un plan tarifaire
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )
+    
     case 'pricing':
       const plans = safeBlock.data.plans || [{ 
         name: '', 
@@ -3694,10 +4617,10 @@ function BlockRenderer({
               </label>
               <input
                 type="text"
-                value={safeBlock.data.api_endpoint || '/api/billing/pricing-plans/'}
+                value={safeBlock.data.api_endpoint || '/api/pricing-plans/'}
                 onChange={(e) => onUpdate({ data: { ...safeBlock.data, api_endpoint: e.target.value } })}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                placeholder="/api/billing/pricing-plans/"
+                placeholder="/api/pricing-plans/"
               />
               <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
                 Les plans seront chargés automatiquement depuis l'API
@@ -5085,6 +6008,18 @@ function BlockRenderer({
         </div>
       )
     case 'hero':
+      // Initialiser les boutons par défaut si aucun bouton n'existe
+      const defaultButtons = [
+        { text: 'Démarrer gratuitement', url: '/register', style: 'primary' },
+        { text: 'Voir les tarifs', url: '#pricing', style: 'secondary' }
+      ]
+      const heroButtons = safeBlock.data.buttons && safeBlock.data.buttons.length > 0 
+        ? safeBlock.data.buttons 
+        : defaultButtons
+      
+      // Initialiser le type de fond si non défini
+      const backgroundType = safeBlock.data.background_type || (safeBlock.data.background_image ? 'image' : 'gradient')
+      
       return (
         <div className="space-y-3">
           <div>
@@ -5111,28 +6046,112 @@ function BlockRenderer({
               rows={2}
             />
           </div>
+          
+          {/* Type de fond */}
           <div>
-            <ImageSelector
-              value={safeBlock.data.background_image || ''}
-              onChange={(url) => onUpdate({ data: { ...safeBlock.data, background_image: url } })}
-              label="Image de fond"
-              projectId={1} // Projet système pour les pages publiques
-              placeholder="Sélectionner ou uploader une image de fond"
-            />
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Type de fond
+            </label>
+            <select
+              value={backgroundType}
+              onChange={(e) => {
+                const newType = e.target.value
+                const newData: any = { ...safeBlock.data, background_type: newType }
+                // Réinitialiser les valeurs selon le type
+                if (newType === 'image') {
+                  newData.background_color = undefined
+                  newData.background_gradient = undefined
+                } else if (newType === 'color') {
+                  newData.background_image = undefined
+                  newData.background_gradient = undefined
+                  if (!newData.background_color) {
+                    newData.background_color = '#667eea'
+                  }
+                } else if (newType === 'gradient') {
+                  newData.background_image = undefined
+                  newData.background_color = undefined
+                  if (!newData.background_gradient) {
+                    newData.background_gradient = 'from-blue-500 via-purple-600 to-pink-500'
+                  }
+                }
+                onUpdate({ data: newData })
+              }}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            >
+              <option value="image">Image</option>
+              <option value="color">Couleur unie</option>
+              <option value="gradient">Dégradé</option>
+            </select>
           </div>
+          
+          {/* Image de fond */}
+          {backgroundType === 'image' && (
+            <div>
+              <ImageSelector
+                value={safeBlock.data.background_image || ''}
+                onChange={(url) => onUpdate({ data: { ...safeBlock.data, background_image: url } })}
+                label="Image de fond"
+                projectId={1} // Projet système pour les pages publiques
+                placeholder="Sélectionner ou uploader une image de fond"
+              />
+            </div>
+          )}
+          
+          {/* Couleur de fond */}
+          {backgroundType === 'color' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Couleur de fond
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={safeBlock.data.background_color || '#667eea'}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_color: e.target.value } })}
+                  className="w-16 h-8 border border-gray-300 dark:border-gray-600 rounded cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={safeBlock.data.background_color || '#667eea'}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_color: e.target.value } })}
+                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="#667eea"
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* Gradient de fond */}
+          {backgroundType === 'gradient' && (
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Dégradé (format Tailwind)
+              </label>
+              <input
+                type="text"
+                value={safeBlock.data.background_gradient || 'from-blue-500 via-purple-600 to-pink-500'}
+                onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_gradient: e.target.value } })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                placeholder="from-blue-500 via-purple-600 to-pink-500"
+              />
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+                Exemples: from-blue-500 to-purple-600, from-pink-500 via-red-500 to-yellow-500
+              </p>
+            </div>
+          )}
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Boutons
+              Boutons ({heroButtons.length})
             </label>
-            <div className="space-y-2">
-              {(safeBlock.data.buttons || (safeBlock.data.button_text ? [{ text: safeBlock.data.button_text, url: safeBlock.data.button_url, style: 'primary' }] : [])).map((btn: any, index: number) => (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {heroButtons.map((btn: any, index: number) => (
                 <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <input
                       type="text"
                       value={btn.text || ''}
                       onChange={(e) => {
-                        const buttons = safeBlock.data.buttons || []
+                        const buttons = [...heroButtons]
                         buttons[index] = { ...btn, text: e.target.value }
                         onUpdate({ data: { ...block.data, buttons } })
                       }}
@@ -5142,7 +6161,7 @@ function BlockRenderer({
                     <select
                       value={btn.style || 'primary'}
                       onChange={(e) => {
-                        const buttons = safeBlock.data.buttons || []
+                        const buttons = [...heroButtons]
                         buttons[index] = { ...btn, style: e.target.value }
                         onUpdate({ data: { ...block.data, buttons } })
                       }}
@@ -5155,7 +6174,7 @@ function BlockRenderer({
                   <PageSelector
                     value={btn.url || ''}
                     onChange={(url) => {
-                      const buttons = safeBlock.data.buttons || []
+                      const buttons = [...heroButtons]
                       buttons[index] = { ...btn, url }
                       onUpdate({ data: { ...block.data, buttons } })
                     }}
@@ -5164,8 +6183,9 @@ function BlockRenderer({
                   />
                   <button
                     onClick={() => {
-                      const buttons = safeBlock.data.buttons || []
-                      onUpdate({ data: { ...block.data, buttons: buttons.filter((_: any, i: number) => i !== index) } })
+                      const buttons = [...heroButtons]
+                      const newButtons = buttons.filter((_: any, i: number) => i !== index)
+                      onUpdate({ data: { ...block.data, buttons: newButtons.length > 0 ? newButtons : defaultButtons } })
                     }}
                     className="mt-2 w-full px-3 py-1.5 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
                     title="Supprimer ce bouton"
@@ -5179,8 +6199,8 @@ function BlockRenderer({
               ))}
               <button
                 onClick={() => {
-                  const buttons = safeBlock.data.buttons || []
-                  onUpdate({ data: { ...block.data, buttons: [...(buttons || []), { text: '', url: '', style: 'primary' }] } })
+                  const buttons = [...heroButtons]
+                  onUpdate({ data: { ...block.data, buttons: [...buttons, { text: '', url: '', style: 'primary' }] } })
                 }}
                 className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
               >
@@ -5507,165 +6527,8 @@ function BlockRenderer({
         </div>
       )
     case 'cta-section':
-      return (
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Titre
-            </label>
-            <input
-              type="text"
-              value={safeBlock.data.title || ''}
-              onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
-              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              placeholder="Prêt à démarrer ?"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
-            </label>
-            <textarea
-              value={safeBlock.data.description || ''}
-              onChange={(e) => onUpdate({ data: { ...safeBlock.data, description: e.target.value } })}
-              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              rows={3}
-              placeholder="Créez votre site VTC professionnel dès aujourd'hui..."
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Texte du bouton
-            </label>
-            <input
-              type="text"
-              value={safeBlock.data.button_text || ''}
-              onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_text: e.target.value } })}
-              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              placeholder="🚀 Créer mon compte gratuitement"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              URL du bouton
-            </label>
-            <UrlInputWithSuggestions
-              value={safeBlock.data.button_url || ''}
-              onChange={(url) => onUpdate({ data: { ...safeBlock.data, button_url: url } })}
-              placeholder="/register"
-              className="text-xs"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Style du bouton
-            </label>
-            <select
-              value={safeBlock.data.button_style || 'light'}
-              onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_style: e.target.value } })}
-              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-            >
-              <option value="light">Clair (blanc sur fond coloré)</option>
-              <option value="dark">Sombre (gris foncé)</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Type d'arrière-plan
-            </label>
-            <select
-              value={safeBlock.data.background_type || 'gradient'}
-              onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_type: e.target.value } })}
-              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 mb-2"
-            >
-              <option value="gradient">Dégradé de couleur</option>
-              <option value="image">Image</option>
-              <option value="solid">Couleur unie</option>
-            </select>
-          </div>
-
-          {safeBlock.data.background_type === 'gradient' && (
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Dégradé de fond
-              </label>
-              <input
-                type="text"
-                value={safeBlock.data.background_gradient || 'linear-gradient(to right, #2563eb, #9333ea)'}
-                onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_gradient: e.target.value } })}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono"
-                placeholder="linear-gradient(to right, #2563eb, #9333ea)"
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Exemples: linear-gradient(to right, #2563eb, #9333ea) ou radial-gradient(circle, #2563eb, #9333ea)
-              </p>
-            </div>
-          )}
-
-          {safeBlock.data.background_type === 'image' && (
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Image de fond
-              </label>
-              <ImageSelector
-                value={safeBlock.data.background_image || ''}
-                onChange={(imageUrl) => onUpdate({ data: { ...safeBlock.data, background_image: imageUrl } })}
-                className="text-sm"
-                projectId={1} // Projet système pour les pages publiques
-              />
-              <div className="mt-2">
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Opacité de l'image (0-1)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={safeBlock.data.background_image_opacity || 1}
-                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_image_opacity: parseFloat(e.target.value) || 1 } })}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
-                />
-              </div>
-              <div className="mt-2">
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Dégradé par-dessus l'image (optionnel)
-                </label>
-                <input
-                  type="text"
-                  value={safeBlock.data.background_overlay || ''}
-                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_overlay: e.target.value } })}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-mono"
-                  placeholder="linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7))"
-                />
-              </div>
-            </div>
-          )}
-
-          {safeBlock.data.background_type === 'solid' && (
-            <div>
-              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Couleur de fond
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={safeBlock.data.background_color || '#2563eb'}
-                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_color: e.target.value } })}
-                  className="h-8 w-16 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={safeBlock.data.background_color || '#2563eb'}
-                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_color: e.target.value } })}
-                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-mono"
-                  placeholder="#2563eb"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )
+    case 'cta_section':
+      return renderCTASectionEditor(block, onUpdate)
     case 'header':
       const headerLinks = safeBlock.data.links || []
       return (
@@ -8907,6 +9770,35 @@ export function BlockPropertiesPanel({
     return <div className="text-sm text-gray-500 dark:text-gray-400">Type de bloc non trouvé</div>
   }
 
+  // Liste des blocs qui ont une configuration spéciale dans BlockRenderer
+  const blocksWithSpecialConfig = [
+    'features-grid',
+    'features_grid',
+    'pricing_cards',
+    'pricing-cards',
+    'hero',
+    'cta-section',
+    'cta_section',
+    'container',
+    'flex-container',
+    'grid-container',
+    'carousel',
+    'section',
+    'rows',
+    'flexbox',
+    'grid',
+    'stack',
+    'inline',
+    'group',
+    'wrapper',
+  ]
+
+  // Si le bloc a une configuration spéciale, utiliser BlockRenderer
+  if (blocksWithSpecialConfig.includes(block.type)) {
+    return <BlockRenderer block={block} blockType={blockType} onUpdate={onUpdate} />
+  }
+
+  // Sinon, utiliser le schema générique
   return (
     <div className="space-y-4">
       <div>

@@ -16,6 +16,7 @@ export interface Tenant {
   secondary_color: string;
   created_at: string;
   deleted_at?: string | null;
+  schema_name?: string; // Nom du schéma PostgreSQL pour les tenants
 }
 
 class TenantService {

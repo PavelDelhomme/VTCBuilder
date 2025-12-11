@@ -4,21 +4,325 @@ Views for Project management
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework.views import APIView
 from django.db.models import Q
 from django.utils import timezone
 from .models import Project, ProjectPage
 from .serializers import ProjectSerializer, ProjectDetailSerializer, ProjectPageSerializer
-from api.utils import add_cors_headers
+from api.utils import add_cors_headers, is_super_admin_from_token
+from api.mixins import CORSMixin
 
 
-class ProjectViewSet(viewsets.ModelViewSet):
+class IsAuthenticatedOrOptions(BasePermission):
+    """
+    Permission class that allows OPTIONS requests without authentication
+    but requires authentication for all other methods.
+    """
+    def has_permission(self, request, view):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Log pour debug - AVANT toute vérification
+        action_name = getattr(view, 'action', None)
+        logger.info(
+            f"IsAuthenticatedOrOptions.has_permission called: method={request.method}, "
+            f"path={request.path}, action={action_name}, "
+            f"view_class={view.__class__.__name__ if view else 'None'}"
+        )
+        
+        # Allow OPTIONS requests without authentication (for CORS preflight)
+        if request.method == 'OPTIONS':
+            logger.info(f"IsAuthenticatedOrOptions: Allowing OPTIONS request for {request.path}")
+            return True
+        
+        # For all other methods, require authentication
+        user = request.user
+        is_authenticated = user and user.is_authenticated
+        
+        # Log détaillé pour debug
+        if not is_authenticated:
+            logger.warning(
+                f"IsAuthenticatedOrOptions: Permission denied for {request.method} {request.path}. "
+                f"User: {user}, is_authenticated: {is_authenticated}, "
+                f"action={action_name}"
+            )
+        else:
+            logger.info(
+                f"IsAuthenticatedOrOptions: Permission granted for {request.method} {request.path}. "
+                f"User: {user.email if hasattr(user, 'email') else 'unknown'} (ID: {user.id if hasattr(user, 'id') else 'unknown'}), "
+                f"action={action_name}"
+            )
+        
+        return is_authenticated
+
+
+class PageProjectsView(APIView):
+    """
+    Vue APIView séparée pour l'endpoint page-projects
+    Permet un meilleur contrôle des permissions et contourne les problèmes de routing DRF
+    """
+    permission_classes = [IsAuthenticatedOrOptions]
+    
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to add logging"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(
+            f"PageProjectsView.dispatch: {request.method} {request.path}. "
+            f"User: {request.user.email if request.user and hasattr(request.user, 'email') else 'anonymous'}, "
+            f"is_authenticated: {request.user.is_authenticated if request.user else False}"
+        )
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get(self, request):
+        """Get all projects where a page is linked"""
+        import logging
+        import urllib.parse
+        logger = logging.getLogger(__name__)
+        
+        # Vérifier l'authentification depuis le token JWT uniquement
+        from api.utils import get_authenticated_user_from_token
+        user, auth_error = get_authenticated_user_from_token(request)
+        
+        if not user or auth_error:
+            logger.warning(
+                f"Unauthorized access to page_projects from {request.META.get('REMOTE_ADDR', 'unknown')}. "
+                f"Error: {auth_error}, "
+                f"auth_header={'present' if 'Authorization' in request.headers else 'missing'}"
+            )
+            response = Response(
+                {'error': 'Authentication required'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        # Vérifier le statut super admin depuis le token JWT uniquement
+        is_super_admin = is_super_admin_from_token(request)
+        is_superuser = hasattr(user, 'is_superuser') and user.is_superuser
+        
+        user_email = user.email if hasattr(user, 'email') else 'no-email'
+        user_id = user.id if hasattr(user, 'id') else 'no-id'
+        
+        logger.info(
+            f"PageProjectsView.get called: user={user_email} (ID: {user_id}), "
+            f"is_superuser={is_superuser}, "
+            f"is_super_admin={is_super_admin} (verified from JWT token), "
+            f"path={request.path}"
+        )
+        
+        try:
+            # Get page_slug from query params (supports slashes like "legal/terms")
+            page_slug = request.query_params.get('page_slug')
+            page_type = request.query_params.get('page_type', 'public')
+            
+            if not page_slug:
+                response = Response(
+                    {'error': 'page_slug query parameter is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                add_cors_headers(response, request)
+                return response
+            
+            # Decode the page_slug if it's URL encoded
+            page_slug = urllib.parse.unquote(page_slug)
+            
+            # Vérifier les permissions selon le type de page
+            # Les pages publiques sont accessibles UNIQUEMENT par les super admins
+            # Vérification sécurisée depuis le token JWT uniquement
+            if page_type == 'public':
+                if not is_super_admin:
+                    logger.warning(
+                        f"Forbidden: Non-super-admin user {user_email} (ID: {user_id}) attempted to access public page '{page_slug}'"
+                    )
+                    response = Response(
+                        {'error': 'Seuls les super administrateurs peuvent accéder aux pages publiques'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                    add_cors_headers(response, request)
+                    return response
+                logger.info(
+                    f"Super admin {user_email} accessing public page '{page_slug}' (verified from JWT token)"
+                )
+            
+            # Pour les pages tenant, vérifier que l'utilisateur appartient au tenant
+            elif page_type == 'tenant':
+                user_tenant = getattr(user, 'tenant', None)
+                if not user_tenant:
+                    logger.warning(
+                        f"Forbidden: User {user_email} (ID: {user_id}) has no tenant but attempted to access tenant page '{page_slug}'"
+                    )
+                    response = Response(
+                        {'error': 'Vous devez appartenir à un tenant pour accéder aux pages tenant'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                    add_cors_headers(response, request)
+                    return response
+                logger.info(
+                    f"Tenant user {user_email} (tenant: {user_tenant.name}) accessing tenant page '{page_slug}'"
+                )
+            
+            # Get all projects where this page is linked
+            project_pages = ProjectPage.objects.filter(
+                page_slug=page_slug,
+                page_type=page_type
+            ).select_related('project')
+            
+            # Pour les pages tenant, filtrer uniquement les projets du tenant de l'utilisateur
+            if page_type == 'tenant':
+                user_tenant = getattr(request.user, 'tenant', None)
+                if user_tenant:
+                    project_pages = project_pages.filter(project__tenant=user_tenant)
+                else:
+                    # Si l'utilisateur n'a pas de tenant, retourner une liste vide
+                    project_pages = ProjectPage.objects.none()
+            
+            projects = [
+                {
+                    'id': pp.project.id,
+                    'name': pp.project.name,
+                    'slug': pp.project.slug,
+                }
+                for pp in project_pages
+            ]
+            
+            response = Response({
+                'page_slug': page_slug,
+                'page_type': page_type,
+                'projects': projects,
+                'count': len(projects)
+            }, status=status.HTTP_200_OK)
+            add_cors_headers(response, request)
+            return response
+        except Exception as e:
+            logger.error(f"Error in PageProjectsView.get: {e}", exc_info=True)
+            response = Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            add_cors_headers(response, request)
+            return response
+    
+    def options(self, request):
+        """Handle OPTIONS request for CORS preflight"""
+        response = Response({}, status=status.HTTP_200_OK)
+        add_cors_headers(response, request)
+        return response
+
+
+class ProjectViewSet(CORSMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing projects
     """
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrOptions]  # Allow OPTIONS without auth
+    
+    def get_permissions(self):
+        """
+        Override to ensure permissions are correctly applied for custom actions
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Get the action name if available
+        action = getattr(self, 'action', None)
+        
+        # Check if this is a page-projects request by examining the path
+        if not action and hasattr(self, 'request'):
+            request_path = getattr(self.request, 'path', '')
+            if '/page-projects' in request_path or request_path.endswith('/page-projects/'):
+                action = 'page_projects'
+                self.action = 'page_projects'
+                logger.info(f"ProjectViewSet.get_permissions: Detected page_projects action from path {request_path}")
+        
+        if action == 'page_projects':
+            logger.info(f"ProjectViewSet.get_permissions: Using IsAuthenticatedOrOptions for action 'page_projects'")
+            return [IsAuthenticatedOrOptions()]
+        
+        # For other actions, use default permissions
+        return super().get_permissions()
+    
+    def dispatch(self, request, *args, **kwargs):
+        """Handle OPTIONS requests for CORS preflight before authentication check"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Log TOUTES les requêtes vers page-projects AVANT toute autre chose
+        if request.path.endswith('/page-projects/') or '/page-projects' in request.path:
+            logger.info(
+                f"ProjectViewSet.dispatch: INTERCEPTING {request.method} {request.path}. "
+                f"User: {request.user.email if request.user and hasattr(request.user, 'email') else 'anonymous'}, "
+                f"is_authenticated: {request.user.is_authenticated if request.user else False}, "
+                f"args={args}, kwargs={kwargs}"
+            )
+        
+        # Handle OPTIONS requests for CORS preflight
+        if request.method == 'OPTIONS':
+            logger.info(f"ProjectViewSet.dispatch: Handling OPTIONS request for {request.path}")
+            response = Response({}, status=status.HTTP_200_OK)
+            add_cors_headers(response, request)
+            return response
+        
+        logger.info(
+            f"ProjectViewSet.dispatch: Calling super().dispatch for {request.method} {request.path}"
+        )
+        return super().dispatch(request, *args, **kwargs)
+    
+    def initial(self, request, *args, **kwargs):
+        """
+        Override initial to handle permissions for page_projects action before DRF checks
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Check if this is a page-projects request
+        if request.path.endswith('/page-projects/') or '/page-projects' in request.path:
+            logger.info(
+                f"ProjectViewSet.initial: Handling {request.method} {request.path}. "
+                f"User: {request.user.email if request.user and hasattr(request.user, 'email') else 'anonymous'}, "
+                f"is_authenticated: {request.user.is_authenticated if request.user else False}"
+            )
+            
+            # For OPTIONS, allow without authentication (handled in dispatch, but just in case)
+            if request.method == 'OPTIONS':
+                logger.info(f"ProjectViewSet.initial: Allowing OPTIONS for {request.path}")
+                # Set action manually for OPTIONS
+                self.action = 'page_projects'
+                return super().initial(request, *args, **kwargs)
+            
+            # Manually set action for page_projects so get_permissions can use it
+            # IMPORTANT: Set this BEFORE calling super().initial() so permissions check uses it
+            self.action = 'page_projects'
+            logger.info(f"ProjectViewSet.initial: Set action to 'page_projects' for {request.path}")
+        
+        # Call parent initial which will check permissions
+        return super().initial(request, *args, **kwargs)
+    
+    def check_permissions(self, request):
+        """
+        Override check_permissions to handle page_projects action correctly
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Check if this is a page-projects request
+        if request.path.endswith('/page-projects/') or '/page-projects' in request.path:
+            logger.info(
+                f"ProjectViewSet.check_permissions: Checking permissions for {request.method} {request.path}. "
+                f"User: {request.user.email if request.user and hasattr(request.user, 'email') else 'anonymous'}, "
+                f"is_authenticated: {request.user.is_authenticated if request.user else False}, "
+                f"action: {getattr(self, 'action', None)}"
+            )
+            
+            # Manually set action if not already set
+            if not hasattr(self, 'action') or self.action is None:
+                self.action = 'page_projects'
+                logger.info(f"ProjectViewSet.check_permissions: Set action to 'page_projects'")
+        
+        # Call parent check_permissions which will use get_permissions
+        return super().check_permissions(request)
     
     def get_queryset(self):
         """Filter projects based on user"""
@@ -38,12 +342,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         base_queryset = base_queryset.prefetch_related('pages')
         
         # Super admin sees all projects
-        # Vérifier d'abord is_super_admin (méthode personnalisée)
-        if hasattr(user, 'is_super_admin') and callable(user.is_super_admin) and user.is_super_admin():
-            return base_queryset
-        
-        # Vérifier aussi is_superuser (attribut Django standard)
-        if hasattr(user, 'is_superuser') and user.is_superuser:
+        # Vérification sécurisée depuis le token JWT uniquement
+        if is_super_admin_from_token(self.request):
             return base_queryset
         
         # Tenant admin sees only their tenant's projects
@@ -219,17 +519,124 @@ class ProjectViewSet(viewsets.ModelViewSet):
             add_cors_headers(response, request)
             return response
     
-    @action(detail=False, methods=['get'], url_path='page-projects/(?P<page_slug>[^/]+)')
-    def page_projects(self, request, page_slug=None):
+    @action(detail=False, methods=['get', 'options'], url_path='page-projects', permission_classes=[IsAuthenticatedOrOptions])
+    def page_projects(self, request):
         """Get all projects where a page is linked"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Handle OPTIONS request for CORS preflight FIRST
+        if request.method == 'OPTIONS':
+            response = Response({}, status=status.HTTP_200_OK)
+            add_cors_headers(response, request)
+            return response
+        
+        # Log détaillé pour debug AVANT la vérification d'authentification
+        user_email = 'anonymous'
+        user_id = 'unknown'
+        is_authenticated = False
+        is_superuser = False
+        is_super_admin = False
+        
+        # Vérifier l'authentification depuis le token JWT uniquement
+        from api.utils import get_authenticated_user_from_token
+        user, auth_error = get_authenticated_user_from_token(request)
+        
+        if not user or auth_error:
+            logger.warning(
+                f"Unauthorized access to page_projects from {request.META.get('REMOTE_ADDR', 'unknown')}. "
+                f"Error: {auth_error}, "
+                f"auth_header={'present' if 'Authorization' in request.headers else 'missing'}"
+            )
+            response = Response(
+                {'error': 'Authentication required'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        # Vérifier le statut super admin depuis le token JWT uniquement
+        is_super_admin = is_super_admin_from_token(request)
+        is_superuser = hasattr(user, 'is_superuser') and user.is_superuser
+        
+        user_email = user.email if hasattr(user, 'email') else 'no-email'
+        user_id = user.id if hasattr(user, 'id') else 'no-id'
+        
+        logger.info(
+            f"page_projects called: method={request.method}, "
+            f"user={user_email} (ID: {user_id}), "
+            f"is_superuser={is_superuser}, "
+            f"is_super_admin={is_super_admin} (verified from JWT token), "
+            f"path={request.path}"
+        )
+        
         try:
+            # Get page_slug from query params (supports slashes like "legal/terms")
+            page_slug = request.query_params.get('page_slug')
             page_type = request.query_params.get('page_type', 'public')
+            
+            if not page_slug:
+                response = Response(
+                    {'error': 'page_slug query parameter is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                add_cors_headers(response, request)
+                return response
+            
+            # Decode the page_slug if it's URL encoded
+            import urllib.parse
+            page_slug = urllib.parse.unquote(page_slug)
+            
+            # Vérifier les permissions selon le type de page
+            # Les pages publiques sont accessibles UNIQUEMENT par les super admins
+            # Vérification sécurisée depuis le token JWT uniquement
+            if page_type == 'public':
+                if not is_super_admin:
+                    logger.warning(
+                        f"Forbidden: Non-super-admin user {user_email} (ID: {user_id}) attempted to access public page '{page_slug}'"
+                    )
+                    response = Response(
+                        {'error': 'Seuls les super administrateurs peuvent accéder aux pages publiques'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                    add_cors_headers(response, request)
+                    return response
+                logger.info(
+                    f"Super admin {user_email} accessing public page '{page_slug}' (verified from JWT token)"
+                )
+            
+            # Pour les pages tenant, vérifier que l'utilisateur appartient au tenant
+            # (Cette vérification sera faite lors du filtrage des projets)
+            elif page_type == 'tenant':
+                user_tenant = getattr(user, 'tenant', None)
+                if not user_tenant:
+                    logger.warning(
+                        f"Forbidden: User {user_email} (ID: {user_id}) has no tenant but attempted to access tenant page '{page_slug}'"
+                    )
+                    response = Response(
+                        {'error': 'Vous devez appartenir à un tenant pour accéder aux pages tenant'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                    add_cors_headers(response, request)
+                    return response
+                logger.info(
+                    f"Tenant user {user_email} (tenant: {user_tenant.name}) accessing tenant page '{page_slug}'"
+                )
             
             # Get all projects where this page is linked
             project_pages = ProjectPage.objects.filter(
                 page_slug=page_slug,
                 page_type=page_type
             ).select_related('project')
+            
+            # Pour les pages tenant, filtrer uniquement les projets du tenant de l'utilisateur
+            if page_type == 'tenant':
+                user_tenant = getattr(request.user, 'tenant', None)
+                if user_tenant:
+                    project_pages = project_pages.filter(project__tenant=user_tenant)
+                else:
+                    # Si l'utilisateur n'a pas de tenant, retourner une liste vide
+                    project_pages = ProjectPage.objects.none()
             
             projects = [
                 {
@@ -249,9 +656,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
             add_cors_headers(response, request)
             return response
         except Exception as e:
+            logger.error(f"Error in page_projects: {e}", exc_info=True)
             response = Response(
                 {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             add_cors_headers(response, request)
             return response

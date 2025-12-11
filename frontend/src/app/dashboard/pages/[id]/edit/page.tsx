@@ -82,6 +82,21 @@ export default function EditPage() {
     }
   }
 
+  const handleDelete = async () => {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer la page "${title}" ? Cette action est irréversible.`)) {
+      return
+    }
+
+    try {
+      await pageService.delete(pageId!)
+      toast.success('Page supprimée !')
+      router.push('/dashboard/pages')
+    } catch (error: any) {
+      console.error('Erreur suppression:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
+    }
+  }
+
   if (loading) {
     return (
       <TenantLayout title="Éditer la page">
@@ -138,6 +153,12 @@ export default function EditPage() {
               Publier
             </button>
           )}
+          <button
+            onClick={handleDelete}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Supprimer
+          </button>
         </div>
       }
     >

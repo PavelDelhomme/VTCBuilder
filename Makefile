@@ -1,11 +1,10 @@
-.PHONY: help install setup start stop restart build logs clean migrate migrations migrate-fresh superuser shell dbshell collectstatic test lint format logs-backend logs-db logs-redis npm-install npm-build npm-dev npm bash-backend bash-frontend db-cli test-billing test-subscriptions test-payments test-invoices test-pricing-plans test-trial-status test-trial-create test-trial-activate test-trial-expire test-trial-advance
+.PHONY: help install setup start stop restart build logs clean migrate migrate-app migrations migrations-app migrate-merge migrate-show migrate-fake migrate-fresh superuser shell dbshell collectstatic test lint format logs-backend logs-db logs-redis npm-install npm-build npm-dev npm bash-backend bash-frontend db-cli test-billing test-subscriptions test-payments test-invoices test-pricing-plans test-trial-status test-trial-create test-trial-activate test-trial-expire test-trial-advance
 
 # Variables
 DOCKER_COMPOSE = docker-compose
 BACKEND_CONTAINER = vtcbuilder-backend
 FRONTEND_CONTAINER = vtcbuilder-frontend
-MYSQL_CONTAINER = vtcbuilder-mysql
-NGINX_CONTAINER = vtcbuilder-nginx
+POSTGRES_CONTAINER = vtcbuilder-postgres
 
 # Couleurs pour l'affichage
 BLUE = \033[0;34m
@@ -127,50 +126,41 @@ quick-start: setup-backend-django start ## Configuration complète + démarrage 
 
 ##@ Gestion des Containers
 
-start: ## Démarrer tous les services
-	@printf "$(GREEN)🚀 Démarrage des services Django...$(NC)\n"
-	@cd backend-django && $(MAKE) start
+start: ## Démarrer tous les services (Django + Frontend)
+	@printf "$(GREEN)🚀 Démarrage de tous les services (Django + Frontend)...$(NC)\n"
+	@./start.sh
 	@printf "$(GREEN)✅ Services démarrés !$(NC)\n"
-	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
-	@printf "$(GREEN)📍 URLs d'accès :$(NC)\n"
-	@echo "   Frontend:     http://localhost:9494"
-	@echo "   API Django:   http://localhost:9495/api/"
-	@echo "   Admin Django: http://localhost:9495/admin/"
-	@echo "   PgAdmin:      http://localhost:9498"
-	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
-	@printf "$(GREEN)💡 Utilisez 'make logs' pour voir les logs$(NC)\n"
-	@printf "$(GREEN)💡 Utilisez 'make status' pour vérifier le statut$(NC)\n"
 
-up: ## Démarrer tous les services
-	@printf "$(GREEN)🚀 Démarrage des services Django...$(NC)\n"
-	@cd backend-django && $(MAKE) start
-	@printf "$(GREEN)✅ Services démarrés !$(NC)\n"
+up: start ## Démarrer tous les services (alias de start)
 
 
 stop: ## Arrêter tous les services
 	@printf "$(YELLOW)⏸️  Arrêt des services...$(NC)\n"
-	@cd backend-django && $(MAKE) stop
+	@$(DOCKER_COMPOSE) stop
 	@printf "$(GREEN)✅ Services arrêtés !$(NC)\n"
 
 restart: ## Redémarrer tous les services
-	@printf "$(YELLOW)🔄 Redémarrage des services...$(NC)\n"
-	@cd backend-django && $(MAKE) restart
-	@printf "$(GREEN)✅ Services redémarrés !$(NC)\n"
+	@printf "$(YELLOW)🔄 Redémarrage de tous les services (Django + Frontend)...$(NC)\n"
+	@$(DOCKER_COMPOSE) restart postgres redis backend frontend pgadmin 2>/dev/null || true
+	@$(DOCKER_COMPOSE) up -d postgres redis backend frontend pgadmin
+	@printf "$(GREEN)✅ Services redémarrés et démarrés !$(NC)\n"
+	@printf "$(BLUE)💡 Si le frontend ne démarre pas, vérifiez les logs avec: make logs-frontend$(NC)\n"
 
 down: ## Arrêter et supprimer tous les containers
-	@printf "$(RED)🗑️  Suppression des containers...$(NC)\n"
-	@cd backend-django && $(MAKE) down
+	@printf "$(RED)🗑️  Arrêt et suppression des containers...$(NC)\n"
+	@$(DOCKER_COMPOSE) down
 	@printf "$(GREEN)✅ Containers supprimés !$(NC)\n"
 
-build: ## Reconstruire les images Docker
-	@printf "$(GREEN)🔨 Reconstruction des images...$(NC)\n"
-	@cd backend-django && $(MAKE) build
+build: ## Reconstruire les images Docker (Backend + Frontend)
+	@printf "$(GREEN)🔨 Reconstruction des images (Backend + Frontend)...$(NC)\n"
+	@$(DOCKER_COMPOSE) build backend frontend
 	@printf "$(GREEN)✅ Images reconstruites !$(NC)\n"
 
 rebuild: ## Tout reconstruire et redémarrer
-	@printf "$(GREEN)🔄 Reconstruction complète...$(NC)\n"
-	@cd backend-django && $(MAKE) rebuild
-	@printf "$(GREEN)✅ Reconstruction terminée !$(NC)\n"
+	@printf "$(GREEN)🔄 Reconstruction complète (Backend + Frontend)...$(NC)\n"
+	@$(DOCKER_COMPOSE) build --no-cache backend frontend
+	@$(DOCKER_COMPOSE) up -d
+	@printf "$(GREEN)✅ Reconstruction terminée et services redémarrés !$(NC)\n"
 
 status: ## Afficher le statut des services VTCBuilder
 	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
@@ -189,11 +179,26 @@ status: ## Afficher le statut des services VTCBuilder
 ##@ Backend Django (backend-django/)
 
 # Rediriger les commandes vers le Makefile Django
-migrate: ## Exécuter les migrations Django
+migrate: ## Exécuter toutes les migrations Django
 	@cd backend-django && $(MAKE) migrate
 
-migrations: ## Créer de nouvelles migrations
+migrate-app: ## Exécuter les migrations pour une app spécifique (usage: make migrate-app APP=media)
+	@cd backend-django && $(MAKE) migrate-app APP=$(APP)
+
+migrations: ## Créer de nouvelles migrations pour toutes les apps
 	@cd backend-django && $(MAKE) migrations
+
+migrations-app: ## Créer de nouvelles migrations pour une app spécifique (usage: make migrations-app APP=media)
+	@cd backend-django && $(MAKE) migrations-app APP=$(APP)
+
+migrate-merge: ## Créer une migration de merge pour résoudre les conflits (usage: make migrate-merge APP=media)
+	@cd backend-django && $(MAKE) migrate-merge APP=$(APP)
+
+migrate-show: ## Afficher l'état des migrations
+	@cd backend-django && $(MAKE) migrate-show
+
+migrate-fake: ## Fake une migration spécifique (usage: make migrate-fake APP=media MIGRATION=0001_initial)
+	@cd backend-django && $(MAKE) migrate-fake APP=$(APP) MIGRATION=$(MIGRATION)
 
 migrate-fresh: ## Reset et re-exécuter les migrations
 	@cd backend-django && $(MAKE) migrate-fresh
@@ -314,22 +319,23 @@ format: ## Formatage du code avec black
 demo-tenant: ## Créer un tenant de démonstration
 	@cd backend-django && $(MAKE) demo-tenant
 
-logs: logs-backend ## Voir tous les logs (alias pour logs-backend)
+logs: ## Voir tous les logs (tous les services)
+	@$(DOCKER_COMPOSE) logs -f
 
 logs-backend: ## Logs du backend Django
-	@cd backend-django && $(MAKE) logs
+	@$(DOCKER_COMPOSE) logs -f backend
+
+logs-frontend: ## Logs du frontend Next.js
+	@$(DOCKER_COMPOSE) logs -f frontend
 
 logs-db: ## Logs PostgreSQL
-	@cd backend-django && $(MAKE) logs-db
+	@$(DOCKER_COMPOSE) logs -f postgres
 
 logs-redis: ## Logs Redis
-	@cd backend-django && $(MAKE) logs-redis
-
-logs-frontend: ## Logs Frontend
-	@cd backend-django && $(MAKE) logs-frontend
+	@$(DOCKER_COMPOSE) logs -f redis
 
 logs-pgadmin: ## Logs PgAdmin
-	@cd backend-django && $(MAKE) logs-pgadmin
+	@$(DOCKER_COMPOSE) logs -f pgadmin
 
 ##@ Frontend (frontend/)
 
@@ -358,7 +364,7 @@ npm: ## Exécuter une commande npm
 
 bash-backend: ## Accéder au terminal du backend Django
 	@printf "$(BLUE)🔧 Accès au container backend Django...$(NC)\n"
-	@cd backend-django && $(MAKE) shell
+	@docker exec -it $(BACKEND_CONTAINER) /bin/bash || docker exec -it $(BACKEND_CONTAINER) /bin/sh
 
 bash-frontend: ## Accéder au terminal du frontend
 	@printf "$(BLUE)🔧 Accès au container frontend...$(NC)\n"

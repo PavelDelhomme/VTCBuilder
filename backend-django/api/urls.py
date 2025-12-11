@@ -2,6 +2,7 @@
 API URL Configuration
 """
 from django.urls import path, include
+from django.http import HttpResponseRedirect
 from rest_framework.routers import DefaultRouter
 
 # Import views
@@ -34,7 +35,7 @@ from billing.views import (
 from settings_app.views import system_settings_view, system_settings_test_email_view, system_settings_test_stripe_view
 from billing.webhooks import stripe_webhook
 try:
-    from projects.views import ProjectViewSet
+    from projects.views import ProjectViewSet, IsAuthenticatedOrOptions, PageProjectsView
     PROJECTS_AVAILABLE = True
 except (ImportError, RuntimeError) as e:
     import logging
@@ -42,6 +43,8 @@ except (ImportError, RuntimeError) as e:
     logger.error(f"Failed to import ProjectViewSet: {e}", exc_info=True)
     PROJECTS_AVAILABLE = False
     ProjectViewSet = None
+    IsAuthenticatedOrOptions = None
+    PageProjectsView = None
 try:
     from security.views import (
         WAFRuleViewSet, WAFLogViewSet, SecurityAlertViewSet,
@@ -105,6 +108,32 @@ router.register(r'payment-methods', PaymentMethodViewSet, basename='payment-meth
 router.register(r'invoice-templates', InvoiceTemplateViewSet, basename='invoice-template')
 # System settings is handled as a singleton with a direct view function above
 
+# Compatibility function for old pricing-plans URL
+def billing_pricing_plans_compat(request):
+    """Compatibility view for /api/billing/pricing-plans/ - calls PricingPlanViewSet.list directly"""
+    from rest_framework.request import Request
+    from rest_framework.test import APIRequestFactory
+    
+    # Create a proper DRF request
+    factory = APIRequestFactory()
+    drf_request = Request(factory.get('/api/billing/pricing-plans/'))
+    drf_request.user = request.user if hasattr(request, 'user') else None
+    
+    # Create ViewSet instance and call list
+    viewset = PricingPlanViewSet()
+    viewset.request = drf_request
+    viewset.format_kwarg = None
+    viewset.action = 'list'
+    
+    # Call the list method
+    response = viewset.list(drf_request)
+    
+    # Add CORS headers
+    from billing.views import add_cors_headers
+    add_cors_headers(response, request)
+    
+    return response
+
 urlpatterns = [
     # IMPORTANT: Specific routes must come BEFORE the router to avoid conflicts
     
@@ -121,6 +150,10 @@ urlpatterns = [
     path('billing/stats', billing_stats, name='billing-stats'),
     path('billing/unpaid-items/', unpaid_items, name='billing-unpaid-items-slash'),
     path('billing/unpaid-items', unpaid_items, name='billing-unpaid-items'),
+    
+    # Compatibility route for old pricing-plans URL
+    path('billing/pricing-plans/', billing_pricing_plans_compat, name='billing-pricing-plans-slash'),
+    path('billing/pricing-plans', billing_pricing_plans_compat, name='billing-pricing-plans'),
     
     # System Settings - must come before router for singleton access
     path('system-settings/', system_settings_view, name='system-settings-slash'),
@@ -166,6 +199,12 @@ urlpatterns = [
     
     # Analytics app URLs
     *([path('analytics/', include('analytics.urls'))] if ANALYTICS_AVAILABLE else []),
+    
+    # Projects page-projects endpoint - using separate APIView for better control
+    *([
+        path('projects/page-projects/', PageProjectsView.as_view(), name='projects-page-projects-slash'),
+        path('projects/page-projects', PageProjectsView.as_view(), name='projects-page-projects'),
+    ] if PROJECTS_AVAILABLE and PageProjectsView else []),
 
     # Include router URLs LAST (order matters!)
     path('', include(router.urls)),

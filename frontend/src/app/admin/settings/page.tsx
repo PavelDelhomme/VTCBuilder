@@ -23,6 +23,7 @@ export default function SettingsPage() {
   useEffect(() => {
     // Vérifier l'authentification avant de charger
     if (!authService.isAuthenticated()) {
+      authService.saveRedirectUrl()
       router.push('/login')
       return
     }
@@ -50,7 +51,8 @@ export default function SettingsPage() {
         localStorage.removeItem('token')
         localStorage.removeItem('refresh_token')
         localStorage.removeItem('user')
-        router.push('/login')
+        authService.saveRedirectUrl()
+      router.push('/login')
         return
       }
       

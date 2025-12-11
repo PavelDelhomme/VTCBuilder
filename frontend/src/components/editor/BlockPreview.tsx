@@ -99,6 +99,13 @@ function BlockPreview({
     if (!onNavigate) return
 
     const handleLinkClick = (e: MouseEvent) => {
+      // Ne pas intercepter si les liens sont désactivés
+      if (!isInteractive) {
+        e.preventDefault()
+        e.stopPropagation()
+        return
+      }
+      
       // Ne pas intercepter en mode inspecteur
       if (inspectorMode) return
 
@@ -151,7 +158,7 @@ function BlockPreview({
               }
             }
             
-            onNavigate(`/admin/pages-public/${pageSlug}/edit`)
+            onNavigate(`/admin/pages-public/edit/${pageSlug}`)
           }
         } catch (err) {
           // Si l'URL n'est pas valide, laisser le comportement par défaut
@@ -163,11 +170,27 @@ function BlockPreview({
     const previewContainer = document.querySelector('.block-preview-container')
     if (previewContainer) {
       previewContainer.addEventListener('click', handleLinkClick, true) // Use capture phase
+      
+      // Désactiver les liens via CSS si isInteractive est false
+      if (!isInteractive) {
+        const links = previewContainer.querySelectorAll('a')
+        links.forEach(link => {
+          link.style.pointerEvents = 'none'
+          link.style.cursor = 'default'
+        })
+      } else {
+        const links = previewContainer.querySelectorAll('a')
+        links.forEach(link => {
+          link.style.pointerEvents = 'auto'
+          link.style.cursor = 'pointer'
+        })
+      }
+      
       return () => {
         previewContainer.removeEventListener('click', handleLinkClick, true)
       }
     }
-  }, [onNavigate, inspectorMode])
+  }, [onNavigate, inspectorMode, isInteractive])
 
   // Mode inspecteur : détecter les éléments survolés
   useEffect(() => {
@@ -478,7 +501,7 @@ function FAQSectionPreview({ title, items, wrapperStyles }: { title?: string; it
 function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; blockType?: BlockType; blockTypes?: BlockType[] }) {
   // Liste des blocs qui ont un rendu hardcodé et doivent toujours utiliser le switch case
   const blocksWithHardcodedRender = [
-    'hero', 'progress-bar', 'cta-section', 'features-grid', 'pricing', 
+    'hero', 'progress-bar', 'cta-section', 'features-grid', 'features_grid', 'pricing', 'pricing_cards', 
     'heading', 'text', 'paragraph', 'image', 'button', 'link', 'list',
     'quote', 'code', 'alert', 'divider', 'spacer', 'container', 'flex-container',
     'grid-container', 'columns', 'section', 'footer', 'header', 'contact-form',
@@ -1169,30 +1192,40 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       )
 
     case 'container':
+      // Container should render its children, not just show placeholder text
       return (
         <div 
           style={{
+            ...wrapperStyles,
             ...contentStyles,
-            minHeight: block.minHeight || '200px',
+            minHeight: block.minHeight || 'auto',
             height: block.height || 'auto',
             maxHeight: block.maxHeight || 'none',
+            width: '100%',
+            maxWidth: '100%',
           }} 
-          className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg"
+          className="w-full max-w-full"
         >
-          <div className="text-center text-gray-500 dark:text-gray-400">
-            <div className="text-2xl mb-2">📦</div>
-            <div className="text-sm font-semibold">Conteneur</div>
-            <div className="text-xs mt-1">Conteneur avec largeur maximale</div>
-            {block.children && block.children.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {block.children.map((child: any, idx: number) => (
-                  <div key={idx} className="p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
-                    Bloc enfant {idx + 1}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {block.children && block.children.length > 0 ? (
+            // Render children blocks recursively
+            <div className="space-y-0">
+              {block.children.map((childBlock: Block, idx: number) => (
+                <BlockPreviewRenderer
+                  key={childBlock.id || idx}
+                  block={childBlock}
+                  blockType={blockTypes?.find((bt: BlockType) => bt.name === childBlock.type)}
+                  blockTypes={blockTypes}
+                />
+              ))}
+            </div>
+          ) : (
+            // Empty container placeholder
+            <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center text-gray-500 dark:text-gray-400">
+              <div className="text-2xl mb-2">📦</div>
+              <div className="text-sm font-semibold">Conteneur vide</div>
+              <div className="text-xs mt-1">Ajoutez des blocs dans ce conteneur</div>
+            </div>
+          )}
         </div>
       )
     
@@ -1530,7 +1563,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
         useEffect(() => {
           if (block.data.source === 'dynamic' || block.data.source === 'api') {
             setLoading(true)
-            const apiUrl = block.data.api_endpoint || '/api/billing/pricing-plans/'
+            const apiUrl = block.data.api_endpoint || '/api/pricing-plans/'
             // Use absolute URL for API calls
             const fullUrl = apiUrl.startsWith('http') ? apiUrl : `${window.location.origin}${apiUrl}`
             fetch(fullUrl, {
@@ -1719,6 +1752,305 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
         )
       }
       return <PricingPreview />
+    }
+
+    case 'pricing_cards': {
+      // pricing_cards est un alias pour pricing avec show_plans: true par défaut
+      const pricingCardsBlock = {
+        ...block,
+        data: {
+          ...block.data,
+          source: block.data.source || 'dynamic',
+          show_plans: block.data.show_plans !== undefined ? block.data.show_plans : true,
+          show_title: block.data.show_title !== undefined ? block.data.show_title : true,
+        }
+      }
+      // Utiliser le même rendu que 'pricing' mais avec un style spécifique
+      const PricingCardsPreview = () => {
+        const [plans, setPlans] = useState<any[]>(pricingCardsBlock.data.plans || [])
+        const [loading, setLoading] = useState(false)
+        
+        useEffect(() => {
+          // Toujours charger les plans pour pricing_cards (show_plans est true par défaut)
+          // Charger si show_plans n'est pas explicitement false
+          const shouldLoad = pricingCardsBlock.data.show_plans !== false
+          if (shouldLoad) {
+            setLoading(true)
+            // Utiliser l'URL correcte de l'API
+            const apiUrl = pricingCardsBlock.data.api_endpoint || '/api/pricing-plans/'
+            // Construire l'URL complète en utilisant l'origine du backend
+            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9495'
+            const fullUrl = apiUrl.startsWith('http') ? apiUrl : `${backendUrl}${apiUrl}`
+            
+            fetch(fullUrl, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              credentials: 'include',
+            })
+              .then(async res => {
+                if (!res.ok) {
+                  // Pour les erreurs 401/403, ne pas bloquer - l'API peut être publique
+                  if (res.status === 401 || res.status === 403) {
+                    const text = await res.text()
+                    if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+                      // Essayer quand même de parser si c'est du JSON
+                      try {
+                        return await res.json()
+                      } catch {
+                        throw new Error('Authentification requise')
+                      }
+                    }
+                  }
+                  if (res.status === 404) {
+                    throw new Error('Endpoint non trouvé')
+                  }
+                  throw new Error(`HTTP error! status: ${res.status}`)
+                }
+                const contentType = res.headers.get('content-type') || ''
+                if (!contentType.includes('application/json')) {
+                  const text = await res.text()
+                  if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html')) {
+                    throw new Error('Réponse HTML reçue au lieu de JSON')
+                  }
+                  throw new Error(`Response is not JSON (Content-Type: ${contentType})`)
+                }
+                return res.json()
+              })
+              .then(data => {
+                // Gérer différents formats de réponse
+                let plansData: any[] = []
+                if (Array.isArray(data)) {
+                  plansData = data
+                } else if (data.results && Array.isArray(data.results)) {
+                  plansData = data.results
+                } else if (data.plans && Array.isArray(data.plans)) {
+                  plansData = data.plans
+                } else if (data.data && Array.isArray(data.data)) {
+                  plansData = data.data
+                }
+                
+                // Filtrer et trier les plans
+                let filteredPlans = plansData
+                  .filter((p: any) => p.is_active !== false) // Inclure si is_active n'est pas défini ou est true
+                  .sort((a: any, b: any) => {
+                    // Trier par order, puis par prix
+                    const orderA = a.order !== undefined ? a.order : 999
+                    const orderB = b.order !== undefined ? b.order : 999
+                    if (orderA !== orderB) return orderA - orderB
+                    const priceA = parseFloat(a.price_monthly || a.price || 0)
+                    const priceB = parseFloat(b.price_monthly || b.price || 0)
+                    return priceA - priceB
+                  })
+                
+                // Appliquer l'override du plan "featured" si défini
+                const featuredOverride = pricingCardsBlock.data.featured_plan_override
+                if (featuredOverride) {
+                  // Réinitialiser tous les plans à is_featured = false
+                  filteredPlans = filteredPlans.map((p: any) => ({ ...p, is_featured: false }))
+                  
+                  // Trouver le plan correspondant à l'override (par ID ou slug)
+                  const overridePlan = filteredPlans.find((p: any) => {
+                    const overrideValue = featuredOverride.toString().toLowerCase()
+                    const planId = p.id?.toString().toLowerCase()
+                    const planSlug = p.slug?.toLowerCase()
+                    return planId === overrideValue || planSlug === overrideValue
+                  })
+                  
+                  // Marquer le plan trouvé comme featured
+                  if (overridePlan) {
+                    filteredPlans = filteredPlans.map((p: any) => 
+                      p.id === overridePlan.id ? { ...p, is_featured: true } : p
+                    )
+                  }
+                }
+                
+                setPlans(filteredPlans)
+              })
+              .catch(err => {
+                console.error('Erreur chargement plans tarifaires:', err)
+                setPlans([])
+              })
+              .finally(() => setLoading(false))
+          }
+        }, [pricingCardsBlock.data.source, pricingCardsBlock.data.api_endpoint, pricingCardsBlock.data.show_plans, pricingCardsBlock.data.featured_plan_override])
+        
+        const formatPrice = (price: number) => {
+          return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price)
+        }
+        
+        return (
+          <div style={wrapperStyles} className="mb-6 bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 overflow-visible">
+            {pricingCardsBlock.data.show_title !== false && pricingCardsBlock.data.title && (
+              <div className="text-center mb-4">
+                <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-gray-100 mb-4">
+                  {pricingCardsBlock.data.title}
+                </h2>
+                {pricingCardsBlock.data.subtitle && (
+                  <p className="text-center text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
+                    {pricingCardsBlock.data.subtitle}
+                  </p>
+                )}
+              </div>
+            )}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              </div>
+            ) : plans.length > 0 ? (
+              <div className="max-w-7xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 w-full min-w-0 overflow-visible">
+                  {plans.map((plan: any, index: number) => {
+                    // Gérer les prix qui peuvent être des strings (Decimal en Python) ou des nombres
+                    const priceMonthly = typeof plan.price_monthly === 'string' 
+                      ? parseFloat(plan.price_monthly.replace(',', '.')) 
+                      : parseFloat(plan.price_monthly || plan.price || 0)
+                    const priceYearly = plan.price_yearly 
+                      ? (typeof plan.price_yearly === 'string' 
+                          ? parseFloat(plan.price_yearly.replace(',', '.')) 
+                          : parseFloat(plan.price_yearly))
+                      : null
+                    
+                    const buttonStyle = plan.button_style || (plan.is_featured ? 'primary' : 'secondary')
+                    const buttonStylesMap: Record<string, string> = {
+                      primary: 'bg-blue-600 text-white hover:bg-blue-700',
+                      secondary: 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600',
+                      outline: 'bg-transparent border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900'
+                    }
+                    const buttonClasses = buttonStylesMap[buttonStyle] || buttonStylesMap.primary
+                    
+                    const buttonUrl = plan.button_url || `/register?plan=${plan.slug || plan.id || index}`
+                    const buttonText = plan.button_text || `Choisir ${plan.name || 'ce plan'}`
+                    
+                    return (
+                      <div
+                        key={plan.id || index}
+                        className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg relative min-w-0 overflow-visible flex flex-col ${
+                          plan.is_featured 
+                            ? 'ring-4 ring-blue-500 scale-105 sm:scale-110 z-10 shadow-2xl p-6 sm:p-8 lg:p-10' 
+                            : 'p-4 sm:p-6 lg:p-8 shadow-md hover:shadow-lg transition-shadow'
+                        } ${(plan.badge || plan.is_featured) ? 'pt-10 sm:pt-12 lg:pt-14' : ''} min-h-[500px] sm:min-h-[550px]`}
+                      >
+                        {(plan.badge || plan.is_featured) && (
+                          <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
+                            <span className={`text-white px-5 py-2 rounded-full text-sm sm:text-base font-bold shadow-xl ${
+                              plan.is_featured ? 'bg-blue-600' : 'bg-blue-500'
+                            }`}>
+                              {plan.badge || 'POPULAIRE'}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div className="flex-grow flex flex-col">
+                          <h3 className={`font-bold text-gray-900 dark:text-gray-100 mb-2 ${
+                            plan.is_featured ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'
+                          }`}>
+                            {plan.name || `Plan ${index + 1}`}
+                          </h3>
+                          
+                          {plan.description && (
+                            <p className={`text-gray-600 dark:text-gray-400 mb-6 ${
+                              plan.is_featured ? 'text-base sm:text-lg' : 'text-sm sm:text-base'
+                            }`}>
+                              {plan.description}
+                            </p>
+                          )}
+                        
+                        <div className={`mb-6 ${plan.is_featured ? 'mb-8' : ''}`}>
+                          {priceMonthly > 0 ? (
+                            <>
+                              <span className={`font-extrabold text-gray-900 dark:text-gray-100 ${
+                                plan.is_featured ? 'text-5xl sm:text-6xl' : 'text-4xl sm:text-5xl'
+                              }`}>
+                                {formatPrice(priceMonthly)}
+                              </span>
+                              <span className={`text-gray-600 dark:text-gray-400 ${
+                                plan.is_featured ? 'text-lg' : 'text-base'
+                              }`}>/mois</span>
+                              {priceYearly && priceYearly > 0 && (
+                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                  ou {formatPrice(priceYearly)}/an 
+                                  {priceMonthly > 0 && priceYearly < (priceMonthly * 12) && (
+                                    <span className="ml-1 text-green-600 dark:text-green-400 font-semibold">
+                                      (économisez {Math.round((1 - (priceYearly / (priceMonthly * 12))) * 100)}%)
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                              Gratuit
+                            </span>
+                          )}
+                        </div>
+                        
+                        <ul className={`space-y-3 mb-8 flex-grow ${plan.is_featured ? 'space-y-4' : ''}`}>
+                          {/* Afficher les features du plan si disponibles */}
+                          {plan.features && Array.isArray(plan.features) && plan.features.length > 0 ? (
+                            plan.features.map((feature: string, i: number) => (
+                              feature && (
+                                <li key={i} className="flex items-start">
+                                  <span className="text-green-500 mr-2 mt-0.5 flex-shrink-0">✓</span>
+                                  <span className="text-gray-700 dark:text-gray-300 text-sm">{feature}</span>
+                                </li>
+                              )
+                            ))
+                          ) : (
+                            /* Fallback: afficher max_sites, max_users, max_storage_gb si pas de features */
+                            <>
+                              {plan.max_sites !== undefined && plan.max_sites !== null && (
+                                <li className="flex items-center">
+                                  <span className="text-green-500 mr-2">✓</span>
+                                  <span className="text-gray-700 dark:text-gray-300">{plan.max_sites} site{(plan.max_sites || 1) > 1 ? 's' : ''}</span>
+                                </li>
+                              )}
+                              {plan.max_users !== undefined && plan.max_users !== null && (
+                                <li className="flex items-center">
+                                  <span className="text-green-500 mr-2">✓</span>
+                                  <span className="text-gray-700 dark:text-gray-300">{plan.max_users} utilisateur{(plan.max_users || 1) > 1 ? 's' : ''} max</span>
+                                </li>
+                              )}
+                              {plan.max_storage_gb !== undefined && plan.max_storage_gb !== null && (
+                                <li className="flex items-center">
+                                  <span className="text-green-500 mr-2">✓</span>
+                                  <span className="text-gray-700 dark:text-gray-300">{plan.max_storage_gb} GB de stockage</span>
+                                </li>
+                              )}
+                            </>
+                          )}
+                        </ul>
+                        
+                        </div>
+                        
+                        {buttonText && buttonUrl && (
+                          <a
+                            href={buttonUrl}
+                            className={`block w-full text-center rounded-lg font-bold transition-all hover:scale-105 ${
+                              plan.is_featured 
+                                ? 'py-4 text-lg shadow-lg' 
+                                : 'py-3 text-base'
+                            } ${buttonClasses}`}
+                          >
+                            {buttonText}
+                          </a>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-400">
+                Aucun plan tarifaire disponible
+              </div>
+            )}
+          </div>
+        )
+      }
+      return <PricingCardsPreview />
     }
 
     case 'timeline':
@@ -2367,13 +2699,82 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       )
 
     case 'hero':
-      const heroBg = block.data.background_type === 'gradient' && block.data.background_gradient
-        ? `linear-gradient(to ${block.data.background_gradient.includes('to-') ? block.data.background_gradient.split('to-')[1] : 'right'}, ${block.data.background_gradient.includes('from-') ? block.data.background_gradient.split('from-')[1].split(' ')[0] : '#667eea'}, ${block.data.background_gradient.includes('via-') ? block.data.background_gradient.split('via-')[1].split(' ')[0] : '#764ba2'}, ${block.data.background_gradient.includes('to-') ? block.data.background_gradient.split('to-')[1].split(' ')[0] : '#764ba2'})`
-        : block.data.background_image
-        ? `url(${block.data.background_image})`
-        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      // Convertir le gradient Tailwind en CSS gradient
+      const getGradientFromTailwind = (gradient: string) => {
+        if (!gradient) return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        
+        // Extraire les couleurs du gradient Tailwind (ex: "from-blue-500 via-purple-600 to-pink-500")
+        const fromMatch = gradient.match(/from-(\w+)-(\d+)/)
+        const viaMatch = gradient.match(/via-(\w+)-(\d+)/)
+        const toMatch = gradient.match(/to-(\w+)-(\d+)/)
+        
+        // Mapping simplifié des couleurs Tailwind
+        const colorMap: Record<string, Record<string, string>> = {
+          blue: { '500': '#3b82f6', '600': '#2563eb' },
+          purple: { '600': '#9333ea', '500': '#a855f7' },
+          pink: { '500': '#ec4899', '600': '#db2777' },
+        }
+        
+        const fromColor = fromMatch ? (colorMap[fromMatch[1]]?.[fromMatch[2]] || '#3b82f6') : '#3b82f6'
+        const viaColor = viaMatch ? (colorMap[viaMatch[1]]?.[viaMatch[2]] || '#9333ea') : '#9333ea'
+        const toColor = toMatch ? (colorMap[toMatch[1]]?.[toMatch[2]] || '#ec4899') : '#ec4899'
+        
+        return `linear-gradient(135deg, ${fromColor} 0%, ${viaColor} 50%, ${toColor} 100%)`
+      }
       
-      const heroButtons = block.data.buttons || (block.data.button_text ? [{ text: block.data.button_text, url: block.data.button_url, style: 'primary' }] : [])
+      // Déterminer le fond selon le type
+      let heroBg = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' // Par défaut
+      const backgroundType = block.data.background_type || (block.data.background_image ? 'image' : 'gradient')
+      
+      if (backgroundType === 'image' && block.data.background_image) {
+        heroBg = `url(${block.data.background_image})`
+      } else if (backgroundType === 'color' && block.data.background_color) {
+        heroBg = block.data.background_color
+      } else if (backgroundType === 'gradient' && block.data.background_gradient) {
+        heroBg = getGradientFromTailwind(block.data.background_gradient)
+      } else if (block.data.background_gradient) {
+        // Fallback pour l'ancien format
+        heroBg = getGradientFromTailwind(block.data.background_gradient)
+      } else if (block.data.background_image) {
+        // Fallback pour l'ancien format
+        heroBg = `url(${block.data.background_image})`
+      }
+      
+      // Construire les boutons depuis primary_button_text/link et secondary_button_text/link
+      const heroButtons: Array<{ text: string; url: string; style: 'primary' | 'secondary' }> = []
+      if (block.data.primary_button_text && block.data.primary_button_link) {
+        heroButtons.push({
+          text: block.data.primary_button_text,
+          url: block.data.primary_button_link,
+          style: 'primary'
+        })
+      }
+      if (block.data.secondary_button_text && block.data.secondary_button_link) {
+        heroButtons.push({
+          text: block.data.secondary_button_text,
+          url: block.data.secondary_button_link,
+          style: 'secondary'
+        })
+      }
+      
+      // Fallback vers l'ancien format si les nouveaux champs ne sont pas définis
+      if (heroButtons.length === 0) {
+        if (block.data.buttons && Array.isArray(block.data.buttons) && block.data.buttons.length > 0) {
+          heroButtons.push(...block.data.buttons)
+        } else if (block.data.button_text) {
+          heroButtons.push({
+            text: block.data.button_text,
+            url: block.data.button_url || '#',
+            style: 'primary'
+          })
+        } else {
+          // Boutons par défaut si aucun bouton n'est défini
+          heroButtons.push(
+            { text: 'Démarrer gratuitement', url: '/register', style: 'primary' },
+            { text: 'Voir les tarifs', url: '#pricing', style: 'secondary' }
+          )
+        }
+      }
       
       return (
         <div 
@@ -2412,6 +2813,17 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                   <a
                     key={index}
                     href={btn.url || '#'}
+                    onClick={(e) => {
+                      // Si c'est un lien d'ancrage (#pricing), faire défiler vers l'élément
+                      if (btn.url && btn.url.startsWith('#')) {
+                        e.preventDefault()
+                        const targetId = btn.url.substring(1)
+                        const targetElement = document.getElementById(targetId)
+                        if (targetElement) {
+                          targetElement.scrollIntoView({ behavior: 'smooth' })
+                        }
+                      }
+                    }}
                     className={`px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-xl ${
                       btn.style === 'primary'
                         ? 'bg-white text-blue-600 hover:bg-blue-50'
@@ -2428,6 +2840,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       )
 
     case 'features-grid':
+    case 'features_grid': // Alias pour compatibilité
       const features = block.data.features || []
       const columns = block.data.columns || 3
       // Déterminer les classes de grille en fonction du nombre de colonnes avec responsive amélioré
@@ -2468,6 +2881,31 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       )
 
     case 'cta-section':
+    case 'cta_section': // Alias pour compatibilité
+      // Fonction pour convertir le gradient Tailwind en CSS
+      const getGradientFromTailwindCTA = (gradient: string) => {
+        if (!gradient) return 'linear-gradient(to right, #2563eb, #9333ea)'
+        
+        const fromMatch = gradient.match(/from-(\w+)-(\d+)/)
+        const viaMatch = gradient.match(/via-(\w+)-(\d+)/)
+        const toMatch = gradient.match(/to-(\w+)-(\d+)/)
+        
+        const colorMap: Record<string, Record<string, string>> = {
+          blue: { '600': '#2563eb', '500': '#3b82f6' },
+          purple: { '600': '#9333ea', '500': '#a855f7' },
+          pink: { '500': '#ec4899', '600': '#db2777' },
+        }
+        
+        const fromColor = fromMatch ? (colorMap[fromMatch[1]]?.[fromMatch[2]] || '#2563eb') : '#2563eb'
+        const viaColor = viaMatch ? (colorMap[viaMatch[1]]?.[viaMatch[2]] || '#9333ea') : null
+        const toColor = toMatch ? (colorMap[toMatch[1]]?.[toMatch[2]] || '#9333ea') : '#9333ea'
+        
+        if (viaColor) {
+          return `linear-gradient(to right, ${fromColor} 0%, ${viaColor} 50%, ${toColor} 100%)`
+        }
+        return `linear-gradient(to right, ${fromColor} 0%, ${toColor} 100%)`
+      }
+      
       // Déterminer le style d'arrière-plan
       const backgroundType = block.data?.background_type || 'gradient'
       let backgroundStyle: React.CSSProperties = {}
@@ -2487,9 +2925,18 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       } else if (backgroundType === 'solid') {
         backgroundStyle.backgroundColor = block.data?.background_color || '#2563eb'
       } else {
-        // Gradient par défaut
-        backgroundStyle.background = block.data?.background_gradient || 'linear-gradient(to right, #2563eb, #9333ea)'
+        // Gradient par défaut - convertir depuis Tailwind si nécessaire
+        const gradientValue = block.data?.background_gradient
+        if (gradientValue && (gradientValue.includes('from-') || gradientValue.includes('to-'))) {
+          backgroundStyle.background = getGradientFromTailwindCTA(gradientValue)
+        } else {
+          backgroundStyle.background = gradientValue || 'linear-gradient(to right, #2563eb, #9333ea)'
+        }
       }
+
+      // Utiliser button_link ou button_url (compatibilité)
+      const buttonUrl = block.data?.button_url || block.data?.button_link
+      const buttonText = block.data?.button_text
 
       return (
         <div
@@ -2505,9 +2952,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
             ...(block.styles?.padding && !block.styles?.padding_top && !block.styles?.padding_bottom && !block.styles?.padding_left && !block.styles?.padding_right
               ? { padding: block.styles.padding }
               : {
-                  paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '5rem',
+                  paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '6rem',
                   paddingRight: block.styles?.padding_right || block.styles?.padding_horizontal || '2rem',
-                  paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '5rem',
+                  paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '6rem',
                   paddingLeft: block.styles?.padding_left || block.styles?.padding_horizontal || '2rem',
                 }),
           }}
@@ -2515,25 +2962,25 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
         >
           <div className="max-w-4xl mx-auto text-center">
             {block.data.title && (
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
                 {block.data.title}
               </h2>
             )}
-            {block.data.description && (
-              <p className="text-xl text-white/90 mb-8">
-                {block.data.description}
+            {(block.data.description || block.data.subtitle) && (
+              <p className="text-lg sm:text-xl md:text-2xl text-white/90 mb-10 max-w-2xl mx-auto">
+                {block.data.description || block.data.subtitle}
               </p>
             )}
-            {block.data.button_text && block.data.button_url && (
+            {buttonText && buttonUrl && (
               <a
-                href={block.data.button_url}
-                className={`inline-block px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-xl ${
+                href={buttonUrl}
+                className={`inline-block px-10 py-4 sm:px-12 sm:py-5 rounded-lg font-bold text-lg sm:text-xl transition-all shadow-xl hover:scale-105 ${
                   block.data.button_style === 'dark'
                     ? 'bg-white text-gray-900 hover:bg-gray-100'
                     : 'bg-white text-blue-600 hover:bg-blue-50'
                 }`}
               >
-                {block.data.button_text}
+                {buttonText}
               </a>
             )}
           </div>
@@ -2817,28 +3264,32 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
     
     case 'footer':
       const footerColumns = block.data.columns || []
+      const currentYear = new Date().getFullYear()
+      const defaultCopyright = block.data.copyright || `© ${currentYear} VTCBuilder. Tous droits réservés.`
+      const defaultAdditionalText = block.data.additional_text || 'vtcbuilder.com - Développé avec ❤️ en France'
+      
       return (
-        <footer style={wrapperStyles} className="mb-6 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white py-8 sm:py-12 w-full min-w-0 overflow-hidden">
+        <footer style={wrapperStyles} className="mb-0 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-8 sm:py-12 w-full min-w-0 overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full min-w-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 w-full min-w-0">
-              {footerColumns.length > 0 ? (
-                footerColumns.map((column: any, colIndex: number) => (
+            {footerColumns.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 w-full min-w-0 mb-8">
+                {footerColumns.map((column: any, colIndex: number) => (
                   <div key={colIndex} className="min-w-0 overflow-hidden">
                     {column.title && (
-                      <h3 className={`${colIndex === 0 ? 'text-lg sm:text-xl' : 'font-bold text-base sm:text-lg'} mb-3 sm:mb-4 text-gray-900 dark:text-white break-words`}>
+                      <h3 className={`${colIndex === 0 ? 'text-lg sm:text-xl font-bold' : 'font-bold text-base sm:text-lg'} mb-3 sm:mb-4 text-gray-900 dark:text-gray-100 break-words`}>
                         {column.title}
                       </h3>
                     )}
                     {column.description && (
-                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-3 sm:mb-4 break-words">{column.description}</p>
+                      <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 break-words">{column.description}</p>
                     )}
                     {(column.links || []).length > 0 && (
-                      <ul className="space-y-1 sm:space-y-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                      <ul className="space-y-2 text-sm sm:text-base text-gray-600 dark:text-gray-300">
                         {column.links.map((link: any, linkIndex: number) => (
                           <li key={linkIndex} className="break-words">
                             <a
                               href={link.url || '#'}
-                              className="hover:text-gray-900 dark:hover:text-white transition-colors break-words"
+                              className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors break-words"
                             >
                               {link.label || 'Lien'}
                             </a>
@@ -2847,21 +3298,49 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
                       </ul>
                     )}
                   </div>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded">
-                  Aucune colonne configurée
+                ))}
+              </div>
+            ) : (
+              // Footer par défaut si aucune colonne n'est configurée
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div>
+                  <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">VTCBuilder</h3>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.
+                  </p>
                 </div>
-              )}
-            </div>
-            {(block.data.copyright || block.data.additional_text) && (
-              <div className="border-t border-gray-300 dark:border-gray-800 mt-8 pt-8 text-center text-gray-600 dark:text-gray-400">
-                {block.data.copyright && <p>{block.data.copyright}</p>}
-                {block.data.additional_text && (
-                  <p className="mt-2 text-sm">{block.data.additional_text}</p>
-                )}
+                <div>
+                  <h4 className="font-bold mb-4 text-gray-900 dark:text-gray-100">Produit</h4>
+                  <ul className="space-y-2 text-gray-600 dark:text-gray-300">
+                    <li><a href="/#pricing" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Tarifs</a></li>
+                    <li><a href="/features" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Fonctionnalités</a></li>
+                    <li><a href="/templates" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Templates</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-bold mb-4 text-gray-900 dark:text-gray-100">Support</h4>
+                  <ul className="space-y-2 text-gray-600 dark:text-gray-300">
+                    <li><a href="/docs" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Documentation</a></li>
+                    <li><a href="/contact" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Contact</a></li>
+                    <li><a href="/faq" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">FAQ</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-bold mb-4 text-gray-900 dark:text-gray-100">Légal</h4>
+                  <ul className="space-y-2 text-gray-600 dark:text-gray-300">
+                    <li><a href="/legal/terms" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">CGV</a></li>
+                    <li><a href="/legal/privacy" className="hover:text-gray-900 dark:hover:text-gray-100 transition-colors">Confidentialité</a></li>
+                  </ul>
+                </div>
               </div>
             )}
+            {/* Copyright et texte additionnel - toujours affichés */}
+            <div className="border-t border-gray-300 dark:border-gray-700 mt-8 pt-8 text-center text-gray-600 dark:text-gray-400">
+              <p className="text-sm sm:text-base">{defaultCopyright}</p>
+              {defaultAdditionalText && (
+                <p className="mt-2 text-xs sm:text-sm">{defaultAdditionalText}</p>
+              )}
+            </div>
           </div>
         </footer>
       )

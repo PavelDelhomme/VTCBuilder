@@ -48,7 +48,9 @@ export default defineConfig({
       use: { 
         ...devices['Desktop Chrome'],
         // Use system Chromium on Alpine Linux (skip headless shell which requires glibc)
+        // @ts-ignore - executablePath is valid but not in types
         channel: undefined, // Disable channel to force executablePath
+        // @ts-ignore - executablePath is valid but not in types
         executablePath: '/usr/bin/chromium-browser',
         launchOptions: {
           args: ['--no-sandbox', '--disable-setuid-sandbox', '--headless=new', '--disable-dev-shm-usage', '--disable-gpu'],

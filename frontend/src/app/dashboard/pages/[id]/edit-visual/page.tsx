@@ -98,7 +98,9 @@ export default function VisualPageEditor() {
           if (restored.blocks) setBlocks(restored.blocks)
           if (restored.metaTitle) setMetaTitle(restored.metaTitle)
           if (restored.metaDescription) setMetaDescription(restored.metaDescription)
-          if (restored.status) setStatus(restored.status)
+          if (restored.status && (restored.status === 'draft' || restored.status === 'published' || restored.status === 'scheduled')) {
+            setStatus(restored.status)
+          }
           if (restored.isHomepage !== undefined) setIsHomepage(restored.isHomepage)
           toast.success('Vos modifications ont été restaurées')
         }

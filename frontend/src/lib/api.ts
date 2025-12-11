@@ -88,6 +88,8 @@ const SILENT_ERROR_ENDPOINTS = [
   '/users/impersonation-status/', // Endpoint optionnel (401 normal si non connecté)
   '/dashboard/', // Peut être en erreur temporaire (401 normal si non connecté)
   '/blocks/types/', // Peut être en erreur temporaire (401 normal si non connecté)
+  '/tenants/features/', // Endpoint de features - erreurs 401 normales si non connecté
+  '/analytics/actions/', // Endpoint d'analytics - erreurs 401/403 normales si non connecté
 ];
 
 // Intercepteur pour gérer les erreurs
@@ -97,14 +99,27 @@ api.interceptors.response.use(
     const url = error.config?.url || '';
     const status = error.response?.status;
     
-    // Marquer les erreurs 401 pour les endpoints silencieux comme silencieuses
+    // Marquer les erreurs 401/403 pour les endpoints silencieux comme silencieuses
     const isSilentError = SILENT_ERROR_ENDPOINTS.some(endpoint => url.includes(endpoint));
-    if (status === 401 && isSilentError && !localStorage.getItem('token')) {
+    if ((status === 401 || status === 403) && isSilentError) {
       // Supprimer l'erreur de la console en interceptant avant qu'elle soit loggée
       error.silent = true;
       // Ne pas afficher l'erreur dans la console
       error.config = error.config || {};
       error.config.silent = true;
+      // Pour les erreurs 403 sur system-settings, retourner une promesse résolue silencieusement
+      // pour éviter que l'erreur remonte et pollue la console
+      if (status === 403 && url.includes('/system-settings/')) {
+        return Promise.resolve({ 
+          data: {}, 
+          status: 403, 
+          statusText: 'Forbidden', 
+          headers: {}, 
+          config: error.config 
+        });
+      }
+      // Pour les autres erreurs silencieuses, rejeter silencieusement
+      return Promise.reject(error);
     }
     
     // ERR_BLOCKED_BY_CLIENT est généralement causé par un bloqueur de publicité
@@ -115,6 +130,7 @@ api.interceptors.response.use(
       '/users/impersonation-status/',
       '/dashboard/',
       '/analytics/usage-stats/',
+      '/analytics/actions/', // Endpoint d'analytics - erreurs 401/403 normales si non connecté
     ]
     const isSilentEndpoint = silentEndpoints.some(endpoint => url.includes(endpoint))
     
@@ -247,6 +263,8 @@ api.interceptors.response.use(
           window.__showReconnectModal();
         } else {
           // Fallback : rediriger si le modal n'est pas disponible
+          // Sauvegarder l'URL actuelle avant de rediriger
+          authService.saveRedirectUrl();
           localStorage.removeItem('token');
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('user');

@@ -3,9 +3,13 @@ Django settings for VTCBuilder project.
 """
 
 import os
+import warnings
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+
+# Suppress pkg_resources deprecation warnings
+warnings.filterwarnings('ignore', category=UserWarning, message='.*pkg_resources.*')
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -55,11 +59,11 @@ INSTALLED_APPS = SHARED_APPS + TENANT_APPS
 MIDDLEWARE = [
     'django_tenants.middleware.main.TenantMainMiddleware',  # Réactivé pour gérer correctement les schémas des tenants
     'django.middleware.security.SecurityMiddleware',
+    'vtcbuilder.cors_middleware.CORSAlwaysMiddleware',  # CORS en premier - AVANT tout autre middleware
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'security.middleware.WAFMiddleware',  # WAF - Must be early in the chain
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'vtcbuilder.cors_middleware.CORSAlwaysMiddleware',  # Garantir CORS même en cas d'erreur
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

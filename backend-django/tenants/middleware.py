@@ -47,8 +47,24 @@ class UserStatusMiddleware:
                     user = jwt_auth.get_user(validated_token)
 
                     if user:
+                        # Log pour debug
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        is_super_admin = False
+                        try:
+                            is_super_admin = user.is_super_admin()
+                        except Exception as e:
+                            logger.warning(f"Error checking is_super_admin in UserStatusMiddleware: {e}")
+                        
+                        logger.info(
+                            f"UserStatusMiddleware: path={request.path}, "
+                            f"user={user.email if hasattr(user, 'email') else 'unknown'}, "
+                            f"is_super_admin={is_super_admin}, status={user.status if hasattr(user, 'status') else 'unknown'}"
+                        )
+                        
                         # Super admin can always access
-                        if user.is_super_admin():
+                        if is_super_admin:
+                            logger.info(f"UserStatusMiddleware: Allowing access for super admin to {request.path}")
                             return self.get_response(request)
                         
                         # Check user status

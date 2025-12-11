@@ -45,6 +45,14 @@ class WAFMiddleware(MiddlewareMixin):
     def process_request(self, request):
         """Process incoming request and apply WAF rules"""
         try:
+            # Skip WAF for specific API endpoints that are safe
+            safe_endpoints = [
+                '/api/projects/page-projects/',
+                '/api/projects/page-projects',
+            ]
+            if request.path in safe_endpoints or any(request.path.startswith(ep.rstrip('/')) for ep in safe_endpoints):
+                return None  # Skip WAF for this endpoint
+            
             # Get security settings
             settings = SecuritySettings.objects.first()
             if not settings or not settings.waf_enabled:

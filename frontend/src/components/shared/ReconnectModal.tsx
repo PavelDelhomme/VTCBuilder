@@ -45,7 +45,10 @@ export default function ReconnectModal({ isOpen, onClose, onReconnect, currentPa
         setUserEmail(storedUser.email)
         reset({ password: '' })
       } else {
-        // Si pas d'utilisateur stocké, fermer le modal et rediriger vers login
+        // Si pas d'utilisateur stocké, sauvegarder l'URL et rediriger vers login
+        if (typeof window !== 'undefined' && currentPath) {
+          authService.saveRedirectUrl()
+        }
         onClose()
         router.push('/login')
       }

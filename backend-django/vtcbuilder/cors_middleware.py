@@ -18,25 +18,32 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
         """Gérer les requêtes OPTIONS (preflight) avant qu'elles n'atteignent les vues"""
         if request.method == 'OPTIONS':
             from django.http import HttpResponse
-            origin = request.META.get('HTTP_ORIGIN', 'http://localhost:9494')
+            origin = request.META.get('HTTP_ORIGIN', '')
+            
+            logger.info(f"🔍 CORSAlwaysMiddleware intercepting OPTIONS: path={request.path}, origin={origin or 'NOT SET'}")
+            
+            # Créer la réponse immédiatement
             response = HttpResponse('', status=200)
             
-            # Toujours ajouter les headers CORS pour OPTIONS en développement
+            # En mode DEBUG, toujours autoriser toutes les origines localhost
             if settings.DEBUG:
-                if (origin.startswith('http://localhost') or 
-                    origin.startswith('http://127.0.0.1') or
-                    origin.startswith('http://192.168.1.134') or
-                    origin.startswith('https://localhost') or
-                    origin.startswith('https://127.0.0.1') or
-                    origin.startswith('https://192.168.1.134')):
+                # Si on a une origine, l'utiliser directement
+                if origin:
                     response['Access-Control-Allow-Origin'] = origin
-                    response['Access-Control-Allow-Credentials'] = 'true'
-                    response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
-                    response['Access-Control-Allow-Headers'] = 'accept, accept-encoding, authorization, content-type, dnt, origin, user-agent, x-csrftoken, x-requested-with'
-                    response['Access-Control-Max-Age'] = '86400'
+                else:
+                    # Pas d'origine dans les headers, autoriser toutes les origines en DEBUG
+                    response['Access-Control-Allow-Origin'] = '*'
+                
+                response['Access-Control-Allow-Credentials'] = 'true'
+                response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+                response['Access-Control-Allow-Headers'] = 'accept, accept-encoding, authorization, content-type, dnt, origin, user-agent, x-csrftoken, x-requested-with'
+                response['Access-Control-Max-Age'] = '86400'
+                
+                logger.info(f"✅ CORS preflight handled (DEBUG): origin={origin or '*'}, path={request.path}")
             else:
                 # En production, utiliser la logique normale
                 response = self._add_cors_headers(response, request)
+                logger.info(f"✅ CORS preflight handled (PROD): origin={origin}, path={request.path}")
             
             return response
         return None
@@ -44,48 +51,41 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
     def _add_cors_headers(self, response, request):
         """Ajouter les headers CORS à une réponse"""
         try:
-            origin = request.META.get('HTTP_ORIGIN') or request.META.get('HTTP_REFERER', '').split('/')[0:3]
-            if isinstance(origin, list):
-                origin = '/'.join(origin)
+            origin = request.META.get('HTTP_ORIGIN', '')
             
-            # Si pas d'origin, essayer de le déduire de la requête
-            if not origin:
-                # En développement, autoriser par défaut
-                if settings.DEBUG:
-                    origin = 'http://localhost:9494'
-                else:
-                    return response
-            
-            # Vérifier si l'origin est autorisé
-            allowed = False
-            
+            # En mode DEBUG, toujours autoriser
             if settings.DEBUG:
-                # En développement, autoriser tous les localhost, 127.0.0.1 et 192.168.1.134
-                if (origin.startswith('http://localhost') or 
-                    origin.startswith('http://127.0.0.1') or
-                    origin.startswith('http://192.168.1.134') or
-                    origin.startswith('https://localhost') or
-                    origin.startswith('https://127.0.0.1') or
-                    origin.startswith('https://192.168.1.134')):
-                    allowed = True
+                if origin:
+                    response['Access-Control-Allow-Origin'] = origin
+                else:
+                    response['Access-Control-Allow-Origin'] = '*'
             else:
-                # En production, vérifier les origines autorisées
-                if hasattr(settings, 'CORS_ALLOWED_ORIGINS'):
+                # En production, vérifier si l'origine est autorisée
+                allowed = False
+                if hasattr(settings, 'CORS_ALLOWED_ORIGINS') and origin:
                     allowed = origin in settings.CORS_ALLOWED_ORIGINS
                 elif hasattr(settings, 'CORS_ALLOW_ALL_ORIGINS') and settings.CORS_ALLOW_ALL_ORIGINS:
                     allowed = True
+                
+                if allowed and origin:
+                    response['Access-Control-Allow-Origin'] = origin
+                else:
+                    # Pas d'origine autorisée, ne pas ajouter les headers
+                    return response
             
-            if allowed:
-                # Ajouter les headers CORS
-                response['Access-Control-Allow-Origin'] = origin
-                response['Access-Control-Allow-Credentials'] = 'true'
+            # Ajouter les autres headers CORS
+            response['Access-Control-Allow-Credentials'] = 'true'
+            response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+            response['Access-Control-Allow-Headers'] = 'accept, accept-encoding, authorization, content-type, dnt, origin, user-agent, x-csrftoken, x-requested-with'
+            if request.method == 'OPTIONS':
+                response['Access-Control-Max-Age'] = '86400'
+        except Exception as e:
+            logger.warning(f"Error adding CORS headers: {e}", exc_info=True)
+            # En développement, ajouter quand même les headers de base en cas d'erreur
+            if settings.DEBUG:
+                response['Access-Control-Allow-Origin'] = '*'
                 response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
                 response['Access-Control-Allow-Headers'] = 'accept, accept-encoding, authorization, content-type, dnt, origin, user-agent, x-csrftoken, x-requested-with'
-                # Ajouter header pour les requêtes preflight
-                if request.method == 'OPTIONS':
-                    response['Access-Control-Max-Age'] = '86400'
-        except Exception as e:
-            logger.warning(f"Error adding CORS headers in middleware: {e}")
         
         return response
     
@@ -98,10 +98,11 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
                 '/api/system-settings',
                 '/api/pricing-plans',
                 '/api/blocks/types',
+                '/api/projects/page-projects',
             ]
             path = request.path.rstrip('/')
             for endpoint in silent_endpoints:
-                if path == endpoint or path == endpoint + '/':
+                if path == endpoint or path == endpoint + '/' or path.startswith(endpoint + '?'):
                     # Ne pas logger cette erreur - c'est attendu
                     # Marquer la réponse pour supprimer le log
                     response._suppress_logging = True

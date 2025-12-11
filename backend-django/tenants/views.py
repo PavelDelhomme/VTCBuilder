@@ -879,13 +879,31 @@ class UserViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_403_FORBIDDEN
                 )
         
+        # Sécuriser les modifications de rôle : vérifier depuis le token JWT uniquement
+        from api.utils import is_super_admin_from_token
+        request_user_is_super_admin = is_super_admin_from_token(request)
+        
         # Prevent changing super-admin role unless you're super-admin
-        if 'role' in request.data and request.data['role'] != 'super-admin':
-            if user.is_super_admin() and not request_user.is_super_admin():
-                return Response(
-                    {'error': 'Seul un super admin peut modifier le rôle d\'un super admin'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
+        # Vérification sécurisée depuis le token JWT uniquement
+        if 'role' in request.data:
+            requested_role = request.data.get('role')
+            target_user_is_super_admin = user.is_super_admin() if hasattr(user, 'is_super_admin') and callable(user.is_super_admin) else False
+            
+            # Si on essaie de modifier le rôle d'un super admin, seul un super admin peut le faire
+            if target_user_is_super_admin and requested_role != 'super-admin':
+                if not request_user_is_super_admin:
+                    return Response(
+                        {'error': 'Seul un super admin peut modifier le rôle d\'un super admin'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+            
+            # Si on essaie de créer ou promouvoir un utilisateur en super admin, seul un super admin peut le faire
+            if requested_role == 'super-admin' and not target_user_is_super_admin:
+                if not request_user_is_super_admin:
+                    return Response(
+                        {'error': 'Seul un super admin peut créer ou promouvoir un utilisateur en super admin'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
         
         # Handle tenant assignment - check for tenant_id in data
         if 'tenant_id' in request.data or 'tenant' in request.data:
@@ -909,7 +927,13 @@ class UserViewSet(viewsets.ModelViewSet):
                 request.data.pop('tenant_id')
         
         # If role is super-admin, ensure tenant is None
+        # Vérification sécurisée : on vérifie que l'utilisateur qui fait la requête est super admin
         if request.data.get('role') == 'super-admin':
+            if not request_user_is_super_admin:
+                return Response(
+                    {'error': 'Seul un super admin peut définir le rôle super-admin'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
             request.data['tenant'] = None
         
         # Use partial update to allow updating only specific fields (like password)

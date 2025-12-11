@@ -129,6 +129,7 @@ export default function EditUserPage() {
         authService.logout()
         toast.success('Email modifié. Veuillez vous reconnecter avec le nouvel email.')
         setTimeout(() => {
+          authService.saveRedirectUrl()
           router.push('/login')
         }, 2000)
         return

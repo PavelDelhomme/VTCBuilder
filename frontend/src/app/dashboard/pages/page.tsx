@@ -49,14 +49,19 @@ export default function PagesManagement() {
   }
 
   const handleDelete = async (pageId: number) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette page ?')) return
+    const page = pages.find(p => p.id === pageId)
+    const pageTitle = page?.title || 'cette page'
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer la page "${pageTitle}" ? Cette action est irréversible.`)) {
+      return
+    }
 
     try {
       await pageService.delete(pageId)
       toast.success('Page supprimée !')
       loadPages()
-    } catch (error) {
-      toast.error('Erreur lors de la suppression')
+    } catch (error: any) {
+      console.error('Erreur suppression:', error)
+      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
     }
   }
 
@@ -164,7 +169,7 @@ export default function PagesManagement() {
                     </button>
                     <button
                       onClick={() => handleDelete(page.id)}
-                      className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+                      className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
                     >
                       Supprimer
                     </button>

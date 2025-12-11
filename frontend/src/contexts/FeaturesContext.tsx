@@ -128,11 +128,12 @@ export function FeaturesProvider({ children }: { children: ReactNode }) {
           (error.message?.includes('Network request failed') && !error.response)
         
         const isNetworkError = error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED'
+        const isUnauthorized = error.response?.status === 401 || error.response?.status === 403
         
-        // Ne RIEN logger pour les erreurs bloquées - c'est géré silencieusement
-        // Les bloqueurs de pub sont courants et ne doivent pas polluer la console
-        if (isBlockedError) {
-          // Erreur bloquée par un adblocker - utiliser les valeurs par défaut silencieusement
+        // Ne RIEN logger pour les erreurs bloquées ou 401/403 - c'est géré silencieusement
+        // Les bloqueurs de pub sont courants et les erreurs 401/403 sont normales si non connecté
+        if (isBlockedError || isUnauthorized) {
+          // Erreur bloquée par un adblocker ou non autorisé - utiliser les valeurs par défaut silencieusement
           // Ne rien logger du tout
         } else if (isNetworkError) {
           // Erreurs réseau normales (backend non démarré, etc.) - logger une seule fois

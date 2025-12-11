@@ -6,6 +6,22 @@ def add_fields_if_not_exist(apps, schema_editor):
     """Add fields only if they don't exist"""
     db_alias = schema_editor.connection.alias
     with schema_editor.connection.cursor() as cursor:
+        # First, drop any existing unique index on slug if it exists
+        cursor.execute("""
+            SELECT indexname 
+            FROM pg_indexes 
+            WHERE tablename = 'templates' 
+            AND indexname LIKE 'templates_slug%'
+        """)
+        indexes = cursor.fetchall()
+        
+        for index in indexes:
+            index_name = index[0]
+            try:
+                cursor.execute(f"DROP INDEX IF EXISTS {index_name}")
+            except Exception as e:
+                print(f"Error dropping index {index_name}: {e}")
+        
         # Check if html_content exists
         cursor.execute("""
             SELECT column_name 
@@ -57,6 +73,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(add_fields_if_not_exist, remove_fields_if_exist),
         # Make slug not unique (for multi-tenant) - only if unique constraint exists
+        # Note: The unique index will be dropped by migration 20251210_fix_template_slug_index
         migrations.AlterField(
             model_name='template',
             name='slug',

@@ -871,6 +871,7 @@ export default function TenantDetailPage() {
     try {
       // Vérifier si l'utilisateur est authentifié avant de charger
       if (!authService.isAuthenticated()) {
+        authService.saveRedirectUrl()
         router.push('/login')
         return
       }
@@ -881,6 +882,7 @@ export default function TenantDetailPage() {
       // Si erreur 401, rediriger vers login
       if (error?.response?.status === 401) {
         authService.logout()
+        authService.saveRedirectUrl()
         router.push('/login')
         return
       }

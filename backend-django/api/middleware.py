@@ -31,14 +31,18 @@ class Suppress401Handler(logging.StreamHandler):
     
     def emit(self, record):
         """
-        Only emit logs that are not 401 errors for expected endpoints
+        Only emit logs that are not 401/403 errors for expected endpoints
         """
         message = str(record.getMessage())
         message_lower = message.lower()
         
-        # Check if this is a 401/Unauthorized log (DRF format: "GET /api/endpoint/ 401")
-        # or Django format: "Unauthorized: /api/endpoint/"
-        if 'unauthorized' in message_lower or ' 401' in message or '401 ' in message:
+        # Check if this is a 401/Unauthorized or 403/Forbidden log (DRF format: "GET /api/endpoint/ 401" or "Forbidden: /api/endpoint/")
+        # or Django format: "Unauthorized: /api/endpoint/" or "Forbidden: /api/endpoint/"
+        is_401_or_403 = ('unauthorized' in message_lower or 'forbidden' in message_lower or 
+                         ' 401' in message or '401 ' in message or 
+                         ' 403' in message or '403 ' in message)
+        
+        if is_401_or_403:
             # Check if message contains any silent endpoint
             for endpoint in SILENT_401_ENDPOINTS:
                 endpoint_lower = endpoint.lower()
@@ -56,7 +60,7 @@ class Suppress401Handler(logging.StreamHandler):
         if pathname:
             for endpoint in SILENT_401_ENDPOINTS:
                 if endpoint in pathname or endpoint.lower() in pathname.lower():
-                    if 'unauthorized' in message_lower or ' 401' in message or '401 ' in message:
+                    if is_401_or_403:
                         return
         
         # Check args (sometimes the endpoint is in args)
@@ -67,8 +71,7 @@ class Suppress401Handler(logging.StreamHandler):
                     arg_lower = arg.lower()
                     for endpoint in SILENT_401_ENDPOINTS:
                         endpoint_lower = endpoint.lower()
-                        if ((endpoint_lower in arg_lower or endpoint in arg) and 
-                            ('unauthorized' in message_lower or ' 401' in message or '401 ' in message)):
+                        if ((endpoint_lower in arg_lower or endpoint in arg) and is_401_or_403):
                             return
         
         # If we get here, emit the log normally
@@ -78,23 +81,27 @@ class Suppress401Handler(logging.StreamHandler):
 
 class SuppressExpected401LogFilter(logging.Filter):
     """
-    Logging filter to suppress 401 Unauthorized logs for expected endpoints
+    Logging filter to suppress 401 Unauthorized and 403 Forbidden logs for expected endpoints
     """
     
     def filter(self, record):
         """
-        Filter out 401 logs for expected endpoints
+        Filter out 401 and 403 logs for expected endpoints
         """
-        # Check if this is an Unauthorized log
+        # Check if this is an Unauthorized or Forbidden log
         message = str(record.getMessage())
         # Also check the pathname and args if available
         pathname = getattr(record, 'pathname', '')
         args = getattr(record, 'args', ())
         
-        # Check message content - look for "Unauthorized" in various forms
-        # DRF format: "GET /api/endpoint/ 401" or "Unauthorized: /api/endpoint/"
+        # Check message content - look for "Unauthorized" or "Forbidden" in various forms
+        # DRF format: "GET /api/endpoint/ 401" or "Unauthorized: /api/endpoint/" or "Forbidden: /api/endpoint/"
         message_lower = message.lower()
-        if 'unauthorized' in message_lower or ' 401' in message or '401 ' in message:
+        is_401_or_403 = ('unauthorized' in message_lower or 'forbidden' in message_lower or 
+                         ' 401' in message or '401 ' in message or 
+                         ' 403' in message or '403 ' in message)
+        
+        if is_401_or_403:
             # Check if message contains any silent endpoint
             for endpoint in SILENT_401_ENDPOINTS:
                 endpoint_lower = endpoint.lower()
@@ -115,8 +122,7 @@ class SuppressExpected401LogFilter(logging.Filter):
                     arg_lower = arg.lower()
                     for endpoint in SILENT_401_ENDPOINTS:
                         endpoint_lower = endpoint.lower()
-                        if ((endpoint_lower in arg_lower or endpoint in arg) and 
-                            ('unauthorized' in message_lower or ' 401' in message or '401 ' in message)):
+                        if ((endpoint_lower in arg_lower or endpoint in arg) and is_401_or_403):
                             return False
         
         return True
@@ -127,6 +133,19 @@ class SuppressExpected401Middleware(MiddlewareMixin):
     Middleware to suppress logging of expected 401 errors for specific endpoints
     """
     
+    def process_request(self, request):
+        """
+        Log all requests to page-projects for debugging
+        """
+        if '/page-projects' in request.path:
+            logger.info(
+                f"SuppressExpected401Middleware.process_request: {request.method} {request.path}. "
+                f"User: {request.user.email if request.user and hasattr(request.user, 'email') else 'anonymous'}, "
+                f"is_authenticated: {request.user.is_authenticated if request.user else False}, "
+                f"auth_header={'present' if 'Authorization' in request.headers else 'missing'}"
+            )
+        return None
+    
     def process_response(self, request, response):
         """
         Suppress logging of 401 errors for expected endpoints
@@ -134,6 +153,14 @@ class SuppressExpected401Middleware(MiddlewareMixin):
         # Only process API requests
         if not request.path.startswith('/api/'):
             return response
+        
+        # Log page-projects responses for debugging
+        if '/page-projects' in request.path:
+            logger.info(
+                f"SuppressExpected401Middleware.process_response: {request.method} {request.path} -> {response.status_code}. "
+                f"User: {request.user.email if request.user and hasattr(request.user, 'email') else 'anonymous'}, "
+                f"is_authenticated: {request.user.is_authenticated if request.user else False}"
+            )
         
         # Check if this is a 401 response for an expected endpoint
         if response.status_code == 401:

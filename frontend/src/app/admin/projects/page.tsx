@@ -156,6 +156,7 @@ export default function ProjectsManagement() {
   useEffect(() => {
     // Vérifier l'authentification avant de charger
     if (!authService.isAuthenticated()) {
+      authService.saveRedirectUrl()
       router.push('/login')
       return
     }
@@ -179,7 +180,8 @@ export default function ProjectsManagement() {
         localStorage.removeItem('token')
         localStorage.removeItem('refresh_token')
         localStorage.removeItem('user')
-        router.push('/login')
+        authService.saveRedirectUrl()
+      router.push('/login')
         return
       }
       
@@ -208,6 +210,7 @@ export default function ProjectsManagement() {
     // Vérifier l'authentification avant de créer
     if (!authService.isAuthenticated()) {
       toast.error('Vous devez être connecté pour créer un projet')
+      authService.saveRedirectUrl()
       router.push('/login')
       return
     }
@@ -226,7 +229,8 @@ export default function ProjectsManagement() {
       if (error.response?.status === 401) {
         toast.error('Session expirée. Veuillez vous reconnecter.')
         localStorage.removeItem('token')
-        router.push('/login')
+        authService.saveRedirectUrl()
+      router.push('/login')
         return
       }
       

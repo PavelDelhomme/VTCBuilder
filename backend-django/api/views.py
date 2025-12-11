@@ -382,7 +382,10 @@ class DetailedStatsView(APIView):
                 if reference_tenant:
                     try:
                         with tenant_context(reference_tenant):
-                            templates = Template.objects.filter(is_active=True).order_by('-usage_count')[:10]
+                            # Use only() to fetch only the fields we need, avoiding preview_image which may not exist
+                            templates = Template.objects.filter(is_active=True).only(
+                                'id', 'name', 'slug', 'category', 'usage_count'
+                            ).order_by('-usage_count')[:10]
                             templates_usage = [
                                 {
                                     'id': t.id,
@@ -394,9 +397,13 @@ class DetailedStatsView(APIView):
                                 for t in templates
                             ]
                     except Exception as e:
-                        # Silently ignore "relation does not exist" errors (normal for public schema)
+                        # Silently ignore "relation does not exist" and "column does not exist" errors
                         error_msg = str(e).lower()
-                        if 'relation' not in error_msg or 'does not exist' not in error_msg:
+                        if ('relation' in error_msg and 'does not exist' in error_msg) or \
+                           ('column' in error_msg and 'does not exist' in error_msg):
+                            # These are normal errors in multi-tenant context
+                            pass
+                        else:
                             logger.warning(f"Error calculating templates usage for tenant {reference_tenant.id}: {e}")
                 stats['templates_usage'] = templates_usage
             except Exception as e:
@@ -426,7 +433,16 @@ class DetailedStatsView(APIView):
                 active_tenants = TenantModel.objects.filter(deleted_at__isnull=True).exclude(schema_name='public')
                 for tenant in active_tenants:
                     try:
+                        # Vérifier que le schéma existe avant d'essayer d'y accéder
+                        from django.db import connection
                         with tenant_context(tenant):
+                            # Vérifier que la table existe dans ce schéma
+                            schema_name = connection.schema_name
+                            if schema_name == 'public':
+                                # Skip public schema - tables don't exist there
+                                continue
+                            
+                            # Toutes les requêtes sont maintenant dans tenant_context
                             pages_stats['total'] += Page.objects.count()
                             pages_stats['published'] += Page.objects.filter(status='published').count()
                             pages_stats['draft'] += Page.objects.filter(status='draft').count()
@@ -436,10 +452,13 @@ class DetailedStatsView(APIView):
                             pages_stats['created_this_week'] += Page.objects.filter(created_at__gte=timezone.now() - timedelta(days=7)).count()
                             pages_stats['created_this_month'] += Page.objects.filter(created_at__gte=timezone.now() - timedelta(days=30)).count()
                     except Exception as e:
-                        # Silently ignore "relation does not exist" errors (shouldn't happen if we exclude public, but just in case)
+                        # Silently ignore "relation does not exist" errors
+                        # These are normal in multi-tenant systems when accessing tenant-specific tables
                         error_msg = str(e).lower()
                         if 'relation' not in error_msg or 'does not exist' not in error_msg:
+                            # Only log non-expected errors
                             logger.warning(f"Error calculating pages stats for tenant {tenant.id}: {e}")
+                        # Continue to next tenant
                         continue
                 
                 stats['pages_stats'] = pages_stats

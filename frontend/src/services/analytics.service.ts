@@ -183,6 +183,10 @@ class AnalyticsService {
       })
     } catch (error: any) {
       // Silently fail - analytics should not break the app
+      // Ne pas logger les erreurs 401/403 - c'est normal si non connecté
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        return // Erreur silencieuse
+      }
       // Ne logger que les erreurs critiques (500+)
       if (error.response?.status >= 500) {
         console.warn('Failed to track action:', error)

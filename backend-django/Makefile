@@ -1,4 +1,4 @@
-.PHONY: help install setup start stop restart build logs clean migrate superuser shell test lint format up test-subscriptions-internal test-payments-internal test-invoices-internal test-pricing-plans-internal test-trial-status test-trial-create test-trial-activate test-trial-expire test-trial-advance
+.PHONY: help install setup start stop restart build logs clean migrate migrate-app migrations migrations-app migrate-merge migrate-show migrate-fake migrate-fresh superuser shell test lint format up test-subscriptions-internal test-payments-internal test-invoices-internal test-pricing-plans-internal test-trial-status test-trial-create test-trial-activate test-trial-expire test-trial-advance
 
 # Variables
 DOCKER_COMPOSE = docker-compose -f ../docker-compose.simple.yml
@@ -166,7 +166,7 @@ build: ## Reconstruire les images Docker
 
 ##@ Base de données
 
-migrate: ## Exécuter les migrations Django
+migrate: ## Exécuter toutes les migrations Django
 	@printf "$(GREEN)🗄️  Exécution des migrations...$(NC)\n"
 	@$(DOCKER_COMPOSE) up -d postgres redis
 	@printf "$(BLUE)⏳ Attente du démarrage de PostgreSQL...$(NC)\n"
@@ -176,12 +176,68 @@ migrate: ## Exécuter les migrations Django
 	@docker exec $(BACKEND_CONTAINER) python manage.py migrate
 	@printf "$(GREEN)✅ Migrations exécutées !$(NC)\n"
 
-migrations: ## Créer de nouvelles migrations
+migrate-app: ## Exécuter les migrations pour une app spécifique (usage: make migrate-app APP=media)
+	@if [ -z "$(APP)" ]; then \
+		printf "$(RED)❌ Usage: make migrate-app APP=media$(NC)\n"; \
+		printf "$(YELLOW)💡 Exemples: make migrate-app APP=media, make migrate-app APP=pages$(NC)\n"; \
+	else \
+		printf "$(GREEN)🗄️  Exécution des migrations pour l'app $(APP)...$(NC)\n"; \
+		$(DOCKER_COMPOSE) up -d postgres redis backend; \
+		sleep 5; \
+		docker exec $(BACKEND_CONTAINER) python manage.py migrate $(APP); \
+		printf "$(GREEN)✅ Migrations de $(APP) exécutées !$(NC)\n"; \
+	fi
+
+migrations: ## Créer de nouvelles migrations pour toutes les apps
 	@printf "$(GREEN)📄 Génération des migrations...$(NC)\n"
 	@$(DOCKER_COMPOSE) up -d postgres redis backend
 	@sleep 5
 	@docker exec $(BACKEND_CONTAINER) python manage.py makemigrations
 	@printf "$(GREEN)✅ Migrations générées !$(NC)\n"
+
+migrations-app: ## Créer de nouvelles migrations pour une app spécifique (usage: make migrations-app APP=media)
+	@if [ -z "$(APP)" ]; then \
+		printf "$(RED)❌ Usage: make migrations-app APP=media$(NC)\n"; \
+		printf "$(YELLOW)💡 Exemples: make migrations-app APP=media, make migrations-app APP=pages$(NC)\n"; \
+	else \
+		printf "$(GREEN)📄 Génération des migrations pour l'app $(APP)...$(NC)\n"; \
+		$(DOCKER_COMPOSE) up -d postgres redis backend; \
+		sleep 5; \
+		docker exec $(BACKEND_CONTAINER) python manage.py makemigrations $(APP); \
+		printf "$(GREEN)✅ Migrations de $(APP) générées !$(NC)\n"; \
+	fi
+
+migrate-merge: ## Créer une migration de merge pour résoudre les conflits (usage: make migrate-merge APP=media)
+	@if [ -z "$(APP)" ]; then \
+		printf "$(RED)❌ Usage: make migrate-merge APP=media$(NC)\n"; \
+		printf "$(YELLOW)💡 Exemples: make migrate-merge APP=media, make migrate-merge APP=pages$(NC)\n"; \
+	else \
+		printf "$(GREEN)🔀 Création d'une migration de merge pour $(APP)...$(NC)\n"; \
+		$(DOCKER_COMPOSE) up -d postgres redis backend; \
+		sleep 5; \
+		docker exec $(BACKEND_CONTAINER) python manage.py makemigrations --merge --noinput $(APP); \
+		printf "$(GREEN)✅ Migration de merge créée pour $(APP) !$(NC)\n"; \
+		printf "$(YELLOW)💡 N'oubliez pas d'exécuter: make migrate-app APP=$(APP)$(NC)\n"; \
+	fi
+
+migrate-show: ## Afficher l'état des migrations
+	@printf "$(GREEN)📊 État des migrations...$(NC)\n"
+	@$(DOCKER_COMPOSE) up -d postgres redis backend
+	@sleep 5
+	@docker exec $(BACKEND_CONTAINER) python manage.py showmigrations
+	@printf "$(GREEN)✅ État des migrations affiché !$(NC)\n"
+
+migrate-fake: ## Fake une migration spécifique (usage: make migrate-fake APP=media MIGRATION=0001_initial)
+	@if [ -z "$(APP)" ] || [ -z "$(MIGRATION)" ]; then \
+		printf "$(RED)❌ Usage: make migrate-fake APP=media MIGRATION=0001_initial$(NC)\n"; \
+		printf "$(YELLOW)💡 Cela marque la migration comme appliquée sans l'exécuter$(NC)\n"; \
+	else \
+		printf "$(YELLOW)⚠️  Fake de la migration $(APP).$(MIGRATION)...$(NC)\n"; \
+		$(DOCKER_COMPOSE) up -d postgres redis backend; \
+		sleep 5; \
+		docker exec $(BACKEND_CONTAINER) python manage.py migrate --fake $(APP) $(MIGRATION); \
+		printf "$(GREEN)✅ Migration $(APP).$(MIGRATION) fake appliquée !$(NC)\n"; \
+	fi
 
 migrate-fresh: ## Reset et re-exécuter les migrations
 	@printf "$(RED)⚠️  Reset de la base de données...$(NC)\n"

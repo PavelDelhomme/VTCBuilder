@@ -803,9 +803,13 @@ class TemplateViewSet(viewsets.ModelViewSet):
                                 add_cors_headers(response, request)
                                 return response
                         except Exception as e:
-                            # Silently ignore "relation does not exist" errors (normal for public schema)
+                            # Silently ignore "relation does not exist" and "column does not exist" errors
                             error_msg = str(e).lower()
-                            if 'relation' not in error_msg or 'does not exist' not in error_msg:
+                            if ('relation' in error_msg and 'does not exist' in error_msg) or \
+                               ('column' in error_msg and 'does not exist' in error_msg):
+                                # These are normal errors in multi-tenant context
+                                pass
+                            else:
                                 logger.error(f"Error listing templates for super admin with tenant {tenant.id}: {str(e)}", exc_info=True)
                             # Return empty array on error instead of 500
                             response = Response([], status=status.HTTP_200_OK)

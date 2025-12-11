@@ -31,8 +31,9 @@ class PageService {
     return [];
   }
 
-  async getById(id: number) {
-    const response = await api.get(`/pages/${id}/`);
+  async getById(id: number, tenantId?: number) {
+    const params = tenantId ? { tenant_id: tenantId } : {}
+    const response = await api.get(`/pages/${id}/`, { params });
     return response.data;
   }
 

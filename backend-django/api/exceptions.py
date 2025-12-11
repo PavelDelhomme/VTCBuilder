@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed, NotAuthenticated, PermissionDenied
 from django.conf import settings
 import logging
+from api.utils import add_cors_headers
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ SILENT_401_ENDPOINTS = [
     '/api/system-settings',
     '/api/pricing-plans',
     '/api/blocks/types',
+    '/api/projects/page-projects',  # Add this endpoint to silent list
 ]
 
 
@@ -35,39 +37,22 @@ def custom_exception_handler(exc, context):
             'message': str(exc) if settings.DEBUG else 'An error occurred'
         }, status=500)
     
-    # Suppress logging of expected 401 errors
+    # Suppress logging of expected 401/403 errors
     request = context.get('request')
-    if request and response and response.status_code == 401:
+    if request and response:
         path = request.path.rstrip('/')
         for endpoint in SILENT_401_ENDPOINTS:
-            if path == endpoint or path == endpoint + '/':
+            if path == endpoint or path == endpoint + '/' or path.startswith(endpoint + '/'):
                 # Don't log this as an error - it's expected behavior
                 # The frontend handles these gracefully
                 # Set a flag on the response to prevent logging
-                response._suppress_logging = True
+                if response.status_code in [401, 403]:
+                    response._suppress_logging = True
                 break
     
-    # Add CORS headers to error responses
+    # Always add CORS headers to error responses using the utility function
     if request:
-        origin = request.META.get('HTTP_ORIGIN')
-        if origin:
-            if settings.DEBUG:
-                # En développement, autoriser tous les localhost, 127.0.0.1 et 192.168.1.134
-                if (origin.startswith('http://localhost') or 
-                    origin.startswith('http://127.0.0.1') or
-                    origin.startswith('http://192.168.1.134') or
-                    origin.startswith('https://localhost') or
-                    origin.startswith('https://127.0.0.1') or
-                    origin.startswith('https://192.168.1.134')):
-                    response['Access-Control-Allow-Origin'] = origin
-                    response['Access-Control-Allow-Credentials'] = 'true'
-                    response['Access-Control-Allow-Methods'] = ', '.join(settings.CORS_ALLOW_METHODS)
-                    response['Access-Control-Allow-Headers'] = ', '.join(settings.CORS_ALLOW_HEADERS)
-            else:
-                # En production, vérifier les origines autorisées
-                if hasattr(settings, 'CORS_ALLOWED_ORIGINS') and origin in settings.CORS_ALLOWED_ORIGINS:
-                    response['Access-Control-Allow-Origin'] = origin
-                    response['Access-Control-Allow-Credentials'] = 'true'
+        add_cors_headers(response, request)
     
     return response
 

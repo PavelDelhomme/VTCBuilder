@@ -172,6 +172,38 @@ class AuthService {
       return roleValue === 'tenant-admin';
     }) || (user as any).role === 'tenant-admin';
   }
+
+  /**
+   * Sauvegarde l'URL actuelle avant de rediriger vers /login
+   * Cette URL sera restaurée après la reconnexion
+   */
+  saveRedirectUrl(): void {
+    if (typeof window === 'undefined') return; // SSR safety
+    const url = new URL(window.location.href);
+    // Supprimer les paramètres sensibles (email, password) de l'URL avant de sauvegarder
+    url.searchParams.delete('email');
+    url.searchParams.delete('password');
+    const currentPath = url.pathname + url.search;
+    // Ne pas sauvegarder si on est déjà sur /login ou /register
+    if (currentPath.startsWith('/login') || currentPath.startsWith('/register')) {
+      return;
+    }
+    sessionStorage.setItem('redirect_after_login', currentPath);
+  }
+
+  /**
+   * Récupère et supprime l'URL de redirection sauvegardée
+   * @returns L'URL à restaurer ou null si aucune URL n'a été sauvegardée
+   */
+  getAndClearRedirectUrl(): string | null {
+    if (typeof window === 'undefined') return null; // SSR safety
+    const redirectUrl = sessionStorage.getItem('redirect_after_login');
+    if (redirectUrl) {
+      sessionStorage.removeItem('redirect_after_login');
+      return redirectUrl;
+    }
+    return null;
+  }
 }
 
 export default new AuthService();

@@ -33,7 +33,8 @@ export default function AdminPage() {
         // Utilisateur connecté mais pas super admin → rediriger vers le dashboard tenant
         router.replace('/dashboard')
       } else {
-        // Pas connecté → rediriger vers le login
+        // Pas connecté → sauvegarder l'URL et rediriger vers le login
+        authService.saveRedirectUrl()
         router.replace('/login')
       }
     }

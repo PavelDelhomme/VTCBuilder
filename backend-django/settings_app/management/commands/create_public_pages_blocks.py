@@ -290,6 +290,35 @@ class Command(BaseCommand):
         
         self.stdout.write(self.style.SUCCESS(f'\n📦 {created_count} nouveau(x) bloc(s) créé(s)'))
 
+    def _format_blocks(self, raw_blocks):
+        """Formate les blocs avec la structure complète attendue par le frontend"""
+        import uuid
+        formatted_blocks = []
+        
+        for index, block in enumerate(raw_blocks):
+            formatted_block = {
+                'id': f'block-{uuid.uuid4().hex[:12]}-{index}',
+                'type': block['type'],
+                'data': block.get('data', {}),
+                'styles': block.get('styles', {}),
+                'order': index,
+            }
+            formatted_blocks.append(formatted_block)
+        
+        # Envelopper tous les blocs dans un conteneur par défaut
+        container_block = {
+            'id': f'block-container-{uuid.uuid4().hex[:12]}',
+            'type': 'container',
+            'data': {},
+            'styles': {},
+            'layout': 12,
+            'container': 'container',
+            'children': formatted_blocks,
+            'order': 0,
+        }
+        
+        return [container_block]
+
     def _init_public_pages(self):
         """Initialise les pages publiques avec le contenu exact des pages existantes"""
         self.stdout.write(self.style.SUCCESS('\n📄 Initialisation des pages publiques...'))
@@ -298,7 +327,7 @@ class Command(BaseCommand):
         public_pages = settings.public_pages or {}
         
         # Page Homepage (reproduction exacte de page.tsx)
-        homepage_blocks = [
+        homepage_blocks_raw = [
             {
                 'type': 'hero',
                 'data': {
@@ -346,8 +375,10 @@ class Command(BaseCommand):
             },
         ]
         
+        homepage_blocks = self._format_blocks(homepage_blocks_raw)
+        
         # Page Docs (reproduction exacte de docs/page.tsx)
-        docs_blocks = [
+        docs_blocks_raw = [
             {
                 'type': 'docs_sections',
                 'data': {
@@ -426,8 +457,64 @@ class Command(BaseCommand):
             },
         ]
         
+        docs_blocks = self._format_blocks(docs_blocks_raw)
+        
+        # Page Templates (galerie de modèles)
+        templates_blocks_raw = [
+            {
+                'type': 'heading',
+                'data': {
+                    'text': 'Modèles de Sites VTC',
+                    'level': 1,
+                    'align': 'center',
+                }
+            },
+            {
+                'type': 'paragraph',
+                'data': {
+                    'content': 'Choisissez parmi nos modèles professionnels pré-conçus pour démarrer rapidement votre site VTC.',
+                    'align': 'center',
+                }
+            },
+            {
+                'type': 'features_grid',
+                'data': {
+                    'title': 'Nos Modèles',
+                    'features': [
+                        {
+                            'icon': '🚗',
+                            'title': 'Modèle Classique',
+                            'description': 'Design épuré et professionnel pour les chauffeurs VTC indépendants',
+                        },
+                        {
+                            'icon': '🏢',
+                            'title': 'Modèle Entreprise',
+                            'description': 'Parfait pour les flottes et entreprises de transport',
+                        },
+                        {
+                            'icon': '✨',
+                            'title': 'Modèle Premium',
+                            'description': 'Design moderne et élégant avec animations et effets visuels',
+                        },
+                    ],
+                    'columns': 3,
+                }
+            },
+            {
+                'type': 'cta_section',
+                'data': {
+                    'title': 'Prêt à choisir votre modèle ?',
+                    'description': 'Créez votre compte gratuitement et accédez à tous nos modèles.',
+                    'button_text': '🚀 Démarrer gratuitement',
+                    'button_link': '/register',
+                    'background_gradient': 'from-blue-600 to-purple-600',
+                }
+            },
+        ]
+        templates_blocks = self._format_blocks(templates_blocks_raw)
+        
         # Page Contact (reproduction exacte de contact/page.tsx)
-        contact_blocks = [
+        contact_blocks_raw = [
             {
                 'type': 'contact_form',
                 'data': {
@@ -448,8 +535,10 @@ class Command(BaseCommand):
             },
         ]
         
+        contact_blocks = self._format_blocks(contact_blocks_raw)
+        
         # Page FAQ (reproduction exacte de faq/page.tsx)
-        faq_blocks = [
+        faq_blocks_raw = [
             {
                 'type': 'faq_accordion',
                 'data': {
@@ -487,8 +576,10 @@ class Command(BaseCommand):
             },
         ]
         
+        faq_blocks = self._format_blocks(faq_blocks_raw)
+        
         # Page Legal Terms (reproduction exacte de legal/terms/page.tsx)
-        terms_blocks = [
+        terms_blocks_raw = [
             {
                 'type': 'legal_content',
                 'data': {
@@ -555,8 +646,10 @@ class Command(BaseCommand):
             },
         ]
         
+        terms_blocks = self._format_blocks(terms_blocks_raw)
+        
         # Page Legal Privacy (reproduction exacte de legal/privacy/page.tsx)
-        privacy_blocks = [
+        privacy_blocks_raw = [
             {
                 'type': 'legal_content',
                 'data': {
@@ -628,8 +721,10 @@ class Command(BaseCommand):
             },
         ]
         
+        privacy_blocks = self._format_blocks(privacy_blocks_raw)
+        
         # Page Features (reproduction exacte de features/page.tsx)
-        features_blocks = [
+        features_blocks_raw = [
             {
                 'type': 'features_list',
                 'data': {
@@ -721,6 +816,7 @@ class Command(BaseCommand):
                 }
             },
         ]
+        features_blocks = self._format_blocks(features_blocks_raw)
         
         # Pages à créer/mettre à jour
         pages_to_create = {
@@ -744,6 +840,16 @@ class Command(BaseCommand):
                 'is_active': True,
                 'order': 2,
             },
+            'templates': {
+                'title': 'Modèles de Sites',
+                'description': 'Galerie de modèles pré-conçus pour votre site VTC',
+                'slug': 'templates',
+                'blocks': templates_blocks,
+                'meta_title': 'Modèles de Sites - VTCBuilder',
+                'meta_description': 'Choisissez parmi nos modèles professionnels pour votre site VTC',
+                'is_active': True,
+                'order': 3,
+            },
             'contact': {
                 'title': 'Contact',
                 'description': 'Page de contact avec formulaire',
@@ -752,7 +858,7 @@ class Command(BaseCommand):
                 'meta_title': 'Contact - VTCBuilder',
                 'meta_description': 'Contactez l\'équipe VTCBuilder',
                 'is_active': True,
-                'order': 3,
+                'order': 4,
             },
             'faq': {
                 'title': 'FAQ',
@@ -762,7 +868,7 @@ class Command(BaseCommand):
                 'meta_title': 'FAQ - VTCBuilder',
                 'meta_description': 'Réponses aux questions fréquemment posées',
                 'is_active': True,
-                'order': 4,
+                'order': 5,
             },
             'legal/terms': {
                 'title': 'Conditions Générales de Vente',
@@ -772,7 +878,7 @@ class Command(BaseCommand):
                 'meta_title': 'CGV - VTCBuilder',
                 'meta_description': 'Conditions Générales de Vente',
                 'is_active': True,
-                'order': 5,
+                'order': 6,
             },
             'legal/privacy': {
                 'title': 'Politique de Confidentialité',
@@ -782,7 +888,7 @@ class Command(BaseCommand):
                 'meta_title': 'Politique de Confidentialité - VTCBuilder',
                 'meta_description': 'Politique de confidentialité et protection des données',
                 'is_active': True,
-                'order': 6,
+                'order': 7,
             },
             'features': {
                 'title': 'Fonctionnalités',
@@ -792,7 +898,7 @@ class Command(BaseCommand):
                 'meta_title': 'Fonctionnalités - VTCBuilder',
                 'meta_description': 'Découvrez toutes les fonctionnalités de VTCBuilder',
                 'is_active': True,
-                'order': 7,
+                'order': 8,
             },
         }
         
@@ -811,9 +917,19 @@ class Command(BaseCommand):
                 updated_count += 1
                 self.stdout.write(self.style.WARNING(f'  🔄 Page mise à jour: {page_data["title"]} ({slug})'))
         
-        # Sauvegarder
+        # Sauvegarder les pages publiques
         settings.public_pages = public_pages
         settings.save(update_fields=['public_pages'])
+        
+        # Mettre à jour aussi la page d'accueil (homepage) si elle existe
+        if 'home' in pages_to_create:
+            homepage_formatted = pages_to_create['home']['blocks']
+            if settings.public_homepage_blocks != homepage_formatted:
+                settings.public_homepage_blocks = homepage_formatted
+                settings.public_homepage_meta_title = pages_to_create['home']['meta_title']
+                settings.public_homepage_meta_description = pages_to_create['home']['meta_description']
+                settings.save(update_fields=['public_homepage_blocks', 'public_homepage_meta_title', 'public_homepage_meta_description'])
+                self.stdout.write(self.style.SUCCESS('  ✅ Page d\'accueil mise à jour'))
         
         self.stdout.write(self.style.SUCCESS(f'\n📄 {created_count} page(s) créée(s), {updated_count} page(s) mise(s) à jour'))
 

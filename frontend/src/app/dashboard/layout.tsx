@@ -21,8 +21,9 @@ export default function DashboardLayout({
       try {
         const currentUser = authService.getStoredUser()
         
-        // Si pas d'utilisateur connecté, rediriger vers login
+        // Si pas d'utilisateur connecté, sauvegarder l'URL et rediriger vers login
         if (!currentUser) {
+          authService.saveRedirectUrl()
           router.push('/login')
           return
         }
@@ -36,6 +37,7 @@ export default function DashboardLayout({
         // Vérifier que l'utilisateur a un tenant
         if (!currentUser.tenant_id) {
           console.error('Utilisateur sans tenant associé')
+          authService.saveRedirectUrl()
           router.push('/login')
           return
         }
@@ -44,6 +46,7 @@ export default function DashboardLayout({
         setIsAuthorized(true)
       } catch (error) {
         console.error('Erreur vérification auth:', error)
+        authService.saveRedirectUrl()
         router.push('/login')
       } finally {
         setIsChecking(false)

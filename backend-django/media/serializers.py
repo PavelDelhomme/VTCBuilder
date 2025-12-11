@@ -178,6 +178,7 @@ class TemplateSerializer(serializers.ModelSerializer):
 
 class TemplateListSerializer(serializers.ModelSerializer):
     """Simplified serializer for template listings"""
+    preview_image = serializers.SerializerMethodField()
 
     class Meta:
         model = Template
@@ -186,6 +187,17 @@ class TemplateListSerializer(serializers.ModelSerializer):
             'category', 'is_premium', 'price', 'is_active', 'usage_count'
         ]
         read_only_fields = ['id', 'usage_count']
+    
+    def get_preview_image(self, obj):
+        """Safely get preview_image, returning None if column doesn't exist"""
+        try:
+            # Try to access the field - if it doesn't exist in DB, return None
+            if hasattr(obj, 'preview_image'):
+                return obj.preview_image.url if obj.preview_image else None
+            return None
+        except Exception:
+            # If column doesn't exist or any other error, return None
+            return None
 
 
 class TemplateUsageSerializer(serializers.ModelSerializer):

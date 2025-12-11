@@ -5,55 +5,153 @@ import logging
 from rest_framework import viewsets, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, BasePermission
 from django.conf import settings
 from .models import SystemSettings
 from .serializers import SystemSettingsSerializer
+from api.utils import is_super_admin_from_token
 
 logger = logging.getLogger(__name__)
+
+
+class IsAuthenticatedOrOptions(BasePermission):
+    """
+    Permission class that allows OPTIONS requests without authentication
+    but requires authentication for all other methods.
+    """
+    def has_permission(self, request, view):
+        # Allow OPTIONS requests without authentication (for CORS preflight)
+        if request.method == 'OPTIONS':
+            return True
+        # For all other methods, require authentication
+        return request.user and request.user.is_authenticated
+
+
+class IsSuperAdminOrOptions(BasePermission):
+    """
+    Permission class that allows OPTIONS requests without authentication
+    but requires super admin status for all other methods.
+    
+    IMPORTANT: Cette classe vérifie le statut super admin UNIQUEMENT depuis le token JWT,
+    jamais depuis les paramètres de requête ou request.data pour éviter les manipulations.
+    """
+    def has_permission(self, request, view):
+        import logging
+        from api.utils import is_super_admin_from_token
+        logger = logging.getLogger(__name__)
+        
+        # Allow OPTIONS requests without authentication (for CORS preflight)
+        if request.method == 'OPTIONS':
+            logger.info(f"IsSuperAdminOrOptions: Allowing OPTIONS request for {request.path}")
+            return True
+        
+        # Vérifier le statut super admin depuis le token JWT uniquement
+        is_super_admin = is_super_admin_from_token(request)
+        
+        if not is_super_admin:
+            user_email = 'unknown'
+            if request.user and hasattr(request.user, 'email'):
+                user_email = request.user.email
+            logger.warning(
+                f"IsSuperAdminOrOptions: Permission denied for {request.method} {request.path}. "
+                f"User: {user_email} is not super admin (verified from JWT token)."
+            )
+        else:
+            user_email = 'unknown'
+            if request.user and hasattr(request.user, 'email'):
+                user_email = request.user.email
+            logger.info(
+                f"IsSuperAdminOrOptions: Permission granted for {request.method} {request.path}. "
+                f"User: {user_email} is super admin (verified from JWT token)."
+            )
+        
+        return is_super_admin
 
 
 def add_cors_headers(response, request):
     """Helper function to add CORS headers to a response"""
     try:
-        origin = request.META.get('HTTP_ORIGIN') or request.META.get('HTTP_REFERER', '').split('/')[0:3]
-        if isinstance(origin, list):
-            origin = '/'.join(origin)
+        # Try to get origin from HTTP_ORIGIN first
+        origin = request.META.get('HTTP_ORIGIN')
         
-        # Si pas d'origin, essayer de le déduire de la requête
+        # If no origin, try to extract from HTTP_REFERER
+        if not origin:
+            referer = request.META.get('HTTP_REFERER', '')
+            if referer:
+                try:
+                    from urllib.parse import urlparse
+                    parsed = urlparse(referer)
+                    origin = f"{parsed.scheme}://{parsed.netloc}"
+                except Exception:
+                    pass
+        
+        # If still no origin and in DEBUG mode, use default
         if not origin or not origin.startswith('http'):
-            # En développement, autoriser par défaut
             if settings.DEBUG:
-                origin = 'http://localhost:9494'
+                # Try to get from request host
+                host = request.META.get('HTTP_HOST', '')
+                if host:
+                    scheme = 'https' if request.is_secure() else 'http'
+                    origin = f"{scheme}://{host}"
+                else:
+                    origin = 'http://localhost:9494'
             else:
+                # In production, if no origin, don't add CORS headers
                 return response
         
+        # Determine allowed origins and methods
+        allowed_origins = []
         if settings.DEBUG:
-            # En développement, autoriser tous les localhost, 127.0.0.1 et 192.168.1.134
-            if (origin.startswith('http://localhost') or 
-                origin.startswith('http://127.0.0.1') or
-                origin.startswith('http://192.168.1.134') or
-                origin.startswith('https://localhost') or
-                origin.startswith('https://127.0.0.1') or
-                origin.startswith('https://192.168.1.134')):
-                response['Access-Control-Allow-Origin'] = origin
-                response['Access-Control-Allow-Credentials'] = 'true'
-                response['Access-Control-Allow-Methods'] = ', '.join(settings.CORS_ALLOW_METHODS)
-                response['Access-Control-Allow-Headers'] = ', '.join(settings.CORS_ALLOW_HEADERS)
+            # In development, allow localhost, 127.0.0.1, and 192.168.1.134 on any port
+            allowed_origins = [
+                'http://localhost',
+                'https://localhost',
+                'http://127.0.0.1',
+                'https://127.0.0.1',
+                'http://192.168.1.134',
+                'https://192.168.1.134',
+            ]
         else:
-            if hasattr(settings, 'CORS_ALLOWED_ORIGINS') and origin in settings.CORS_ALLOWED_ORIGINS:
-                response['Access-Control-Allow-Origin'] = origin
-                response['Access-Control-Allow-Credentials'] = 'true'
-                response['Access-Control-Allow-Methods'] = ', '.join(settings.CORS_ALLOW_METHODS)
-                response['Access-Control-Allow-Headers'] = ', '.join(settings.CORS_ALLOW_HEADERS)
+            # In production, use configured allowed origins
+            if hasattr(settings, 'CORS_ALLOWED_ORIGINS'):
+                allowed_origins = settings.CORS_ALLOWED_ORIGINS
+        
+        # Check if origin is allowed (match base without port)
+        origin_allowed = False
+        if settings.DEBUG:
+            # In DEBUG, check if origin starts with any allowed base (with or without port)
+            for allowed_base in allowed_origins:
+                # Check exact match or starts with base (to handle ports)
+                if origin == allowed_base or origin.startswith(allowed_base + ':'):
+                    origin_allowed = True
+                    break
+        else:
+            # In production, exact match required
+            origin_allowed = origin in allowed_origins
+        
+        # Always add CORS headers if origin is allowed, or in DEBUG mode for debugging
+        if origin_allowed or settings.DEBUG:
+            response['Access-Control-Allow-Origin'] = origin if origin_allowed else '*'
+            response['Access-Control-Allow-Credentials'] = 'true'
+            response['Access-Control-Allow-Methods'] = ', '.join(getattr(settings, 'CORS_ALLOW_METHODS', ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']))
+            response['Access-Control-Allow-Headers'] = ', '.join(getattr(settings, 'CORS_ALLOW_HEADERS', ['accept', 'accept-encoding', 'authorization', 'content-type', 'dnt', 'origin', 'user-agent', 'x-csrftoken', 'x-requested-with']))
+            response['Access-Control-Max-Age'] = '86400'
+            # Add exposed headers for debugging
+            if settings.DEBUG:
+                response['Access-Control-Expose-Headers'] = 'Content-Type, Authorization'
     except Exception as e:
         logger.warning(f"Error adding CORS headers: {e}")
+        # In DEBUG mode, still add basic CORS headers even on error
+        if settings.DEBUG:
+            response['Access-Control-Allow-Origin'] = '*'
+            response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+            response['Access-Control-Allow-Headers'] = 'accept, accept-encoding, authorization, content-type, dnt, origin, user-agent, x-csrftoken, x-requested-with'
     
     return response
 
 
 @api_view(['GET', 'POST', 'PATCH', 'PUT', 'OPTIONS'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsSuperAdminOrOptions])
 def system_settings_view(request):
     """Get, create or update system settings (singleton)"""
     try:
@@ -63,51 +161,11 @@ def system_settings_view(request):
             add_cors_headers(response, request)
             return response
         
-        # Check authentication for non-OPTIONS requests
-        if not request.user or not request.user.is_authenticated:
-            logger.warning(f"Unauthenticated request to system-settings from {request.META.get('HTTP_ORIGIN', 'unknown')}")
-            error_response = Response(
-                {'error': 'Authentication required'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-            add_cors_headers(error_response, request)
-            return error_response
-        
+        # IsSuperAdminOrOptions already checks authentication and super admin status
         # Log user info for debugging
-        logger.info(f"System settings request - User: {getattr(request.user, 'email', 'unknown')}, Authenticated: {request.user.is_authenticated}")
-        
-        # Vérifier si l'utilisateur est super admin (avec plusieurs méthodes de vérification)
-        is_super_admin = False
-        user_info = {}
-        
-        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
-            is_super_admin = request.user.is_super_admin()
-            user_info['is_super_admin_method'] = is_super_admin
-        elif hasattr(request.user, 'is_superuser'):
-            is_super_admin = request.user.is_superuser
-            user_info['is_superuser'] = is_super_admin
-        elif hasattr(request.user, 'is_staff'):
-            is_super_admin = request.user.is_staff
-            user_info['is_staff'] = is_super_admin
-        
-        # Log pour débogage
-        if hasattr(request.user, 'email'):
-            user_info['email'] = request.user.email
-        if hasattr(request.user, 'role'):
-            user_info['role'] = request.user.role
-        if hasattr(request.user, 'id'):
-            user_info['id'] = request.user.id
-        
-        logger.info(f"System settings access check - User: {user_info}, is_super_admin: {is_super_admin}")
-        
-        if not is_super_admin:
-            logger.warning(f"Access denied to system settings - User: {user_info}")
-            error_response = Response(
-                {'error': 'Only super admin can manage system settings', 'user_info': user_info if settings.DEBUG else None},
-                status=status.HTTP_403_FORBIDDEN
-            )
-            add_cors_headers(error_response, request)
-            return error_response
+        user_email = getattr(request.user, 'email', 'unknown')
+        user_id = getattr(request.user, 'id', None)
+        logger.info(f"System settings request ({request.method}) - User: {user_email} (ID: {user_id})")
         
         # GET - Retrieve settings
         if request.method == 'GET':
@@ -187,28 +245,60 @@ def system_settings_view(request):
             # Synchroniser les pages publiques avec le projet système après sauvegarde
             try:
                 from projects.models import Project, ProjectPage
-                system_project = Project.objects.filter(slug='vtcbuilder-public-site', is_system_project=True).first()
+                # Chercher le projet système (peut avoir différents slugs selon la version)
+                system_project = Project.objects.filter(is_system_project=True).first()
+                if not system_project:
+                    # Créer le projet système s'il n'existe pas
+                    system_project = Project.objects.create(
+                        name='VTCBuilder - Site Public',
+                        slug='vtcbuilder-public-site',
+                        description='Projet système pour les pages publiques de VTCBuilder',
+                        is_system_project=True,
+                        status='active'
+                    )
+                    logger.info(f"Projet système créé: {system_project.name} (ID: {system_project.id})")
+                
                 if system_project:
-                    # Ajouter la page d'accueil si elle existe
+                    synced_pages = []
+                    
+                    # Ajouter la page d'accueil si elle existe dans public_homepage_blocks
+                    # (priorité à public_homepage_blocks pour la page d'accueil)
                     if instance.public_homepage_blocks is not None:
-                        ProjectPage.objects.get_or_create(
+                        page, created = ProjectPage.objects.get_or_create(
                             project=system_project,
                             page_slug='home',
                             page_type='public',
-                            defaults={'order': 0}
+                            defaults={'order': 0, 'is_active': True}
                         )
+                        synced_pages.append('home')
+                        if created:
+                            logger.info(f"Page 'home' ajoutée au projet système depuis public_homepage_blocks")
                     
-                    # Ajouter les autres pages publiques
+                    # Ajouter les autres pages publiques (y compris les sous-pages)
+                    # Exclure 'home' si elle existe déjà dans public_homepage_blocks pour éviter les doublons
                     if instance.public_pages:
-                        for order, (slug, page_data) in enumerate(instance.public_pages.items(), start=1):
-                            ProjectPage.objects.get_or_create(
+                        # Trier les pages pour maintenir l'ordre
+                        sorted_pages = sorted(instance.public_pages.items(), key=lambda x: x[1].get('order', 999) if isinstance(x[1], dict) else 999)
+                        for order, (slug, page_data) in enumerate(sorted_pages, start=1):
+                            # Ne pas synchroniser 'home' si elle existe déjà dans public_homepage_blocks
+                            # (pour éviter les doublons dans le projet système)
+                            if slug == 'home' and instance.public_homepage_blocks is not None:
+                                logger.debug(f"Page 'home' ignorée dans public_pages car elle existe déjà dans public_homepage_blocks")
+                                continue
+                            
+                            page, created = ProjectPage.objects.get_or_create(
                                 project=system_project,
                                 page_slug=slug,
                                 page_type='public',
-                                defaults={'order': order}
+                                defaults={'order': order, 'is_active': True}
                             )
+                            synced_pages.append(slug)
+                            if created:
+                                logger.info(f"Page '{slug}' ajoutée au projet système")
+                    
+                    logger.info(f"Synchronisation terminée: {len(synced_pages)} pages synchronisées avec le projet système")
             except Exception as sync_error:
-                logger.warning(f"Erreur synchronisation pages publiques avec projet: {sync_error}")
+                logger.error(f"Erreur synchronisation pages publiques avec projet: {sync_error}", exc_info=True)
             
             status_code = status.HTTP_200_OK if instance.pk else status.HTTP_201_CREATED
             response = Response(serializer.data, status=status_code)
@@ -275,7 +365,8 @@ def system_settings_view(request):
 def system_settings_test_email_view(request):
     """Test email configuration - send test email to specified recipient"""
     try:
-        if not request.user.is_super_admin():
+        # Vérification sécurisée depuis le token JWT uniquement
+        if not is_super_admin_from_token(request):
             error_response = Response(
                 {'error': 'Only super admin can test email configuration'},
                 status=status.HTTP_403_FORBIDDEN
@@ -353,7 +444,8 @@ def system_settings_test_email_view(request):
 def system_settings_test_stripe_view(request):
     """Test Stripe connection with provided keys"""
     try:
-        if not request.user.is_super_admin():
+        # Vérification sécurisée depuis le token JWT uniquement
+        if not is_super_admin_from_token(request):
             error_response = Response(
                 {'error': 'Only super admin can test Stripe connection'},
                 status=status.HTTP_403_FORBIDDEN
@@ -397,7 +489,7 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     """ViewSet for managing system settings"""
     queryset = SystemSettings.objects.all()
     serializer_class = SystemSettingsSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsSuperAdminOrOptions]  # Require super admin for all methods except OPTIONS
     http_method_names = ['get', 'put', 'patch', 'options', 'head']
     
     def get_queryset(self):
@@ -425,13 +517,8 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """Return the singleton settings instance"""
         # Vérifier si l'utilisateur est super admin
-        is_super_admin = False
-        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
-            is_super_admin = request.user.is_super_admin()
-        elif hasattr(request.user, 'is_superuser'):
-            is_super_admin = request.user.is_superuser
-        elif hasattr(request.user, 'is_staff'):
-            is_super_admin = request.user.is_staff
+        # Vérification sécurisée depuis le token JWT uniquement
+        is_super_admin = is_super_admin_from_token(request)
         
         if not is_super_admin:
             error_response = Response(
@@ -472,13 +559,8 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """Get settings instance"""
         # Vérifier si l'utilisateur est super admin
-        is_super_admin = False
-        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
-            is_super_admin = request.user.is_super_admin()
-        elif hasattr(request.user, 'is_superuser'):
-            is_super_admin = request.user.is_superuser
-        elif hasattr(request.user, 'is_staff'):
-            is_super_admin = request.user.is_staff
+        # Vérification sécurisée depuis le token JWT uniquement
+        is_super_admin = is_super_admin_from_token(request)
         
         if not is_super_admin:
             error_response = Response(
@@ -494,13 +576,8 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         """Create or update system settings (singleton pattern)"""
         # Vérifier si l'utilisateur est super admin
-        is_super_admin = False
-        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
-            is_super_admin = request.user.is_super_admin()
-        elif hasattr(request.user, 'is_superuser'):
-            is_super_admin = request.user.is_superuser
-        elif hasattr(request.user, 'is_staff'):
-            is_super_admin = request.user.is_staff
+        # Vérification sécurisée depuis le token JWT uniquement
+        is_super_admin = is_super_admin_from_token(request)
         
         if not is_super_admin:
             error_response = Response(
@@ -526,13 +603,8 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         """Update system settings"""
         # Vérifier si l'utilisateur est super admin
-        is_super_admin = False
-        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
-            is_super_admin = request.user.is_super_admin()
-        elif hasattr(request.user, 'is_superuser'):
-            is_super_admin = request.user.is_superuser
-        elif hasattr(request.user, 'is_staff'):
-            is_super_admin = request.user.is_staff
+        # Vérification sécurisée depuis le token JWT uniquement
+        is_super_admin = is_super_admin_from_token(request)
         
         if not is_super_admin:
             error_response = Response(
@@ -552,16 +624,24 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     
     def partial_update(self, request, *args, **kwargs):
         """Partially update system settings"""
-        # Vérifier si l'utilisateur est super admin
-        is_super_admin = False
-        if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
-            is_super_admin = request.user.is_super_admin()
-        elif hasattr(request.user, 'is_superuser'):
-            is_super_admin = request.user.is_superuser
-        elif hasattr(request.user, 'is_staff'):
-            is_super_admin = request.user.is_staff
+        # Vérification sécurisée depuis le token JWT uniquement
+        is_super_admin = is_super_admin_from_token(request)
+        
+        user_email = 'unknown'
+        if request.user and hasattr(request.user, 'email'):
+            user_email = request.user.email
+        
+        logger.info(
+            f"SystemSettingsViewSet.partial_update: user={user_email}, "
+            f"is_super_admin={is_super_admin} (verified from JWT token), "
+            f"method={request.method}, path={request.path}"
+        )
         
         if not is_super_admin:
+            logger.warning(
+                f"Access denied to SystemSettingsViewSet.partial_update - User: {user_email}, "
+                f"Origin: {request.META.get('HTTP_ORIGIN', 'unknown')}"
+            )
             error_response = Response(
                 {'error': 'Only super admin can manage system settings'},
                 status=status.HTTP_403_FORBIDDEN
@@ -580,7 +660,8 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def test_email(self, request):
         """Test email configuration"""
-        if not request.user.is_super_admin():
+        # Vérification sécurisée depuis le token JWT uniquement
+        if not is_super_admin_from_token(request):
             return Response(
                 {'error': 'Only super admin can test email configuration'},
                 status=status.HTTP_403_FORBIDDEN

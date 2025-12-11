@@ -37,6 +37,22 @@ export default function LoginPage() {
   const [configuringDomain, setConfiguringDomain] = useState(false)
 
   useEffect(() => {
+    // Nettoyer les paramètres d'URL pour des raisons de sécurité
+    // (éviter que les identifiants soient dans l'URL)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      const hasEmail = url.searchParams.has('email')
+      const hasPassword = url.searchParams.has('password')
+      
+      if (hasEmail || hasPassword) {
+        // Supprimer les paramètres sensibles de l'URL
+        url.searchParams.delete('email')
+        url.searchParams.delete('password')
+        // Rediriger vers la même page sans les paramètres
+        window.history.replaceState({}, '', url.toString())
+      }
+    }
+    
     // Détecter si on est sur un sous-domaine tenant
     // Ne pas traiter les adresses IP comme des sous-domaines tenant
     if (typeof window !== 'undefined') {
@@ -71,11 +87,20 @@ export default function LoginPage() {
       
       // Vérifier si l'utilisateur est authentifié
       if (authService.isAuthenticated()) {
-        const user = authService.getStoredUser()
-        if (user?.roles?.some((role: any) => role === 'super-admin' || role.name === 'super-admin')) {
-          router.push('/admin/dashboard')
+        // Récupérer l'URL de redirection sauvegardée
+        const redirectUrl = authService.getAndClearRedirectUrl()
+        
+        if (redirectUrl) {
+          // Rediriger vers l'URL sauvegardée
+          router.push(redirectUrl)
         } else {
-          router.push('/dashboard')
+          // Sinon, rediriger selon le rôle
+          const user = authService.getStoredUser()
+          if (user?.roles?.some((role: any) => role === 'super-admin' || role.name === 'super-admin')) {
+            router.push('/admin/dashboard')
+          } else {
+            router.push('/dashboard')
+          }
         }
         toast.success('Connexion réussie !')
       } else {

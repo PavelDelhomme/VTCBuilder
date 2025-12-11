@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter, useParams, usePathname } from 'next/navigation'
+import { useRouter, useParams, usePathname, useSearchParams } from 'next/navigation'
 import authService from '@/services/auth.service'
 import AdminLayout from '@/components/admin/AdminLayout'
 import api from '@/lib/api'
@@ -33,9 +33,13 @@ export default function EditPublicPage() {
   const router = useRouter()
   const params = useParams()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { saveEditorState } = useReconnect()
   const { confirm, ConfirmDialog } = useConfirm()
-  const pageSlug = params?.slug as string
+  // Handle catch-all route: slug can be a string or array of strings
+  const slugParam = params?.slug
+  const pageSlug = Array.isArray(slugParam) ? slugParam.join('/') : (slugParam as string || '')
+  const projectId = searchParams?.get('projectId')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [blocks, setBlocks] = useState<Block[]>([])
@@ -45,7 +49,8 @@ export default function EditPublicPage() {
   const [status, setStatus] = useState<'draft' | 'published'>('draft')
   const [showPreview, setShowPreview] = useState(true)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
-  const [availablePages, setAvailablePages] = useState<Array<{ slug: string; title: string }>>([])
+  const [availablePages, setAvailablePages] = useState<Array<{ slug: string; title: string; isSubPage?: boolean; parentSlug?: string }>>([])
+  const [currentPageSubPages, setCurrentPageSubPages] = useState<Array<{ slug: string; title: string }>>([])
   const [headerVisible, setHeaderVisible] = useState(true)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [inspectorMode, setInspectorMode] = useState(false)
@@ -279,6 +284,10 @@ export default function EditPublicPage() {
     try {
       setLoading(true)
       
+      // Check if this is a new page
+      const isNew = searchParams?.get('new') === 'true'
+      const newTitle = searchParams?.get('title') || ''
+      
       // Load block types and page data in parallel
       const [blockTypesData, settingsResponse] = await Promise.all([
         blocksService.getBlockTypes(),
@@ -288,19 +297,100 @@ export default function EditPublicPage() {
       setBlockTypes(blockTypesData)
       const data = settingsResponse.data
       
-      // Load available pages for navigation
-      const pagesList: Array<{ slug: string; title: string }> = []
+      // Load available pages for navigation - Organiser hiérarchiquement
+      const pagesList: Array<{ slug: string; title: string; isSubPage?: boolean; parentSlug?: string }> = []
+      const subPagesMap = new Map<string, Array<{ slug: string; title: string }>>()
+      
+      // Page d'accueil
       if (data.public_homepage_blocks !== undefined) {
         pagesList.push({ slug: 'home', title: 'Page d\'accueil' })
       }
+      
+      // Autres pages
       const otherPages = data.public_pages || {}
       Object.entries(otherPages).forEach(([slug, pageData]: [string, any]) => {
-        pagesList.push({
-          slug,
-          title: pageData.title || PAGE_TITLES[slug] || slug.charAt(0).toUpperCase() + slug.slice(1),
+        const slugParts = slug.split('/')
+        const title = pageData.title || PAGE_TITLES[slug] || slug.charAt(0).toUpperCase() + slug.slice(1)
+        
+        if (slugParts.length === 1) {
+          // Page principale
+          pagesList.push({ slug, title })
+        } else {
+          // Sous-page
+          const parentSlug = slugParts[0]
+          if (!subPagesMap.has(parentSlug)) {
+            subPagesMap.set(parentSlug, [])
+          }
+          subPagesMap.get(parentSlug)!.push({ slug, title })
+        }
+      })
+      
+      // Trier les pages principales par ordre
+      pagesList.sort((a, b) => {
+        // Home en premier
+        if (a.slug === 'home') return -1
+        if (b.slug === 'home') return 1
+        return a.slug.localeCompare(b.slug)
+      })
+      
+      // Ajouter les sous-pages après leurs pages parentes
+      const finalPagesList: Array<{ slug: string; title: string; isSubPage?: boolean; parentSlug?: string }> = []
+      pagesList.forEach(page => {
+        finalPagesList.push(page)
+        // Ajouter les sous-pages de cette page
+        const subPages = subPagesMap.get(page.slug) || []
+        subPages.forEach(subPage => {
+          finalPagesList.push({
+            ...subPage,
+            isSubPage: true,
+            parentSlug: page.slug
+          })
         })
       })
-      setAvailablePages(pagesList)
+      
+      setAvailablePages(finalPagesList)
+      
+      // Trouver les sous-pages de la page actuelle
+      const subPages = finalPagesList.filter(p => p.isSubPage && p.parentSlug === pageSlug)
+      setCurrentPageSubPages(subPages)
+      
+      // If this is a new page, initialize it
+      if (isNew && pageSlug !== 'home') {
+        const publicPages = data.public_pages || {}
+        if (!publicPages[pageSlug]) {
+          // Create new page entry
+          publicPages[pageSlug] = {
+            title: newTitle || pageSlug.split('/').pop()?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || pageSlug,
+            description: '',
+            blocks: [],
+            meta_title: newTitle || pageSlug,
+            meta_description: '',
+            is_active: true,
+            order: 999,
+          }
+          
+          // Save the new page
+          await api.patch('/system-settings/', {
+            public_pages: publicPages
+          })
+          
+          // Set initial values
+          setMetaTitle(publicPages[pageSlug].meta_title)
+          setMetaDescription(publicPages[pageSlug].meta_description)
+          setBlocks([])
+          setStatus('draft')
+          
+          // Remove new=true from URL
+          const newUrl = new URL(window.location.href)
+          newUrl.searchParams.delete('new')
+          newUrl.searchParams.delete('title')
+          window.history.replaceState({}, '', newUrl.toString())
+          
+          toast.success('Nouvelle page créée !')
+          setLoading(false)
+          return
+        }
+      }
       
       // Load page data based on slug
       if (pageSlug === 'home') {
@@ -416,7 +506,7 @@ export default function EditPublicPage() {
               title: 'Tarifs Transparents',
               subtitle: 'Choisissez le plan adapté à vos besoins. Pas d\'engagement, changez de plan à tout moment.',
               source: 'api',
-              api_endpoint: '/api/billing/pricing-plans/',
+              api_endpoint: '/api/pricing-plans/',
               columns: 3
             },
             styles: {
@@ -716,7 +806,9 @@ export default function EditPublicPage() {
           if (restored.blocks) setBlocks(restored.blocks)
           if (restored.metaTitle) setMetaTitle(restored.metaTitle)
           if (restored.metaDescription) setMetaDescription(restored.metaDescription)
-          if (restored.status) setStatus(restored.status)
+          if (restored.status && (restored.status === 'draft' || restored.status === 'published')) {
+            setStatus(restored.status)
+          }
           toast.success('Vos modifications ont été restaurées')
         }
       }
@@ -835,6 +927,23 @@ export default function EditPublicPage() {
       }
       headerActions={
         <div className="flex flex-row gap-2 sm:gap-3 flex-wrap items-center w-full">
+          {/* Bouton Retour au projet - Afficher uniquement si projectId est présent */}
+          {projectId && (
+            <button
+              onClick={() => {
+                router.push(`/admin/projects/${projectId}`)
+              }}
+              className="px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 whitespace-nowrap"
+              title="Retourner à la page de détail du projet"
+            >
+              <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span className="hidden sm:inline">Retour au projet</span>
+              <span className="sm:hidden">Retour</span>
+            </button>
+          )}
+          
           {/* Page Selector - Isolated for better readability */}
           {availablePages.length > 1 && (
             <div className="flex items-center gap-2 pr-2 sm:pr-3 border-r border-gray-300 dark:border-gray-600">
@@ -844,16 +953,45 @@ export default function EditPublicPage() {
               <select
                 value={pageSlug}
                 onChange={(e) => {
-                  router.push(`/admin/pages-public/${e.target.value}/edit`)
+                  const url = projectId 
+                    ? `/admin/pages-public/${e.target.value}/edit?projectId=${projectId}`
+                    : `/admin/pages-public/${e.target.value}/edit`
+                  router.push(url)
                 }}
                 className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm font-medium min-w-[150px] sm:min-w-[180px]"
               >
                 {availablePages.map((page) => (
                   <option key={page.slug} value={page.slug}>
-                    {page.title}
+                    {page.isSubPage ? `  └─ ${page.title}` : page.title}
                   </option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {/* Afficher les sous-pages de la page actuelle */}
+          {currentPageSubPages.length > 0 && (
+            <div className="flex items-center gap-2 pr-2 sm:pr-3 border-r border-gray-300 dark:border-gray-600">
+              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                Sous-pages:
+              </label>
+              <div className="flex items-center gap-1 flex-wrap">
+                {currentPageSubPages.map((subPage) => (
+                  <button
+                    key={subPage.slug}
+                    onClick={() => {
+                      const url = projectId 
+                        ? `/admin/pages-public/${subPage.slug}/edit?projectId=${projectId}`
+                        : `/admin/pages-public/${subPage.slug}/edit`
+                      router.push(url)
+                    }}
+                    className="px-2 py-1 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                    title={`Éditer ${subPage.title}`}
+                  >
+                    {subPage.title}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -979,7 +1117,7 @@ export default function EditPublicPage() {
                 toast.success(`Page "${newPageTitle}" créée avec succès !`)
                 
                 // Naviguer vers l'éditeur de la nouvelle page
-                router.push(`/admin/pages-public/${newSlug}/edit`)
+                router.push(`/admin/pages-public/edit/${newSlug}`)
               } catch (error) {
                 console.error('Erreur création nouvelle page:', error)
                 toast.error('Erreur lors de la création de la nouvelle page')
@@ -1130,7 +1268,7 @@ export default function EditPublicPage() {
                 
                 await api.patch('/system-settings/', { public_pages: publicPages })
                 toast.success('Nouvelle page créée !')
-                router.push(`/admin/pages-public/${newPageSlug}/edit`)
+                router.push(`/admin/pages-public/edit/${newPageSlug}`)
               } catch (error: any) {
                 console.error('Erreur création page:', error)
                 toast.error('Erreur lors de la création de la page')
