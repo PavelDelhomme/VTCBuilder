@@ -2870,10 +2870,10 @@ function renderCTASectionEditor(block: Block, onUpdate: (updates: Partial<Block>
   const safeBlock = { ...block, data: block.data || {} }
   
   // Déterminer le style d'arrière-plan
-  const backgroundType = safeBlock.data?.background_type || 'gradient'
+  const ctaBackgroundType = safeBlock.data?.background_type || 'gradient'
   let backgroundStyle: React.CSSProperties = {}
   
-  if (backgroundType === 'image' && safeBlock.data?.background_image) {
+  if (ctaBackgroundType === 'image' && safeBlock.data?.background_image) {
     backgroundStyle = {
       backgroundImage: safeBlock.data.background_overlay 
         ? `url(${safeBlock.data.background_image}), ${safeBlock.data.background_overlay}`
@@ -2885,7 +2885,7 @@ function renderCTASectionEditor(block: Block, onUpdate: (updates: Partial<Block>
     if (safeBlock.data.background_image_opacity !== undefined) {
       backgroundStyle.opacity = safeBlock.data.background_image_opacity
     }
-  } else if (backgroundType === 'solid') {
+  } else if (ctaBackgroundType === 'solid') {
     backgroundStyle.backgroundColor = safeBlock.data?.background_color || '#2563eb'
   } else {
     // Gradient par défaut - convertir depuis Tailwind si nécessaire
