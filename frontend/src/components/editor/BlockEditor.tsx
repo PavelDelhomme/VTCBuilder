@@ -83,9 +83,10 @@ interface BlockEditorProps {
   showBlocksPalette?: boolean // Afficher ou non la sidebar de blocs (désactivée si popup externe)
   showOnlyPalette?: boolean // Afficher uniquement la palette (pour popup)
   onPaletteToggle?: () => void // Callback pour masquer/afficher la palette
+  onUndoRedoChange?: (canUndo: boolean, canRedo: boolean) => void // Callback pour notifier les changements undo/redo
 }
 
-export default function BlockEditor({ blocks, onChange, availableBlockTypes, onBlockSelect, selectedBlockId: externalSelectedBlockId, showBlocksPalette = true, showOnlyPalette = false, onPaletteToggle }: BlockEditorProps) {
+export default function BlockEditor({ blocks, onChange, availableBlockTypes, onBlockSelect, selectedBlockId: externalSelectedBlockId, showBlocksPalette = true, showOnlyPalette = false, onPaletteToggle, onUndoRedoChange }: BlockEditorProps) {
   const { resolvedTheme, toggleTheme } = useTheme()
   const [blockTypes, setBlockTypes] = useState<BlockType[]>([])
   const [selectedBlock, setSelectedBlock] = useState<string | null>(externalSelectedBlockId || null)
@@ -322,6 +323,27 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [history, handleUndo, handleRedo])
+
+  // Notifier le parent des changements undo/redo
+  useEffect(() => {
+    if (onUndoRedoChange) {
+      onUndoRedoChange(history.canUndo, history.canRedo)
+    }
+  }, [history.canUndo, history.canRedo, onUndoRedoChange])
+
+  // Exposer les fonctions undo/redo via window pour les boutons dans headerActions
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__blockEditorUndo = handleUndo
+      ;(window as any).__blockEditorRedo = handleRedo
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).__blockEditorUndo
+        delete (window as any).__blockEditorRedo
+      }
+    }
+  }, [handleUndo, handleRedo])
 
   // Les blocs par défaut sont maintenant créés automatiquement par l'API
   // Plus besoin de getDefaultBlockTypes() - l'API crée les blocs si aucun n'existe
@@ -2240,6 +2262,12 @@ function ContainerChildrenRenderer({
                         onClick={(e) => {
                           e.stopPropagation()
                           // Sélectionner l'enfant si on clique dans son contenu
+                          onSelectChild(child.id)
+                        }}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation()
+                          e.preventDefault()
+                          // Sélectionner l'enfant et ouvrir les paramètres
                           onSelectChild(child.id)
                         }}
                         onMouseDown={(e) => {

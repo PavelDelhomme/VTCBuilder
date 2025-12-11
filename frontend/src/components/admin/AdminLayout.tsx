@@ -142,7 +142,7 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
           <header className="hidden lg:block bg-white dark:bg-gray-800 shadow dark:shadow-gray-900/50 flex-shrink-0">
             <div className="w-full py-4 px-4 sm:px-6 lg:px-8">
               <div className="flex flex-col gap-4">
-                {/* First row: Title and theme toggle */}
+                {/* First row: Title, headerActions and theme toggle */}
                 <div className="flex items-center justify-between gap-4 min-w-0">
                   <div className="flex items-center space-x-4 min-w-0 flex-1">
                     <button
@@ -166,6 +166,12 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
                         </div>
                       )}
                     </div>
+                    {/* Header Actions - Intégrés dans la même ligne */}
+                    {headerActions && (
+                      <div className="flex items-center gap-2 flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-shrink min-w-0">
+                        {headerActions}
+                      </div>
+                    )}
                   </div>
                   {/* Back Button and Dark Mode Toggle */}
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -200,12 +206,6 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
                     </button>
                   </div>
                 </div>
-                {/* Second row: Header actions - can wrap to multiple lines */}
-                {headerActions && (
-                  <div className="w-full min-w-0">
-                    {headerActions}
-                  </div>
-                )}
               </div>
             </div>
           </header>

@@ -286,33 +286,58 @@ function BlockPreview({
   const activeBlock = activeId ? blocks.find(b => b.id === activeId) : null
 
   return (
-    <div className="w-full h-full bg-white dark:bg-gray-900 overflow-y-auto flex flex-col block-preview-container" data-theme-isolated>
+    <div 
+      className={`w-full h-full overflow-y-auto flex flex-col block-preview-container ${theme === 'dark' ? 'dark' : ''}`}
+      style={{
+        backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
+        color: theme === 'dark' ? '#f9fafb' : '#111827'
+      }}
+      data-theme-isolated
+      data-preview-theme={theme}
+    >
       {/* Preview Header - Simulated Browser Bar */}
-      <div className={`border-b px-4 py-2 flex items-center gap-2 flex-shrink-0 ${
-        theme === 'dark' 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-gray-50 border-gray-200'
-      }`}>
+      <div 
+        className="border-b px-4 py-2 flex items-center gap-2 flex-shrink-0"
+        style={{
+          backgroundColor: theme === 'dark' ? '#1f2937' : '#f9fafb',
+          borderColor: theme === 'dark' ? '#374151' : '#e5e7eb'
+        }}
+      >
         <div className="flex gap-1.5">
           <div className="w-3 h-3 rounded-full bg-red-400"></div>
           <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
           <div className="w-3 h-3 rounded-full bg-green-400"></div>
         </div>
-        <div className="flex-1 bg-white dark:bg-gray-900 rounded px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
+        <div 
+          className="flex-1 rounded px-3 py-1 text-xs"
+          style={{
+            backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
+            color: theme === 'dark' ? '#9ca3af' : '#4b5563'
+          }}
+        >
           localhost:9494/
         </div>
         {inspectorMode && (
-          <div className="text-xs text-blue-600 dark:text-blue-400 px-2 font-semibold">
+          <div 
+            className="text-xs px-2 font-semibold"
+            style={{ color: theme === 'dark' ? '#60a5fa' : '#2563eb' }}
+          >
             🔍 Mode Inspecteur Actif - Cliquez sur un élément pour le sélectionner
           </div>
         )}
         {isEditable && !inspectorMode && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
+          <div 
+            className="text-xs px-2"
+            style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+          >
             💡 Double-cliquez pour modifier • Clic droit pour menu contextuel
           </div>
         )}
         {isInteractive && !inspectorMode && !isEditable && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
+          <div 
+            className="text-xs px-2"
+            style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+          >
             Mode prévisualisation interactive
           </div>
         )}
@@ -330,14 +355,33 @@ function BlockPreview({
             {blocks.length === 0 ? (
               <div className="text-center py-20 lg:py-32">
                 <div className="max-w-md mx-auto">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div 
+                    className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
+                    style={{
+                      backgroundColor: theme === 'dark' ? '#1f2937' : '#f3f4f6'
+                    }}
+                  >
+                    <svg 
+                      className="w-10 h-10" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                      style={{ color: theme === 'dark' ? '#4b5563' : '#9ca3af' }}
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                   </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-lg font-medium mb-2">Aucun contenu à prévisualiser</p>
-                  <p className="text-sm text-gray-400 dark:text-gray-500">
+                  <p 
+                    className="text-lg font-medium mb-2"
+                    style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
+                  >
+                    Aucun contenu à prévisualiser
+                  </p>
+                  <p 
+                    className="text-sm"
+                    style={{ color: theme === 'dark' ? '#6b7280' : '#9ca3af' }}
+                  >
                     Ajoutez des blocs dans l'éditeur à gauche pour voir la prévisualisation ici
                   </p>
                 </div>
@@ -467,13 +511,17 @@ function SortablePreviewBlock({
 }
 
 // FAQ Section Component with state
-function FAQSectionPreview({ title, items, wrapperStyles }: { title?: string; items: any[]; wrapperStyles?: React.CSSProperties }) {
+function FAQSectionPreview({ title, items, wrapperStyles, theme = 'light' }: { title?: string; items: any[]; wrapperStyles?: React.CSSProperties; theme?: 'light' | 'dark' }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const isDark = theme === 'dark'
   
   return (
     <div style={wrapperStyles} className="mb-6">
       {title && (
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-gray-100 mb-12">
+        <h2 
+          className="text-3xl md:text-4xl font-bold text-center mb-12"
+          style={{ color: isDark ? '#f9fafb' : '#111827' }}
+        >
           {title}
         </h2>
       )}
@@ -482,13 +530,32 @@ function FAQSectionPreview({ title, items, wrapperStyles }: { title?: string; it
           items.map((item: any, i: number) => (
             <div
               key={i}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden"
+              className="rounded-xl shadow-lg overflow-hidden"
+              style={{
+                backgroundColor: isDark ? '#1f2937' : '#ffffff'
+              }}
             >
               <button
                 onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-gray-50 dark:bg-gray-900 transition-colors"
+                className="w-full px-6 py-5 flex items-center justify-between text-left transition-colors"
+                style={{
+                  backgroundColor: openIndex === i ? (isDark ? '#374151' : '#f9fafb') : 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  if (openIndex !== i) {
+                    e.currentTarget.style.backgroundColor = isDark ? '#374151' : '#f9fafb'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (openIndex !== i) {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }
+                }}
               >
-                <span className="font-semibold text-gray-900 dark:text-gray-100 pr-8">
+                <span 
+                  className="font-semibold pr-8"
+                  style={{ color: isDark ? '#f9fafb' : '#111827' }}
+                >
                   {item.question || `Question ${i + 1}`}
                 </span>
                 <span className="text-blue-600 text-xl flex-shrink-0">
@@ -496,14 +563,26 @@ function FAQSectionPreview({ title, items, wrapperStyles }: { title?: string; it
                 </span>
               </button>
               {openIndex === i && (
-                <div className="px-6 pb-5 text-gray-600 dark:text-gray-400 border-t border-gray-100">
+                <div 
+                  className="px-6 pb-5 border-t"
+                  style={{
+                    color: isDark ? '#9ca3af' : '#4b5563',
+                    borderColor: isDark ? '#374151' : '#e5e7eb'
+                  }}
+                >
                   <p className="pt-4">{item.answer || 'Réponse...'}</p>
                 </div>
               )}
             </div>
           ))
         ) : (
-          <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
+          <div 
+            className="text-center py-8 border-2 border-dashed rounded"
+            style={{
+              color: isDark ? '#9ca3af' : '#9ca3af',
+              borderColor: isDark ? '#4b5563' : '#d1d5db'
+            }}
+          >
             Aucune question FAQ
           </div>
         )}
@@ -817,9 +896,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'text':
+    case 'text': {
+      const isDark = theme === 'dark'
       return (
-        <div className="mb-6 prose dark:prose-invert max-w-none" style={{ textAlign: contentStyles.textAlign }}>
+        <div className="mb-6 prose max-w-none" style={{ 
+          textAlign: contentStyles.textAlign,
+          color: isDark ? '#d1d5db' : undefined
+        }}>
           <div 
             dangerouslySetInnerHTML={{ 
               __html: (block.data.content || '').replace(/\n/g, '<br />') 
@@ -828,15 +911,24 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               ...contentStyles,
               fontSize: block.styles?.font_size || '1rem',
               lineHeight: block.styles?.line_height || '1.6',
+              color: isDark ? '#d1d5db' : (contentStyles.color || '#111827'),
             }}
           />
         </div>
       )
+    }
 
-    case 'image':
+    case 'image': {
+      const isDark = theme === 'dark'
       if (!block.data.url && !block.data.src) {
         return (
-          <div className="mb-6 p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded text-center text-gray-400">
+          <div 
+            className="mb-6 p-8 border-2 border-dashed rounded text-center"
+            style={{
+              borderColor: isDark ? '#4b5563' : '#d1d5db',
+              color: isDark ? '#9ca3af' : '#9ca3af'
+            }}
+          >
             Image non configurée
           </div>
         )
@@ -864,12 +956,16 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             />
           </div>
           {block.data.caption && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 italic mt-2 text-center">
+            <p 
+              className="text-sm italic mt-2 text-center"
+              style={{ color: theme === 'dark' ? '#9ca3af' : '#4b5563' }}
+            >
               {block.data.caption}
             </p>
           )}
         </div>
       )
+    }
 
     case 'button':
       const buttonSizeClass = block.data.size === 'xs' ? 'px-2 py-1 text-xs' :
@@ -883,10 +979,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         : block.data.style === 'secondary'
         ? 'bg-gray-600 hover:bg-gray-700 text-white'
         : block.data.style === 'ghost'
-        ? 'bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+        ? `bg-transparent ${theme === 'dark' ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`
         : block.data.style === 'link'
         ? 'bg-transparent text-blue-600 hover:underline'
-        : 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900'
+        : `border-2 border-blue-600 text-blue-600 ${theme === 'dark' ? 'hover:bg-blue-900' : 'hover:bg-blue-50'}`
       
       const buttonAlign = block.data.align || contentStyles.textAlign || 'left'
       
@@ -911,10 +1007,18 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'video':
+    case 'video': {
+      const isDark = theme === 'dark'
       if (!block.data.url) {
         return (
-          <div style={wrapperStyles} className="mb-6 p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded text-center text-gray-400">
+          <div 
+            style={{
+              ...wrapperStyles,
+              borderColor: isDark ? '#4b5563' : '#d1d5db',
+              color: isDark ? '#9ca3af' : '#9ca3af'
+            }} 
+            className="mb-6 p-8 border-2 border-dashed rounded text-center"
+          >
             Vidéo non configurée
           </div>
         )
@@ -924,16 +1028,20 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       return (
         <div style={wrapperStyles} className="mb-6">
           {block.data.title && (
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <h3 
+              className="text-lg font-semibold mb-2"
+              style={{ color: isDark ? '#f9fafb' : '#111827' }}
+            >
               {block.data.title}
             </h3>
           )}
           <div 
-            className="bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mx-auto"
+            className="rounded-lg overflow-hidden mx-auto"
             style={{
               width: `${videoWidth}%`,
               height: `${videoHeight}px`,
-              maxWidth: '100%'
+              maxWidth: '100%',
+              backgroundColor: isDark ? '#1f2937' : '#f3f4f6'
             }}
           >
             <iframe
@@ -945,6 +1053,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
     case 'spacer':
       const spacerDirection = block.data.direction || 'vertical'
@@ -985,11 +1094,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         return (
           <div style={wrapperStyles} className="mb-6 flex items-center justify-center">
             <div 
-              className={`border-l-2 border-gray-400 dark:border-gray-600`}
+              className="border-l-2"
               style={{ 
                 borderStyle: dividerStyle,
                 height: `${dividerHeight}px`,
-                margin: block.styles?.margin || '0 1rem'
+                margin: block.styles?.margin || '0 1rem',
+                borderColor: theme === 'dark' ? '#4b5563' : '#9ca3af'
               }}
             />
           </div>
@@ -1017,9 +1127,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       const variant = block.data.variant || 'info'
       const variantStyles = {
         info: {
-          bg: 'bg-blue-50 dark:bg-blue-900/20',
-          border: 'border-blue-200 dark:border-blue-800',
-          text: 'text-blue-800 dark:text-blue-200',
+          bg: theme === 'dark' ? '#1e3a5f' : '#dbeafe',
+          border: theme === 'dark' ? '#1e40af' : '#93c5fd',
+          text: theme === 'dark' ? '#bfdbfe' : '#1e40af',
           icon: (
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
@@ -1027,9 +1137,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           ),
         },
         success: {
-          bg: 'bg-green-50 dark:bg-green-900/20',
-          border: 'border-green-200 dark:border-green-800',
-          text: 'text-green-800 dark:text-green-200',
+          bg: theme === 'dark' ? '#1e3a2e' : '#d1fae5',
+          border: theme === 'dark' ? '#166534' : '#6ee7b7',
+          text: theme === 'dark' ? '#86efac' : '#166534',
           icon: (
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -1037,9 +1147,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           ),
         },
         warning: {
-          bg: 'bg-yellow-50 dark:bg-yellow-900/20',
-          border: 'border-yellow-200 dark:border-yellow-800',
-          text: 'text-yellow-800 dark:text-yellow-200',
+          bg: theme === 'dark' ? '#422006' : '#fef3c7',
+          border: theme === 'dark' ? '#854d0e' : '#fde047',
+          text: theme === 'dark' ? '#fde047' : '#854d0e',
           icon: (
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -1047,9 +1157,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           ),
         },
         error: {
-          bg: 'bg-red-50 dark:bg-red-900/20',
-          border: 'border-red-200 dark:border-red-800',
-          text: 'text-red-800 dark:text-red-200',
+          bg: theme === 'dark' ? '#7f1d1d' : '#fee2e2',
+          border: theme === 'dark' ? '#991b1b' : '#fca5a5',
+          text: theme === 'dark' ? '#fca5a5' : '#991b1b',
           icon: (
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
@@ -1061,7 +1171,14 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       
       return (
         <div style={wrapperStyles} className="mb-6">
-          <div className={`${style.bg} ${style.border} border-l-4 rounded-lg p-4 ${style.text}`}>
+          <div 
+            className="border-l-4 rounded-lg p-4"
+            style={{
+              backgroundColor: style.bg as string,
+              borderColor: style.border as string,
+              color: style.text as string
+            }}
+          >
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 {style.icon}
@@ -1235,16 +1352,28 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             </div>
           ) : (
             // Empty container placeholder
-            <div className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-center text-gray-500 dark:text-gray-400">
-              <div className="text-2xl mb-2">📦</div>
-              <div className="text-sm font-semibold">Conteneur vide</div>
-              <div className="text-xs mt-1">Ajoutez des blocs dans ce conteneur</div>
-            </div>
+            (() => {
+              const isDark = theme === 'dark'
+              return (
+                <div 
+                  className="p-6 border-2 border-dashed rounded-lg text-center"
+                  style={{
+                    borderColor: isDark ? '#4b5563' : '#d1d5db',
+                    color: isDark ? '#9ca3af' : '#6b7280'
+                  }}
+                >
+                  <div className="text-2xl mb-2">📦</div>
+                  <div className="text-sm font-semibold">Conteneur vide</div>
+                  <div className="text-xs mt-1">Ajoutez des blocs dans ce conteneur</div>
+                </div>
+              )
+            })()
           )}
         </div>
       )
     
-    case 'flex-container':
+    case 'flex-container': {
+      const isDark = theme === 'dark'
       return (
         <div 
           style={{ 
@@ -1256,27 +1385,45 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             minHeight: block.minHeight || '200px',
             height: block.height || 'auto',
             maxHeight: block.maxHeight || 'none',
+            borderColor: isDark ? '#4b5563' : '#d1d5db',
+            borderWidth: '2px',
+            borderStyle: 'dashed',
           }} 
-          className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg"
+          className="p-6 rounded-lg"
         >
-          <div className="text-center text-gray-500 dark:text-gray-400 flex-1">
+          <div 
+            className="text-center flex-1"
+            style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
+          >
             <div className="text-2xl mb-2">📐</div>
             <div className="text-sm font-semibold">Flex Container</div>
             <div className="text-xs mt-1">Direction: {block.data?.direction || 'row'}</div>
             {block.children && block.children.length > 0 && (
               <div className="mt-4 space-y-2">
-                {block.children.map((child: any, idx: number) => (
-                  <div key={idx} className="p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
-                    Bloc {idx + 1}
-                  </div>
-                ))}
+                {block.children.map((child: any, idx: number) => {
+                  const isDark = theme === 'dark'
+                  return (
+                    <div 
+                      key={idx} 
+                      className="p-2 rounded text-xs"
+                      style={{
+                        backgroundColor: isDark ? '#1f2937' : '#f3f4f6',
+                        color: isDark ? '#d1d5db' : '#374151'
+                      }}
+                    >
+                      Bloc {idx + 1}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
         </div>
       )
+    }
     
     case 'grid-container': {
+      const isDark = theme === 'dark'
       const gridColumns = block.data?.columns || 'repeat(3, 1fr)'
       const gridRows = block.data?.rows || 'auto'
       const gridGap = block.data?.gap || '1rem'
@@ -1291,10 +1438,16 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             minHeight: block.minHeight || '200px',
             height: block.height || 'auto',
             maxHeight: block.maxHeight || 'none',
+            borderColor: isDark ? '#4b5563' : '#d1d5db',
+            borderWidth: '2px',
+            borderStyle: 'dashed',
           }} 
-          className="p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg"
+          className="p-6 rounded-lg"
         >
-          <div className="text-center text-gray-500 dark:text-gray-400">
+          <div 
+            className="text-center"
+            style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
+          >
             <div className="text-2xl mb-2">⚏</div>
             <div className="text-sm font-semibold">Grille</div>
             <div className="text-xs mt-1">Colonnes: {gridColumns}</div>
@@ -1302,7 +1455,14 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             {block.children && block.children.length > 0 && (
               <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: gridColumns, gridTemplateRows: gridRows }}>
                 {block.children.map((child: any, idx: number) => (
-                  <div key={idx} className="p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
+                  <div 
+                    key={idx} 
+                    className="p-2 rounded text-xs"
+                    style={{
+                      backgroundColor: isDark ? '#1f2937' : '#f3f4f6',
+                      color: isDark ? '#d1d5db' : '#374151'
+                    }}
+                  >
                     Bloc {idx + 1}
                   </div>
                 ))}
@@ -1365,14 +1525,27 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       const hasHeader = block.data.has_header || false
       const bordered = block.data.bordered !== false
       
+      const isDark = theme === 'dark'
       return (
         <div style={wrapperStyles} className="mb-6 overflow-x-auto">
-          <table className={`w-full ${bordered ? 'border border-gray-300 dark:border-gray-600' : ''}`}>
+          <table 
+            className="w-full"
+            style={{
+              border: bordered ? `1px solid ${isDark ? '#4b5563' : '#d1d5db'}` : undefined
+            }}
+          >
             {hasHeader && tableData.length > 0 && (
               <thead>
-                <tr className="bg-gray-100 dark:bg-gray-800">
+                <tr style={{ backgroundColor: isDark ? '#1f2937' : '#f3f4f6' }}>
                   {tableData[0].map((cell: string, colIndex: number) => (
-                    <th key={colIndex} className={`px-4 py-2 text-left font-semibold text-gray-900 dark:text-gray-100 ${bordered ? 'border border-gray-300 dark:border-gray-600' : ''}`}>
+                    <th 
+                      key={colIndex} 
+                      className={`px-4 py-2 text-left font-semibold ${bordered ? 'border' : ''}`}
+                      style={{
+                        color: isDark ? '#f3f4f6' : '#111827',
+                        borderColor: bordered ? (isDark ? '#4b5563' : '#d1d5db') : undefined
+                      }}
+                    >
                       {cell || `En-tête ${colIndex + 1}`}
                     </th>
                   ))}
@@ -1381,9 +1554,28 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             )}
             <tbody>
               {(hasHeader ? tableData.slice(1) : tableData).map((row: string[], rowIndex: number) => (
-                <tr key={rowIndex} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                <tr 
+                  key={rowIndex}
+                  style={{
+                    backgroundColor: 'transparent',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#f9fafb'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }}
+                >
                   {row.map((cell: string, colIndex: number) => (
-                    <td key={colIndex} className={`px-4 py-2 text-gray-700 dark:text-gray-300 ${bordered ? 'border border-gray-300 dark:border-gray-600' : ''}`}>
+                    <td 
+                      key={colIndex} 
+                      className={`px-4 py-2 ${bordered ? 'border' : ''}`}
+                      style={{
+                        color: isDark ? '#d1d5db' : '#374151',
+                        borderColor: bordered ? (isDark ? '#4b5563' : '#d1d5db') : undefined
+                      }}
+                    >
                       {cell || `Cellule ${rowIndex + 1},${colIndex + 1}`}
                     </td>
                   ))}
@@ -1394,34 +1586,58 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'paragraph':
+    case 'paragraph': {
+      const isDark = theme === 'dark'
       return (
         <div style={wrapperStyles} className="mb-6">
-          <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+          <p 
+            className="text-base leading-relaxed whitespace-pre-wrap"
+            style={{ color: isDark ? '#d1d5db' : '#374151' }}
+          >
             {block.data.content || 'Paragraphe vide'}
           </p>
         </div>
       )
+    }
 
-    case 'line':
+    case 'line': {
+      const isDark = theme === 'dark'
       return (
         <div style={wrapperStyles} className="mb-6">
-          <span className="text-base text-gray-700 dark:text-gray-300">
+          <span 
+            className="text-base"
+            style={{ color: isDark ? '#d1d5db' : '#374151' }}
+          >
             {block.data.text || 'Texte sur une ligne'}
           </span>
         </div>
       )
+    }
 
-    case 'form-newsletter':
+    case 'form-newsletter': {
+      const isDark = theme === 'dark'
       return (
-        <div style={wrapperStyles} className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+        <div 
+          style={{
+            ...wrapperStyles,
+            backgroundColor: isDark ? '#1f2937' : '#ffffff',
+            borderColor: isDark ? '#374151' : '#e5e7eb'
+          }} 
+          className="mb-6 p-6 rounded-lg shadow-md border"
+        >
           {block.data.title && (
-            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <h3 
+              className="text-xl font-bold mb-2"
+              style={{ color: isDark ? '#f3f4f6' : '#111827' }}
+            >
               {block.data.title}
             </h3>
           )}
           {block.data.description && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p 
+              className="text-sm mb-4"
+              style={{ color: isDark ? '#9ca3af' : '#4b5563' }}
+            >
               {block.data.description}
             </p>
           )}
@@ -1429,7 +1645,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             <input
               type="email"
               placeholder="Votre email"
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              style={{
+                borderColor: isDark ? '#4b5563' : '#d1d5db',
+                backgroundColor: isDark ? '#374151' : '#ffffff',
+                color: isDark ? '#f3f4f6' : '#111827'
+              }}
             />
             <button
               type="submit"
@@ -1440,15 +1661,22 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </form>
         </div>
       )
+    }
 
-    case 'form-search':
+    case 'form-search': {
+      const isDark = theme === 'dark'
       return (
         <div style={wrapperStyles} className="mb-6">
           <form className="flex gap-2">
             <input
               type="search"
               placeholder={block.data.placeholder || 'Rechercher...'}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              style={{
+                borderColor: isDark ? '#4b5563' : '#d1d5db',
+                backgroundColor: isDark ? '#1f2937' : '#ffffff',
+                color: isDark ? '#f3f4f6' : '#111827'
+              }}
             />
             <button
               type="submit"
@@ -1460,56 +1688,99 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'form-inscription':
+    case 'form-inscription': {
+      const isDark = theme === 'dark'
       return (
-        <div style={wrapperStyles} className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+        <div 
+          style={{
+            ...wrapperStyles,
+            backgroundColor: isDark ? '#1f2937' : '#ffffff',
+            borderColor: isDark ? '#374151' : '#e5e7eb'
+          }} 
+          className="mb-6 p-6 rounded-lg shadow-md border"
+        >
           {block.data.title && (
-            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            <h3 
+              className="text-xl font-bold mb-4"
+              style={{ color: isDark ? '#f3f4f6' : '#111827' }}
+            >
               {block.data.title}
             </h3>
           )}
           <form className="space-y-4">
             {block.data.show_name !== false && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label 
+                  className="block text-sm font-medium mb-1"
+                  style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                >
                   Nom complet
                 </label>
                 <input
                   type="text"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  style={{
+                    borderColor: isDark ? '#4b5563' : '#d1d5db',
+                    backgroundColor: isDark ? '#374151' : '#ffffff',
+                    color: isDark ? '#f3f4f6' : '#111827'
+                  }}
                 />
               </div>
             )}
             {block.data.show_email !== false && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label 
+                  className="block text-sm font-medium mb-1"
+                  style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                >
                   Email
                 </label>
                 <input
                   type="email"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  style={{
+                    borderColor: isDark ? '#4b5563' : '#d1d5db',
+                    backgroundColor: isDark ? '#374151' : '#ffffff',
+                    color: isDark ? '#f3f4f6' : '#111827'
+                  }}
                 />
               </div>
             )}
             {block.data.show_password !== false && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label 
+                  className="block text-sm font-medium mb-1"
+                  style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                >
                   Mot de passe
                 </label>
                 <input
                   type="password"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  style={{
+                    borderColor: isDark ? '#4b5563' : '#d1d5db',
+                    backgroundColor: isDark ? '#374151' : '#ffffff',
+                    color: isDark ? '#f3f4f6' : '#111827'
+                  }}
                 />
               </div>
             )}
             {block.data.show_phone && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label 
+                  className="block text-sm font-medium mb-1"
+                  style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                >
                   Téléphone
                 </label>
                 <input
                   type="tel"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  style={{
+                    borderColor: isDark ? '#4b5563' : '#d1d5db',
+                    backgroundColor: isDark ? '#374151' : '#ffffff',
+                    color: isDark ? '#f3f4f6' : '#111827'
+                  }}
                 />
               </div>
             )}
@@ -1897,15 +2168,30 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price)
         }
         
+        const isDark = theme === 'dark'
+        
         return (
-          <div style={wrapperStyles} className="mb-6 bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 overflow-visible">
+          <div 
+            style={{
+              ...wrapperStyles,
+              backgroundColor: isDark ? '#111827' : '#f9fafb',
+              color: isDark ? '#f9fafb' : '#111827'
+            }} 
+            className={`mb-6 py-12 px-4 sm:px-6 lg:px-8 overflow-visible ${isDark ? 'dark' : ''}`}
+          >
             {pricingCardsBlock.data.show_title !== false && pricingCardsBlock.data.title && (
               <div className="text-center mb-4">
-                <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-gray-100 mb-4">
+                <h2 
+                  className="text-3xl md:text-4xl font-bold text-center mb-4"
+                  style={{ color: isDark ? '#f9fafb' : '#111827' }}
+                >
                   {pricingCardsBlock.data.title}
                 </h2>
                 {pricingCardsBlock.data.subtitle && (
-                  <p className="text-center text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
+                  <p 
+                    className="text-center mb-12 max-w-2xl mx-auto"
+                    style={{ color: isDark ? '#d1d5db' : '#4b5563' }}
+                  >
                     {pricingCardsBlock.data.subtitle}
                   </p>
                 )}
@@ -1930,12 +2216,29 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                       : null
                     
                     const buttonStyle = plan.button_style || (plan.is_featured ? 'primary' : 'secondary')
-                    const buttonStylesMap: Record<string, string> = {
-                      primary: 'bg-blue-600 text-white hover:bg-blue-700',
-                      secondary: 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600',
-                      outline: 'bg-transparent border-2 border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900'
+                    // Styles de bouton basés sur le thème
+                    const getButtonStyle = (style: string) => {
+                      if (style === 'primary') {
+                        return {
+                          backgroundColor: '#2563eb',
+                          color: '#ffffff',
+                          border: 'none'
+                        }
+                      } else if (style === 'secondary') {
+                        return {
+                          backgroundColor: isDark ? '#374151' : '#e5e7eb',
+                          color: isDark ? '#ffffff' : '#111827',
+                          border: `1px solid ${isDark ? '#4b5563' : '#d1d5db'}`
+                        }
+                      } else { // outline
+                        return {
+                          backgroundColor: 'transparent',
+                          color: '#2563eb',
+                          border: '2px solid #2563eb'
+                        }
+                      }
                     }
-                    const buttonClasses = buttonStylesMap[buttonStyle] || buttonStylesMap.primary
+                    const buttonStyleObj = getButtonStyle(buttonStyle)
                     
                     const buttonUrl = plan.button_url || `/register?plan=${plan.slug || plan.id || index}`
                     const buttonText = plan.button_text || `Choisir ${plan.name || 'ce plan'}`
@@ -1943,11 +2246,15 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                     return (
                       <div
                         key={plan.id || index}
-                        className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg relative min-w-0 overflow-visible flex flex-col ${
+                        className={`rounded-xl shadow-lg relative min-w-0 overflow-visible flex flex-col ${
                           plan.is_featured 
                             ? 'ring-4 ring-blue-500 scale-105 sm:scale-110 z-10 shadow-2xl p-6 sm:p-8 lg:p-10' 
                             : 'p-4 sm:p-6 lg:p-8 shadow-md hover:shadow-lg transition-shadow'
                         } ${(plan.badge || plan.is_featured) ? 'pt-10 sm:pt-12 lg:pt-14' : ''} min-h-[500px] sm:min-h-[550px]`}
+                        style={{
+                          backgroundColor: isDark ? '#1f2937' : '#ffffff',
+                          color: isDark ? '#f9fafb' : '#111827'
+                        }}
                       >
                         {(plan.badge || plan.is_featured) && (
                           <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-20">
@@ -1960,16 +2267,22 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                         )}
                         
                         <div className="flex-grow flex flex-col">
-                          <h3 className={`font-bold text-gray-900 dark:text-gray-100 mb-2 ${
-                            plan.is_featured ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'
-                          }`}>
+                          <h3 
+                            className={`font-bold mb-2 ${
+                              plan.is_featured ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'
+                            }`}
+                            style={{ color: isDark ? '#f9fafb' : '#111827' }}
+                          >
                             {plan.name || `Plan ${index + 1}`}
                           </h3>
                           
                           {plan.description && (
-                            <p className={`text-gray-600 dark:text-gray-400 mb-6 ${
-                              plan.is_featured ? 'text-base sm:text-lg' : 'text-sm sm:text-base'
-                            }`}>
+                            <p 
+                              className={`mb-6 ${
+                                plan.is_featured ? 'text-base sm:text-lg' : 'text-sm sm:text-base'
+                              }`}
+                              style={{ color: isDark ? '#d1d5db' : '#4b5563' }}
+                            >
                               {plan.description}
                             </p>
                           )}
@@ -1977,19 +2290,31 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                         <div className={`mb-6 ${plan.is_featured ? 'mb-8' : ''}`}>
                           {priceMonthly > 0 ? (
                             <>
-                              <span className={`font-extrabold text-gray-900 dark:text-gray-100 ${
-                                plan.is_featured ? 'text-5xl sm:text-6xl' : 'text-4xl sm:text-5xl'
-                              }`}>
+                              <span 
+                                className={`font-extrabold ${
+                                  plan.is_featured ? 'text-5xl sm:text-6xl' : 'text-4xl sm:text-5xl'
+                                }`}
+                                style={{ color: isDark ? '#f9fafb' : '#111827' }}
+                              >
                                 {formatPrice(priceMonthly)}
                               </span>
-                              <span className={`text-gray-600 dark:text-gray-400 ${
-                                plan.is_featured ? 'text-lg' : 'text-base'
-                              }`}>/mois</span>
+                              <span 
+                                className={plan.is_featured ? 'text-lg' : 'text-base'}
+                                style={{ color: isDark ? '#d1d5db' : '#4b5563' }}
+                              >
+                                /mois
+                              </span>
                               {priceYearly && priceYearly > 0 && (
-                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                <div 
+                                  className="text-sm mt-1"
+                                  style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
+                                >
                                   ou {formatPrice(priceYearly)}/an 
                                   {block.data?.show_discount !== false && priceMonthly > 0 && priceYearly < (priceMonthly * 12) && (
-                                    <span className="ml-1 text-green-600 dark:text-green-400 font-semibold">
+                                    <span 
+                                      className="ml-1 font-semibold"
+                                      style={{ color: isDark ? '#34d399' : '#059669' }}
+                                    >
                                       (économisez {Math.round((1 - (priceYearly / (priceMonthly * 12))) * 100)}%)
                                     </span>
                                   )}
@@ -1997,7 +2322,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                               )}
                             </>
                           ) : (
-                            <span className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                            <span 
+                              className="text-2xl font-bold"
+                              style={{ color: isDark ? '#9ca3af' : '#4b5563' }}
+                            >
                               Gratuit
                             </span>
                           )}
@@ -2010,7 +2338,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                               feature && (
                                 <li key={i} className="flex items-start">
                                   <span className="text-green-500 mr-2 mt-0.5 flex-shrink-0">✓</span>
-                                  <span className="text-gray-700 dark:text-gray-300 text-sm">{feature}</span>
+                                  <span 
+                                    className="text-sm"
+                                    style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                                  >
+                                    {feature}
+                                  </span>
                                 </li>
                               )
                             ))
@@ -2020,19 +2353,25 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                               {plan.max_sites !== undefined && plan.max_sites !== null && (
                                 <li className="flex items-center">
                                   <span className="text-green-500 mr-2">✓</span>
-                                  <span className="text-gray-700 dark:text-gray-300">{plan.max_sites} site{(plan.max_sites || 1) > 1 ? 's' : ''}</span>
+                                  <span style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+                                    {plan.max_sites} site{(plan.max_sites || 1) > 1 ? 's' : ''}
+                                  </span>
                                 </li>
                               )}
                               {plan.max_users !== undefined && plan.max_users !== null && (
                                 <li className="flex items-center">
                                   <span className="text-green-500 mr-2">✓</span>
-                                  <span className="text-gray-700 dark:text-gray-300">{plan.max_users} utilisateur{(plan.max_users || 1) > 1 ? 's' : ''} max</span>
+                                  <span style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+                                    {plan.max_users} utilisateur{(plan.max_users || 1) > 1 ? 's' : ''} max
+                                  </span>
                                 </li>
                               )}
                               {plan.max_storage_gb !== undefined && plan.max_storage_gb !== null && (
                                 <li className="flex items-center">
                                   <span className="text-green-500 mr-2">✓</span>
-                                  <span className="text-gray-700 dark:text-gray-300">{plan.max_storage_gb} GB de stockage</span>
+                                  <span style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+                                    {plan.max_storage_gb} GB de stockage
+                                  </span>
                                 </li>
                               )}
                             </>
@@ -2048,7 +2387,20 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                               plan.is_featured 
                                 ? 'py-4 text-lg shadow-lg' 
                                 : 'py-3 text-base'
-                            } ${buttonClasses}`}
+                            }`}
+                            style={buttonStyleObj}
+                            onMouseEnter={(e) => {
+                              if (buttonStyle === 'primary') {
+                                e.currentTarget.style.backgroundColor = '#1d4ed8'
+                              } else if (buttonStyle === 'secondary') {
+                                e.currentTarget.style.backgroundColor = isDark ? '#4b5563' : '#d1d5db'
+                              } else {
+                                e.currentTarget.style.backgroundColor = isDark ? 'rgba(37, 99, 235, 0.1)' : 'rgba(37, 99, 235, 0.05)'
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              Object.assign(e.currentTarget.style, buttonStyleObj)
+                            }}
                           >
                             {buttonText}
                           </a>
@@ -2860,6 +3212,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     case 'features_grid': { // Alias pour compatibilité
       const features = block.data.features || []
       const columns = block.data.columns || 3
+      const isDark = theme === 'dark'
       // Déterminer les classes de grille en fonction du nombre de colonnes avec responsive amélioré
       const gridClasses = {
         1: 'grid-cols-1',
@@ -2869,27 +3222,97 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       }[columns] || 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
       
       return (
-        <div style={wrapperStyles} className="mb-6 w-full min-w-0 overflow-hidden">
+        <div 
+          style={{
+            ...wrapperStyles,
+            backgroundColor: isDark ? '#111827' : (block.styles?.background_color || 'transparent'),
+            // En mode clair, utiliser un fond transparent pour laisser voir le dégradé des cartes
+            color: isDark ? '#f9fafb' : '#111827'
+          }} 
+          className="mb-6 w-full min-w-0 overflow-hidden"
+        >
           {block.data.title && (
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-gray-100 mb-8 sm:mb-12 px-4">
+            <h2 
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12 px-4"
+              style={{ color: isDark ? '#f9fafb' : '#111827' }}
+            >
               {block.data.title}
             </h2>
           )}
           <div className={`grid ${gridClasses} gap-4 sm:gap-6 lg:gap-8 w-full min-w-0`}>
             {features.length > 0 ? (
-              features.map((feature: any, i: number) => (
-                <div key={i} className="text-center p-4 sm:p-6 rounded-lg hover:shadow-lg transition-shadow bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 min-w-0 overflow-hidden">
-                  <div className="text-4xl sm:text-5xl mb-3 sm:mb-4">{feature.icon || '✨'}</div>
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 break-words">
-                    {feature.title || `Fonctionnalité ${i + 1}`}
-                  </h3>
-                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 break-words">
-                    {feature.description || 'Description...'}
-                  </p>
-                </div>
-              ))
+              features.map((feature: any, i: number) => {
+                // Style sympa avec gradient et ombre comme le Hero
+                // En mode clair, utiliser un dégradé similaire au Hero (bleu-violet-rose)
+                const cardStyle: React.CSSProperties = {
+                  background: isDark 
+                    ? 'linear-gradient(135deg, #1f2937 0%, #111827 100%)'
+                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 50%, rgba(236, 72, 153, 0.05) 100%)',
+                  borderColor: isDark ? '#374151' : 'rgba(59, 130, 246, 0.2)',
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  boxShadow: isDark 
+                    ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+                    : '0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(147, 51, 234, 0.08)',
+                  transition: 'all 0.3s ease',
+                }
+                
+                return (
+                  <div 
+                    key={i} 
+                    className="text-center p-4 sm:p-6 rounded-xl hover:shadow-xl hover:scale-105 transition-all min-w-0 overflow-hidden relative group"
+                    style={cardStyle}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow = isDark
+                        ? '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)'
+                        : '0 10px 15px -3px rgba(59, 130, 246, 0.2), 0 4px 6px -2px rgba(147, 51, 234, 0.15)'
+                      // Renforcer le gradient au survol en mode clair
+                      if (!isDark) {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 50%, rgba(236, 72, 153, 0.1) 100%)'
+                        e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = cardStyle.boxShadow as string
+                      e.currentTarget.style.background = cardStyle.background as string
+                      e.currentTarget.style.borderColor = cardStyle.borderColor as string
+                    }}
+                  >
+                    {/* Effet de brillance au survol - Dégradé similaire au Hero */}
+                    <div 
+                      className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity rounded-xl"
+                      style={{
+                        background: isDark
+                          ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(147, 51, 234, 0.3) 100%)'
+                          : 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(147, 51, 234, 0.15) 50%, rgba(236, 72, 153, 0.15) 100%)'
+                      }}
+                    />
+                    <div className="text-4xl sm:text-5xl mb-3 sm:mb-4 relative z-10 transform group-hover:scale-110 transition-transform">
+                      {feature.icon || '✨'}
+                    </div>
+                    <h3 
+                      className="text-lg sm:text-xl font-bold mb-2 break-words relative z-10"
+                      style={{ color: isDark ? '#f9fafb' : '#111827' }}
+                    >
+                      {feature.title || `Fonctionnalité ${i + 1}`}
+                    </h3>
+                    <p 
+                      className="text-sm sm:text-base break-words relative z-10"
+                      style={{ color: isDark ? '#d1d5db' : '#4b5563' }}
+                    >
+                      {feature.description || 'Description...'}
+                    </p>
+                  </div>
+                )
+              })
             ) : (
-              <div className="col-span-full text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded">
+              <div 
+                className="col-span-full text-center py-8 border-2 border-dashed rounded"
+                style={{
+                  color: isDark ? '#9ca3af' : '#9ca3af',
+                  borderColor: isDark ? '#4b5563' : '#d1d5db'
+                }}
+              >
                 Aucune fonctionnalité
               </div>
             )}
@@ -3076,6 +3499,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           title={block.data.title}
           items={faqItems}
           wrapperStyles={wrapperStyles}
+          theme={theme}
         />
       )
 
@@ -3309,7 +3733,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                           <li key={linkIndex} className="break-words">
                             <a
                               href={link.url || '#'}
-                              className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors break-words`}
+                              className={`${isDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors break-words`}
                             >
                               {link.label || 'Lien'}
                             </a>
@@ -3332,24 +3756,24 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                 <div>
                   <h4 className={`font-bold mb-4 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Produit</h4>
                   <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    <li><a href="/#pricing" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Tarifs</a></li>
-                    <li><a href="/features" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Fonctionnalités</a></li>
-                    <li><a href="/templates" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Templates</a></li>
+                    <li><a href="/#pricing" className={`${isDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Tarifs</a></li>
+                    <li><a href="/features" className={`${isDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Fonctionnalités</a></li>
+                    <li><a href="/templates" className={`${isDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Templates</a></li>
                   </ul>
                 </div>
                 <div>
                   <h4 className={`font-bold mb-4 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Support</h4>
                   <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    <li><a href="/docs" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Documentation</a></li>
-                    <li><a href="/contact" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Contact</a></li>
-                    <li><a href="/faq" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>FAQ</a></li>
+                    <li><a href="/docs" className={`${isDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Documentation</a></li>
+                    <li><a href="/contact" className={`${isDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Contact</a></li>
+                    <li><a href="/faq" className={`${isDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>FAQ</a></li>
                   </ul>
                 </div>
                 <div>
                   <h4 className={`font-bold mb-4 ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>Légal</h4>
                   <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    <li><a href="/legal/terms" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>CGV</a></li>
-                    <li><a href="/legal/privacy" className={`hover:${isDark ? 'text-gray-100' : 'text-gray-900'} transition-colors`}>Confidentialité</a></li>
+                    <li><a href="/legal/terms" className={`${isDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>CGV</a></li>
+                    <li><a href="/legal/privacy" className={`${isDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Confidentialité</a></li>
                   </ul>
                 </div>
               </div>

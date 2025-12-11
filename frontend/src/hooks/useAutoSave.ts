@@ -68,8 +68,17 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
         await onSaveRef.current(data)
         lastSavedHashRef.current = currentHash
         setLastSaved(new Date())
-      } catch (error) {
-        console.error('Erreur sauvegarde automatique:', error)
+      } catch (error: any) {
+        // Ignorer silencieusement les erreurs de requêtes annulées ou les 403 pour /system-settings/
+        // Ces erreurs sont gérées par l'intercepteur Axios et ne doivent pas être loggées
+        if (error?.__shouldRejectSilently || error?.__isCancelled) {
+          // Requête bloquée silencieusement, ignorer
+          return
+        }
+        // Ne logger que les erreurs non silencieuses
+        if (!error?.silent && !error?.config?.__shouldRejectSilently) {
+          console.error('Erreur sauvegarde automatique:', error)
+        }
       } finally {
         setIsSaving(false)
       }
