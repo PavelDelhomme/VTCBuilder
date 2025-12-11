@@ -43,5 +43,7 @@ USER $user
 EXPOSE 8000
 
 # Run Django
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "vtcbuilder.wsgi:application"]
+# Optimisation: Réduire les workers pour économiser la mémoire
+# Utiliser 2 workers au lieu de 4 (réduction de 50% de la mémoire)
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "2", "--worker-class", "sync", "--timeout", "120", "--keep-alive", "5", "--max-requests", "1000", "--max-requests-jitter", "100", "vtcbuilder.wsgi:application"]
 

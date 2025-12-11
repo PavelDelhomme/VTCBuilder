@@ -9,12 +9,37 @@ services:
       POSTGRES_DB: vtcbuilder
       POSTGRES_USER: vtcbuilder_user
       POSTGRES_PASSWORD: vtcbuilder_password
+      # Optimisation: Réduire les connexions max et la mémoire partagée
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=fr_FR.UTF-8"
+    command: >
+      postgres
+      -c max_connections=50
+      -c shared_buffers=128MB
+      -c effective_cache_size=256MB
+      -c maintenance_work_mem=32MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=2GB
     ports:
       - "9496:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - vtcbuilder_network
+    # Optimisation: Limiter les ressources PostgreSQL
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vtcbuilder_user -d vtcbuilder"]
       interval: 10s
@@ -25,12 +50,22 @@ services:
   redis:
     image: redis:7-alpine
     container_name: vtcbuilder-redis
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --save ""
     ports:
       - "9497:6379"
     volumes:
       - redis_data:/data
     networks:
       - vtcbuilder_network
+    # Optimisation: Limiter les ressources Redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
 
   # Django Backend API
   backend:
@@ -43,6 +78,15 @@ services:
     volumes:
       - ./backend-django:/app
       - ./backend-django/logs:/var/log
+    # Optimisation: Limiter les ressources pour réduire la consommation
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     environment:
       DB_ENGINE: django_tenants.postgresql_backend
       DB_NAME: vtcbuilder
@@ -88,10 +132,21 @@ services:
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:9495
+      # Optimisation: Limiter l'utilisation mémoire de Node.js
+      - NODE_OPTIONS=--max-old-space-size=512
     ports:
       - "9494:3000"  # Next.js sur le port 9494
     networks:
       - vtcbuilder_network
+    # Optimisation: Limiter les ressources frontend
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   # PgAdmin (Development only)
   pgadmin:
