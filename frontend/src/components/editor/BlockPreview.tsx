@@ -2698,7 +2698,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
         </div>
       )
 
-    case 'hero':
+    case 'hero': {
       // Convertir le gradient Tailwind en CSS gradient
       const getGradientFromTailwind = (gradient: string) => {
         if (!gradient) return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
@@ -2724,13 +2724,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       
       // Déterminer le fond selon le type
       let heroBg = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' // Par défaut
-      const backgroundType = block.data.background_type || (block.data.background_image ? 'image' : 'gradient')
+      const heroPreviewBackgroundType = block.data.background_type || (block.data.background_image ? 'image' : 'gradient')
       
-      if (backgroundType === 'image' && block.data.background_image) {
+      if (heroPreviewBackgroundType === 'image' && block.data.background_image) {
         heroBg = `url(${block.data.background_image})`
-      } else if (backgroundType === 'color' && block.data.background_color) {
+      } else if (heroPreviewBackgroundType === 'color' && block.data.background_color) {
         heroBg = block.data.background_color
-      } else if (backgroundType === 'gradient' && block.data.background_gradient) {
+      } else if (heroPreviewBackgroundType === 'gradient' && block.data.background_gradient) {
         heroBg = getGradientFromTailwind(block.data.background_gradient)
       } else if (block.data.background_gradient) {
         // Fallback pour l'ancien format
@@ -2838,6 +2838,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
           </div>
         </div>
       )
+    }
 
     case 'features-grid':
     case 'features_grid': // Alias pour compatibilité
