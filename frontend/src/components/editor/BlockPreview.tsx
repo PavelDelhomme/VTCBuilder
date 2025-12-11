@@ -2907,10 +2907,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
       }
       
       // Déterminer le style d'arrière-plan
-      const backgroundType = block.data?.background_type || 'gradient'
+      const ctaPreviewBackgroundType = block.data?.background_type || 'gradient'
       let backgroundStyle: React.CSSProperties = {}
       
-      if (backgroundType === 'image' && block.data?.background_image) {
+      if (ctaPreviewBackgroundType === 'image' && block.data?.background_image) {
         backgroundStyle = {
           backgroundImage: block.data.background_overlay 
             ? `url(${block.data.background_image}), ${block.data.background_overlay}`
@@ -2922,7 +2922,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
         if (block.data.background_image_opacity !== undefined) {
           backgroundStyle.opacity = block.data.background_image_opacity
         }
-      } else if (backgroundType === 'solid') {
+      } else if (ctaPreviewBackgroundType === 'solid') {
         backgroundStyle.backgroundColor = block.data?.background_color || '#2563eb'
       } else {
         // Gradient par défaut - convertir depuis Tailwind si nécessaire
