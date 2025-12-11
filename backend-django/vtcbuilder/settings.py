@@ -335,23 +335,36 @@ LOGGING = {
             'filters': ['suppress_expected_401'],
             'formatter': 'simple',
         },
+        'file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10MB max par fichier (optimisation mémoire)
+            'backupCount': 3,  # Garder seulement 3 fichiers de backup
+            'formatter': 'verbose',
+            'level': 'ERROR',  # Seulement les erreurs dans les fichiers
+        },
         'null': {
             'class': 'logging.NullHandler',
         },
     },
     'root': {
         'handlers': ['console'],
-        'level': 'INFO',
+        'level': 'WARNING' if not DEBUG else 'INFO',  # Optimisation: Réduire les logs en dev
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'WARNING' if not DEBUG else 'INFO',  # Optimisation: Moins de logs
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'ERROR',  # Optimisation: Ne logger que les erreurs SQL
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['console'],
-            'level': 'WARNING',  # Log warnings but filter 401 for expected endpoints
+            'handlers': ['console', 'file'],
+            'level': 'ERROR',  # Optimisation: Seulement les erreurs
             'propagate': False,
             'filters': ['suppress_expected_401'],
         },
@@ -363,7 +376,7 @@ LOGGING = {
         },
         'django.server': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'WARNING' if not DEBUG else 'INFO',  # Optimisation: Moins de logs
             'propagate': False,
             'filters': ['suppress_expected_401'],
         },
