@@ -2841,7 +2841,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
     }
 
     case 'features-grid':
-    case 'features_grid': // Alias pour compatibilité
+    case 'features_grid': { // Alias pour compatibilité
       const features = block.data.features || []
       const columns = block.data.columns || 3
       // Déterminer les classes de grille en fonction du nombre de colonnes avec responsive amélioré
@@ -2880,6 +2880,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes }: { block: Block; 
           </div>
         </div>
       )
+    }
 
     case 'cta-section':
     case 'cta_section': // Alias pour compatibilité

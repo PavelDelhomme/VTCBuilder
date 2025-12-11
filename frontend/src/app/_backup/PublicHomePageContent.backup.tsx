@@ -12,7 +12,7 @@
  */
 
 import Link from 'next/link'
-import { useTheme } from '@/contexts/theme-context'
+import { useTheme } from '@/contexts/ThemeContext'
 import PublicHeader from '@/components/public/PublicHeader'
 import PublicFooter from '@/components/public/PublicFooter'
 import billingService, { PricingPlan } from '@/services/billing.service'
