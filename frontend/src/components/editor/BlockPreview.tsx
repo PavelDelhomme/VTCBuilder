@@ -6349,12 +6349,16 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       switch (align) {
         case 'left': {
           return 'mr-auto'
+        }
         case 'center': {
           return 'mx-auto'
+        }
         case 'right': {
           return 'ml-auto'
+        }
         case 'stretch': {
           return 'w-full'
+        }
         default:
           return ''
       }
