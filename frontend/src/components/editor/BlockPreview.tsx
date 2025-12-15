@@ -889,7 +889,6 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               fontWeight: block.styles?.font_weight || 'bold',
               marginBottom: block.styles?.margin_bottom || '1rem',
               color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
-              }
             }}>
               {block.data.text || 'Title'}
             </h3>
@@ -6338,7 +6337,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     }
   }
 
-  // Appliquer l'alignement selon le type de position
+  // Apply alignment based on position type
   const getAlignmentClasses = () => {
     if (block.position?.type === 'relative' || block.position?.type === 'absolute' || block.position?.type === 'fixed' || block.position?.type === 'sticky') {
       const align = block.position?.align || 'left'
