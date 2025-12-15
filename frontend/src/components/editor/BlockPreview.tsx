@@ -1092,8 +1092,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           className="mb-6"
         />
       )
+    }
 
-    case 'divider':
+    case 'divider': {
       const dividerDirection = block.data.direction || 'horizontal'
       const dividerStyle = block.data.style === 'solid' ? 'solid' : 
                           block.data.style === 'dashed' ? 'dashed' : 
@@ -1133,8 +1134,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           />
         </div>
       )
+    }
 
-    case 'alert':
+    case 'alert': {
       const variant = block.data.variant || 'info'
       const variantStyles = {
         info: {
