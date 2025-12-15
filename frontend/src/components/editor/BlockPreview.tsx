@@ -3171,7 +3171,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
-      }
+    }
 
     case 'hero': {
       // Convertir le gradient Tailwind en CSS gradient
