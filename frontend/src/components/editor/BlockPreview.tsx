@@ -917,8 +917,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         }}>
           <div 
             dangerouslySetInnerHTML={{ 
-              __html: (block.data.content || '').replace(/\n/g, '<br />') 
-              }
+              __html: (block.data.content || '').replace(/\n/g, '<br />')
             }}
             style={{
               ...contentStyles,
@@ -6309,8 +6308,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Bloc {block.type}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Prévisualisation non disponible</p>
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Block {block.type}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Preview not available</p>
             </div>
           </div>
         </div>
@@ -6318,7 +6317,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     }
   })()
 
-  // Générer les classes d'animation au survol
+  // Generate hover animation classes
   const getHoverAnimationClass = () => {
     const animation = block.styles?.hover_animation || 'none'
     switch (animation) {
