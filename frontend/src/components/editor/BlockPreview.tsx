@@ -1224,7 +1224,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'code':
+    case 'code': {
       const code = block.data.code || ''
       const language = block.data.language || 'plaintext'
       const showLineNumbers = block.data.showLineNumbers || false
@@ -1551,28 +1551,55 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               </div>
             ))
           ) : (
-            Array.from({ length: columnCount }).map((_, i) => (
-              <div key={i} className="bg-gray-50 dark:bg-gray-800 p-4 rounded border-2 border-dashed border-gray-300 dark:border-gray-700 min-h-[100px] flex items-center justify-center">
-                <span className="text-gray-400 dark:text-gray-500 text-sm">Colonne {i + 1}</span>
-              </div>
-            ))
+            Array.from({ length: columnCount }).map((_, i) => {
+              const isDark = theme === 'dark'
+              return (
+                <div 
+                  key={i} 
+                  className="p-4 rounded border-2 border-dashed min-h-[100px] flex items-center justify-center"
+                  style={{
+                    backgroundColor: isDark ? '#1f2937' : '#f9fafb',
+                    borderColor: isDark ? '#374151' : '#d1d5db',
+                  }}
+                >
+                  <span 
+                    className="text-sm"
+                    style={{ color: isDark ? '#6b7280' : '#9ca3af' }}
+                  >
+                    Colonne {i + 1}
+                  </span>
+                </div>
+              )
+            })
           )}
         </div>
       )
+    }
 
-    case 'rows':
+    case 'rows': {
       const rowCount = block.data.rows_count || 2
       return (
         <div style={wrapperStyles} className="mb-6 space-y-4">
-          {Array.from({ length: rowCount }).map((_, i) => (
-            <div key={i} className="bg-gray-50 dark:bg-gray-800 p-4 rounded border border-gray-200 dark:border-gray-700">
-              Ligne {i + 1} - Les colonnes peuvent être ajoutées ici
-            </div>
-          ))}
+          {Array.from({ length: rowCount }).map((_, i) => {
+            const isDark = theme === 'dark'
+            return (
+              <div 
+                key={i} 
+                className="p-4 rounded border"
+                style={{
+                  backgroundColor: isDark ? '#1f2937' : '#f9fafb',
+                  borderColor: isDark ? '#374151' : '#e5e7eb',
+                  color: isDark ? '#d1d5db' : '#374151',
+                }}
+              >
+                Ligne {i + 1} - Les colonnes peuvent être ajoutées ici
+              </div>
+            )
+          })}
         </div>
       )
 
-    case 'table':
+    case 'table': {
       const tableRows = block.data.rows || 3
       const tableCols = block.data.columns || 3
       const tableData = block.data.table_data || Array(tableRows).fill(null).map(() => Array(tableCols).fill(''))
@@ -1639,6 +1666,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </table>
         </div>
       )
+    }
 
     case 'paragraph': {
       const isDark = theme === 'dark'
