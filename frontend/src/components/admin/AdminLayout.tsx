@@ -161,8 +161,8 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
                   {/* Title and Save Status */}
                   <div className="min-w-0 flex-1 flex items-center gap-2 sm:gap-3">
                     <div className="min-w-0 flex-1">
-                      <h1 className="text-lg sm:text-xl xl:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
-                      {subtitle && <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate hidden sm:block">{subtitle}</p>}
+                      <h1 className="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
+                      {subtitle && <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 truncate hidden sm:block">{subtitle}</p>}
                     </div>
                     {saveStatus && (
                       <div className="flex-shrink-0 hidden sm:flex">
