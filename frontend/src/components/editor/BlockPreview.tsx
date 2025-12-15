@@ -298,11 +298,13 @@ function BlockPreview({
 
   return (
     <div 
-      className={`w-full h-full overflow-y-auto flex flex-col block-preview-container ${theme === 'dark' ? 'dark' : ''}`}
+      className="w-full h-full overflow-y-auto flex flex-col block-preview-container"
       style={{
         backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
-        color: theme === 'dark' ? '#f9fafb' : '#111827'
-      }}
+        color: theme === 'dark' ? '#f9fafb' : '#111827',
+        // Forcer le thème sur tous les enfants en utilisant CSS variables
+        '--preview-theme' as any: theme,
+      } as React.CSSProperties}
       data-theme-isolated
       data-preview-theme={theme}
     >
@@ -1124,9 +1126,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       return (
         <div style={wrapperStyles} className="mb-6 flex justify-center">
           <div 
-            className={`border-t-2 border-gray-400 dark:border-gray-600`}
             style={{ 
               borderStyle: dividerStyle,
+              borderColor: theme === 'dark' ? '#4b5563' : '#9ca3af',
               width: dividerWidth,
               margin: block.styles?.margin || '2rem 0'
             }}
@@ -1279,23 +1281,48 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         return labels[lang] || lang
       }
       
+      const isDark = theme === 'dark'
       return (
         <div style={wrapperStyles} className="mb-6">
-          <div className="bg-gray-900 dark:bg-gray-950 rounded-lg overflow-hidden border border-gray-700 dark:border-gray-800">
+          <div 
+            className="rounded-lg overflow-hidden border"
+            style={{
+              backgroundColor: isDark ? '#030712' : '#111827',
+              borderColor: isDark ? '#1f2937' : '#374151',
+            }}
+          >
             {/* Header avec langage et bouton copier */}
-            <div className="flex items-center justify-between px-4 py-2 bg-gray-800 dark:bg-gray-900 border-b border-gray-700 dark:border-gray-800">
+            <div 
+              className="flex items-center justify-between px-4 py-2 border-b"
+              style={{
+                backgroundColor: isDark ? '#111827' : '#1f2937',
+                borderColor: isDark ? '#1f2937' : '#374151',
+              }}
+            >
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                 </svg>
-                <span className="text-xs font-medium text-gray-300 dark:text-gray-400">
+                <span 
+                  className="text-xs font-medium"
+                  style={{ color: isDark ? '#9ca3af' : '#d1d5db' }}
+                >
                   {getLanguageLabel(language)}
                 </span>
               </div>
               {showCopyButton && code && (
                 <button
                   onClick={handleCopyCode}
-                  className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors rounded hover:bg-gray-700 dark:hover:bg-gray-800"
+                  className="flex items-center gap-1 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors rounded"
+                  style={{
+                    backgroundColor: 'transparent',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = isDark ? '#1f2937' : '#374151'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }}
                   title="Copier le code"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1310,11 +1337,17 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             <div className="relative">
               <pre className={`m-0 p-4 overflow-x-auto text-sm font-mono ${showLineNumbers ? 'pl-12' : ''}`}>
                 {code ? (
-                  <code className={`text-gray-100 dark:text-gray-200 ${showLineNumbers ? 'block' : ''}`}>
+                  <code 
+                    className={showLineNumbers ? 'block' : ''}
+                    style={{ color: isDark ? '#e5e7eb' : '#f3f4f6' }}
+                  >
                     {showLineNumbers ? (
                       code.split('\n').map((line: string, index: number) => (
                         <div key={index} className="flex">
-                          <span className="inline-block w-8 text-right pr-4 text-gray-500 dark:text-gray-600 select-none">
+                          <span 
+                            className="inline-block w-8 text-right pr-4 select-none"
+                            style={{ color: isDark ? '#4b5563' : '#6b7280' }}
+                          >
                             {index + 1}
                           </span>
                           <span className="flex-1">{line || ' '}</span>
@@ -1325,7 +1358,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                     )}
                   </code>
                 ) : (
-                  <span className="text-gray-500 dark:text-gray-600 italic">Aucun code configuré</span>
+                  <span 
+                    className="italic"
+                    style={{ color: isDark ? '#4b5563' : '#6b7280' }}
+                  >
+                    Aucun code configuré
+                  </span>
                 )}
               </pre>
             </div>
