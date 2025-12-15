@@ -202,12 +202,18 @@ class WAFMiddleware(MiddlewareMixin):
             hour_count = cache.get(hour_key, 0)
             if not isinstance(hour_count, (int, float)):
                 hour_count = 0
-        if hour_count >= settings.rate_limit_requests_per_hour:
-            return {
-                'blocked': True,
-                'reason': f'Rate limit exceeded: {hour_count} requests per hour'
-            }
-        cache.set(hour_key, hour_count + 1, 3600)
+            if hour_count >= settings.rate_limit_requests_per_hour:
+                return {
+                    'blocked': True,
+                    'reason': f'Rate limit exceeded: {hour_count} requests per hour'
+                }
+            cache.set(hour_key, hour_count + 1, 3600)
+        except Exception as e:
+            # Si Redis est down ou erreur de cache, permettre la requête mais logger l'erreur
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"WAF rate limit cache error: {e}, allowing request")
+            return {'blocked': False}
         
         return {'blocked': False}
     
