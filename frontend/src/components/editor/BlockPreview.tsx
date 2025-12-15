@@ -906,6 +906,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
+    }
 
     case 'text': {
       const isDark = theme === 'dark'
