@@ -1018,6 +1018,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </a>
         </div>
       )
+    }
 
     case 'video': {
       const isDark = theme === 'dark'
