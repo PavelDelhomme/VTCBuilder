@@ -77,7 +77,7 @@ services:
     working_dir: /app
     volumes:
       - ./backend-django:/app
-      - ./backend-django/logs:/var/log
+      - ./backend-django/logs:/app/logs
     # Optimisation: Limiter les ressources pour réduire la consommation
     deploy:
       resources:

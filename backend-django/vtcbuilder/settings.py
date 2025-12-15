@@ -311,6 +311,23 @@ else:
     logger.warning(f"EMAIL BACKEND: Console (SMTP not configured - HOST={EMAIL_HOST}, USER={EMAIL_HOST_USER})")
 
 # Logging Configuration
+# Créer le répertoire de logs s'il n'existe pas (avec gestion d'erreur)
+import os
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_ENABLED = True
+try:
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    # Tester l'écriture dans le répertoire
+    test_file = LOGS_DIR / '.test_write'
+    test_file.touch()
+    test_file.unlink()
+    os.chmod(LOGS_DIR, 0o755)
+except (OSError, PermissionError) as e:
+    # Si on ne peut pas créer/utiliser le répertoire, désactiver le logging fichier
+    LOGS_ENABLED = False
+    import logging
+    logging.warning(f"Impossible d'utiliser le répertoire de logs: {e}. Utilisation du handler console uniquement.")
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -335,14 +352,6 @@ LOGGING = {
             'filters': ['suppress_expected_401'],
             'formatter': 'simple',
         },
-        'file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': BASE_DIR / 'logs' / 'django.log',
-            'maxBytes': 10 * 1024 * 1024,  # 10MB max par fichier (optimisation mémoire)
-            'backupCount': 3,  # Garder seulement 3 fichiers de backup
-            'formatter': 'verbose',
-            'level': 'ERROR',  # Seulement les erreurs dans les fichiers
-        },
         'null': {
             'class': 'logging.NullHandler',
         },
@@ -363,7 +372,7 @@ LOGGING = {
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file'] if LOGS_ENABLED else ['console'],
             'level': 'ERROR',  # Optimisation: Seulement les erreurs
             'propagate': False,
             'filters': ['suppress_expected_401'],
