@@ -6324,14 +6324,19 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     switch (animation) {
       case 'scale': {
         return 'hover:scale-105'
+      }
       case 'lift': {
         return 'hover:-translate-y-2 hover:shadow-lg'
+      }
       case 'fade': {
         return 'hover:opacity-80'
+      }
       case 'rotate': {
         return 'hover:rotate-3'
+      }
       case 'glow': {
         return 'hover:shadow-2xl hover:shadow-blue-500/50'
+      }
       default:
         return ''
     }
