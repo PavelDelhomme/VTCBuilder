@@ -2547,7 +2547,6 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     }
 
     case 'accordion': {
-    {
       const accordionItems = block.data.items || []
       return (
         <div style={wrapperStyles} className="mb-6">
