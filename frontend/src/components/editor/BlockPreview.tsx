@@ -1531,7 +1531,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
     }
     
-    case 'columns':
+    case 'columns': {
       const columnCount = block.data.columns_count || 2
       return (
         <div 
@@ -1892,7 +1892,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
     }
 
-    case 'testimonials':
+    case 'testimonials': {
       const testimonials = block.data.testimonials || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -2509,7 +2509,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       return <PricingCardsPreview />
     }
 
-    case 'timeline':
+    case 'timeline': {
       const events = block.data.events || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -2544,8 +2544,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
-    case 'accordion':
+    case 'accordion': {
+    {
       const accordionItems = block.data.items || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -2569,7 +2571,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'stats':
+    case 'stats': {
       const stats = block.data.stats || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -2596,7 +2598,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'social-links':
+    case 'social-links': {
       const socialLinks = block.data.links || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -2624,7 +2626,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'booking-form':
+    case 'booking-form': {
       return (
         <div style={wrapperStyles} className="mb-6">
           {block.data.title && (
@@ -2737,7 +2739,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'pricing-table':
+    case 'pricing-table': {
       const pricingRows = block.data.rows || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -2783,7 +2785,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'service-zones':
+    case 'service-zones': {
       const zones = block.data.zones || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -2816,7 +2818,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'vehicle-gallery':
+    case 'vehicle-gallery': {
       const vehicles = block.data.vehicles || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -2869,7 +2871,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'contact-buttons':
+    case 'contact-buttons': {
       const contacts = block.data.contacts || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -2883,13 +2885,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               contacts.map((contact: any, index: number) => {
                 const getHref = () => {
                   switch (contact.type) {
-                    case 'phone':
+                    case 'phone': {
                       return `tel:${contact.value}`
-                    case 'whatsapp':
+                    case 'whatsapp': {
                       return `https://wa.me/${contact.value.replace(/[^0-9]/g, '')}`
-                    case 'email':
+                    case 'email': {
                       return `mailto:${contact.value}`
-                    case 'sms':
+                    case 'sms': {
                       return `sms:${contact.value}`
                     default:
                       return '#'
@@ -2915,7 +2917,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'map':
+    case 'map': {
       const mapAddress = block.data.address || ''
       const mapHeight = block.data.height || 400
       return (
@@ -2951,7 +2953,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'badges':
+    case 'badges': {
       const badges = block.data.badges || []
       const getBadgeColor = (color: string) => {
         const colors: Record<string, string> = {
@@ -2991,7 +2993,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'gallery':
+    case 'gallery': {
       const images = block.data.images || []
       const galleryColumns = block.data.columns || 3
       return (
@@ -3024,7 +3026,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'form':
+    case 'form': {
       const formFields = block.data.fields || []
       return (
         <div style={wrapperStyles} className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
@@ -3093,7 +3095,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'accordion':
+    case 'accordion': {
       const items = block.data.items || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -3121,7 +3123,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'tabs':
+    case 'tabs': {
       const tabs = block.data.tabs || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -3296,7 +3298,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
     }
 
-    case 'features-grid':
+    case 'features-grid': {
     case 'features_grid': { // Alias pour compatibilité
       const features = block.data.features || []
       const columns = block.data.columns || 3
@@ -3409,7 +3411,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
     }
 
-    case 'cta-section':
+    case 'cta-section': {
     case 'cta_section': // Alias pour compatibilité
       // Fonction pour convertir le gradient Tailwind en CSS
       const getGradientFromTailwindCTA = (gradient: string) => {
@@ -3516,7 +3518,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'contact-form':
+    case 'contact-form': {
       return (
         <div style={wrapperStyles} className="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
           {block.data.title && (
@@ -3580,7 +3582,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'faq-section':
+    case 'faq-section': {
       const faqItems = block.data.items || []
       return (
         <FAQSectionPreview 
@@ -3591,7 +3593,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         />
       )
 
-    case 'banner':
+    case 'banner': {
       return (
         <div
           style={{
@@ -3643,7 +3645,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'header':
+    case 'header': {
       const headerLinks = block.data.links || []
       const logoText = block.data.logo_text || 'VTCBuilder'
       const logoUrl = block.data.logo_url || '/'
@@ -3878,7 +3880,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
     }
 
-    case 'section':
+    case 'section': {
       return (
         <div
           style={{
@@ -3924,7 +3926,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'carousel':
+    case 'carousel': {
       const carouselItems = block.data.items || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -3961,7 +3963,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'countdown':
+    case 'countdown': {
       const targetDate = block.data.target_date ? new Date(block.data.target_date).getTime() : null
       const now = Date.now()
       const timeLeft = targetDate && targetDate > now ? targetDate - now : 0
@@ -3996,7 +3998,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'progress-bar':
+    case 'progress-bar': {
       const percentage = Math.min(100, Math.max(0, block.data.percentage || 0))
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -4018,7 +4020,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'quote':
+    case 'quote': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <blockquote 
@@ -4037,7 +4039,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'icon-box':
+    case 'icon-box': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <div 
@@ -4061,7 +4063,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'feature-card':
+    case 'feature-card': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <div 
@@ -4093,7 +4095,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'video-embed':
+    case 'video-embed': {
       const videoUrl = block.data.url || ''
       const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')
       const isVimeo = videoUrl.includes('vimeo.com')
@@ -4130,7 +4132,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'team-member':
+    case 'team-member': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <div 
@@ -4313,7 +4315,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       return <TabsPreview />
     }
 
-    case 'rating':
+    case 'rating': {
       const rating = block.data.rating || 5
       const ratingSize = block.data.size || 'medium'
       const sizeClass = ratingSize === 'small' ? 'text-lg' : ratingSize === 'large' ? 'text-3xl' : 'text-2xl'
@@ -4332,7 +4334,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'breadcrumb':
+    case 'breadcrumb': {
       const breadcrumbItems = block.data.items || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -4356,7 +4358,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'tags':
+    case 'tags': {
       const tags = block.data.tags || []
       const tagStyle = block.data.style || 'rounded'
       const tagClass = tagStyle === 'square' ? 'rounded-none' : tagStyle === 'pill' ? 'rounded-full' : 'rounded'
@@ -4379,7 +4381,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'progress-circle':
+    case 'progress-circle': {
       const progressPercentage = block.data.percentage || 75
       const circleSize = block.data.size || 'medium'
       const sizeMap: { [key: string]: { size: string; stroke: string } } = {
@@ -4426,7 +4428,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'search-bar':
+    case 'search-bar': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <form
@@ -4451,7 +4453,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'audio-player':
+    case 'audio-player': {
       return (
         <div style={wrapperStyles} className="mb-6">
           {block.data.src ? (
@@ -4515,7 +4517,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       return <ModalPreview />
     }
 
-    case 'chart':
+    case 'chart': {
       return (
         <div style={wrapperStyles} className="mb-6">
           {block.data.title && (
@@ -4532,7 +4534,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'calendar':
+    case 'calendar': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
@@ -4546,7 +4548,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'pagination':
+    case 'pagination': {
       const currentPage = block.data.current_page || 1
       const totalPages = block.data.total_pages || 10
       const showArrows = block.data.show_arrows !== false
@@ -4591,7 +4593,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'list':
+    case 'list': {
       const listItems = block.data.items || []
       const ListTag = block.data.list_type === 'ordered' ? 'ol' : 'ul'
       const listClass = block.data.list_type === 'none' ? 'list-none' : block.data.list_type === 'ordered' ? 'list-decimal' : 'list-disc'
@@ -4607,7 +4609,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'link':
+    case 'link': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <a
@@ -4621,12 +4623,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'rich-text':
+    case 'rich-text': {
       return (
         <div style={wrapperStyles} className="mb-6" dangerouslySetInnerHTML={{ __html: block.data?.html || '' }} />
       )
 
-    case 'markdown':
+    case 'markdown': {
       // Note: Pour un vrai rendu Markdown, il faudrait une bibliothèque comme react-markdown
       return (
         <div style={wrapperStyles} className="mb-6 prose dark:prose-invert max-w-none">
@@ -4634,12 +4636,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'html-raw':
+    case 'html-raw': {
       return (
         <div style={wrapperStyles} className="mb-6" dangerouslySetInnerHTML={{ __html: block.data?.html || '' }} />
       )
 
-    case 'icon':
+    case 'icon': {
       const iconSize = block.data?.size === 'sm' ? 'text-2xl' : block.data?.size === 'lg' ? 'text-5xl' : block.data?.size === 'xl' ? 'text-6xl' : 'text-4xl'
       return (
         <div style={wrapperStyles} className="mb-6 flex items-center justify-center">
@@ -4649,7 +4651,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'label':
+    case 'label': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <label htmlFor={block.data?.for || undefined} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -4658,7 +4660,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'tooltip':
+    case 'tooltip': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <span
@@ -4670,7 +4672,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'popover':
+    case 'popover': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
@@ -4680,7 +4682,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'dropdown':
+    case 'dropdown': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <select className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
@@ -4691,7 +4693,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'categories':
+    case 'categories': {
       return (
         <div style={wrapperStyles} className="mb-6">
           {block.data?.title && <h3 className="text-lg font-semibold mb-3">{block.data.title}</h3>}
@@ -4705,7 +4707,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'author-box':
+    case 'author-box': {
       return (
         <div style={wrapperStyles} className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-4">
@@ -4725,7 +4727,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'related-posts':
+    case 'related-posts': {
       return (
         <div style={wrapperStyles} className="mb-6">
           {block.data?.title && <h3 className="text-lg font-semibold mb-3">{block.data.title}</h3>}
@@ -4735,7 +4737,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'table-of-contents':
+    case 'table-of-contents': {
       return (
         <div style={wrapperStyles} className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <h3 className="font-semibold mb-3">{block.data?.title || 'Table des matières'}</h3>
@@ -4745,7 +4747,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'reading-time':
+    case 'reading-time': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -4754,7 +4756,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'share-buttons':
+    case 'share-buttons': {
       return (
         <div style={wrapperStyles} className="mb-6">
           {block.data?.title && <h3 className="text-sm font-semibold mb-2">{block.data.title}</h3>}
@@ -4768,12 +4770,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'flexbox':
-    case 'grid':
-    case 'stack':
-    case 'inline':
-    case 'group':
-    case 'wrapper':
+    case 'flexbox': {
+    case 'grid': {
+    case 'stack': {
+    case 'inline': {
+    case 'group': {
+    case 'wrapper': {
       // Ces blocs sont des conteneurs, ils affichent leurs enfants
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -4789,7 +4791,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'image-slider':
+    case 'image-slider': {
       const sliderImages = block.data?.images || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -4808,7 +4810,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'lightbox':
+    case 'lightbox': {
       const lightboxImages = block.data?.images || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -4829,7 +4831,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'vimeo-embed':
+    case 'vimeo-embed': {
       const vimeoId = block.data?.vimeoId || (block.data?.url ? block.data.url.match(/vimeo\.com\/(\d+)/)?.[1] : '')
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -4852,7 +4854,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'counter':
+    case 'counter': {
       return (
         <div style={wrapperStyles} className="mb-6 text-center">
           <div className="text-4xl font-bold text-blue-600 dark:text-blue-400">
@@ -4864,7 +4866,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'card-grid':
+    case 'card-grid': {
       const gridCards = block.data?.cards || []
       const gridColumns = block.data?.columns || 3
       return (
@@ -4894,7 +4896,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'logo-carousel':
+    case 'logo-carousel': {
       const carouselLogos = block.data?.logos || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -4916,7 +4918,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'route-calculator':
+    case 'route-calculator': {
       return (
         <div style={wrapperStyles} className="mb-6">
           {block.data?.title && (
@@ -4969,7 +4971,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'fare-calculator':
+    case 'fare-calculator': {
       const pricingRules = block.data?.pricing_rules || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -5044,7 +5046,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'availability-calendar':
+    case 'availability-calendar': {
       const availableDays = block.data?.available_days || []
       const viewMode = block.data?.view_mode || 'month'
       return (
@@ -5906,7 +5908,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
     }
 
-    case 'captcha':
+    case 'captcha': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <Captcha
@@ -5920,7 +5922,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     )
 
     // Blocs VTC
-    case 'driver-profile':
+    case 'driver-profile': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
@@ -5961,7 +5963,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'email-button':
+    case 'email-button': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <a
@@ -5976,7 +5978,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'sms-button':
+    case 'sms-button': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <a
@@ -5991,7 +5993,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'vehicle-comparison':
+    case 'vehicle-comparison': {
       const comparisonVehicles = block.data?.vehicles || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -6035,7 +6037,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'service-packages':
+    case 'service-packages': {
       const packages = block.data?.packages || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -6070,7 +6072,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
 
     // Blocs E-commerce
-    case 'product-gallery':
+    case 'product-gallery': {
       const productImages = block.data?.images || []
       const displayMode = block.data?.display_mode || 'grid'
       return (
@@ -6114,7 +6116,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'product-details':
+    case 'product-details': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border border-gray-200 dark:border-gray-700">
@@ -6142,7 +6144,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'add-to-cart':
+    case 'add-to-cart': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <div className="flex items-center gap-4">
@@ -6168,7 +6170,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'buy-now':
+    case 'buy-now': {
       return (
         <div style={wrapperStyles} className="mb-6">
           <button className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2">
@@ -6180,7 +6182,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'trust-badges':
+    case 'trust-badges': {
       const trustBadges = block.data?.badges || []
       const layout = block.data?.layout || 'horizontal'
       return (
@@ -6200,7 +6202,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'payment-methods':
+    case 'payment-methods': {
       const methods = block.data?.methods || []
       return (
         <div style={wrapperStyles} className="mb-6">
@@ -6247,15 +6249,15 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
   const getHoverAnimationClass = () => {
     const animation = block.styles?.hover_animation || 'none'
     switch (animation) {
-      case 'scale':
+      case 'scale': {
         return 'hover:scale-105'
-      case 'lift':
+      case 'lift': {
         return 'hover:-translate-y-2 hover:shadow-lg'
-      case 'fade':
+      case 'fade': {
         return 'hover:opacity-80'
-      case 'rotate':
+      case 'rotate': {
         return 'hover:rotate-3'
-      case 'glow':
+      case 'glow': {
         return 'hover:shadow-2xl hover:shadow-blue-500/50'
       default:
         return ''
@@ -6267,13 +6269,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     if (block.position?.type === 'relative' || block.position?.type === 'absolute' || block.position?.type === 'fixed' || block.position?.type === 'sticky') {
       const align = block.position?.align || 'left'
       switch (align) {
-        case 'left':
+        case 'left': {
           return 'mr-auto'
-        case 'center':
+        case 'center': {
           return 'mx-auto'
-        case 'right':
+        case 'right': {
           return 'ml-auto'
-        case 'stretch':
+        case 'stretch': {
           return 'w-full'
         default:
           return ''
