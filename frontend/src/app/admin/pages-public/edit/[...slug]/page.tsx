@@ -946,7 +946,7 @@ export default function EditPublicPage() {
         </div>
       }
       headerActions={
-        <div className="flex flex-row gap-1 sm:gap-2 flex-wrap items-center w-full">
+        <div className="flex flex-row gap-2 flex-wrap items-center w-full py-1">
           {/* Header Toggle - En premier pour être toujours visible */}
           <button
             onClick={() => setHeaderVisible(!headerVisible)}
@@ -1157,6 +1157,28 @@ export default function EditPublicPage() {
                     </svg>
                     {showSeoExpanded ? 'Masquer les paramètres SEO' : 'Afficher les paramètres SEO'}
                   </button>
+                  {/* Statut de la page (pour la page d'accueil) */}
+                  {pageSlug === 'home' && (
+                    <>
+                      <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                      <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                        Statut
+                      </div>
+                      <div className="px-4 py-2">
+                        <select
+                          value={status}
+                          onChange={(e) => {
+                            setStatus(e.target.value as 'draft' | 'published')
+                            setShowMoreMenu(false)
+                          }}
+                          className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="draft">📝 Brouillon</option>
+                          <option value="published">✅ Publié</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
                   {availablePages.length > 0 && (
                     <>
                       <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
@@ -1205,6 +1227,22 @@ export default function EditPublicPage() {
                       ))}
                     </>
                   )}
+                  {/* Option pour gérer les pages */}
+                  <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      router.push('/admin/projects')
+                      setShowMoreMenu(false)
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Gérer les pages
+                  </button>
                 </div>
               </>
             )}

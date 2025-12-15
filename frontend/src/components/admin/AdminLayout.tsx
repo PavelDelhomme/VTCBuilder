@@ -142,7 +142,7 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
           {/* Desktop Header avec hamburger pour ouvrir/fermer */}
           {!hideHeader && (
           <header className="hidden lg:block bg-white dark:bg-gray-800 shadow dark:shadow-gray-900/50 flex-shrink-0">
-            <div className="w-full py-4 px-4 sm:px-6 lg:px-8">
+            <div className="w-full py-5 px-4 sm:px-6 lg:px-8">
               <div className="flex flex-col gap-4">
                 {/* First row: Hamburger, Title, headerActions and theme toggle */}
                 <div className="flex items-center justify-between gap-3 min-w-0">
