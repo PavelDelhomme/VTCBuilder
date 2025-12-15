@@ -37,8 +37,8 @@ export default function SubscriptionDetailPage() {
       setPayments(data.payments || [])
       setSummary(data.summary || {})
     } catch (error: any) {
-      console.error('Erreur chargement détails abonnement:', error)
-      toast.error('Erreur lors du chargement des détails')
+      console.error('Error chargement détails abonnement:', error)
+      toast.error('Error lors du chargement des détails')
       router.push('/admin/billing')
     } finally {
       setLoading(false)
@@ -62,7 +62,7 @@ export default function SubscriptionDetailPage() {
       await billingService.sendInvoiceReminder(id)
       toast.success('Email de relance envoyé')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'envoi de la relance')
+      toast.error(error.response?.data?.error || 'Error lors de l\'envoi de la relance')
     }
   }
 
@@ -264,7 +264,7 @@ export default function SubscriptionDetailPage() {
                   toast.success('Facture générée')
                   loadSubscriptionDetails()
                 } catch (error: any) {
-                  toast.error(error.response?.data?.error || 'Erreur lors de la génération')
+                  toast.error(error.response?.data?.error || 'Error lors de la génération')
                 }
               }}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
@@ -361,7 +361,7 @@ export default function SubscriptionDetailPage() {
                               }
                               toast.success('Facture ouverte')
                             } catch (error: any) {
-                              toast.error('Erreur lors de l\'ouverture de la facture')
+                              toast.error('Error lors de l\'ouverture de la facture')
                             }
                           }}
                           className="text-indigo-600 hover:text-indigo-900"

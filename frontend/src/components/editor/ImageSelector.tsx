@@ -44,10 +44,10 @@ export default function ImageSelector({
       const allImages = await mediaService.getImages(projectFilter)
       setImages(Array.isArray(allImages) ? allImages : [])
     } catch (error: any) {
-      console.error('Erreur chargement images:', error)
-      // Ne pas afficher d'erreur si c'est une erreur attendue (401, etc.)
+      console.error('Error chargement images:', error)
+      // Ne pas afficher d'error si c'est une erreur attendue (401, etc.)
       if (error.response?.status !== 401 && error.code !== 'ERR_NETWORK') {
-        toast.error('Erreur lors du chargement des images')
+        toast.error('Error lors du chargement des images')
       }
     } finally {
       setLoading(false)
@@ -92,11 +92,11 @@ export default function ImageSelector({
         // Recharger la liste des images
         await loadImages()
       } else {
-        toast.error('Erreur lors de l\'upload de l\'image')
+        toast.error('Error lors de l\'upload de l\'image')
       }
     } catch (error: any) {
-      console.error('Erreur upload image:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'upload de l\'image')
+      console.error('Error upload image:', error)
+      toast.error(error.response?.data?.error || 'Error lors de l\'upload de l\'image')
     } finally {
       setUploading(false)
       // Réinitialiser l'input file

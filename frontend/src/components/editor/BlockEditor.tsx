@@ -370,7 +370,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                  apiError.code === 'ERR_NETWORK' || 
                                  apiError.code === 'ERR_BLOCKED_BY_CLIENT'
           if (!isExpectedError) {
-            console.error('Erreur chargement blocs API:', apiError)
+            console.error('Error chargement blocs API:', apiError)
           }
           setBlockTypes([])
         }

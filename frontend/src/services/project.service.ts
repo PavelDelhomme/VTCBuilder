@@ -117,7 +117,7 @@ const projectService = {
       const projects = await this.getAll()
       return projects.find(p => p.is_system_project) || null
     } catch (error) {
-      console.error('Erreur récupération projet système:', error)
+      console.error('Error récupération projet système:', error)
       return null
     }
   },
@@ -130,7 +130,7 @@ const projectService = {
       const projects = await this.getAll()
       return projects.find(p => p.tenant?.slug === tenantSlug) || null
     } catch (error) {
-      console.error('Erreur récupération projet tenant:', error)
+      console.error('Error récupération projet tenant:', error)
       return null
     }
   },

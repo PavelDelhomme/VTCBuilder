@@ -27,8 +27,8 @@ export default function InvoiceDetailPage() {
       const data = await billingService.getInvoice(parseInt(invoiceId))
       setInvoice(data)
     } catch (error: any) {
-      console.error('Erreur chargement facture:', error)
-      toast.error('Erreur lors du chargement de la facture')
+      console.error('Error chargement facture:', error)
+      toast.error('Error lors du chargement de la facture')
       router.push('/admin/billing')
     } finally {
       setLoading(false)
@@ -56,7 +56,7 @@ export default function InvoiceDetailPage() {
       })
       
       if (!response.ok) {
-        throw new Error('Erreur lors du téléchargement')
+        throw new Error('Error lors du téléchargement')
       }
       
       const blob = await response.blob()
@@ -74,8 +74,8 @@ export default function InvoiceDetailPage() {
       
       toast.success('Facture ouverte')
     } catch (error: any) {
-      console.error('Erreur téléchargement PDF:', error)
-      toast.error('Erreur lors du téléchargement de la facture')
+      console.error('Error téléchargement PDF:', error)
+      toast.error('Error lors du téléchargement de la facture')
     }
   }
 

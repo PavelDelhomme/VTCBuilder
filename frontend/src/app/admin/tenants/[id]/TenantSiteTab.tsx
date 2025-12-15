@@ -41,8 +41,8 @@ export default function TenantSiteTab({ tenantId, tenantName, tenantSlug }: Tena
         setSelectedProject(tenantProjects[0])
       }
     } catch (error) {
-      console.error('Erreur chargement projets:', error)
-      toast.error('Erreur lors du chargement des projets')
+      console.error('Error chargement projets:', error)
+      toast.error('Error lors du chargement des projets')
       setProjects([])
     } finally {
       setLoadingProjects(false)
@@ -57,8 +57,8 @@ export default function TenantSiteTab({ tenantId, tenantName, tenantSlug }: Tena
       const pagesArray = Array.isArray(data) ? data : (data?.results || data?.data || [])
       setPages(pagesArray)
     } catch (error) {
-      console.error('Erreur chargement pages:', error)
-      toast.error('Erreur lors du chargement des pages')
+      console.error('Error chargement pages:', error)
+      toast.error('Error lors du chargement des pages')
       setPages([])
     } finally {
       setLoading(false)

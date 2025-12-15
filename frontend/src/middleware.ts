@@ -81,7 +81,7 @@ export async function middleware(request: NextRequest) {
       if (!checkResponse.ok) {
         // Ne logger que si ce n'est pas une erreur 404 (tenant n'existe pas, normal)
         if (checkResponse.status !== 404) {
-          console.warn(`[Middleware] Erreur vérification tenant ${tenantSlug}:`, checkResponse.status)
+          console.warn(`[Middleware] Error vérification tenant ${tenantSlug}:`, checkResponse.status)
         }
       }
     } catch (error: any) {

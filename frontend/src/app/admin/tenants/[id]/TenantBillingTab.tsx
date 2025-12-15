@@ -46,8 +46,8 @@ export default function TenantBillingTab({ tenantId, tenantName }: TenantBilling
       setPayments(pays.filter((pay: Payment) => pay.tenant?.id === tenantId))
       setPricingPlans(Array.isArray(plans) ? plans : [])
     } catch (error) {
-      console.error('Erreur chargement facturation:', error)
-      toast.error('Erreur lors du chargement des données de facturation')
+      console.error('Error chargement facturation:', error)
+      toast.error('Error lors du chargement des données de facturation')
     } finally {
       setLoading(false)
     }
@@ -71,8 +71,8 @@ export default function TenantBillingTab({ tenantId, tenantName }: TenantBilling
       setNewSubscriptionData({ plan_id: '', billing_cycle: 'monthly', start_trial: false })
       loadBillingData()
     } catch (error: any) {
-      console.error('Erreur création abonnement:', error)
-      toast.error(error.response?.data?.error || error.response?.data?.detail || 'Erreur lors de la création de l\'abonnement')
+      console.error('Error création abonnement:', error)
+      toast.error(error.response?.data?.error || error.response?.data?.detail || 'Error lors de la création de l\'abonnement')
     }
   }
 
@@ -86,8 +86,8 @@ export default function TenantBillingTab({ tenantId, tenantName }: TenantBilling
       toast.success('Abonnement annulé avec succès !')
       loadBillingData()
     } catch (error: any) {
-      console.error('Erreur annulation abonnement:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'annulation')
+      console.error('Error annulation abonnement:', error)
+      toast.error(error.response?.data?.error || 'Error lors de l\'annulation')
     }
   }
 
@@ -101,8 +101,8 @@ export default function TenantBillingTab({ tenantId, tenantName }: TenantBilling
       toast.success('Abonnement réactivé avec succès !')
       loadBillingData()
     } catch (error: any) {
-      console.error('Erreur réactivation abonnement:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la réactivation')
+      console.error('Error réactivation abonnement:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la réactivation')
     }
   }
 
@@ -116,8 +116,8 @@ export default function TenantBillingTab({ tenantId, tenantName }: TenantBilling
       toast.success('Facture marquée comme payée !')
       loadBillingData()
     } catch (error: any) {
-      console.error('Erreur marquage facture:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors du marquage')
+      console.error('Error marquage facture:', error)
+      toast.error(error.response?.data?.error || 'Error lors du marquage')
     }
   }
 
@@ -393,7 +393,7 @@ export default function TenantBillingTab({ tenantId, tenantName }: TenantBilling
                             document.body.removeChild(a)
                             toast.success('Facture téléchargée')
                           } catch (error: any) {
-                            toast.error('Erreur lors du téléchargement')
+                            toast.error('Error lors du téléchargement')
                           }
                         }}
                         className="text-purple-600 hover:text-purple-900 dark:text-purple-400"

@@ -46,7 +46,7 @@ export default function NewUserPage() {
       const tenantsArray = data?.results || (Array.isArray(data) ? data : [])
       setTenants(Array.isArray(tenantsArray) ? tenantsArray : [])
     } catch (error) {
-      console.error('Erreur chargement tenants:', error)
+      console.error('Error chargement tenants:', error)
       setTenants([])
     } finally {
       setLoading(false)
@@ -122,12 +122,12 @@ export default function NewUserPage() {
         router.push('/admin/users')
       }, 1500)
     } catch (error: any) {
-      console.error('Erreur création utilisateur:', error)
+      console.error('Error création utilisateur:', error)
       const errorMessage = error.response?.data?.error || 
                           error.response?.data?.message ||
                           (typeof error.response?.data === 'string' ? error.response.data : null) ||
                           error.message ||
-                          'Erreur lors de la création de l\'utilisateur'
+                          'Error lors de la création de l\'utilisateur'
       
       // Gérer les erreurs de quota
       if (error.response?.data?.quota) {

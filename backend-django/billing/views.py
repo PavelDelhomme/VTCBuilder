@@ -554,7 +554,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
                 # Ne pas bloquer la création de l'abonnement si l'activation des features échoue
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(f"Erreur activation fonctionnalités pour tenant {tenant.slug}: {e}")
+                logger.warning(f&quot;Error activation fonctionnalités pour tenant {tenant.slug}: {e}")
             
             headers = self.get_success_headers(serializer.data)
             response = Response(
@@ -626,7 +626,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
                 StripeService.reactivate_subscription(subscription)
             except Exception as e:
                 return Response(
-                    {'error': f'Erreur réactivation Stripe: {str(e)}'},
+                    {'error': f'Error réactivation Stripe: {str(e)}'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
@@ -731,7 +731,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(f"Erreur synchronisation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
+                logger.warning(f&quot;Error synchronisation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
             
             return Response({
                 'status': 'Subscription plan updated',
@@ -773,7 +773,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(f"Erreur activation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
+                logger.warning(f&quot;Error activation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
         elif new_status == 'trial':
             # Activer les fonctionnalités lors du passage en trial
             try:
@@ -782,7 +782,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(f"Erreur activation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
+                logger.warning(f&quot;Error activation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
         
         subscription.save(update_fields=['status', 'cancelled_at'])
         
@@ -1056,7 +1056,7 @@ L'équipe VTCBuilder
             logger = logging.getLogger(__name__)
             logger.error(f"Error sending reminder email: {str(e)}")
             error_response = Response(
-                {'error': f'Erreur lors de l\'envoi de l\'email: {str(e)}'},
+                {'error': f'Error lors de l\'envoi de l\'email: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             add_cors_headers(error_response, request)
@@ -2118,7 +2118,7 @@ def complete_card_registration(request):
         except Exception as e:
             logger.error(f"Error attaching payment method: {e}", exc_info=True)
             error_response = Response(
-                {'error': f'Erreur lors de l\'enregistrement de la carte : {str(e)}'},
+                {'error': f'Error lors de l\'enregistrement de la carte : {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             add_cors_headers(error_response, request)
@@ -2127,7 +2127,7 @@ def complete_card_registration(request):
     except Exception as e:
         logger.error(f"Error in complete_card_registration: {e}", exc_info=True)
         error_response = Response(
-            {'error': f'Erreur lors de l\'enregistrement de la carte : {str(e)}'},
+            {'error': f'Error lors de l\'enregistrement de la carte : {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
         add_cors_headers(error_response, request)

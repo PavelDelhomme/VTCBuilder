@@ -49,7 +49,7 @@ export default function InvoicesTab({ invoices: initialInvoices, getStatusBadge,
       const data = await tenantService.getAll()
       setTenants(Array.isArray(data) ? data : data.results || [])
     } catch (error) {
-      console.error('Erreur chargement tenants:', error)
+      console.error('Error chargement tenants:', error)
     }
   }
 
@@ -67,7 +67,7 @@ export default function InvoicesTab({ invoices: initialInvoices, getStatusBadge,
       const filtered = await billingService.getInvoices(params)
       setFilteredInvoices(Array.isArray(filtered) ? filtered : filtered.results || [])
     } catch (error: any) {
-      console.error('Erreur filtrage factures:', error)
+      console.error('Error filtrage factures:', error)
       // Fallback to client-side filtering
       let filtered = [...invoices]
       
@@ -110,8 +110,8 @@ export default function InvoicesTab({ invoices: initialInvoices, getStatusBadge,
       document.body.removeChild(a)
       toast.success('Facture téléchargée')
     } catch (error: any) {
-      console.error('Erreur téléchargement PDF:', error)
-      toast.error('Erreur lors du téléchargement de la facture')
+      console.error('Error téléchargement PDF:', error)
+      toast.error('Error lors du téléchargement de la facture')
     }
   }
 
@@ -129,7 +129,7 @@ export default function InvoicesTab({ invoices: initialInvoices, getStatusBadge,
       })
       
       if (!response.ok) {
-        throw new Error('Erreur lors du chargement de la facture')
+        throw new Error('Error lors du chargement de la facture')
       }
       
       const blob = await response.blob()
@@ -145,8 +145,8 @@ export default function InvoicesTab({ invoices: initialInvoices, getStatusBadge,
         window.URL.revokeObjectURL(blobUrl)
       }
     } catch (error: any) {
-      console.error('Erreur ouverture HTML:', error)
-      toast.error('Erreur lors de l\'ouverture de la facture')
+      console.error('Error ouverture HTML:', error)
+      toast.error('Error lors de l\'ouverture de la facture')
     }
   }
 
@@ -169,7 +169,7 @@ export default function InvoicesTab({ invoices: initialInvoices, getStatusBadge,
       await billingService.sendInvoiceReminder(invoice.id)
       toast.success('Rappel envoyé avec succès')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'envoi du rappel')
+      toast.error(error.response?.data?.error || 'Error lors de l\'envoi du rappel')
     }
   }
 

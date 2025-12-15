@@ -45,7 +45,7 @@ export default function TenantBillingPage() {
       setPayments(pays)
       setPricingPlans(plans)
     } catch (error) {
-      console.error('Erreur chargement facturation:', error)
+      console.error('Error chargement facturation:', error)
     } finally {
       setLoading(false)
     }
@@ -72,7 +72,7 @@ export default function TenantBillingPage() {
           setShowCheckout(true)
           return
         } catch (error: any) {
-          console.error('Erreur création payment intent:', error)
+          console.error('Error création payment intent:', error)
           // Fallback to direct subscription update
         }
       }
@@ -86,7 +86,7 @@ export default function TenantBillingPage() {
       loadBillingData()
       toast.success('Plan mis à jour avec succès !')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour du plan')
+      toast.error(error.response?.data?.error || 'Error lors de la mise à jour du plan')
     }
   }
 
@@ -101,7 +101,7 @@ export default function TenantBillingPage() {
         loadBillingData()
         toast.success('Plan mis à jour avec succès !')
       } catch (error: any) {
-        toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour')
+        toast.error(error.response?.data?.error || 'Error lors de la mise à jour')
       }
     }
     setShowCheckout(false)
@@ -126,7 +126,7 @@ export default function TenantBillingPage() {
       loadBillingData()
       toast.success('Abonnement annulé')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'annulation')
+      toast.error(error.response?.data?.error || 'Error lors de l\'annulation')
     }
   }
 
@@ -141,7 +141,7 @@ export default function TenantBillingPage() {
       toast.success('Facture générée avec succès !')
       loadBillingData()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la génération de la facture')
+      toast.error(error.response?.data?.error || 'Error lors de la génération de la facture')
     }
   }
 
@@ -155,7 +155,7 @@ export default function TenantBillingPage() {
       // Open invoice detail page in new tab for viewing/printing
       router.push(`/dashboard/billing/invoices/${invoiceId}`)
     } catch (error: any) {
-      toast.error('Erreur lors de l\'ouverture de la facture')
+      toast.error('Error lors de l\'ouverture de la facture')
     }
   }
 

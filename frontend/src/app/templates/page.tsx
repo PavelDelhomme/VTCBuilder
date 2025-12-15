@@ -20,7 +20,7 @@ export default function TemplatesPage() {
       const data = await templateService.getAll()
       setTemplates(Array.isArray(data) ? data : [])
     } catch (error) {
-      console.error('Erreur chargement templates:', error)
+      console.error('Error chargement templates:', error)
     } finally {
       setLoading(false)
     }

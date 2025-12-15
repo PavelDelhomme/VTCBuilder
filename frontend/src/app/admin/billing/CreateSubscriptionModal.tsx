@@ -58,8 +58,8 @@ export default function CreateSubscriptionModal({
       const tenants = await billingService.getTenantsWithoutSubscription()
       setTenantsWithoutSubscription(tenants)
     } catch (error: any) {
-      console.error('Erreur chargement tenants:', error)
-      toast.error('Erreur lors du chargement des tenants sans abonnement')
+      console.error('Error chargement tenants:', error)
+      toast.error('Error lors du chargement des tenants sans abonnement')
     } finally {
       setLoadingTenants(false)
     }
@@ -85,8 +85,8 @@ export default function CreateSubscriptionModal({
           setSelectedTenantId(newTenant.id)
           toast.success('Tenant créé avec succès')
         } catch (error: any) {
-          console.error('Erreur création tenant:', error)
-          toast.error(error.response?.data?.error || 'Erreur lors de la création du tenant')
+          console.error('Error création tenant:', error)
+          toast.error(error.response?.data?.error || 'Error lors de la création du tenant')
           setLoading(false)
           return
         } finally {
@@ -115,8 +115,8 @@ export default function CreateSubscriptionModal({
       
       onSuccess()
     } catch (error: any) {
-      console.error('Erreur création abonnement:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la création de l\'abonnement')
+      console.error('Error création abonnement:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la création de l\'abonnement')
     } finally {
       setLoading(false)
     }

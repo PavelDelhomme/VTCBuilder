@@ -96,6 +96,6 @@ class Command(BaseCommand):
         except SystemSettings.DoesNotExist:
             self.stdout.write(self.style.ERROR('❌ SystemSettings non trouvé.'))
         except Exception as e:
-            logger.error(f"Erreur lors de l'ajout du footer: {e}", exc_info=True)
+            logger.error(f&quot;Error lors de l'ajout du footer: {e}", exc_info=True)
             self.stdout.write(self.style.ERROR(f'❌ Erreur inattendue: {e}'))
 

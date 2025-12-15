@@ -45,8 +45,8 @@ export default function ProjectDetailPage() {
       const data = await projectService.getById(projectId)
       setProject(data)
     } catch (error: any) {
-      console.error('Erreur chargement projet:', error)
-      toast.error('Erreur lors du chargement du projet')
+      console.error('Error chargement projet:', error)
+      toast.error('Error lors du chargement du projet')
       router.push('/dashboard/projects')
     } finally {
       setLoading(false)
@@ -97,7 +97,7 @@ export default function ProjectDetailPage() {
             id: page.id,
           })))
         } catch (error: any) {
-          console.error('Erreur chargement pages tenant:', error)
+          console.error('Error chargement pages tenant:', error)
           // If tenant pages can't be loaded, set empty array
           setTenantPages([])
         }
@@ -106,7 +106,7 @@ export default function ProjectDetailPage() {
         setTenantPages([])
       }
     } catch (error: any) {
-      console.error('Erreur chargement pages disponibles:', error)
+      console.error('Error chargement pages disponibles:', error)
       // On error, clear both arrays
       setPublicPages([])
       setTenantPages([])
@@ -119,8 +119,8 @@ export default function ProjectDetailPage() {
       toast.success('Page ajoutée au projet !')
       loadProject()
     } catch (error: any) {
-      console.error('Erreur ajout page:', error)
-      toast.error('Erreur lors de l\'ajout de la page')
+      console.error('Error ajout page:', error)
+      toast.error('Error lors de l\'ajout de la page')
     }
   }
 
@@ -130,8 +130,8 @@ export default function ProjectDetailPage() {
       toast.success('Page retirée du projet !')
       loadProject()
     } catch (error: any) {
-      console.error('Erreur retrait page:', error)
-      toast.error('Erreur lors du retrait de la page')
+      console.error('Error retrait page:', error)
+      toast.error('Error lors du retrait de la page')
     }
   }
 
@@ -234,8 +234,8 @@ export default function ProjectDetailPage() {
       toast.success('Ordre des pages mis à jour !')
       loadProject()
     } catch (error: any) {
-      console.error('Erreur mise à jour ordre:', error)
-      toast.error('Erreur lors de la mise à jour de l\'ordre')
+      console.error('Error mise à jour ordre:', error)
+      toast.error('Error lors de la mise à jour de l\'ordre')
     }
   }
 
@@ -304,7 +304,7 @@ export default function ProjectDetailPage() {
                     await projectService.update(project.id, { name: project.name })
                     toast.success('Projet mis à jour !')
                   } catch (error) {
-                    toast.error('Erreur lors de la mise à jour')
+                    toast.error('Error lors de la mise à jour')
                     loadProject()
                   }
                 }}
@@ -323,7 +323,7 @@ export default function ProjectDetailPage() {
                     setProject({ ...project, status: e.target.value as any })
                     toast.success('Statut mis à jour !')
                   } catch (error) {
-                    toast.error('Erreur lors de la mise à jour')
+                    toast.error('Error lors de la mise à jour')
                   }
                 }}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"

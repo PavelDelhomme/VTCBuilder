@@ -22,7 +22,7 @@ export default function PagesManagement() {
       const data = await pageService.getAll()
       setPages(data)
     } catch (error) {
-      toast.error('Erreur de chargement des pages')
+      toast.error('Error de chargement des pages')
     } finally {
       setLoading(false)
     }
@@ -34,7 +34,7 @@ export default function PagesManagement() {
       toast.success('Page publiée !')
       loadPages()
     } catch (error) {
-      toast.error('Erreur lors de la publication')
+      toast.error('Error lors de la publication')
     }
   }
 
@@ -44,7 +44,7 @@ export default function PagesManagement() {
       toast.success('Page dupliquée !')
       loadPages()
     } catch (error) {
-      toast.error('Erreur lors de la duplication')
+      toast.error('Error lors de la duplication')
     }
   }
 
@@ -60,8 +60,8 @@ export default function PagesManagement() {
       toast.success('Page supprimée !')
       loadPages()
     } catch (error: any) {
-      console.error('Erreur suppression:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
+      console.error('Error suppression:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la suppression')
     }
   }
 

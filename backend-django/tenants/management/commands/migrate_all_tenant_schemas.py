@@ -89,7 +89,7 @@ class Command(BaseCommand):
                 else:
                     error_count += 1
                     self.stdout.write(self.style.ERROR(f'   ❌ Erreur migration {tenant.schema_name}: {e}'))
-                    logger.error(f'Erreur migration schéma {tenant.schema_name}: {e}', exc_info=True)
+                    logger.error(f'Error migration schéma {tenant.schema_name}: {e}', exc_info=True)
             except Exception as e:
                 error_count += 1
                 error_msg = str(e)
@@ -101,7 +101,7 @@ class Command(BaseCommand):
                     migrated_count += 1
                 else:
                     self.stdout.write(self.style.ERROR(f'   ❌ Erreur migration {tenant.schema_name}: {error_msg[:200]}'))
-                    logger.error(f'Erreur migration schéma {tenant.schema_name}: {e}', exc_info=True)
+                    logger.error(f'Error migration schéma {tenant.schema_name}: {e}', exc_info=True)
 
         self.stdout.write('')
         self.stdout.write(self.style.SUCCESS(f'✅ {migrated_count} schéma(s) migré(s)'))

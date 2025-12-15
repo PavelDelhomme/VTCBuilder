@@ -68,8 +68,8 @@ export default function RegisterPage() {
         : []
       setPricingPlans(activePlans.sort((a, b) => (a.order || 0) - (b.order || 0)))
     } catch (error) {
-      console.error('Erreur chargement plans:', error)
-      toast.error('Erreur lors du chargement des plans tarifaires')
+      console.error('Error chargement plans:', error)
+      toast.error('Error lors du chargement des plans tarifaires')
     }
   }
 
@@ -99,7 +99,7 @@ export default function RegisterPage() {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erreur lors de l\'inscription')
+        throw new Error(result.error || 'Error lors de l\'inscription')
       }
 
       // Store tokens
@@ -127,7 +127,7 @@ export default function RegisterPage() {
       }
     } catch (error: any) {
       console.error('Registration error:', error)
-      toast.error(error.message || 'Erreur lors de l\'inscription')
+      toast.error(error.message || 'Error lors de l\'inscription')
     } finally {
       setLoading(false)
     }

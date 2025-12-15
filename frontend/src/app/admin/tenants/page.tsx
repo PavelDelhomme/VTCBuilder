@@ -35,7 +35,7 @@ export default function TenantsPage() {
       const response = await tenantService.getAll()
       setTenants(response.results || response || [])
     } catch (error) {
-      console.error('Erreur chargement tenants:', error)
+      console.error('Error chargement tenants:', error)
       setTenants([])
     } finally {
       setLoading(false)
@@ -50,8 +50,8 @@ export default function TenantsPage() {
       toast.success('Tenant suspendu avec succès')
       await loadTenants()
     } catch (error: any) {
-      console.error('Erreur suspension:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la suspension')
+      console.error('Error suspension:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la suspension')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
     }
@@ -65,8 +65,8 @@ export default function TenantsPage() {
       toast.success('Tenant activé avec succès')
       await loadTenants()
     } catch (error: any) {
-      console.error('Erreur activation:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'activation')
+      console.error('Error activation:', error)
+      toast.error(error.response?.data?.error || 'Error lors de l\'activation')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
     }
@@ -86,8 +86,8 @@ export default function TenantsPage() {
       alert(result.message || 'Tenant marqué comme supprimé. Il sera définitivement supprimé après 1 mois. Vous pouvez le restaurer avant ce délai.')
       await loadTenants()
     } catch (error: any) {
-      console.error('Erreur suppression:', error)
-      alert(error.response?.data?.error || 'Erreur lors de la suppression du tenant')
+      console.error('Error suppression:', error)
+      alert(error.response?.data?.error || 'Error lors de la suppression du tenant')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
     }
@@ -102,8 +102,8 @@ export default function TenantsPage() {
       toast.success(result.message || 'Tenant restauré avec succès')
       await loadTenants()
     } catch (error: any) {
-      console.error('Erreur restauration:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la restauration du tenant')
+      console.error('Error restauration:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la restauration du tenant')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
     }
@@ -141,8 +141,8 @@ export default function TenantsPage() {
       // Reload page to refresh user context
       window.location.reload()
     } catch (error: any) {
-      console.error('Erreur impersonnification:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'impersonnification')
+      console.error('Error impersonnification:', error)
+      toast.error(error.response?.data?.error || 'Error lors de l\'impersonnification')
       setActionLoading({ ...actionLoading, [tenant.id]: '' })
     }
   }
@@ -155,8 +155,8 @@ export default function TenantsPage() {
       await tenantService.resetAdminPassword(tenant.id, 'admin123')
       toast.success('Mot de passe réinitialisé avec succès. Le nouveau mot de passe est "admin123"')
     } catch (error: any) {
-      console.error('Erreur réinitialisation mot de passe:', error)
-      toast.error(error.response?.data?.error || error.message || 'Erreur lors de la réinitialisation du mot de passe')
+      console.error('Error réinitialisation mot de passe:', error)
+      toast.error(error.response?.data?.error || error.message || 'Error lors de la réinitialisation du mot de passe')
     } finally {
       setActionLoading({ ...actionLoading, [tenant.id]: '' })
     }

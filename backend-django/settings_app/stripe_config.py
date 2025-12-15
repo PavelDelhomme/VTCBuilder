@@ -82,13 +82,13 @@ def test_stripe_connection(secret_key: str = None) -> dict:
         except stripe.error.AuthenticationError as e:
             return {
                 'status': 'error',
-                'message': f'Erreur d\'authentification: {str(e)}',
+                'message': f'Error d\'authentification: {str(e)}',
                 'error': 'Clé secrète invalide'
             }
         except stripe.error.StripeError as e:
             return {
                 'status': 'error',
-                'message': f'Erreur Stripe: {str(e)}',
+                'message': f'Error Stripe: {str(e)}',
                 'error': str(e)
             }
         finally:
@@ -104,7 +104,7 @@ def test_stripe_connection(secret_key: str = None) -> dict:
         logger.error(f"Unexpected error testing Stripe: {e}", exc_info=True)
         return {
             'status': 'error',
-            'message': f'Erreur inattendue: {str(e)}',
+            'message': f'Error inattendue: {str(e)}',
             'error': str(e)
         }
 

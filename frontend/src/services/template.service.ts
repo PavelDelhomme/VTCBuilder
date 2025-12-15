@@ -33,7 +33,7 @@ class TemplateService {
       }
       return [];
     } catch (error: any) {
-      // Retourner un tableau vide en cas d'erreur (500, etc.)
+      // Retourner un tableau vide en cas d'error (500, etc.)
       if (error.response?.status === 404 || error.response?.status === 500 || error.code === 'ERR_FAILED') {
         return [];
       }

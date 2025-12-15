@@ -204,7 +204,7 @@ export default function Captcha({ onVerify, onReset, className = '', theme = 'li
         )}
       </div>
 
-      {/* Message d'erreur */}
+      {/* Message d'error */}
       {error && (
         <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>
       )}

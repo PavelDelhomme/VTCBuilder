@@ -191,7 +191,7 @@ class TenantSerializer(serializers.ModelSerializer):
             # Ne pas bloquer la création du tenant si l'activation des features échoue
             import logging
             logger = logging.getLogger(__name__)
-            logger.warning(f"Erreur activation fonctionnalités pour tenant {tenant.slug}: {e}")
+            logger.warning(f&quot;Error activation fonctionnalités pour tenant {tenant.slug}: {e}")
         
         # Generate setup URL
         frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:9494')

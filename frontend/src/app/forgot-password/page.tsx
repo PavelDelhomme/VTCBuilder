@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
     } catch (error: any) {
       console.error('Password reset request error:', error)
       
-      // Gestion spécifique de l'erreur ERR_BLOCKED_BY_CLIENT
+      // Gestion spécifique de l'error ERR_BLOCKED_BY_CLIENT
       if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
         // Vérifier si c'est un blocage par extension
         const isBlocked = error.config?.url?.includes('localhost') || 
@@ -44,14 +44,14 @@ export default function ForgotPasswordPage() {
           )
         } else {
           setError(
-            'Erreur de connexion au serveur. Vérifiez que le backend est démarré et accessible sur http://localhost:9495'
+            'Error de connexion au serveur. Vérifiez que le backend est démarré et accessible sur http://localhost:9495'
           )
         }
       } else {
         setError(
           error.response?.data?.error ||
           error.response?.data?.message ||
-          'Erreur lors de la demande de réinitialisation. Vérifiez votre email et réessayez.'
+          'Error lors de la demande de réinitialisation. Vérifiez votre email et réessayez.'
         )
       }
     } finally {

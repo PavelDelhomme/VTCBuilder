@@ -60,7 +60,7 @@ class ServiceViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger.error(f"Error listing services for tenant {user.tenant.id if user.tenant else 'None'}: {str(e)}", exc_info=True)
                 # Return error details for debugging
                 return Response(
-                    {'error': f'Erreur lors de la récupération des services: {str(e)}', 'details': str(e)},
+                    {'error': f'Error lors de la récupération des services: {str(e)}', 'details': str(e)},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -82,7 +82,7 @@ class ServiceViewSet(CORSMixin, viewsets.ModelViewSet):
                 except Exception as e:
                     logger.error(f"Error listing services for tenant {tenant_id}: {str(e)}", exc_info=True)
                     return Response(
-                        {'error': f'Erreur lors de la récupération des services: {str(e)}', 'details': str(e)},
+                        {'error': f'Error lors de la récupération des services: {str(e)}', 'details': str(e)},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR
                     )
         
@@ -110,7 +110,7 @@ class ServiceViewSet(CORSMixin, viewsets.ModelViewSet):
                 if not serializer.is_valid():
                     logger.error(f"Serializer validation errors: {serializer.errors}")
                     return Response(
-                        {'error': 'Erreur de validation', 'details': serializer.errors},
+                        {'error': 'Error de validation', 'details': serializer.errors},
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 
@@ -136,7 +136,7 @@ class ServiceViewSet(CORSMixin, viewsets.ModelViewSet):
                     return Response({'error': str(e.detail), 'details': str(e)}, status=status.HTTP_400_BAD_REQUEST)
                 
                 return Response(
-                    {'error': f'Erreur lors de la création: {str(e)}'},
+                    {'error': f'Error lors de la création: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -171,7 +171,7 @@ class ServiceViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error updating service: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la mise à jour: {str(e)}'},
+                    {'error': f'Error lors de la mise à jour: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -203,7 +203,7 @@ class ServiceViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error deleting service: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la suppression: {str(e)}'},
+                    {'error': f'Error lors de la suppression: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -258,7 +258,7 @@ class ServiceViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error activating service: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de l\'activation: {str(e)}'},
+                    {'error': f'Error lors de l\'activation: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -290,7 +290,7 @@ class ServiceViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error deactivating service: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la désactivation: {str(e)}'},
+                    {'error': f'Error lors de la désactivation: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -361,7 +361,7 @@ class ServiceViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error getting pricing detail: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la récupération: {str(e)}'},
+                    {'error': f'Error lors de la récupération: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         

@@ -25,8 +25,8 @@ export default function ProjectsManagement() {
       const data = await projectService.getAll()
       setProjects(data)
     } catch (error: any) {
-      console.error('Erreur chargement projets:', error)
-      toast.error('Erreur lors du chargement des projets')
+      console.error('Error chargement projets:', error)
+      toast.error('Error lors du chargement des projets')
     } finally {
       setLoading(false)
     }
@@ -43,8 +43,8 @@ export default function ProjectsManagement() {
       toast.success('Projet créé avec succès !')
       router.push(`/dashboard/projects/${project.id}`)
     } catch (error: any) {
-      console.error('Erreur création projet:', error)
-      toast.error('Erreur lors de la création du projet')
+      console.error('Error création projet:', error)
+      toast.error('Error lors de la création du projet')
     }
   }
 
@@ -57,8 +57,8 @@ export default function ProjectsManagement() {
       toast.success('Projet supprimé avec succès !')
       loadProjects()
     } catch (error: any) {
-      console.error('Erreur suppression projet:', error)
-      toast.error('Erreur lors de la suppression')
+      console.error('Error suppression projet:', error)
+      toast.error('Error lors de la suppression')
     }
   }
 

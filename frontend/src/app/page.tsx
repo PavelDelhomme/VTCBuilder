@@ -66,7 +66,7 @@ export default function HomePage() {
       } catch (error: any) {
         // Ne pas logger les erreurs 401 (normal si non connecté sur page publique)
         if (error.response?.status !== 401 && !error.silent) {
-          console.error('Erreur chargement blocs homepage:', error)
+          console.error('Error chargement blocs homepage:', error)
         }
         setUseBlocks(false)
       }
@@ -93,7 +93,7 @@ export default function HomePage() {
     } catch (error: any) {
       // Ne pas logger les erreurs 401 (normal si non connecté sur page publique)
       if (error.response?.status !== 401 && !error.silent) {
-        console.error('Erreur vérification mode maintenance:', error)
+        console.error('Error vérification mode maintenance:', error)
       }
       // Continue loading if error
       loadPricingPlans()
@@ -110,7 +110,7 @@ export default function HomePage() {
       const homePage = pages.find((p: Page) => p.is_homepage || p.slug === 'home') || pages[0]
       setTenantPage(homePage || null)
     } catch (error) {
-      console.error('Erreur chargement page tenant:', error)
+      console.error('Error chargement page tenant:', error)
       setTenantPage(null)
     } finally {
       setLoading(false)
@@ -124,7 +124,7 @@ export default function HomePage() {
     } catch (error: any) {
       // Ne pas logger les erreurs 401 (normal si non connecté sur page publique)
       if (error.response?.status !== 401 && !error.silent) {
-        console.error('Erreur chargement plans:', error)
+        console.error('Error chargement plans:', error)
       }
     } finally {
       setLoading(false)

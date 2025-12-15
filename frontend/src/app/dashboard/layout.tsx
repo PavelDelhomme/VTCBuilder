@@ -45,7 +45,7 @@ export default function DashboardLayout({
         // Autoriser l'accès
         setIsAuthorized(true)
       } catch (error) {
-        console.error('Erreur vérification auth:', error)
+        console.error('Error vérification auth:', error)
         authService.saveRedirectUrl()
         router.push('/login')
       } finally {

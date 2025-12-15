@@ -146,9 +146,9 @@ export default function StatsPage() {
         api.get('/stats/detailed/'),
         billingService.getBillingStats().catch(() => null), // Ne pas bloquer si billing stats échoue
         analyticsService.getUsageStats().catch((err) => {
-          // Ne pas logger d'erreur si c'est juste un 404 (endpoint pas encore disponible)
+          // Ne pas logger d'error si c'est juste un 404 (endpoint pas encore disponible)
           if (err?.response?.status !== 404) {
-            console.warn('Erreur chargement usage stats:', err)
+            console.warn('Error chargement usage stats:', err)
           }
           return null
         }) // Ne pas bloquer si usage stats échoue
@@ -237,7 +237,7 @@ export default function StatsPage() {
         setStats(normalizedStats)
       }
     } catch (error: any) {
-      console.error('Erreur chargement statistiques:', error)
+      console.error('Error chargement statistiques:', error)
       // Si 404 ou autre erreur, initialiser avec des valeurs vides pour éviter les erreurs d'affichage
       if (error.response?.status === 404 || error.response?.status === 500) {
         console.warn('⚠️ Endpoint /api/stats/detailed/ non disponible. Utilisation des valeurs par défaut.')

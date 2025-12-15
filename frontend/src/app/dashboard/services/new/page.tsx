@@ -50,7 +50,7 @@ export default function NewServicePage() {
       toast.success('Service créé avec succès !')
       router.push('/dashboard/services')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la création')
+      toast.error(error.response?.data?.error || 'Error lors de la création')
     } finally {
       setLoading(false)
     }

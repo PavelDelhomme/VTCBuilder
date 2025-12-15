@@ -68,10 +68,10 @@ export default function ReconnectModal({ isOpen, onClose, onReconnect, currentPa
         // Ne PAS rafraîchir la page - les requêtes seront relancées automatiquement
         // L'état de l'éditeur sera préservé
       } else {
-        toast.error('Erreur lors de la reconnexion')
+        toast.error('Error lors de la reconnexion')
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || error.response?.data?.detail || error.message || 'Erreur lors de la reconnexion'
+      const errorMessage = error.response?.data?.error || error.response?.data?.detail || error.message || 'Error lors de la reconnexion'
       toast.error(errorMessage)
     } finally {
       setLoading(false)

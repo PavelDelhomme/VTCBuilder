@@ -164,7 +164,7 @@ export default function NewPage() {
       toast.success('Page créée avec succès !')
       router.push('/dashboard/pages')
     } catch (error: any) {
-      console.error('Erreur création page:', error)
+      console.error('Error création page:', error)
       
       // Handle validation errors with details
       if (error.response?.data?.fields) {
@@ -185,7 +185,7 @@ export default function NewPage() {
         const errorMessage = error.response?.data?.error || 
                             error.response?.data?.message ||
                             error.message ||
-                            'Erreur lors de la création de la page'
+                            'Error lors de la création de la page'
         toast.error(errorMessage)
       }
     } finally {

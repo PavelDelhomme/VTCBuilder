@@ -50,7 +50,7 @@ export default function AdminBlocksPage() {
       const plans = await billingService.getPricingPlans()
       setPricingPlans(Array.isArray(plans) ? plans : plans.results || [])
     } catch (error: any) {
-      console.error('Erreur chargement plans tarifaires:', error)
+      console.error('Error chargement plans tarifaires:', error)
     }
   }
 
@@ -60,8 +60,8 @@ export default function AdminBlocksPage() {
       const data = await blocksService.getBlockTypes()
       setBlocks(Array.isArray(data) ? data : [])
     } catch (error: any) {
-      console.error('Erreur chargement blocs:', error)
-      toast.error('Erreur lors du chargement des blocs')
+      console.error('Error chargement blocs:', error)
+      toast.error('Error lors du chargement des blocs')
       setBlocks([])
     } finally {
       setLoading(false)
@@ -132,7 +132,7 @@ export default function AdminBlocksPage() {
       resetForm()
       loadBlocks()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || error.response?.data?.message || 'Erreur lors de la sauvegarde')
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Error lors de la sauvegarde')
     }
   }
 
@@ -148,7 +148,7 @@ export default function AdminBlocksPage() {
       toast.success('Bloc supprimé avec succès !')
       loadBlocks()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
+      toast.error(error.response?.data?.error || 'Error lors de la suppression')
     }
   }
 
@@ -158,7 +158,7 @@ export default function AdminBlocksPage() {
       toast.success(`Bloc ${!block.is_active ? 'activé' : 'désactivé'} avec succès !`)
       loadBlocks()
     } catch (error: any) {
-      toast.error('Erreur lors de la mise à jour')
+      toast.error('Error lors de la mise à jour')
     }
   }
 
@@ -521,7 +521,7 @@ export default function AdminBlocksPage() {
                   </div>
                   {schemaError && (
                     <div className="mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400">
-                      Erreur JSON: {schemaError}
+                      Error JSON: {schemaError}
                     </div>
                   )}
                   <textarea
@@ -566,7 +566,7 @@ export default function AdminBlocksPage() {
                   </div>
                   {stylesError && (
                     <div className="mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400">
-                      Erreur JSON: {stylesError}
+                      Error JSON: {stylesError}
                     </div>
                   )}
                   <textarea
@@ -611,7 +611,7 @@ export default function AdminBlocksPage() {
                   </div>
                   {ctaError && (
                     <div className="mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400">
-                      Erreur JSON: {ctaError}
+                      Error JSON: {ctaError}
                     </div>
                   )}
                   <textarea

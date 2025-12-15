@@ -23,8 +23,8 @@ export default function ServicesPage() {
       const data = await serviceService.getAll()
       setServices(Array.isArray(data) ? data : [])
     } catch (error) {
-      console.error('Erreur chargement services:', error)
-      toast.error('Erreur lors du chargement des services')
+      console.error('Error chargement services:', error)
+      toast.error('Error lors du chargement des services')
     } finally {
       setLoading(false)
     }
@@ -41,7 +41,7 @@ export default function ServicesPage() {
       }
       loadServices()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la modification')
+      toast.error(error.response?.data?.error || 'Error lors de la modification')
     }
   }
 
@@ -55,7 +55,7 @@ export default function ServicesPage() {
       toast.success('Service supprimé')
       loadServices()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
+      toast.error(error.response?.data?.error || 'Error lors de la suppression')
     }
   }
 

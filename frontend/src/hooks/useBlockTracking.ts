@@ -58,7 +58,7 @@ export function useBlockTracking() {
         usages: dataToSend,
       })
     } catch (error) {
-      console.warn('Erreur enregistrement usage blocs:', error)
+      console.warn('Error enregistrement usage blocs:', error)
       // En cas d'erreur, remettre dans la queue pour réessayer plus tard
       trackingQueue.current = [...dataToSend, ...trackingQueue.current]
     }

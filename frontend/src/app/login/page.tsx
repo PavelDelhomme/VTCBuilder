@@ -104,7 +104,7 @@ export default function LoginPage() {
         }
         toast.success('Connexion réussie !')
       } else {
-        toast.error('Erreur de connexion')
+        toast.error('Error de connexion')
       }
     } catch (error: any) {
       console.error('Login error:', error)
@@ -149,7 +149,7 @@ export default function LoginPage() {
         const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Email ou mot de passe incorrect'
         toast.error(errorMessage)
       } else {
-        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Erreur de connexion'
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Error de connexion'
         toast.error(errorMessage)
       }
     } finally {
@@ -189,8 +189,8 @@ export default function LoginPage() {
       setShowDomainConfig(false)
       setCustomDomain('')
     } catch (error: any) {
-      console.error('Erreur configuration domaine:', error)
-      const errorMessage = error.response?.data?.error || error.message || 'Erreur lors de la configuration du domaine'
+      console.error('Error configuration domaine:', error)
+      const errorMessage = error.response?.data?.error || error.message || 'Error lors de la configuration du domaine'
       toast.error(errorMessage)
     } finally {
       setConfiguringDomain(false)

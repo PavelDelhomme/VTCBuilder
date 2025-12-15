@@ -28,8 +28,8 @@ export default function BookingsPage() {
       const data = await bookingService.getAll(params)
       setBookings(Array.isArray(data) ? data : [])
     } catch (error) {
-      console.error('Erreur chargement réservations:', error)
-      toast.error('Erreur lors du chargement des réservations')
+      console.error('Error chargement réservations:', error)
+      toast.error('Error lors du chargement des réservations')
     } finally {
       setLoading(false)
     }
@@ -41,7 +41,7 @@ export default function BookingsPage() {
       toast.success('Réservation confirmée')
       loadBookings()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la confirmation')
+      toast.error(error.response?.data?.error || 'Error lors de la confirmation')
     }
   }
 
@@ -51,7 +51,7 @@ export default function BookingsPage() {
       toast.success('Réservation terminée')
       loadBookings()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la finalisation')
+      toast.error(error.response?.data?.error || 'Error lors de la finalisation')
     }
   }
 
@@ -62,7 +62,7 @@ export default function BookingsPage() {
       toast.success('Réservation annulée')
       loadBookings()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'annulation')
+      toast.error(error.response?.data?.error || 'Error lors de l\'annulation')
     }
   }
 

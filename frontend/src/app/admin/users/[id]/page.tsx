@@ -71,8 +71,8 @@ export default function EditUserPage() {
         status: userData.status || 'active',
       })
     } catch (error) {
-      console.error('Erreur chargement utilisateur:', error)
-      setError('Erreur lors du chargement de l\'utilisateur')
+      console.error('Error chargement utilisateur:', error)
+      setError('Error lors du chargement de l\'utilisateur')
     } finally {
       setLoading(false)
     }
@@ -86,7 +86,7 @@ export default function EditUserPage() {
       const tenantsArray = data?.results || (Array.isArray(data) ? data : [])
       setTenants(Array.isArray(tenantsArray) ? tenantsArray : [])
     } catch (error) {
-      console.error('Erreur chargement tenants:', error)
+      console.error('Error chargement tenants:', error)
       // En cas d'erreur, s'assurer que tenants reste un tableau vide
       setTenants([])
     }
@@ -143,7 +143,7 @@ export default function EditUserPage() {
                           error.response?.data?.message || 
                           (error.response?.data && typeof error.response.data === 'object' 
                             ? JSON.stringify(error.response.data) 
-                            : 'Erreur lors de la mise à jour')
+                            : 'Error lors de la mise à jour')
       setError(errorMessage)
     } finally {
       setSaving(false)
@@ -174,7 +174,7 @@ export default function EditUserPage() {
       setSuccess('Mot de passe changé avec succès !')
       setPasswordData({ new_password: '', confirm_password: '' })
     } catch (error: any) {
-      setError(error.response?.data?.error || 'Erreur lors du changement de mot de passe')
+      setError(error.response?.data?.error || 'Error lors du changement de mot de passe')
     } finally {
       setSaving(false)
     }

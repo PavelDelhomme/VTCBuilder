@@ -53,7 +53,7 @@ export default function TenantPublicPage() {
         await loadPage()
       }
     } catch (error) {
-      console.error('Erreur vérification statut projet:', error)
+      console.error('Error vérification statut projet:', error)
       // En cas d'erreur, essayer de charger la page quand même
       await loadPage()
     } finally {
@@ -75,7 +75,7 @@ export default function TenantPublicPage() {
       })
       setPage(foundPage || null)
     } catch (error) {
-      console.error('Erreur chargement page:', error)
+      console.error('Error chargement page:', error)
       setPage(null)
     }
   }
@@ -92,7 +92,7 @@ export default function TenantPublicPage() {
     )
   }
 
-  // Si le projet est désactivé, afficher la page d'erreur stylisée
+  // Si le projet est désactivé, afficher la page d'error stylisée
   if (projectStatus && projectStatus !== 'active' && !loading) {
     return (
       <ProjectUnavailablePage 

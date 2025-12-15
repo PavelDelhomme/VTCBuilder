@@ -125,7 +125,7 @@ class BookingViewSet(CORSMixin, viewsets.ModelViewSet):
                 if hasattr(e, 'detail'):
                     return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
                 return Response(
-                    {'error': f'Erreur lors de la création: {str(e)}'},
+                    {'error': f'Error lors de la création: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -160,7 +160,7 @@ class BookingViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error updating booking: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la mise à jour: {str(e)}'},
+                    {'error': f'Error lors de la mise à jour: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -192,7 +192,7 @@ class BookingViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error deleting booking: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la suppression: {str(e)}'},
+                    {'error': f'Error lors de la suppression: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -225,7 +225,7 @@ class BookingViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error confirming booking: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la confirmation: {str(e)}'},
+                    {'error': f'Error lors de la confirmation: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -258,7 +258,7 @@ class BookingViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error starting trip: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors du démarrage: {str(e)}'},
+                    {'error': f'Error lors du démarrage: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -291,7 +291,7 @@ class BookingViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error completing booking: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la finalisation: {str(e)}'},
+                    {'error': f'Error lors de la finalisation: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -325,7 +325,7 @@ class BookingViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error cancelling booking: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de l\'annulation: {str(e)}'},
+                    {'error': f'Error lors de l\'annulation: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         

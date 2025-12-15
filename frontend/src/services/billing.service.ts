@@ -98,7 +98,7 @@ class BillingService {
       });
       return Array.isArray(response.data) ? response.data : response.data.results || [];
     } catch (error: any) {
-      // Retourner un tableau vide en cas d'erreur (401, 404, 500, CORS, etc.)
+      // Retourner un tableau vide en cas d'error (401, 404, 500, CORS, etc.)
       // Ne pas logger les erreurs 401/404 (normal si non connecté)
       if (error.response?.status === 401 || error.response?.status === 404 || error.response?.status === 500 || error.code === 'ERR_FAILED' || error.silent) {
         return [];
@@ -274,7 +274,7 @@ class BillingService {
     });
     
     if (!response.ok) {
-      throw new Error('Erreur lors du téléchargement');
+      throw new Error('Error lors du téléchargement');
     }
     
     return response.blob();
@@ -373,7 +373,7 @@ class BillingService {
       return Array.isArray(response.data) ? response.data : response.data.results || [];
     } catch (error: any) {
       // Retourner un tableau vide si l'endpoint n'est pas disponible (404)
-      // Ne pas logger l'erreur car c'est attendu si le backend n'est pas redémarré
+      // Ne pas logger l'error car c'est attendu si le backend n'est pas redémarré
       if (error.response?.status === 404 || error.code === 'ERR_FAILED') {
         // Optionnel: Logger seulement en mode développement
         if (process.env.NODE_ENV === 'development') {
@@ -382,7 +382,7 @@ class BillingService {
         return [];
       }
       // Logger seulement les autres erreurs
-      console.error('Erreur lors de la récupération des méthodes de paiement:', error);
+      console.error('Error lors de la récupération des méthodes de paiement:', error);
       throw error;
     }
   }

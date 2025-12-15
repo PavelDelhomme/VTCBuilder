@@ -47,7 +47,7 @@ export default function ImpersonationBanner() {
                              error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||
                              error.message?.includes('blocked by client')
       if (!isExpectedError) {
-        console.error('Erreur vérification impersonnification:', error)
+        console.error('Error vérification impersonnification:', error)
       }
       // Set not impersonating on any error
       setIsImpersonating(false)
@@ -80,8 +80,8 @@ export default function ImpersonationBanner() {
       router.refresh()
       window.location.reload()
     } catch (error: any) {
-      console.error('Erreur arrêt impersonnification:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'arrêt de l\'impersonnification')
+      console.error('Error arrêt impersonnification:', error)
+      toast.error(error.response?.data?.error || 'Error lors de l\'arrêt de l\'impersonnification')
     }
   }
 

@@ -52,7 +52,7 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
       const data = await projectService.getAll()
       setProjects(data)
     } catch (error) {
-      console.error('Erreur chargement projets:', error)
+      console.error('Error chargement projets:', error)
       setProjects([])
     } finally {
       setLoadingProjects(false)

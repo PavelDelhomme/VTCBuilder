@@ -42,8 +42,8 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
         return saved === 'true'
       }
     } catch (error) {
-      // En cas d'erreur (localStorage bloqué, etc.), logger et retourner false
-      console.error('Erreur lors du chargement de l\'état du sidebar:', error)
+      // En cas d'error (localStorage bloqué, etc.), logger et retourner false
+      console.error('Error lors du chargement de l\'état du sidebar:', error)
     }
     return false
   }
@@ -54,8 +54,8 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
       if (typeof window === 'undefined') return
       localStorage.setItem(SIDEBAR_STATE_KEY, String(isOpen))
     } catch (error) {
-      // En cas d'erreur (localStorage bloqué, quota dépassé, etc.), logger seulement
-      console.error('Erreur lors de la sauvegarde de l\'état du sidebar:', error)
+      // En cas d'error (localStorage bloqué, quota dépassé, etc.), logger seulement
+      console.error('Error lors de la sauvegarde de l\'état du sidebar:', error)
     }
   }
 

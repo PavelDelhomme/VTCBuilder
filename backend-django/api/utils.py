@@ -65,7 +65,7 @@ def get_authenticated_user_from_token(request):
     Returns:
         tuple: (user, error_message)
         - user: L'objet User si authentifié, None sinon
-        - error_message: Message d'erreur si échec, None sinon
+        - error_message: Message d'error si échec, None sinon
     """
     try:
         jwt_auth = JWTAuthentication()
@@ -93,10 +93,10 @@ def get_authenticated_user_from_token(request):
         return None, "Token invalide ou expiré"
     except TokenError as e:
         logger.warning(f"Token error: {e}")
-        return None, "Erreur de token"
+        return None, &quot;Error de token"
     except Exception as e:
         logger.error(f"Error authenticating user from token: {e}", exc_info=True)
-        return None, "Erreur d'authentification"
+        return None, &quot;Error d'authentification"
 
 
 def is_super_admin_from_token(request):

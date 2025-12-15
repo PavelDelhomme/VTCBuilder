@@ -63,7 +63,7 @@ export default function EditServicePage() {
         order: service.order,
       })
     } catch (error: any) {
-      toast.error('Erreur lors du chargement du service')
+      toast.error('Error lors du chargement du service')
       router.push('/dashboard/services')
     } finally {
       setLoading(false)
@@ -77,7 +77,7 @@ export default function EditServicePage() {
       toast.success('Service mis à jour avec succès !')
       router.push('/dashboard/services')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour')
+      toast.error(error.response?.data?.error || 'Error lors de la mise à jour')
     } finally {
       setSaving(false)
     }

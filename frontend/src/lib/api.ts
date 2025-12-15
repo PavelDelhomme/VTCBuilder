@@ -123,7 +123,7 @@ api.interceptors.response.use(
       // Si c'est une requête annulée pour /system-settings/ et que l'utilisateur n'est pas super admin, ignorer silencieusement
       const requestUrl = originalRequest?.url || (error as any).config?.url || '';
       if (requestUrl.includes('/system-settings/') && !authService.isSuperAdmin()) {
-        // Supprimer le message d'erreur pour éviter qu'il soit loggé
+        // Supprimer le message d'error pour éviter qu'il soit loggé
         try {
           if (error.message) {
             Object.defineProperty(error, 'message', { value: '', writable: false, configurable: true });
@@ -145,7 +145,7 @@ api.interceptors.response.use(
     // Gérer les erreurs personnalisées avec flag __shouldRejectSilently (requêtes bloquées dans l'intercepteur de requête)
     // Ces erreurs sont créées quand une requête est bloquée AVANT d'être envoyée
     if ((error as any).__shouldRejectSilently || (error as any).__isCancelled || (originalRequest as any).__shouldRejectSilently || (originalRequest as any).__isCancelled) {
-      // Supprimer le message d'erreur pour éviter qu'il soit loggé
+      // Supprimer le message d'error pour éviter qu'il soit loggé
       try {
         if (error.message) {
           Object.defineProperty(error, 'message', { value: '', writable: false, configurable: true });
@@ -175,11 +175,11 @@ api.interceptors.response.use(
     // Si c'est le cas, retourner une promesse résolue silencieusement AVANT tout autre traitement
     if (status === 403 && url.includes('/system-settings/')) {
       if (!authService.isSuperAdmin()) {
-        // Marquer l'erreur comme silencieuse pour éviter qu'elle soit loggée
+        // Marquer l'error comme silencieuse pour éviter qu'elle soit loggée
         error.silent = true;
         error.config = error.config || {};
         error.config.silent = true;
-        // Supprimer l'erreur de la console en interceptant avant qu'elle soit loggée
+        // Supprimer l'error de la console en interceptant avant qu'elle soit loggée
         // Empêcher le navigateur de logger cette erreur en masquant l'objet error
         try {
           Object.defineProperty(error, 'message', { value: '', writable: false, configurable: true });
@@ -307,7 +307,7 @@ api.interceptors.response.use(
       });
     }
     
-    // Vérifier si l'erreur est marquée comme silencieuse (depuis l'intercepteur de requête)
+    // Vérifier si l'error est marquée comme silencieuse (depuis l'intercepteur de requête)
     // ou si c'est une erreur de cancellation pour /system-settings/
     if (error.silent || (axios.isCancel && axios.isCancel(error) && error.message?.includes('Not super admin'))) {
       // Retourner une promesse résolue sans logger
@@ -321,13 +321,13 @@ api.interceptors.response.use(
     }
     
     if ((status === 401 || status === 403) && isSilentError) {
-      // Supprimer l'erreur de la console en interceptant avant qu'elle soit loggée
+      // Supprimer l'error de la console en interceptant avant qu'elle soit loggée
       error.silent = true;
-      // Ne pas afficher l'erreur dans la console
+      // Ne pas afficher l'error dans la console
       error.config = error.config || {};
       error.config.silent = true;
       // Pour toutes les erreurs 401/403 sur les endpoints silencieux, retourner une promesse résolue silencieusement
-      // Cela évite que l'erreur soit loggée dans la console
+      // Cela évite que l'error soit loggée dans la console
       return Promise.resolve({ 
         data: {}, 
         status: status, 
@@ -367,7 +367,7 @@ api.interceptors.response.use(
     } else if (error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
       // Erreurs réseau normales (backend non démarré, etc.)
       if (!isSilentEndpoint && !window.__hasLoggedNetworkError) {
-        console.warn(`⚠️ Erreur réseau: ${url} (backend non accessible?)`);
+        console.warn(`⚠️ Error réseau: ${url} (backend non accessible?)`);
         window.__hasLoggedNetworkError = true;
       }
     }
@@ -388,7 +388,7 @@ api.interceptors.response.use(
       // Utiliser isSilentError défini plus haut (ligne 100)
       if (isSilentError && !hasToken) {
         // Ne rien logger, c'est attendu - rejeter silencieusement
-        // Supprimer l'erreur de la console en interceptant avant qu'elle soit loggée
+        // Supprimer l'error de la console en interceptant avant qu'elle soit loggée
         error.silent = true;
         return Promise.reject(error);
       }

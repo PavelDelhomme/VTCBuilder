@@ -183,7 +183,7 @@ export default function UsersPage() {
       const data = await userService.getAll()
       setUsers(data)
     } catch (error) {
-      console.error('Erreur chargement utilisateurs:', error)
+      console.error('Error chargement utilisateurs:', error)
       setUsers([])
     } finally {
       setLoading(false)
@@ -197,8 +197,8 @@ export default function UsersPage() {
       toast.success('Utilisateur activé')
       await loadUsers()
     } catch (error) {
-      console.error('Erreur activation:', error)
-      toast.error('Erreur lors de l\'activation')
+      console.error('Error activation:', error)
+      toast.error('Error lors de l\'activation')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
     }
@@ -212,8 +212,8 @@ export default function UsersPage() {
       toast.success('Utilisateur désactivé')
       await loadUsers()
     } catch (error) {
-      console.error('Erreur désactivation:', error)
-      toast.error('Erreur lors de la désactivation')
+      console.error('Error désactivation:', error)
+      toast.error('Error lors de la désactivation')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
     }
@@ -227,8 +227,8 @@ export default function UsersPage() {
       toast.success('Utilisateur suspendu')
       await loadUsers()
     } catch (error) {
-      console.error('Erreur suspension:', error)
-      toast.error('Erreur lors de la suspension')
+      console.error('Error suspension:', error)
+      toast.error('Error lors de la suspension')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
     }
@@ -241,8 +241,8 @@ export default function UsersPage() {
       const result = await userService.sendPasswordReset(id)
       toast.success(result.message || 'Email de réinitialisation envoyé avec succès !')
     } catch (error: any) {
-      console.error('Erreur envoi reset password:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'envoi de l\'email')
+      console.error('Error envoi reset password:', error)
+      toast.error(error.response?.data?.error || 'Error lors de l\'envoi de l\'email')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
     }
@@ -276,8 +276,8 @@ export default function UsersPage() {
       // Reload page to refresh user context
       window.location.reload()
     } catch (error: any) {
-      console.error('Erreur impersonnification:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'impersonnification')
+      console.error('Error impersonnification:', error)
+      toast.error(error.response?.data?.error || 'Error lors de l\'impersonnification')
       setActionLoading({ ...actionLoading, [id]: '' })
     }
   }
@@ -302,8 +302,8 @@ export default function UsersPage() {
       toast.success('Utilisateur supprimé avec succès')
       await loadUsers()
     } catch (error: any) {
-      console.error('Erreur suppression:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression. Impossible de supprimer un super-admin.')
+      console.error('Error suppression:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la suppression. Impossible de supprimer un super-admin.')
     } finally {
       setActionLoading({ ...actionLoading, [id]: '' })
     }

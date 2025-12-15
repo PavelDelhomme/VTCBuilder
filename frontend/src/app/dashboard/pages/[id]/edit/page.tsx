@@ -40,8 +40,8 @@ export default function EditPage() {
       setStatus(data.status || 'draft')
       setIsHomepage(data.is_homepage || false)
     } catch (error) {
-      console.error('Erreur chargement page:', error)
-      toast.error('Erreur lors du chargement de la page')
+      console.error('Error chargement page:', error)
+      toast.error('Error lors du chargement de la page')
     } finally {
       setLoading(false)
     }
@@ -65,8 +65,8 @@ export default function EditPage() {
       })
       toast.success('Page sauvegardée !')
     } catch (error: any) {
-      console.error('Erreur sauvegarde:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      console.error('Error sauvegarde:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
     } finally {
       setSaving(false)
     }
@@ -78,7 +78,7 @@ export default function EditPage() {
       toast.success('Page publiée !')
       loadPage()
     } catch (error) {
-      toast.error('Erreur lors de la publication')
+      toast.error('Error lors de la publication')
     }
   }
 
@@ -92,8 +92,8 @@ export default function EditPage() {
       toast.success('Page supprimée !')
       router.push('/dashboard/pages')
     } catch (error: any) {
-      console.error('Erreur suppression:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
+      console.error('Error suppression:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la suppression')
     }
   }
 

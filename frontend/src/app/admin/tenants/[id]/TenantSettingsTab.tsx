@@ -164,8 +164,8 @@ export default function TenantSettingsTab({ tenantId, tenantName }: TenantSettin
       const features = data.enabled_features || data.settings?.enabled_features || []
       setEnabledFeatures(new Set(features))
     } catch (error) {
-      console.error('Erreur chargement tenant:', error)
-      toast.error('Erreur lors du chargement des paramètres')
+      console.error('Error chargement tenant:', error)
+      toast.error('Error lors du chargement des paramètres')
     } finally {
       setLoading(false)
     }
@@ -198,8 +198,8 @@ export default function TenantSettingsTab({ tenantId, tenantName }: TenantSettin
       toast.success('Fonctionnalités mises à jour avec succès !')
       loadTenant()
     } catch (error: any) {
-      console.error('Erreur sauvegarde fonctionnalités:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      console.error('Error sauvegarde fonctionnalités:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
     } finally {
       setSaving(false)
     }
@@ -220,8 +220,8 @@ export default function TenantSettingsTab({ tenantId, tenantName }: TenantSettin
       toast.success('Paramètres mis à jour avec succès !')
       loadTenant()
     } catch (error: any) {
-      console.error('Erreur sauvegarde paramètres:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      console.error('Error sauvegarde paramètres:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
     } finally {
       setSaving(false)
     }

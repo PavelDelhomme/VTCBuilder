@@ -47,15 +47,15 @@ function CheckoutForm({ clientSecret, onSuccess, onError }: StripeCheckoutProps)
       })
 
       if (error) {
-        toast.error(error.message || 'Erreur de paiement')
-        onError?.(error.message || 'Erreur de paiement')
+        toast.error(error.message || 'Error de paiement')
+        onError?.(error.message || 'Error de paiement')
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         toast.success('Paiement réussi !')
         onSuccess()
       }
     } catch (error: any) {
-      toast.error('Erreur lors du paiement')
-      onError?.(error.message || 'Erreur de paiement')
+      toast.error('Error lors du paiement')
+      onError?.(error.message || 'Error de paiement')
     } finally {
       setProcessing(false)
     }

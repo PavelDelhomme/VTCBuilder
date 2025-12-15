@@ -48,7 +48,7 @@ export default function SetupPage() {
         setError('Le lien d\'invitation est invalide ou a expiré')
       }
     } catch (error) {
-      setError('Erreur lors de la vérification du token')
+      setError('Error lors de la vérification du token')
       setTokenValid(false)
     } finally {
       setVerifying(false)
@@ -93,7 +93,7 @@ export default function SetupPage() {
         router.push('/dashboard')
       }, 2000)
     } catch (error: any) {
-      setError(error.response?.data?.error || 'Erreur lors de la configuration du compte')
+      setError(error.response?.data?.error || 'Error lors de la configuration du compte')
     } finally {
       setLoading(false)
     }

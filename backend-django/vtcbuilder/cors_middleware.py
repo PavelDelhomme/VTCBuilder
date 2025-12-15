@@ -119,7 +119,7 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
         
         logger.error(f"Exception in CORSAlwaysMiddleware: {exception}", exc_info=True)
         
-        # Créer une réponse d'erreur avec headers CORS
+        # Créer une réponse d'error avec headers CORS
         error_response = JsonResponse({
             'error': 'Internal server error',
             'message': str(exception) if settings.DEBUG else 'An error occurred'

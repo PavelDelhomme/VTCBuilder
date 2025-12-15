@@ -84,7 +84,7 @@ function SubscriptionRow({
       }
       onUpdate()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'action')
+      toast.error(error.response?.data?.error || 'Error lors de l\'action')
     } finally {
       setActionLoading(null)
     }
@@ -314,10 +314,10 @@ export default function BillingPage() {
       const data = await billingService.getUnpaidItems()
       setUnpaidItems(data)
     } catch (error: any) {
-      console.error('Erreur chargement impayés:', error)
-      // Ne pas afficher d'erreur si c'est un 404 (endpoint non disponible)
+      console.error('Error chargement impayés:', error)
+      // Ne pas afficher d'error si c'est un 404 (endpoint non disponible)
       if (error.response?.status !== 404) {
-        toast.error('Erreur lors du chargement des impayés')
+        toast.error('Error lors du chargement des impayés')
       }
       // Initialiser avec des données vides
       setUnpaidItems({
@@ -366,11 +366,11 @@ export default function BillingPage() {
     } catch (error: any) {
       // Ne pas logger les erreurs attendues (gérées gracieusement)
       if (!error.response || (error.response?.status !== 404 && error.response?.status !== 500)) {
-        console.error('Erreur chargement facturation:', error)
+        console.error('Error chargement facturation:', error)
       }
       // Ne pas afficher de toast pour les erreurs attendues
       if (!error.response || (error.response?.status !== 404 && error.response?.status !== 500)) {
-        toast.error('Erreur lors du chargement des données de facturation')
+        toast.error('Error lors du chargement des données de facturation')
       }
     } finally {
       setLoading(false)
@@ -433,8 +433,8 @@ export default function BillingPage() {
                 billingService.getUnpaidItems()
                   .then(data => setUnpaidItems(data))
                   .catch(error => {
-                    console.error('Erreur chargement impayés:', error)
-                    toast.error('Erreur lors du chargement des impayés')
+                    console.error('Error chargement impayés:', error)
+                    toast.error('Error lors du chargement des impayés')
                   })
               }
             }}
@@ -1189,7 +1189,7 @@ export default function BillingPage() {
                                         await billingService.sendInvoiceReminder(invoice.id)
                                         toast.success('Email de relance envoyé')
                                       } catch (error: any) {
-                                        toast.error(error.response?.data?.error || 'Erreur lors de l\'envoi de la relance')
+                                        toast.error(error.response?.data?.error || 'Error lors de l\'envoi de la relance')
                                       }
                                     }}
                                     className="text-blue-600 hover:text-blue-900 p-1"
@@ -1294,7 +1294,7 @@ export default function BillingPage() {
                                       await billingService.sendInvoiceReminder(invoice.id)
                                       toast.success('Email de relance envoyé')
                                     } catch (error: any) {
-                                      toast.error(error.response?.data?.error || 'Erreur lors de l\'envoi de la relance')
+                                      toast.error(error.response?.data?.error || 'Error lors de l\'envoi de la relance')
                                     }
                                   }}
                                   className="text-blue-600 hover:text-blue-900 p-1"
@@ -1427,7 +1427,7 @@ function PricingPlansTab({
       setFeatures([])
       onUpdate()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || error.response?.data?.slug?.[0] || 'Erreur lors de la sauvegarde')
+      toast.error(error.response?.data?.error || error.response?.data?.slug?.[0] || 'Error lors de la sauvegarde')
     }
   }
 
@@ -1439,7 +1439,7 @@ function PricingPlansTab({
       toast.success('Plan tarifaire supprimé')
       onUpdate()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
+      toast.error(error.response?.data?.error || 'Error lors de la suppression')
     }
   }
 
@@ -2217,7 +2217,7 @@ function PaymentMethodsTab({
       setFormData({})
       onUpdate()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
     }
   }
 
@@ -2229,7 +2229,7 @@ function PaymentMethodsTab({
       toast.success('Mode de paiement supprimé')
       onUpdate()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
+      toast.error(error.response?.data?.error || 'Error lors de la suppression')
     }
   }
 

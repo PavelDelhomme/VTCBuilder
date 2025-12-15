@@ -50,11 +50,11 @@ export default function AdminTemplatesPage() {
     } catch (error: any) {
       // Ne pas logger les erreurs attendues (500, etc.)
       if (!error.response || error.response?.status !== 500) {
-        console.error('Erreur chargement templates:', error)
+        console.error('Error chargement templates:', error)
       }
       // Ne pas afficher de toast pour les erreurs 500 (endpoint peut être en cours de développement)
       if (!error.response || error.response?.status !== 500) {
-        toast.error('Erreur lors du chargement des templates')
+        toast.error('Error lors du chargement des templates')
       }
       setTemplates([])
     } finally {
@@ -97,7 +97,7 @@ export default function AdminTemplatesPage() {
       resetForm()
       loadTemplates()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
     }
   }
 
@@ -160,8 +160,8 @@ export default function AdminTemplatesPage() {
       // Détecter les variables après avoir chargé le contenu
       setTimeout(() => detectVariables(), 100)
     } catch (error: any) {
-      console.error('Erreur chargement détails template:', error)
-      toast.error('Erreur lors du chargement des détails du template')
+      console.error('Error chargement détails template:', error)
+      toast.error('Error lors du chargement des détails du template')
       // Fallback: utiliser les données de la liste si le chargement échoue
       setEditingTemplate(template)
       setFormData({
@@ -196,7 +196,7 @@ export default function AdminTemplatesPage() {
       toast.success('Template supprimé avec succès !')
       loadTemplates()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
+      toast.error(error.response?.data?.error || 'Error lors de la suppression')
     }
   }
 
@@ -209,7 +209,7 @@ export default function AdminTemplatesPage() {
       toast.success(`Template ${!template.is_active ? 'activé' : 'désactivé'} avec succès !`)
       loadTemplates()
     } catch (error: any) {
-      toast.error('Erreur lors de la mise à jour')
+      toast.error('Error lors de la mise à jour')
     }
   }
 

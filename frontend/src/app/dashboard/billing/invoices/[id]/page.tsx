@@ -31,8 +31,8 @@ export default function InvoiceDetailPage() {
       const data = await billingService.getInvoice(invoiceId)
       setInvoice(data)
     } catch (error: any) {
-      console.error('Erreur chargement facture:', error)
-      toast.error('Erreur lors du chargement de la facture')
+      console.error('Error chargement facture:', error)
+      toast.error('Error lors du chargement de la facture')
       router.push('/dashboard/billing')
     } finally {
       setLoading(false)
@@ -53,7 +53,7 @@ export default function InvoiceDetailPage() {
       window.URL.revokeObjectURL(url)
       toast.success('Facture téléchargée avec succès')
     } catch (error: any) {
-      toast.error('Erreur lors du téléchargement')
+      toast.error('Error lors du téléchargement')
     }
   }
 

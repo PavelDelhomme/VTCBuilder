@@ -124,7 +124,7 @@ class MediaUploadSerializer(serializers.ModelSerializer):
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"Error saving file: {e}", exc_info=True)
-            raise serializers.ValidationError(f'Erreur lors de la sauvegarde du fichier: {str(e)}')
+            raise serializers.ValidationError(f'Error lors de la sauvegarde du fichier: {str(e)}')
 
 
 class MediaListSerializer(serializers.ModelSerializer):

@@ -41,7 +41,7 @@ export default function TenantUsersPage() {
       const usersArray = Array.isArray(data) ? data : (data.results || data.data || [])
       setUsers(usersArray)
     } catch (error) {
-      console.error('Erreur chargement utilisateurs:', error)
+      console.error('Error chargement utilisateurs:', error)
       setUsers([])
     } finally {
       setLoading(false)
@@ -62,8 +62,8 @@ export default function TenantUsersPage() {
       toast.success('Utilisateur créé avec succès !')
       loadUsers()
     } catch (error: any) {
-      console.error('Erreur création utilisateur:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la création')
+      console.error('Error création utilisateur:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la création')
     }
   }
 
@@ -73,7 +73,7 @@ export default function TenantUsersPage() {
       const result = await userService.sendPasswordReset(id)
       toast.success(result.message || 'Email envoyé avec succès !')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'envoi')
+      toast.error(error.response?.data?.error || 'Error lors de l\'envoi')
     }
   }
 
@@ -90,8 +90,8 @@ export default function TenantUsersPage() {
       toast.success('Utilisateur supprimé avec succès')
       loadUsers()
     } catch (error: any) {
-      console.error('Erreur suppression:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression. Impossible de supprimer un super-admin.')
+      console.error('Error suppression:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la suppression. Impossible de supprimer un super-admin.')
     }
   }
 

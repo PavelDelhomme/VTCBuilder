@@ -286,7 +286,7 @@ function createDefaultHomepageBlocks(): Block[] {
 export default function HomepageEditorPage() {
   const router = useRouter()
   
-  // Supprimer complètement l'erreur 403 de la console pour /system-settings/
+  // Supprimer complètement l'error 403 de la console pour /system-settings/
   useEffect(() => {
     const originalError = console.error
     console.error = (...args: any[]) => {
@@ -414,8 +414,8 @@ export default function HomepageEditorPage() {
       
       setAvailablePages(allPages)
     } catch (error: any) {
-      console.error('Erreur chargement:', error)
-      toast.error('Erreur lors du chargement des données')
+      console.error('Error chargement:', error)
+      toast.error('Error lors du chargement des données')
     } finally {
       setLoading(false)
     }
@@ -464,7 +464,7 @@ export default function HomepageEditorPage() {
         return
       }
       // Pour les autres erreurs, les logger
-      console.error('Erreur lors de la sauvegarde automatique:', error)
+      console.error('Error lors de la sauvegarde automatique:', error)
     }
   }, [])
 
@@ -519,8 +519,8 @@ export default function HomepageEditorPage() {
       updateLastSaved()
       toast.success(pageStatus === 'published' ? 'Page publiée avec succès !' : 'Brouillon sauvegardé avec succès !')
     } catch (error: any) {
-      console.error('Erreur sauvegarde:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      console.error('Error sauvegarde:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
     } finally {
       setSaving(false)
     }

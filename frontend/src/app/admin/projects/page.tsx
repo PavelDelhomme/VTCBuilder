@@ -188,8 +188,8 @@ export default function ProjectsManagement() {
       const isExpectedError = error.code === 'ERR_NETWORK' || 
                              error.code === 'ERR_BLOCKED_BY_CLIENT'
       if (!isExpectedError) {
-        console.error('Erreur chargement projets:', error)
-        toast.error('Erreur lors du chargement des projets')
+        console.error('Error chargement projets:', error)
+        toast.error('Error lors du chargement des projets')
       }
     } finally {
       setLoading(false)
@@ -201,8 +201,8 @@ export default function ProjectsManagement() {
       const data = await projectService.getAll(true)
       setTrashProjects(data.filter(p => p.is_deleted))
     } catch (error: any) {
-      console.error('Erreur chargement corbeille:', error)
-      toast.error('Erreur lors du chargement de la corbeille')
+      console.error('Error chargement corbeille:', error)
+      toast.error('Error lors du chargement de la corbeille')
     }
   }
 
@@ -238,12 +238,12 @@ export default function ProjectsManagement() {
       const isExpectedError = error.code === 'ERR_NETWORK' || 
                              error.code === 'ERR_BLOCKED_BY_CLIENT'
       if (!isExpectedError) {
-        console.error('Erreur création projet:', error)
+        console.error('Error création projet:', error)
       }
       
       const errorMessage = error.response?.data?.error || 
                           error.response?.data?.message || 
-                          'Erreur lors de la création du projet'
+                          'Error lors de la création du projet'
       toast.error(errorMessage)
     }
   }
@@ -265,8 +265,8 @@ export default function ProjectsManagement() {
       // Mise à jour optimiste : retirer le projet de la liste
       setProjects(prevProjects => prevProjects.filter(p => p.id !== id))
     } catch (error: any) {
-      console.error('Erreur suppression projet:', error)
-      toast.error('Erreur lors de la suppression')
+      console.error('Error suppression projet:', error)
+      toast.error('Error lors de la suppression')
     }
   }
 
@@ -276,8 +276,8 @@ export default function ProjectsManagement() {
       toast.success('Projet restauré avec succès !')
       loadProjects()
     } catch (error: any) {
-      console.error('Erreur restauration projet:', error)
-      toast.error('Erreur lors de la restauration')
+      console.error('Error restauration projet:', error)
+      toast.error('Error lors de la restauration')
     }
   }
 
@@ -297,8 +297,8 @@ export default function ProjectsManagement() {
       toast.success('Projet supprimé définitivement !')
       loadTrash()
     } catch (error: any) {
-      console.error('Erreur suppression définitive:', error)
-      toast.error('Erreur lors de la suppression définitive')
+      console.error('Error suppression définitive:', error)
+      toast.error('Error lors de la suppression définitive')
     }
   }
 
@@ -318,14 +318,14 @@ export default function ProjectsManagement() {
       
       // Pas besoin de recharger toute la liste, on a déjà mis à jour l'état local
     } catch (error: any) {
-      console.error('Erreur changement statut:', error)
+      console.error('Error changement statut:', error)
       // En cas d'erreur, restaurer l'état précédent
       setProjects(prevProjects => 
         prevProjects.map(p => 
           p.id === project.id ? { ...p, status: project.status } : p
         )
       )
-      toast.error('Erreur lors de la mise à jour du statut')
+      toast.error('Error lors de la mise à jour du statut')
     }
   }
 

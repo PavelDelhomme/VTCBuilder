@@ -77,7 +77,7 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
         }
         // Ne logger que les erreurs non silencieuses
         if (!error?.silent && !error?.config?.__shouldRejectSilently) {
-          console.error('Erreur sauvegarde automatique:', error)
+          console.error('Error sauvegarde automatique:', error)
         }
       } finally {
         setIsSaving(false)

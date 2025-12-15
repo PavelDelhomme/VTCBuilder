@@ -69,7 +69,7 @@ export default function PageSelector({ value, onChange, placeholder = 'Sélectio
         console.warn('Impossible de charger les pages publiques:', error)
       }
     } catch (error) {
-      console.error('Erreur chargement pages:', error)
+      console.error('Error chargement pages:', error)
     } finally {
       setLoading(false)
     }

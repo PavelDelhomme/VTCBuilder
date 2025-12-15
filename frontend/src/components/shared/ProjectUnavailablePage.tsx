@@ -118,7 +118,7 @@ export default function ProjectUnavailablePage({
           </Link>
         </div>
 
-        {/* Code d'erreur stylisé */}
+        {/* Code d'error stylisé */}
         <div className="mt-12 text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">
             HTTP 503 • Service Temporairement Indisponible

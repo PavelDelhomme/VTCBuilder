@@ -70,7 +70,7 @@ export default function ProjectDetailPage() {
       const types = await blocksService.getBlockTypes()
       setBlockTypes(Array.isArray(types) ? types : [])
     } catch (error) {
-      console.error('Erreur chargement types de blocs:', error)
+      console.error('Error chargement types de blocs:', error)
     }
   }
 
@@ -80,8 +80,8 @@ export default function ProjectDetailPage() {
       const data = await projectService.getById(projectId)
       setProject(data)
     } catch (error: any) {
-      console.error('Erreur chargement projet:', error)
-      toast.error('Erreur lors du chargement du projet')
+      console.error('Error chargement projet:', error)
+      toast.error('Error lors du chargement du projet')
       router.push('/admin/projects')
     } finally {
       setLoading(false)
@@ -134,7 +134,7 @@ export default function ProjectDetailPage() {
               // Si l'endpoint n'existe pas encore ou erreur, retourner la page sans projets
               // Ne logger que les erreurs non-404 (404 est normal si la page n'est dans aucun projet)
               if (error.response?.status !== 404 && error.response?.status !== 403) {
-                console.warn(`Erreur chargement projets pour page ${page.slug}:`, error.response?.status || error.message)
+                console.warn(`Error chargement projets pour page ${page.slug}:`, error.response?.status || error.message)
               }
               return {
                 ...page,
@@ -163,7 +163,7 @@ export default function ProjectDetailPage() {
             is_active: page.status === 'published',
           })))
         } catch (error: any) {
-          console.error('Erreur chargement pages tenant:', error)
+          console.error('Error chargement pages tenant:', error)
           setTenantPages([])
         }
       } else {
@@ -171,7 +171,7 @@ export default function ProjectDetailPage() {
         setTenantPages([])
       }
     } catch (error: any) {
-      console.error('Erreur chargement pages disponibles:', error)
+      console.error('Error chargement pages disponibles:', error)
       setPublicPages([])
       setTenantPages([])
     }
@@ -184,12 +184,12 @@ export default function ProjectDetailPage() {
       loadProject()
       loadAvailablePages() // Recharger les pages disponibles
     } catch (error: any) {
-      console.error('Erreur ajout page:', error)
+      console.error('Error ajout page:', error)
       const errorMessage = error.response?.data?.error || 
                            error.response?.data?.message || 
-                           'Erreur lors de l\'ajout de la page'
+                           'Error lors de l\'ajout de la page'
       
-      // Afficher un message d'erreur plus détaillé
+      // Afficher un message d'error plus détaillé
       if (error.response?.data?.existing_project_name) {
         toast.error(
           `${errorMessage}\n\nCette page est déjà dans le projet "${error.response.data.existing_project_name}" (ID: ${error.response.data.existing_project_id}).`,
@@ -233,7 +233,7 @@ export default function ProjectDetailPage() {
           try {
             await projectService.removePage(projectId, subPage.id)
           } catch (error: any) {
-            console.warn(`Erreur retrait sous-page ${subPage.page_slug}:`, error)
+            console.warn(`Error retrait sous-page ${subPage.page_slug}:`, error)
           }
         }
 
@@ -251,8 +251,8 @@ export default function ProjectDetailPage() {
       loadProject()
       loadAvailablePages() // Recharger les pages disponibles
     } catch (error: any) {
-      console.error('Erreur retrait page:', error)
-      toast.error('Erreur lors du retrait de la page')
+      console.error('Error retrait page:', error)
+      toast.error('Error lors du retrait de la page')
     }
   }
 
@@ -281,8 +281,8 @@ export default function ProjectDetailPage() {
       loadAvailablePages()
       loadProject()
     } catch (error: any) {
-      console.error('Erreur suppression page:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression de la page')
+      console.error('Error suppression page:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la suppression de la page')
     }
   }
 
@@ -410,8 +410,8 @@ export default function ProjectDetailPage() {
       setCreatingSubPage(null)
       setSubPageName('')
     } catch (error: any) {
-      console.error('Erreur création sous-page:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la création de la sous-page')
+      console.error('Error création sous-page:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la création de la sous-page')
     }
   }
 
@@ -452,8 +452,8 @@ export default function ProjectDetailPage() {
       toast.success('Page dupliquée ajoutée au projet !')
       loadProject()
     } catch (error: any) {
-      console.error('Erreur duplication page:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la duplication de la page')
+      console.error('Error duplication page:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la duplication de la page')
     }
   }
 
@@ -463,8 +463,8 @@ export default function ProjectDetailPage() {
       toast.success(`Page ${!page.is_active ? 'affichée' : 'masquée'} dans le projet`)
       loadProject()
     } catch (error: any) {
-      console.error('Erreur mise à jour page:', error)
-      toast.error('Erreur lors de la mise à jour')
+      console.error('Error mise à jour page:', error)
+      toast.error('Error lors de la mise à jour')
     }
   }
 
@@ -487,8 +487,8 @@ export default function ProjectDetailPage() {
         loadProject()
       }
     } catch (error: any) {
-      console.error('Erreur toggle published:', error)
-      toast.error('Erreur lors de la modification')
+      console.error('Error toggle published:', error)
+      toast.error('Error lors de la modification')
     }
   }
 
@@ -568,13 +568,13 @@ export default function ProjectDetailPage() {
             toast.error('Page non trouvée')
           }
         } catch (error: any) {
-          console.error('Erreur chargement page tenant:', error)
-          toast.error(error.response?.data?.error || 'Erreur lors du chargement de la page tenant')
+          console.error('Error chargement page tenant:', error)
+          toast.error(error.response?.data?.error || 'Error lors du chargement de la page tenant')
         }
       }
     } catch (error: any) {
-      console.error('Erreur chargement prévisualisation:', error)
-      toast.error('Erreur lors du chargement de la prévisualisation')
+      console.error('Error chargement prévisualisation:', error)
+      toast.error('Error lors du chargement de la prévisualisation')
     } finally {
       setLoadingPreview(false)
     }
@@ -640,7 +640,7 @@ export default function ProjectDetailPage() {
                     await projectService.update(project.id, { name: project.name })
                     toast.success('Projet mis à jour !')
                   } catch (error) {
-                    toast.error('Erreur lors de la mise à jour')
+                    toast.error('Error lors de la mise à jour')
                     loadProject()
                   }
                 }}
@@ -659,7 +659,7 @@ export default function ProjectDetailPage() {
                     setProject({ ...project, status: e.target.value as any })
                     toast.success('Statut mis à jour !')
                   } catch (error) {
-                    toast.error('Erreur lors de la mise à jour')
+                    toast.error('Error lors de la mise à jour')
                   }
                 }}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
@@ -728,8 +728,8 @@ export default function ProjectDetailPage() {
                           toast.success(`${pagesToRemove.length} page(s) retirée(s) avec succès !`)
                           loadProject()
                         } catch (error: any) {
-                          console.error('Erreur nettoyage:', error)
-                          toast.error('Erreur lors du nettoyage des pages')
+                          console.error('Error nettoyage:', error)
+                          toast.error('Error lors du nettoyage des pages')
                         }
                       }
                     }}
@@ -779,8 +779,8 @@ export default function ProjectDetailPage() {
                       // Naviguer vers l'éditeur de la nouvelle page
                       navigate(`/admin/pages-public/edit/${newSlug}?projectId=${projectId}`)
                     } catch (error: any) {
-                      console.error('Erreur création nouvelle page:', error)
-                      toast.error(error.response?.data?.error || 'Erreur lors de la création de la nouvelle page')
+                      console.error('Error création nouvelle page:', error)
+                      toast.error(error.response?.data?.error || 'Error lors de la création de la nouvelle page')
                     }
                   }}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm"
@@ -901,8 +901,8 @@ export default function ProjectDetailPage() {
                                   toast.success(`Page ${!isPublished ? 'publiée' : 'dépubliée'} !`)
                                   loadAvailablePages()
                                 } catch (error: any) {
-                                  console.error('Erreur publication page tenant:', error)
-                                  toast.error('Erreur lors de la publication')
+                                  console.error('Error publication page tenant:', error)
+                                  toast.error('Error lors de la publication')
                                 }
                               }}
                               size="sm"
@@ -1207,8 +1207,8 @@ export default function ProjectDetailPage() {
                                           toast.success(`Page ${!childIsPublished ? 'publiée' : 'dépubliée'} !`)
                                           loadAvailablePages()
                                         } catch (error: any) {
-                                          console.error('Erreur publication page tenant:', error)
-                                          toast.error('Erreur lors de la publication')
+                                          console.error('Error publication page tenant:', error)
+                                          toast.error('Error lors de la publication')
                                         }
                                       }}
                                       size="sm"

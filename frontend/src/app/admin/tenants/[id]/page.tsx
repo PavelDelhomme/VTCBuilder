@@ -31,7 +31,7 @@ function AdminDebugSection({ tenantId }: { tenantId: number }) {
       const info = await tenantService.getAdminInfo(tenantId)
       setAdminInfo(info)
     } catch (error) {
-      console.error('Erreur chargement info admin:', error)
+      console.error('Error chargement info admin:', error)
       setAdminInfo({ exists: false })
     } finally {
       setLoading(false)
@@ -50,8 +50,8 @@ function AdminDebugSection({ tenantId }: { tenantId: number }) {
       toast.success('Mot de passe réinitialisé avec succès !')
       loadAdminInfo()
     } catch (error: any) {
-      console.error('Erreur réinitialisation mot de passe:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la réinitialisation')
+      console.error('Error réinitialisation mot de passe:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la réinitialisation')
     } finally {
       setResetting(false)
     }
@@ -187,8 +187,8 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
       
       setUsers(usersArray)
     } catch (error) {
-      console.error('Erreur chargement utilisateurs:', error)
-      toast.error('Erreur lors du chargement des utilisateurs')
+      console.error('Error chargement utilisateurs:', error)
+      toast.error('Error lors du chargement des utilisateurs')
       setUsers([])
     } finally {
       setLoading(false)
@@ -204,8 +204,8 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
       await userService.sendPasswordReset(userId)
       toast.success('Email de réinitialisation envoyé avec succès !')
     } catch (error: any) {
-      console.error('Erreur envoi email reset:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'envoi de l\'email')
+      console.error('Error envoi email reset:', error)
+      toast.error(error.response?.data?.error || 'Error lors de l\'envoi de l\'email')
     }
   }
 
@@ -219,8 +219,8 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
       toast.success('Utilisateur supprimé avec succès !')
       loadUsers()
     } catch (error: any) {
-      console.error('Erreur suppression utilisateur:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
+      console.error('Error suppression utilisateur:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la suppression')
     }
   }
 
@@ -263,11 +263,11 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
       handleCancelEditPassword(userId)
       // Optionnel: forcer reconnexion utilisateur si besoin
     } catch (error: any) {
-      console.error('Erreur modification mot de passe:', error)
+      console.error('Error modification mot de passe:', error)
       const errorMessage = error.response?.data?.error || 
                           error.response?.data?.detail || 
                           (error.response?.data?.username ? `Erreur: ${error.response.data.username.join(', ')}` : null) ||
-                          'Erreur lors de la modification du mot de passe'
+                          'Error lors de la modification du mot de passe'
       toast.error(errorMessage)
       console.error('Détails erreur:', error.response?.data)
     } finally {
@@ -393,11 +393,11 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
       handleCloseModal()
       loadUsers()
     } catch (error: any) {
-      console.error('Erreur sauvegarde utilisateur:', error)
+      console.error('Error sauvegarde utilisateur:', error)
       const errorMessage = error.response?.data?.error || 
                           error.response?.data?.message ||
                           (error.response?.data?.quota ? `Quota dépassé: ${error.response.data.quota.current}/${error.response.data.quota.max}` : null) ||
-                          'Erreur lors de la sauvegarde de l\'utilisateur'
+                          'Error lors de la sauvegarde de l\'utilisateur'
       toast.error(errorMessage)
     } finally {
       setSaving(false)
@@ -410,8 +410,8 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
       toast.success(`Statut mis à jour: ${newStatus}`)
       loadUsers()
     } catch (error: any) {
-      console.error('Erreur mise à jour statut:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour du statut')
+      console.error('Error mise à jour statut:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la mise à jour du statut')
     }
   }
 
@@ -421,8 +421,8 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
       toast.success(`Rôle mis à jour: ${newRole}`)
       loadUsers()
     } catch (error: any) {
-      console.error('Erreur mise à jour rôle:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour du rôle')
+      console.error('Error mise à jour rôle:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la mise à jour du rôle')
     }
   }
 
@@ -887,7 +887,7 @@ export default function TenantDetailPage() {
         return
       }
       // Autre erreur - redirection vers liste
-      console.error('Erreur chargement tenant:', error)
+      console.error('Error chargement tenant:', error)
       router.push('/admin/tenants')
     } finally {
       setLoading(false)

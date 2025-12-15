@@ -44,8 +44,8 @@ export default function InvoiceTemplatesPage() {
       const data = await billingService.getInvoiceTemplates()
       setTemplates(Array.isArray(data) ? data : [])
     } catch (error: any) {
-      console.error('Erreur chargement templates:', error)
-      toast.error('Erreur lors du chargement des templates')
+      console.error('Error chargement templates:', error)
+      toast.error('Error lors du chargement des templates')
     } finally {
       setLoading(false)
     }
@@ -58,7 +58,7 @@ export default function InvoiceTemplatesPage() {
       setShowCreateModal(false)
       loadTemplates()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la création')
+      toast.error(error.response?.data?.error || 'Error lors de la création')
     }
   }
 
@@ -69,7 +69,7 @@ export default function InvoiceTemplatesPage() {
       setEditingTemplate(null)
       loadTemplates()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour')
+      toast.error(error.response?.data?.error || 'Error lors de la mise à jour')
     }
   }
 
@@ -81,7 +81,7 @@ export default function InvoiceTemplatesPage() {
       toast.success('Template supprimé avec succès')
       loadTemplates()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
+      toast.error(error.response?.data?.error || 'Error lors de la suppression')
     }
   }
 
@@ -101,7 +101,7 @@ export default function InvoiceTemplatesPage() {
       setPreviewHtml(data.html)
       setPreviewTemplate(template)
     } catch (error: any) {
-      toast.error('Erreur lors de la prévisualisation')
+      toast.error('Error lors de la prévisualisation')
     }
   }
 

@@ -117,7 +117,7 @@ export default function AdminDashboard() {
           alerts: detailed.alerts || [],
         })
       } catch (error) {
-        console.warn('Erreur chargement stats détaillées:', error)
+        console.warn('Error chargement stats détaillées:', error)
         // Continue without detailed stats
       }
     } catch (error: any) {
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
                              error.message?.includes('ERR_BLOCKED_BY_CLIENT') ||
                              error.message?.includes('blocked by client')
       if (!isExpectedError) {
-        console.error('Erreur chargement dashboard:', error)
+        console.error('Error chargement dashboard:', error)
       }
       setStats({
         total_tenants: 0,

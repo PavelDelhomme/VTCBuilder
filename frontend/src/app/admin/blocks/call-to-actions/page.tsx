@@ -43,8 +43,8 @@ export default function AdminCallToActionsPage() {
       const data = await callToActionService.getAll()
       setCtas(data)
     } catch (error: any) {
-      console.error('Erreur chargement CTAs:', error)
-      toast.error('Erreur lors du chargement des call-to-actions')
+      console.error('Error chargement CTAs:', error)
+      toast.error('Error lors du chargement des call-to-actions')
       setCtas([])
     } finally {
       setLoading(false)
@@ -102,8 +102,8 @@ export default function AdminCallToActionsPage() {
       setShowForm(false)
       loadCtas()
     } catch (error: any) {
-      console.error('Erreur sauvegarde CTA:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      console.error('Error sauvegarde CTA:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
     }
   }
 
@@ -159,8 +159,8 @@ export default function AdminCallToActionsPage() {
       setDeleteConfirm({ show: false, ctaId: null, ctaName: '' })
       loadCtas()
     } catch (error: any) {
-      console.error('Erreur suppression CTA:', error)
-      toast.error('Erreur lors de la suppression')
+      console.error('Error suppression CTA:', error)
+      toast.error('Error lors de la suppression')
     }
   }
 

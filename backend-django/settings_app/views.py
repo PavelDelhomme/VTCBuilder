@@ -314,7 +314,7 @@ def system_settings_view(request):
                     
                     logger.info(f"Synchronisation terminée: {len(synced_pages)} pages synchronisées avec le projet système")
             except Exception as sync_error:
-                logger.error(f"Erreur synchronisation pages publiques avec projet: {sync_error}", exc_info=True)
+                logger.error(f&quot;Error synchronisation pages publiques avec projet: {sync_error}", exc_info=True)
             
             status_code = status.HTTP_200_OK if instance.pk else status.HTTP_201_CREATED
             response = Response(serializer.data, status=status_code)
@@ -367,7 +367,7 @@ def system_settings_view(request):
         else:
             error_response = Response(
                 {
-                    'error': 'Erreur lors de la sauvegarde des paramètres',
+                    'error': 'Error lors de la sauvegarde des paramètres',
                     'message': str(e) if settings.DEBUG else 'Une erreur est survenue'
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -435,7 +435,7 @@ def system_settings_test_email_view(request):
             error_response = Response(
                 {
                     'status': 'error',
-                    'message': f'Erreur lors de l\'envoi de l\'email de test: {str(e)}'
+                    'message': f'Error lors de l\'envoi de l\'email de test: {str(e)}'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -566,7 +566,7 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
                 logger.error(f"Error creating default system settings: {create_error}", exc_info=True)
                 # Return error details for debugging
                 error_response = Response(
-                    {'error': f'Erreur lors de la récupération des paramètres système: {str(e)}'},
+                    {'error': f'Error lors de la récupération des paramètres système: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
                 add_cors_headers(error_response, request)
@@ -730,7 +730,7 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
             return Response(
                 {
                     'status': 'error',
-                    'message': f'Erreur lors de l\'envoi de l\'email de test: {str(e)}'
+                    'message': f'Error lors de l\'envoi de l\'email de test: {str(e)}'
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )

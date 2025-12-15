@@ -60,7 +60,7 @@ export default function UrlInputWithSuggestions({
           })
         })
       } catch (error) {
-        console.warn('Erreur chargement pages tenant:', error)
+        console.warn('Error chargement pages tenant:', error)
       }
 
       // Charger les pages publiques
@@ -79,7 +79,7 @@ export default function UrlInputWithSuggestions({
           }
         })
       } catch (error) {
-        console.warn('Erreur chargement pages publiques:', error)
+        console.warn('Error chargement pages publiques:', error)
       }
 
       // Ajouter des liens externes courants
@@ -92,7 +92,7 @@ export default function UrlInputWithSuggestions({
 
       setSuggestions(allSuggestions)
     } catch (error) {
-      console.error('Erreur chargement suggestions:', error)
+      console.error('Error chargement suggestions:', error)
     } finally {
       setLoading(false)
     }

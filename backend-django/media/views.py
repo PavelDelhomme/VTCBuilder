@@ -154,7 +154,7 @@ class MediaViewSet(viewsets.ModelViewSet):
                 if hasattr(e, 'detail'):
                     return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
                 return Response(
-                    {'error': f'Erreur lors de la création: {str(e)}'},
+                    {'error': f'Error lors de la création: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -189,7 +189,7 @@ class MediaViewSet(viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error updating media: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la mise à jour: {str(e)}'},
+                    {'error': f'Error lors de la mise à jour: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -221,7 +221,7 @@ class MediaViewSet(viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error deleting media: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la suppression: {str(e)}'},
+                    {'error': f'Error lors de la suppression: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -281,7 +281,7 @@ class MediaViewSet(viewsets.ModelViewSet):
                 if not serializer.is_valid():
                     # Ne pas logger comme erreur - c'est une validation normale
                     error_response = Response(
-                        {'error': 'Erreur de validation', 'details': serializer.errors},
+                        {'error': 'Error de validation', 'details': serializer.errors},
                         status=status.HTTP_400_BAD_REQUEST
                     )
                     add_cors_headers(error_response, request)
@@ -317,7 +317,7 @@ class MediaViewSet(viewsets.ModelViewSet):
                     add_cors_headers(error_response, request)
                     return error_response
                 error_response = Response(
-                    {'error': f'Erreur lors du téléversement: {str(e)}'},
+                    {'error': f'Error lors du téléversement: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
                 add_cors_headers(error_response, request)
@@ -505,7 +505,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error creating template: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la création: {str(e)}'},
+                    {'error': f'Error lors de la création: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -542,7 +542,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
                 if hasattr(e, 'detail'):
                     return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
                 return Response(
-                    {'error': f'Erreur lors de la création: {str(e)}'},
+                    {'error': f'Error lors de la création: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -606,7 +606,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error updating template: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la mise à jour: {str(e)}'},
+                    {'error': f'Error lors de la mise à jour: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -653,7 +653,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error updating template: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la mise à jour: {str(e)}'},
+                    {'error': f'Error lors de la mise à jour: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -703,7 +703,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error deleting template: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la suppression: {str(e)}'},
+                    {'error': f'Error lors de la suppression: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -725,7 +725,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error deleting template: {e}", exc_info=True)
                 return Response(
-                    {'error': f'Erreur lors de la suppression: {str(e)}'},
+                    {'error': f'Error lors de la suppression: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -883,7 +883,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error using template: {str(e)}")
                 return Response(
-                    {'error': f'Erreur lors de l\'utilisation du template: {str(e)}'},
+                    {'error': f'Error lors de l\'utilisation du template: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         
@@ -978,13 +978,13 @@ class TemplateViewSet(viewsets.ModelViewSet):
                 }, status=status.HTTP_200_OK)
             else:
                 response = Response(
-                    {'error': 'Erreur lors de la génération de la preview'},
+                    {'error': 'Error lors de la génération de la preview'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         except Exception as e:
-            logger.error(f"Erreur lors de la génération de la preview: {e}", exc_info=True)
+            logger.error(f&quot;Error lors de la génération de la preview: {e}", exc_info=True)
             response = Response(
-                {'error': f'Erreur lors de la génération: {str(e)}'},
+                {'error': f'Error lors de la génération: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         

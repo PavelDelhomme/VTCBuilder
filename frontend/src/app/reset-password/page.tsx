@@ -73,7 +73,7 @@ export default function ResetPasswordPage() {
       }
     } catch (error: any) {
       console.error('Error verifying token:', error)
-      setError(error.response?.data?.error || 'Erreur lors de la vérification du token')
+      setError(error.response?.data?.error || 'Error lors de la vérification du token')
       setTokenValid(false)
     } finally {
       setVerifying(false)
@@ -119,7 +119,7 @@ export default function ResetPasswordPage() {
       }, 3000)
     } catch (error: any) {
       console.error('Error resetting password:', error)
-      setError(error.response?.data?.error || error.response?.data?.message || 'Erreur lors de la réinitialisation')
+      setError(error.response?.data?.error || error.response?.data?.message || 'Error lors de la réinitialisation')
     } finally {
       setLoading(false)
     }

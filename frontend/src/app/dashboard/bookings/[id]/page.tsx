@@ -23,7 +23,7 @@ export default function BookingDetailsPage() {
       const data = await bookingService.getById(parseInt(bookingId))
       setBooking(data)
     } catch (error: any) {
-      toast.error('Erreur lors du chargement de la réservation')
+      toast.error('Error lors du chargement de la réservation')
       router.push('/dashboard/bookings')
     } finally {
       setLoading(false)
@@ -37,7 +37,7 @@ export default function BookingDetailsPage() {
       toast.success('Réservation confirmée')
       loadBooking()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la confirmation')
+      toast.error(error.response?.data?.error || 'Error lors de la confirmation')
     }
   }
 
@@ -48,7 +48,7 @@ export default function BookingDetailsPage() {
       toast.success('Réservation terminée')
       loadBooking()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la finalisation')
+      toast.error(error.response?.data?.error || 'Error lors de la finalisation')
     }
   }
 
@@ -60,7 +60,7 @@ export default function BookingDetailsPage() {
       toast.success('Réservation annulée')
       loadBooking()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'annulation')
+      toast.error(error.response?.data?.error || 'Error lors de l\'annulation')
     }
   }
 

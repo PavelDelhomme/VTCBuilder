@@ -132,7 +132,7 @@ class PageViewSet(CORSMixin, viewsets.ModelViewSet):
                     logger = logging.getLogger(__name__)
                     logger.error(f"Validation errors: {serializer.errors}")
                     response = Response({
-                        'error': 'Erreur de validation',
+                        'error': 'Error de validation',
                         'details': serializer.errors
                     }, status=status.HTTP_400_BAD_REQUEST)
                     add_cors_headers(response, request)
@@ -176,20 +176,20 @@ class PageViewSet(CORSMixin, viewsets.ModelViewSet):
                             else:
                                 error_messages.append(f"{field}: {messages}")
                         response = Response({
-                            'error': 'Erreur de validation',
+                            'error': 'Error de validation',
                             'details': error_messages,
                             'fields': e.detail
                         }, status=status.HTTP_400_BAD_REQUEST)
                         add_cors_headers(response, request)
                         return response
                     response = Response({
-                        'error': str(e.detail) if hasattr(e.detail, '__str__') else 'Erreur de validation'
+                        'error': str(e.detail) if hasattr(e.detail, '__str__') else 'Error de validation'
                     }, status=status.HTTP_400_BAD_REQUEST)
                     add_cors_headers(response, request)
                     return response
                 
                 response = Response(
-                    {'error': f'Erreur lors de la création: {str(e)}'},
+                    {'error': f'Error lors de la création: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
                 add_cors_headers(response, request)
@@ -232,7 +232,7 @@ class PageViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error updating page: {e}", exc_info=True)
                 response = Response(
-                    {'error': f'Erreur lors de la mise à jour: {str(e)}'},
+                    {'error': f'Error lors de la mise à jour: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
                 add_cors_headers(response, request)
@@ -272,7 +272,7 @@ class PageViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error deleting page: {e}", exc_info=True)
                 response = Response(
-                    {'error': f'Erreur lors de la suppression: {str(e)}'},
+                    {'error': f'Error lors de la suppression: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
                 add_cors_headers(response, request)
@@ -314,7 +314,7 @@ class PageViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error publishing page: {e}", exc_info=True)
                 response = Response(
-                    {'error': f'Erreur lors de la publication: {str(e)}'},
+                    {'error': f'Error lors de la publication: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
                 add_cors_headers(response, request)
@@ -354,7 +354,7 @@ class PageViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger = logging.getLogger(__name__)
                 logger.error(f"Error unpublishing page: {e}", exc_info=True)
                 response = Response(
-                    {'error': f'Erreur lors de la dépublication: {str(e)}'},
+                    {'error': f'Error lors de la dépublication: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
                 add_cors_headers(response, request)

@@ -70,7 +70,7 @@ export default function SettingsPage() {
         } catch (err: any) {
           // Erreur silencieuse lors de la création
           if (err.response?.status !== 404 && err.response?.status !== 401) {
-            console.error('Erreur création paramètres:', err)
+            console.error('Error création paramètres:', err)
           }
         }
       } else {
@@ -78,8 +78,8 @@ export default function SettingsPage() {
         const isExpectedError = error.code === 'ERR_NETWORK' || 
                                error.code === 'ERR_BLOCKED_BY_CLIENT'
         if (!isExpectedError) {
-          console.error('Erreur chargement paramètres:', error)
-          toast.error('Erreur lors du chargement des paramètres')
+          console.error('Error chargement paramètres:', error)
+          toast.error('Error lors du chargement des paramètres')
         }
       }
     } finally {
@@ -95,8 +95,8 @@ export default function SettingsPage() {
       await settingsService.updateSettings(settings)
       toast.success('Paramètres sauvegardés avec succès !')
     } catch (error: any) {
-      console.error('Erreur sauvegarde paramètres:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      console.error('Error sauvegarde paramètres:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
     } finally {
       setSaving(false)
     }
@@ -115,11 +115,11 @@ export default function SettingsPage() {
         toast.success(result.message || `Email de test envoyé avec succès à ${testEmailRecipient} !`)
         setTestEmailRecipient('')
       } else {
-        toast.error(result.message || 'Erreur lors de l\'envoi de l\'email de test')
+        toast.error(result.message || 'Error lors de l\'envoi de l\'email de test')
       }
     } catch (error: any) {
-      console.error('Erreur test email:', error)
-      toast.error(error.response?.data?.message || 'Erreur lors du test email')
+      console.error('Error test email:', error)
+      toast.error(error.response?.data?.message || 'Error lors du test email')
     } finally {
       setTestingEmail(false)
     }
@@ -784,15 +784,15 @@ export default function SettingsPage() {
                         if (result.status === 'success') {
                           toast.success('Connexion Stripe réussie !')
                         } else {
-                          toast.error(result.message || 'Erreur lors du test Stripe')
+                          toast.error(result.message || 'Error lors du test Stripe')
                         }
                       } catch (error: any) {
-                        console.error('Erreur test Stripe:', error)
+                        console.error('Error test Stripe:', error)
                         setStripeTestResult({
                           status: 'error',
-                          message: error.response?.data?.message || 'Erreur lors du test de connexion'
+                          message: error.response?.data?.message || 'Error lors du test de connexion'
                         })
-                        toast.error('Erreur lors du test Stripe')
+                        toast.error('Error lors du test Stripe')
                       } finally {
                         setTestingStripe(false)
                       }

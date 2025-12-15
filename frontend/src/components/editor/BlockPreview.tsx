@@ -194,7 +194,7 @@ function BlockPreview({
     }
   }, [onNavigate, inspectorMode, isInteractive])
 
-  // Mode inspecteur : détecter les éléments survolés
+  // Inspector mode: detect hovered elements
   useEffect(() => {
     if (!inspectorMode || !onBlockSelect) {
       // Nettoyer les outlines quand le mode inspecteur est désactivé
@@ -213,13 +213,13 @@ function BlockPreview({
       const blockElement = target.closest('[data-block-id]') as HTMLElement
       
       if (blockElement && blockElement !== currentHovered) {
-        // Retirer l'outline de l'élément précédent
+        // Remove outline from previous element
         if (currentHovered && currentHovered.getAttribute('data-block-id') !== selectedBlockId) {
           currentHovered.style.outline = ''
           currentHovered.style.outlineOffset = ''
         }
         
-        // Ajouter l'outline au nouvel élément
+        // Add outline to new element
         currentHovered = blockElement
         setHoveredElement(blockElement)
         if (blockElement.getAttribute('data-block-id') !== selectedBlockId) {
@@ -333,7 +333,7 @@ function BlockPreview({
             className="text-xs px-2 font-semibold"
             style={{ color: theme === 'dark' ? '#60a5fa' : '#2563eb' }}
           >
-            🔍 Mode Inspecteur Actif - Cliquez sur un élément pour le sélectionner
+            🔍 Inspector Mode Active - Click on an element to select it
           </div>
         )}
         {isEditable && !inspectorMode && (
@@ -387,7 +387,7 @@ function BlockPreview({
                     className="text-lg font-medium mb-2"
                     style={{ color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}
                   >
-                    Aucun contenu à prévisualiser
+                    No content to preview
                   </p>
                   <p 
                     className="text-sm"
@@ -594,7 +594,7 @@ function FAQSectionPreview({ title, items, wrapperStyles, theme = 'light' }: { t
               borderColor: isDark ? '#4b5563' : '#d1d5db'
             }}
           >
-            Aucune question FAQ
+            No FAQ questions
           </div>
         )}
       </div>
@@ -783,7 +783,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                block.styles?.box_shadow || block.styles?.boxShadow || undefined,
   }
 
-  // Styles du contenu (appliqués aux éléments internes comme boutons, textes, etc.)
+  // Content styles (applied to internal elements like buttons, texts, etc.)
   const contentStyles: React.CSSProperties = {
     // Couleur de fond - Utiliser background pour tout (évite le conflit avec backgroundColor)
     background: block.styles?.background && block.styles?.background.includes('gradient')
@@ -819,7 +819,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     borderRadius: block.styles?.border_radius || block.styles?.borderRadius,
     // Backdrop filter
     backdropFilter: block.styles?.backdrop_filter || block.styles?.backdropFilter,
-    // Padding (espacement interne du contenu)
+    // Padding (internal spacing of content)
     paddingTop: block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical,
     paddingBottom: block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom,
     paddingLeft: block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft,
@@ -828,11 +828,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     borderWidth: block.styles?.border_width || block.styles?.borderWidth,
     borderStyle: block.styles?.border_style || block.styles?.borderStyle,
     borderColor: block.styles?.border_color || block.styles?.borderColor,
-    // Alignement du texte
+    // Text alignment
     textAlign: block.styles?.text_align || block.styles?.textAlign || block.styles?.text_align || 'left',
   }
 
-  // Get layout width (système 12 colonnes Bootstrap)
+  // Get layout width (Bootstrap 12-column system)
   const layoutCols = typeof block.layout === 'number' ? block.layout : 12
   const layoutWidth = layoutCols === 12 ? 'w-full' :
     layoutCols === 11 ? 'w-[91.666667%]' :
@@ -869,7 +869,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             marginBottom: block.styles?.margin_bottom || '1rem',
             color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
           }}>
-            {block.data.text || 'Titre'}
+            {block.data.text || 'Title'}
           </h1>}
           {HeadingTag === 'h2' && (
             <h2 className="font-bold inline-block" style={{
@@ -879,7 +879,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               marginBottom: block.styles?.margin_bottom || '1rem',
               color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
             }}>
-              {block.data.text || 'Titre'}
+              {block.data.text || 'Title'}
             </h2>
           )}
           {HeadingTag === 'h3' && (
@@ -889,8 +889,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               fontWeight: block.styles?.font_weight || 'bold',
               marginBottom: block.styles?.margin_bottom || '1rem',
               color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
+              }
             }}>
-              {block.data.text || 'Titre'}
+              {block.data.text || 'Title'}
             </h3>
           )}
           {HeadingTag === 'h4' && (
@@ -901,7 +902,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               marginBottom: block.styles?.margin_bottom || '1rem',
               color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
             }}>
-              {block.data.text || 'Titre'}
+              {block.data.text || 'Title'}
             </h4>
           )}
         </div>
@@ -918,6 +919,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           <div 
             dangerouslySetInnerHTML={{ 
               __html: (block.data.content || '').replace(/\n/g, '<br />') 
+              }
             }}
             style={{
               ...contentStyles,
@@ -941,7 +943,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               color: isDark ? '#9ca3af' : '#9ca3af'
             }}
           >
-            Image non configurée
+            Image not configured
           </div>
         )
       }
@@ -963,7 +965,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                 display: 'inline-block',
               }}
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23ddd" width="400" height="300"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="18" dy="10.5" font-weight="bold" x="50%25" y="50%25" text-anchor="middle"%3EImage non disponible%3C/text%3E%3C/svg%3E'
+                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23ddd" width="400" height="300"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="18" dy="10.5" font-weight="bold" x="50%25" y="50%25" text-anchor="middle"%3EImage not available%3C/text%3E%3C/svg%3E'
               }}
             />
           </div>
@@ -1032,7 +1034,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             }} 
             className="mb-6 p-8 border-2 border-dashed rounded text-center"
           >
-            Vidéo non configurée
+            Video not configured
           </div>
         )
       }
@@ -1207,7 +1209,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                 {block.data.message ? (
                   <p className="text-sm">{block.data.message}</p>
                 ) : (
-                  <p className="text-sm italic opacity-75">Aucun message configuré</p>
+                  <p className="text-sm italic opacity-75">No message configured</p>
                 )}
               </div>
               {block.data.dismissible && (
@@ -1251,7 +1253,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             }, 2000)
           }
         } catch (err) {
-          console.error('Erreur lors de la copie:', err)
+          console.error('Error copying code:', err)
         }
       }
       
@@ -1365,7 +1367,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                     className="italic"
                     style={{ color: isDark ? '#4b5563' : '#6b7280' }}
                   >
-                    Aucun code configuré
+                    No code configured
                   </span>
                 )}
               </pre>
@@ -1373,6 +1375,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
     case 'container': {
       const isDark = theme === 'dark'
@@ -1419,8 +1422,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                   }}
                 >
                   <div className="text-2xl mb-2">📦</div>
-                  <div className="text-sm font-semibold">Conteneur vide</div>
-                  <div className="text-xs mt-1">Ajoutez des blocs dans ce conteneur</div>
+                  <div className="text-sm font-semibold">Empty container</div>
+                  <div className="text-xs mt-1">Add blocks to this container</div>
                 </div>
               )
             })()
@@ -1509,8 +1512,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           >
             <div className="text-2xl mb-2">⚏</div>
             <div className="text-sm font-semibold">Grille</div>
-            <div className="text-xs mt-1">Colonnes: {gridColumns}</div>
-            <div className="text-xs mt-1">Lignes: {gridRows}</div>
+            <div className="text-xs mt-1">Columns: {gridColumns}</div>
+            <div className="text-xs mt-1">Rows: {gridRows}</div>
             {block.children && block.children.length > 0 && (
               <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: gridColumns, gridTemplateRows: gridRows }}>
                 {block.children.map((child: any, idx: number) => (
@@ -1571,7 +1574,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                     className="text-sm"
                     style={{ color: isDark ? '#6b7280' : '#9ca3af' }}
                   >
-                    Colonne {i + 1}
+                    Column {i + 1}
                   </span>
                 </div>
               )
@@ -1597,12 +1600,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                   color: isDark ? '#d1d5db' : '#374151',
                 }}
               >
-                Ligne {i + 1} - Les colonnes peuvent être ajoutées ici
+                Row {i + 1} - Columns can be added here
               </div>
             )
-          })}
+          }          )}
         </div>
       )
+    }
 
     case 'table': {
       const tableRows = block.data.rows || 3
@@ -1681,7 +1685,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             className="text-base leading-relaxed whitespace-pre-wrap"
             style={{ color: isDark ? '#d1d5db' : '#374151' }}
           >
-            {block.data.content || 'Paragraphe vide'}
+            {block.data.content || 'Empty paragraph'}
           </p>
         </div>
       )
@@ -1695,7 +1699,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             className="text-base"
             style={{ color: isDark ? '#d1d5db' : '#374151' }}
           >
-            {block.data.text || 'Texte sur une ligne'}
+            {block.data.text || 'Single line text'}
           </span>
         </div>
       )
@@ -1930,6 +1934,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
     case 'pricing': {
       const PricingPreview = () => {
@@ -1977,9 +1982,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                 setPlans(plansData.filter((p: any) => p.is_active).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)))
               })
               .catch(err => {
-                // Ne logger l'erreur que si ce n'est pas une erreur d'authentification attendue
+                // Ne logger l'error que si ce n'est pas une erreur d'authentification attendue
                 if (!err.message.includes('Authentification requise') && !err.message.includes('Réponse HTML')) {
-                  console.error('Erreur chargement plans:', err)
+                  console.error('Error loading plans:', err)
                 }
                 setPlans([])
               })
@@ -2011,6 +2016,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                   
                   // Déterminer le style du bouton
                   const buttonStyle = plan.button_style || (plan.is_featured ? 'primary' : 'secondary')
+                  }
                   const buttonStylesMap: Record<string, string> = {
                     primary: 'bg-blue-600 text-white hover:bg-blue-700',
                     secondary: 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600',
@@ -2083,7 +2089,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                             )
                           ))
                         ) : (
-                          // Fonctionnalités par défaut si aucune n'est définie (pour compatibilité API)
+                          // Default features if none are defined (for API compatibility)
                           <>
                             {plan.max_sites && (
                               <li className="flex items-center">
@@ -2121,7 +2127,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               </div>
             ) : (
               <div className="text-center py-12 text-gray-400">
-                Aucun plan tarifaire disponible
+                No pricing plan available
               </div>
             )}
           </div>
@@ -2246,7 +2252,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                 setPlans(filteredPlans)
               })
               .catch(err => {
-                console.error('Erreur chargement plans tarifaires:', err)
+                console.error('Error loading pricing plans:', err)
                 setPlans([])
               })
               .finally(() => setLoading(false))
@@ -2328,6 +2334,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                       }
                     }
                     const buttonStyleObj = getButtonStyle(buttonStyle)
+                    }
                     
                     const buttonUrl = plan.button_url || `/register?plan=${plan.slug || plan.id || index}`
                     const buttonText = plan.button_text || `Choisir ${plan.name || 'ce plan'}`
@@ -2501,7 +2508,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               </div>
             ) : (
               <div className="text-center py-12 text-gray-400">
-                Aucun plan tarifaire disponible
+                No pricing plan available
               </div>
             )}
           </div>
@@ -2529,7 +2536,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                       {event.date || 'Date'}
                     </div>
                     <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-                      {event.title || 'Titre'}
+                      {event.title || 'Title'}
                     </h3>
                     <p className="text-gray-700 dark:text-gray-300">
                       {event.description || 'Description'}
@@ -2560,16 +2567,17 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             {accordionItems.map((item: any, index: number) => (
               <div key={index} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-6 py-4 font-semibold text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700">
-                  {item.title || `Élément ${index + 1}`}
+                  {item.title || `Item ${index + 1}`}
                 </div>
                 <div className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                  {item.content || 'Contenu...'}
+                  {item.content || 'Content...'}
                 </div>
               </div>
             ))}
           </div>
         </div>
       )
+      }
 
     case 'stats': {
       const stats = block.data.stats || []
@@ -2597,6 +2605,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'social-links': {
       const socialLinks = block.data.links || []
@@ -2625,6 +2634,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'booking-form': {
       return (
@@ -2772,10 +2782,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                       </td>
                     </tr>
                   ))
+                  }
                 ) : (
                   <tr>
                     <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                      Aucun tarif configuré
+                      No pricing configured
                     </td>
                   </tr>
                 )}
@@ -2811,12 +2822,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               ))
             ) : (
               <div className="col-span-full text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-                Aucune zone configurée
+                No zone configured
               </div>
             )}
           </div>
         </div>
       )
+      }
 
     case 'vehicle-gallery': {
       const vehicles = block.data.vehicles || []
@@ -2864,7 +2876,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               ))
             ) : (
               <div className="col-span-full text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-                Aucun véhicule configuré
+                No vehicle configured
               </div>
             )}
           </div>
@@ -2910,7 +2922,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               })
             ) : (
               <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded w-full">
-                Aucun contact configuré
+                No contact configured
               </div>
             )}
           </div>
@@ -2986,12 +2998,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               ))
             ) : (
               <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded w-full">
-                Aucun badge configuré
+                No badge configured
               </div>
             )}
           </div>
         </div>
       )
+      }
 
     case 'gallery': {
       const images = block.data.images || []
@@ -3019,12 +3032,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               ))
             ) : (
               <div className="col-span-full text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-                Aucune image dans la galerie
+                No images in gallery
               </div>
             )}
           </div>
         </div>
       )
+      }
 
     case 'form': {
       const formFields = block.data.fields || []
@@ -3058,6 +3072,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                   )}
                 </div>
               ))
+              }
             ) : (
               <>
                 <div>
@@ -3116,12 +3131,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               ))
             ) : (
               <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-                Aucun élément d'accordéon
+                No accordion items
               </div>
             )}
           </div>
         </div>
       )
+      }
 
     case 'tabs': {
       const tabs = block.data.tabs || []
@@ -3150,11 +3166,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             </div>
           ) : (
             <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-              Aucun onglet
+              No tabs
             </div>
           )}
         </div>
       )
+      }
 
     case 'hero': {
       // Convertir le gradient Tailwind en CSS gradient
@@ -3243,6 +3260,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               Object.entries(wrapperStyles).filter(([key]) => 
                 !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'color'].includes(key)
               )
+              }
             ),
             background: heroBg,
             backgroundSize: 'cover',
@@ -3261,7 +3279,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             <div className="absolute inset-0 bg-black bg-opacity-50"></div>
           )}
           <div className="relative z-10" style={{ color: block.styles?.color || '#ffffff' }}>
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-6">{block.data.title || 'Titre Hero'}</h1>
+            <h1 className="text-4xl md:text-6xl font-extrabold mb-6">{block.data.title || 'Hero Title'}</h1>
             {block.data.subtitle && (
               <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90">{block.data.subtitle}</p>
             )}
@@ -3334,6 +3352,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               features.map((feature: any, i: number) => {
                 // Style sympa avec gradient et ombre comme le Hero
                 // En mode clair, utiliser un dégradé similaire au Hero (bleu-violet-rose)
+                }
                 const cardStyle: React.CSSProperties = {
                   background: isDark 
                     ? 'linear-gradient(135deg, #1f2937 0%, #111827 100%)'
@@ -3403,7 +3422,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                   borderColor: isDark ? '#4b5563' : '#d1d5db'
                 }}
               >
-                Aucune fonctionnalité
+                No features
               </div>
             )}
           </div>
@@ -3477,6 +3496,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               Object.entries(contentStyles).filter(([key]) => 
                 !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'].includes(key)
               )
+              }
             ),
             ...backgroundStyle,
             // Ne pas utiliser padding shorthand si on a des propriétés individuelles
@@ -3592,6 +3612,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           theme={theme}
         />
       )
+      }
 
     case 'banner': {
       return (
@@ -3602,6 +3623,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               Object.entries(wrapperStyles).filter(([key]) => 
                 !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'].includes(key)
               )
+              }
             ),
             backgroundImage: block.data.background_image ? `url(${block.data.background_image})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             backgroundSize: 'cover',
@@ -3997,6 +4019,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'progress-bar': {
       const percentage = Math.min(100, Math.max(0, block.data.percentage || 0))
@@ -4019,6 +4042,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'quote': {
       return (
@@ -4038,6 +4062,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </blockquote>
         </div>
       )
+      }
 
     case 'icon-box': {
       return (
@@ -4062,6 +4087,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'feature-card': {
       return (
@@ -4094,6 +4120,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'video-embed': {
       const videoUrl = block.data.url || ''
@@ -4122,15 +4149,16 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             </div>
           ) : videoUrl ? (
             <div className="p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded text-center text-gray-400">
-              URL vidéo non supportée. Utilisez YouTube ou Vimeo.
+              Video URL not supported. Use YouTube or Vimeo.
             </div>
           ) : (
             <div className="p-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded text-center text-gray-400">
-              Aucune vidéo configurée
+              No video configured
             </div>
           )}
         </div>
       )
+      }
 
     case 'team-member': {
       return (
@@ -4220,7 +4248,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               ))
             ) : (
               <div className="col-span-full text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-                Aucun logo configuré
+                No logo configured
               </div>
             )}
           </div>
@@ -4268,7 +4296,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               ))
             ) : (
               <div className="col-span-full text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-                Aucune carte configurée
+                No card configured
               </div>
             )}
           </div>
@@ -4306,7 +4334,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               </div>
             ) : (
               <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-                Aucun onglet configuré
+                No tabs configured
               </div>
             )}
           </div>
@@ -4333,6 +4361,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
+      }
 
     case 'breadcrumb': {
       const breadcrumbItems = block.data.items || []
@@ -4357,6 +4386,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </nav>
         </div>
       )
+      }
 
     case 'tags': {
       const tags = block.data.tags || []
@@ -4375,11 +4405,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                 </span>
               ))
             ) : (
-              <span className="text-gray-400">Aucun tag</span>
+              <span className="text-gray-400">No tag</span>
             )}
           </div>
         </div>
       )
+      }
 
     case 'progress-circle': {
       const progressPercentage = block.data.percentage || 75
@@ -4452,6 +4483,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </form>
         </div>
       )
+      }
 
     case 'audio-player': {
       return (
@@ -4470,16 +4502,17 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                 className="w-full"
               >
                 <source src={block.data.src} />
-                Votre navigateur ne supporte pas l'élément audio.
+                Your browser does not support the audio element.
               </audio>
             </div>
           ) : (
             <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-              Aucun fichier audio configuré
+              No audio file configured
             </div>
           )}
         </div>
       )
+      }
 
     case 'modal': {
       const ModalPreview = () => {
@@ -4506,7 +4539,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                     </button>
                   </div>
                   <div className="p-6 text-gray-700 dark:text-gray-300">
-                    {block.data.content || 'Contenu de la modal...'}
+                    {block.data.content || 'Modal content...'}
                   </div>
                 </div>
               </div>
@@ -4528,11 +4561,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 rounded">
               Graphique {block.data.chart_type || 'line'} - Prévisualisation (nécessite Chart.js)
+              }
             </div>
             <p className="text-xs text-gray-500 mt-2">Type: {block.data.chart_type || 'line'}</p>
           </div>
         </div>
       )
+      }
 
     case 'calendar': {
       return (
@@ -4540,6 +4575,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <div className="h-96 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 rounded">
               Calendrier {block.data.calendar_type || 'month'} - Prévisualisation (nécessite bibliothèque calendrier)
+              }
             </div>
             {block.data.show_events !== false && (
               <p className="text-xs text-gray-500 mt-2">Événements activés</p>
@@ -4547,6 +4583,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'pagination': {
       const currentPage = block.data.current_page || 1
@@ -4592,6 +4629,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </nav>
         </div>
       )
+      }
 
     case 'list': {
       const listItems = block.data.items || []
@@ -4608,6 +4646,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
+      }
 
     case 'link': {
       return (
@@ -4622,11 +4661,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </a>
         </div>
       )
+      }
 
     case 'rich-text': {
       return (
         <div style={wrapperStyles} className="mb-6" dangerouslySetInnerHTML={{ __html: block.data?.html || '' }} />
       )
+      }
 
     case 'markdown': {
       // Note: Pour un vrai rendu Markdown, il faudrait une bibliothèque comme react-markdown
@@ -4635,11 +4676,13 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           <pre className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{block.data?.markdown || ''}</pre>
         </div>
       )
+      }
 
     case 'html-raw': {
       return (
         <div style={wrapperStyles} className="mb-6" dangerouslySetInnerHTML={{ __html: block.data?.html || '' }} />
       )
+      }
 
     case 'icon': {
       const iconSize = block.data?.size === 'sm' ? 'text-2xl' : block.data?.size === 'lg' ? 'text-5xl' : block.data?.size === 'xl' ? 'text-6xl' : 'text-4xl'
@@ -4650,6 +4693,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </span>
         </div>
       )
+      }
 
     case 'label': {
       return (
@@ -4659,6 +4703,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </label>
         </div>
       )
+      }
 
     case 'tooltip': {
       return (
@@ -4671,6 +4716,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </span>
         </div>
       )
+      }
 
     case 'popover': {
       return (
@@ -4681,6 +4727,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           {/* Note: Le popover nécessiterait une bibliothèque comme Radix UI pour un vrai rendu */}
         </div>
       )
+      }
 
     case 'dropdown': {
       return (
@@ -4692,6 +4739,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </select>
         </div>
       )
+      }
 
     case 'categories': {
       return (
@@ -4706,6 +4754,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'author-box': {
       return (
@@ -4726,6 +4775,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'related-posts': {
       return (
@@ -4736,16 +4786,18 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'table-of-contents': {
       return (
         <div style={wrapperStyles} className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <h3 className="font-semibold mb-3">{block.data?.title || 'Table des matières'}</h3>
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            💡 La table des matières sera générée automatiquement à partir des titres de la page
+            💡 Table of contents will be automatically generated from page titles
           </div>
         </div>
       )
+      }
 
     case 'reading-time': {
       return (
@@ -4755,6 +4807,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </span>
         </div>
       )
+      }
 
     case 'share-buttons': {
       return (
@@ -4769,6 +4822,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'flexbox': {
     case 'grid': {
@@ -4790,6 +4844,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           {/* Les enfants seront rendus par le composant parent */}
         </div>
       )
+      }
 
     case 'image-slider': {
       const sliderImages = block.data?.images || []
@@ -4804,11 +4859,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                 ))}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full text-gray-400">Aucune image</div>
+              <div className="flex items-center justify-center h-full text-gray-400">No image</div>
             )}
           </div>
         </div>
       )
+      }
 
     case 'lightbox': {
       const lightboxImages = block.data?.images || []
@@ -4826,10 +4882,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             ))}
           </div>
           {lightboxImages.length === 0 && (
-            <div className="text-center py-8 text-gray-400">Aucune image dans la lightbox</div>
+            <div className="text-center py-8 text-gray-400">No images in lightbox</div>
           )}
         </div>
       )
+      }
 
     case 'vimeo-embed': {
       const vimeoId = block.data?.vimeoId || (block.data?.url ? block.data.url.match(/vimeo\.com\/(\d+)/)?.[1] : '')
@@ -4853,6 +4910,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
+      }
 
     case 'counter': {
       return (
@@ -4865,6 +4923,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
+      }
 
     case 'card-grid': {
       const gridCards = block.data?.cards || []
@@ -4891,10 +4950,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             ))}
           </div>
           {gridCards.length === 0 && (
-            <div className="text-center py-8 text-gray-400">Aucune carte</div>
+            <div className="text-center py-8 text-gray-400">No cards</div>
           )}
         </div>
       )
+      }
 
     case 'logo-carousel': {
       const carouselLogos = block.data?.logos || []
@@ -4913,10 +4973,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             ))}
           </div>
           {carouselLogos.length === 0 && (
-            <div className="text-center py-8 text-gray-400">Aucun logo</div>
+            <div className="text-center py-8 text-gray-400">No logo</div>
           )}
         </div>
       )
+      }
 
     case 'route-calculator': {
       return (
@@ -5002,6 +5063,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Durée (min)
+                    }
                   </label>
                   <input
                     type="number"
@@ -5024,7 +5086,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                     ))
                   ) : (
                     <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                      Aucune règle de tarification configurée
+                      No pricing rule configured
                     </div>
                   )}
                 </div>
@@ -5101,6 +5163,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                     {day <= 31 ? day : ''}
                   </div>
                 )
+                }
               })}
             </div>
             {block.data?.show_time_slots && (
@@ -5307,7 +5370,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           const calculated = Function(`"use strict"; return (${formula})`)()
           setResult(calculated)
         } catch (e) {
-          console.error('Erreur calcul:', e)
+          console.error('Calculation error:', e)
         }
       }
       
@@ -5330,6 +5393,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                       const newValues = { ...values, [field.name]: parseFloat(e.target.value) || 0 }
                       setValues(newValues)
                       calculate()
+                      }
                     }}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     step="0.01"
@@ -5520,7 +5584,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         return (
           <div style={wrapperStyles} className="mb-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
-              <p className="text-gray-600 dark:text-gray-400">Aucune question configurée</p>
+              <p className="text-gray-600 dark:text-gray-400">No questions configured</p>
             </div>
           </div>
         )
@@ -5920,6 +5984,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         />
       </div>
     )
+    }
 
     // Blocs VTC
     case 'driver-profile': {
@@ -5945,6 +6010,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                     {block.data?.reviews_count && (
                       <span className="text-sm text-gray-500 dark:text-gray-400">
                         ({block.data.reviews_count} avis)
+                        }
                       </span>
                     )}
                   </div>
@@ -5977,6 +6043,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </a>
         </div>
       )
+      }
 
     case 'sms-button': {
       return (
@@ -5992,6 +6059,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </a>
         </div>
       )
+      }
 
     case 'vehicle-comparison': {
       const comparisonVehicles = block.data?.vehicles || []
@@ -6070,6 +6138,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     // Blocs E-commerce
     case 'product-gallery': {
@@ -6143,6 +6212,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'add-to-cart': {
       return (
@@ -6169,6 +6239,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+      }
 
     case 'buy-now': {
       return (
@@ -6181,6 +6252,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </button>
         </div>
       )
+      }
 
     case 'trust-badges': {
       const trustBadges = block.data?.badges || []
@@ -6201,6 +6273,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
+      }
 
     case 'payment-methods': {
       const methods = block.data?.methods || []
@@ -6221,10 +6294,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               ))}
             </div>
           ) : (
-            <div className="text-center py-4 text-gray-400">Aucune méthode configurée</div>
+            <div className="text-center py-4 text-gray-400">No method configured</div>
           )}
         </div>
       )
+      }
 
     default:
       return (

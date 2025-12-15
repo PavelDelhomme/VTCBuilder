@@ -100,7 +100,7 @@ class TenantViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Error retrieving tenant: {e}", exc_info=True)
             response = Response(
-                {'error': f'Erreur lors de la récupération du tenant: {str(e)}'},
+                {'error': f'Error lors de la récupération du tenant: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             add_cors_headers(response, request)
@@ -181,7 +181,7 @@ class TenantViewSet(viewsets.ModelViewSet):
                 from django.core.management import call_command
                 call_command('migrate_schemas', schema_name=tenant.schema_name, verbosity=0, interactive=False)
             except Exception as e:
-                logger.warning(f"Erreur migration schéma pour tenant {tenant_slug}: {e}")
+                logger.warning(f&quot;Error migration schéma pour tenant {tenant_slug}: {e}")
             
             serializer = TenantSerializer(tenant)
             response = Response({
@@ -194,9 +194,9 @@ class TenantViewSet(viewsets.ModelViewSet):
             return response
             
         except Exception as e:
-            logger.error(f"Erreur création automatique tenant {tenant_slug}: {e}", exc_info=True)
+            logger.error(f&quot;Error création automatique tenant {tenant_slug}: {e}", exc_info=True)
             response = Response(
-                {'error': f'Erreur création tenant: {str(e)}'},
+                {'error': f'Error création tenant: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
             add_cors_headers(response, request)
@@ -1692,7 +1692,7 @@ L'équipe VTCBuilder
         logger = logging.getLogger(__name__)
         logger.error(f"Error during tenant registration: {e}", exc_info=True)
         return Response(
-            {'error': f'Erreur lors de la création du compte : {str(e)}'},
+            {'error': f'Error lors de la création du compte : {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 

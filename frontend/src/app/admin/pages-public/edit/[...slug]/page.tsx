@@ -131,8 +131,8 @@ export default function EditPublicPage() {
       updateLastSaved()
       toast.success('Page sauvegardée avec succès !')
     } catch (error: any) {
-      console.error('Erreur sauvegarde:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      console.error('Error sauvegarde:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
     } finally {
       setSaving(false)
     }
@@ -779,7 +779,7 @@ export default function EditPublicPage() {
             const updatedPages = { ...publicPages, [pageSlug]: pageData }
             await api.patch('/system-settings/', { public_pages: updatedPages })
           } catch (error) {
-            console.error('Erreur sauvegarde structure par défaut:', error)
+            console.error('Error sauvegarde structure par défaut:', error)
           }
         } else {
           // Convertir l'ancienne structure si nécessaire
@@ -800,8 +800,8 @@ export default function EditPublicPage() {
         setMetaDescription(pageData.meta_description || '')
       }
     } catch (error: any) {
-      console.error('Erreur chargement:', error)
-      toast.error('Erreur lors du chargement des données')
+      console.error('Error chargement:', error)
+      toast.error('Error lors du chargement des données')
     } finally {
       setLoading(false)
     }
@@ -1296,8 +1296,8 @@ export default function EditPublicPage() {
                   loadData()
                 }, 200)
               } catch (error) {
-                console.error('Erreur création nouvelle page:', error)
-                toast.error('Erreur lors de la création de la nouvelle page')
+                console.error('Error création nouvelle page:', error)
+                toast.error('Error lors de la création de la nouvelle page')
               }
             }}
             className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
@@ -1484,8 +1484,8 @@ export default function EditPublicPage() {
                 toast.success('Nouvelle page créée !')
                 router.push(`/admin/pages-public/edit/${newPageSlug}`)
               } catch (error: any) {
-                console.error('Erreur création page:', error)
-                toast.error('Erreur lors de la création de la page')
+                console.error('Error création page:', error)
+                toast.error('Error lors de la création de la page')
               }
             }}
             className="p-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-colors flex items-center justify-center"

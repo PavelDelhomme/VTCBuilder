@@ -35,8 +35,8 @@ export default function SettingsPage() {
         })
       }
     } catch (error) {
-      console.error('Erreur chargement tenant:', error)
-      toast.error('Erreur lors du chargement des paramètres')
+      console.error('Error chargement tenant:', error)
+      toast.error('Error lors du chargement des paramètres')
     } finally {
       setLoading(false)
     }
@@ -52,7 +52,7 @@ export default function SettingsPage() {
       toast.success('Paramètres mis à jour avec succès')
       loadTenant()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour')
+      toast.error(error.response?.data?.error || 'Error lors de la mise à jour')
     } finally {
       setSaving(false)
     }

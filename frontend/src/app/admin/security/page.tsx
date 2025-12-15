@@ -141,8 +141,8 @@ export default function SecurityPage() {
         await loadSettings()
       }
     } catch (error) {
-      console.error('Erreur chargement données sécurité:', error)
-      toast.error('Erreur lors du chargement des données')
+      console.error('Error chargement données sécurité:', error)
+      toast.error('Error lors du chargement des données')
     } finally {
       setLoading(false)
     }
@@ -153,7 +153,7 @@ export default function SecurityPage() {
       const rules = await securityService.getWAFRules()
       setWafRules(rules)
     } catch (error) {
-      console.error('Erreur chargement règles WAF:', error)
+      console.error('Error chargement règles WAF:', error)
     }
   }
 
@@ -167,7 +167,7 @@ export default function SecurityPage() {
       const logs = await securityService.getWAFLogs(params)
       setWafLogs(logs)
     } catch (error) {
-      console.error('Erreur chargement logs WAF:', error)
+      console.error('Error chargement logs WAF:', error)
     }
   }
 
@@ -176,7 +176,7 @@ export default function SecurityPage() {
       const stats = await securityService.getWAFStats(7)
       setWafStats(stats)
     } catch (error) {
-      console.error('Erreur chargement stats WAF:', error)
+      console.error('Error chargement stats WAF:', error)
     }
   }
 
@@ -189,7 +189,7 @@ export default function SecurityPage() {
       const alertsData = await securityService.getAlerts(params)
       setAlerts(alertsData)
     } catch (error) {
-      console.error('Erreur chargement alertes:', error)
+      console.error('Error chargement alertes:', error)
     }
   }
 
@@ -198,7 +198,7 @@ export default function SecurityPage() {
       const rules = await securityService.getFirewallRules()
       setFirewallRules(rules)
     } catch (error) {
-      console.error('Erreur chargement règles firewall:', error)
+      console.error('Error chargement règles firewall:', error)
     }
   }
 
@@ -207,7 +207,7 @@ export default function SecurityPage() {
       const settingsData = await securityService.getSettings()
       setSettings(settingsData)
     } catch (error) {
-      console.error('Erreur chargement paramètres:', error)
+      console.error('Error chargement paramètres:', error)
     }
   }
 
@@ -218,8 +218,8 @@ export default function SecurityPage() {
       await securityService.updateSettings(settings)
       toast.success('Paramètres de sécurité sauvegardés !')
     } catch (error) {
-      console.error('Erreur sauvegarde paramètres:', error)
-      toast.error('Erreur lors de la sauvegarde')
+      console.error('Error sauvegarde paramètres:', error)
+      toast.error('Error lors de la sauvegarde')
     }
   }
 
@@ -229,8 +229,8 @@ export default function SecurityPage() {
       await loadWAFRules()
       toast.success('Règle mise à jour')
     } catch (error) {
-      console.error('Erreur toggle règle:', error)
-      toast.error('Erreur lors de la mise à jour')
+      console.error('Error toggle règle:', error)
+      toast.error('Error lors de la mise à jour')
     }
   }
 
@@ -242,8 +242,8 @@ export default function SecurityPage() {
       await loadWAFRules()
       toast.success('Règle supprimée')
     } catch (error) {
-      console.error('Erreur suppression règle:', error)
-      toast.error('Erreur lors de la suppression')
+      console.error('Error suppression règle:', error)
+      toast.error('Error lors de la suppression')
     }
   }
 
@@ -260,8 +260,8 @@ export default function SecurityPage() {
       setEditingWAFRule(null)
       await loadWAFRules()
     } catch (error: any) {
-      console.error('Erreur sauvegarde règle:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      console.error('Error sauvegarde règle:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
     }
   }
 
@@ -271,8 +271,8 @@ export default function SecurityPage() {
       await loadAlerts()
       toast.success('Alerte acquittée')
     } catch (error) {
-      console.error('Erreur acquittement alerte:', error)
-      toast.error('Erreur lors de l\'acquittement')
+      console.error('Error acquittement alerte:', error)
+      toast.error('Error lors de l\'acquittement')
     }
   }
 
@@ -282,8 +282,8 @@ export default function SecurityPage() {
       await loadAlerts()
       toast.success('Alerte résolue')
     } catch (error) {
-      console.error('Erreur résolution alerte:', error)
-      toast.error('Erreur lors de la résolution')
+      console.error('Error résolution alerte:', error)
+      toast.error('Error lors de la résolution')
     }
   }
 
@@ -295,8 +295,8 @@ export default function SecurityPage() {
       await loadFirewallRules()
       toast.success('Règle supprimée')
     } catch (error) {
-      console.error('Erreur suppression règle:', error)
-      toast.error('Erreur lors de la suppression')
+      console.error('Error suppression règle:', error)
+      toast.error('Error lors de la suppression')
     }
   }
 
@@ -313,8 +313,8 @@ export default function SecurityPage() {
       setEditingFirewallRule(null)
       await loadFirewallRules()
     } catch (error: any) {
-      console.error('Erreur sauvegarde règle:', error)
-      toast.error(error.response?.data?.error || 'Erreur lors de la sauvegarde')
+      console.error('Error sauvegarde règle:', error)
+      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
     }
   }
 
@@ -465,7 +465,7 @@ export default function SecurityPage() {
                           toast.success('Règles par défaut initialisées avec succès !')
                           loadWAFRules()
                         } catch (error: any) {
-                          toast.error(error.response?.data?.error || 'Erreur lors de l\'initialisation')
+                          toast.error(error.response?.data?.error || 'Error lors de l\'initialisation')
                         } finally {
                           setLoading(false)
                         }
@@ -511,7 +511,7 @@ export default function SecurityPage() {
                             toast.success('Règles par défaut initialisées avec succès !')
                             loadWAFRules()
                           } catch (error: any) {
-                            toast.error(error.response?.data?.error || 'Erreur lors de l\'initialisation')
+                            toast.error(error.response?.data?.error || 'Error lors de l\'initialisation')
                           } finally {
                             setLoading(false)
                           }
@@ -635,7 +635,7 @@ export default function SecurityPage() {
                           toast.success('Règles Firewall par défaut initialisées avec succès !')
                           loadFirewallRules()
                         } catch (error: any) {
-                          toast.error(error.response?.data?.error || 'Erreur lors de l\'initialisation')
+                          toast.error(error.response?.data?.error || 'Error lors de l\'initialisation')
                         } finally {
                           setLoading(false)
                         }
@@ -681,7 +681,7 @@ export default function SecurityPage() {
                             toast.success('Règles Firewall par défaut initialisées avec succès !')
                             loadFirewallRules()
                           } catch (error: any) {
-                            toast.error(error.response?.data?.error || 'Erreur lors de l\'initialisation')
+                            toast.error(error.response?.data?.error || 'Error lors de l\'initialisation')
                           } finally {
                             setLoading(false)
                           }

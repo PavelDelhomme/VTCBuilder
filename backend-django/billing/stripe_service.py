@@ -33,7 +33,7 @@ class StripeService:
             )
             return customer.id
         except stripe.error.StripeError as e:
-            raise Exception(f"Erreur création client Stripe: {str(e)}")
+            raise Exception(f&quot;Error création client Stripe: {str(e)}")
     
     @staticmethod
     def create_subscription(
@@ -96,7 +96,7 @@ class StripeService:
                 'status': subscription.status,
             }
         except stripe.error.StripeError as e:
-            raise Exception(f"Erreur création abonnement Stripe: {str(e)}")
+            raise Exception(f&quot;Error création abonnement Stripe: {str(e)}")
     
     @staticmethod
     def get_or_create_price(pricing_plan: PricingPlan, billing_cycle: str, amount: int) -> str:
@@ -134,7 +134,7 @@ class StripeService:
             )
             return price.id
         except stripe.error.StripeError as e:
-            raise Exception(f"Erreur création prix Stripe: {str(e)}")
+            raise Exception(f&quot;Error création prix Stripe: {str(e)}")
     
     @staticmethod
     def cancel_subscription(subscription: Subscription) -> dict:
@@ -155,7 +155,7 @@ class StripeService:
                 'cancel_at_period_end': stripe_subscription.cancel_at_period_end,
             }
         except stripe.error.StripeError as e:
-            raise Exception(f"Erreur annulation abonnement: {str(e)}")
+            raise Exception(f&quot;Error annulation abonnement: {str(e)}")
     
     @staticmethod
     def reactivate_subscription(subscription: Subscription) -> dict:
@@ -176,7 +176,7 @@ class StripeService:
                 'cancel_at_period_end': stripe_subscription.cancel_at_period_end,
             }
         except stripe.error.StripeError as e:
-            raise Exception(f"Erreur réactivation abonnement: {str(e)}")
+            raise Exception(f&quot;Error réactivation abonnement: {str(e)}")
     
     @staticmethod
     def update_subscription_plan(subscription: Subscription, new_plan: PricingPlan, billing_cycle: str = None) -> dict:
@@ -216,7 +216,7 @@ class StripeService:
                 'status': updated_subscription.status,
             }
         except stripe.error.StripeError as e:
-            raise Exception(f"Erreur mise à jour abonnement: {str(e)}")
+            raise Exception(f&quot;Error mise à jour abonnement: {str(e)}")
     
     @staticmethod
     def create_payment_intent(amount: Decimal, currency: str = 'EUR', customer_id: str = None) -> dict:
@@ -237,7 +237,7 @@ class StripeService:
                 'payment_intent_id': intent.id,
             }
         except stripe.error.StripeError as e:
-            raise Exception(f"Erreur création Payment Intent: {str(e)}")
+            raise Exception(f&quot;Error création Payment Intent: {str(e)}")
     
     @staticmethod
     def attach_payment_method(customer_id: str, payment_method_id: str) -> dict:
@@ -254,7 +254,7 @@ class StripeService:
                 'type': payment_method.type,
             }
         except stripe.error.StripeError as e:
-            raise Exception(f"Erreur attachement payment method: {str(e)}")
+            raise Exception(f&quot;Error attachement payment method: {str(e)}")
     
     @staticmethod
     def get_payment_methods(customer_id: str) -> list:
@@ -280,7 +280,7 @@ class StripeService:
                 for pm in payment_methods.data
             ]
         except stripe.error.StripeError as e:
-            raise Exception(f"Erreur récupération payment methods: {str(e)}")
+            raise Exception(f&quot;Error récupération payment methods: {str(e)}")
     
     @staticmethod
     def create_setup_intent(customer_id: str) -> dict:
@@ -299,7 +299,7 @@ class StripeService:
                 'setup_intent_id': setup_intent.id,
             }
         except stripe.error.StripeError as e:
-            raise Exception(f"Erreur création Setup Intent: {str(e)}")
+            raise Exception(f&quot;Error création Setup Intent: {str(e)}")
     
     @staticmethod
     def attach_payment_method_to_subscription(
@@ -336,5 +336,5 @@ class StripeService:
                 'payment_method_id': payment_method_id,
             }
         except stripe.error.StripeError as e:
-            raise Exception(f"Erreur attachement payment method: {str(e)}")
+            raise Exception(f&quot;Error attachement payment method: {str(e)}")
 

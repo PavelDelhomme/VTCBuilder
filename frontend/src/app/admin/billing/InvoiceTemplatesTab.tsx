@@ -41,10 +41,10 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
       const data = await billingService.getInvoiceTemplates()
       setTemplates(Array.isArray(data) ? data : [])
     } catch (error: any) {
-      console.error('Erreur chargement templates:', error)
-      // Ne pas afficher d'erreur si c'est juste que la table n'existe pas encore
+      console.error('Error chargement templates:', error)
+      // Ne pas afficher d'error si c'est juste que la table n'existe pas encore
       if (error.response?.status !== 500) {
-        toast.error('Erreur lors du chargement des templates')
+        toast.error('Error lors du chargement des templates')
       }
       setTemplates([])
     } finally {
@@ -60,7 +60,7 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
       loadTemplates()
       onUpdate()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la création')
+      toast.error(error.response?.data?.error || 'Error lors de la création')
     }
   }
 
@@ -72,7 +72,7 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
       loadTemplates()
       onUpdate()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour')
+      toast.error(error.response?.data?.error || 'Error lors de la mise à jour')
     }
   }
 
@@ -82,7 +82,7 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
       const fullTemplate = await billingService.getInvoiceTemplate(template.id)
       setEditingTemplate(fullTemplate)
     } catch (error: any) {
-      toast.error('Erreur lors du chargement du template')
+      toast.error('Error lors du chargement du template')
       console.error(error)
     }
   }
@@ -96,7 +96,7 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
       loadTemplates()
       onUpdate()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de la suppression')
+      toast.error(error.response?.data?.error || 'Error lors de la suppression')
     }
   }
 
@@ -117,7 +117,7 @@ export default function InvoiceTemplatesTab({ onUpdate }: InvoiceTemplatesTabPro
       setPreviewHtml(data.html)
       setPreviewTemplate(template)
     } catch (error: any) {
-      toast.error('Erreur lors de la prévisualisation')
+      toast.error('Error lors de la prévisualisation')
     }
   }
 

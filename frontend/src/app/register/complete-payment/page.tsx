@@ -57,7 +57,7 @@ function CardRegistrationForm({
       })
 
       if (error) {
-        toast.error(error.message || 'Erreur lors de l\'enregistrement de la carte')
+        toast.error(error.message || 'Error lors de l\'enregistrement de la carte')
         setProcessing(false)
         return
       }
@@ -74,13 +74,13 @@ function CardRegistrationForm({
           onSuccess()
         } catch (error: any) {
           console.error('Error completing card registration:', error)
-          toast.error(error.response?.data?.error || 'Erreur lors de l\'enregistrement de la carte')
+          toast.error(error.response?.data?.error || 'Error lors de l\'enregistrement de la carte')
           setProcessing(false)
         }
       }
     } catch (error: any) {
       console.error('Error confirming setup intent:', error)
-      toast.error('Erreur lors de l\'enregistrement de la carte')
+      toast.error('Error lors de l\'enregistrement de la carte')
       setProcessing(false)
     }
   }

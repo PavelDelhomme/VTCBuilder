@@ -31,8 +31,8 @@ export default function NewTenantPage() {
       await tenantService.create(formData)
       router.push('/admin/tenants')
     } catch (error) {
-      console.error('Erreur création tenant:', error)
-      alert('Erreur lors de la création du tenant')
+      console.error('Error création tenant:', error)
+      alert('Error lors de la création du tenant')
     } finally {
       setLoading(false)
     }

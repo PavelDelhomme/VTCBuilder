@@ -31,8 +31,8 @@ export default function TemplatesPage() {
       const data = await templateService.getAll(params)
       setTemplates(Array.isArray(data) ? data : [])
     } catch (error) {
-      console.error('Erreur chargement templates:', error)
-      toast.error('Erreur lors du chargement des templates')
+      console.error('Error chargement templates:', error)
+      toast.error('Error lors du chargement des templates')
     } finally {
       setLoading(false)
     }
@@ -45,7 +45,7 @@ export default function TemplatesPage() {
       toast.success('Template appliqué avec succès !')
       loadTemplates()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'application')
+      toast.error(error.response?.data?.error || 'Error lors de l\'application')
     } finally {
       setApplying(null)
     }

@@ -59,7 +59,7 @@ export default function EditBlockPage() {
       const plans = await billingService.getPricingPlans()
       setPricingPlans(Array.isArray(plans) ? plans : plans.results || [])
     } catch (error: any) {
-      console.error('Erreur chargement plans tarifaires:', error)
+      console.error('Error chargement plans tarifaires:', error)
     }
   }
 
@@ -68,7 +68,7 @@ export default function EditBlockPage() {
       const data = await callToActionService.getAll()
       setCallToActions(Array.isArray(data) ? data : [])
     } catch (error: any) {
-      console.error('Erreur chargement CTAs:', error)
+      console.error('Error chargement CTAs:', error)
     }
   }
 
@@ -99,8 +99,8 @@ export default function EditBlockPage() {
       })
       setPreviewData(data.schema || {})
     } catch (error: any) {
-      console.error('Erreur chargement bloc:', error)
-      toast.error('Erreur lors du chargement du bloc')
+      console.error('Error chargement bloc:', error)
+      toast.error('Error lors du chargement du bloc')
       router.push('/admin/blocks')
     } finally {
       setLoading(false)
@@ -158,7 +158,7 @@ export default function EditBlockPage() {
       toast.success('Bloc mis à jour avec succès !')
       router.push('/admin/blocks')
     } catch (error: any) {
-      toast.error(error.response?.data?.error || error.response?.data?.message || 'Erreur lors de la sauvegarde')
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Error lors de la sauvegarde')
     } finally {
       setSaving(false)
     }
@@ -487,7 +487,7 @@ export default function EditBlockPage() {
                 </div>
                 {schemaError && (
                   <div className="mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400">
-                    Erreur JSON: {schemaError}
+                    Error JSON: {schemaError}
                   </div>
                 )}
                 <textarea
@@ -534,7 +534,7 @@ export default function EditBlockPage() {
                 </div>
                 {stylesError && (
                   <div className="mb-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-600 dark:text-red-400">
-                    Erreur JSON: {stylesError}
+                    Error JSON: {stylesError}
                   </div>
                 )}
                 <textarea

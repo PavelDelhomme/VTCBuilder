@@ -38,7 +38,7 @@ export function useEditorStatePersistence(
         localStorage.setItem(EDITOR_PATH_KEY, currentPath)
       }
     } catch (error) {
-      console.warn('Erreur sauvegarde état éditeur:', error)
+      console.warn('Error sauvegarde état éditeur:', error)
     }
   }, [currentPath])
 
@@ -59,7 +59,7 @@ export function useEditorStatePersistence(
         return state
       }
     } catch (error) {
-      console.warn('Erreur restauration état éditeur:', error)
+      console.warn('Error restauration état éditeur:', error)
     }
     
     return null
@@ -103,7 +103,7 @@ export function saveEditorStateBeforeReconnect(path: string, state: EditorState)
     localStorage.setItem(EDITOR_STATE_KEY, JSON.stringify(state))
     localStorage.setItem(EDITOR_PATH_KEY, path)
   } catch (error) {
-    console.warn('Erreur sauvegarde état éditeur:', error)
+    console.warn('Error sauvegarde état éditeur:', error)
   }
 }
 
@@ -125,7 +125,7 @@ export function restoreEditorStateAfterReconnect(path: string): EditorState | nu
       return state
     }
   } catch (error) {
-    console.warn('Erreur restauration état éditeur:', error)
+    console.warn('Error restauration état éditeur:', error)
   }
   
   return null

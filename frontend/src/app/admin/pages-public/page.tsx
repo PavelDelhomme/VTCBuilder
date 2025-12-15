@@ -251,8 +251,8 @@ export default function PublicPagesManagement() {
         setPages(sortedPages)
       }
     } catch (error: any) {
-      console.error('Erreur chargement pages publiques:', error)
-      toast.error('Erreur lors du chargement des pages')
+      console.error('Error chargement pages publiques:', error)
+      toast.error('Error lors du chargement des pages')
       // Initialiser avec les pages par défaut en cas d'erreur
       setPages(DEFAULT_PUBLIC_PAGES.map((page, index) => ({
         ...page,
@@ -273,7 +273,7 @@ export default function PublicPagesManagement() {
       toast.success(`Page ${currentStatus ? 'désactivée' : 'activée'}`)
       loadPages()
     } catch (error: any) {
-      toast.error('Erreur lors de la modification')
+      toast.error('Error lors de la modification')
     }
   }
 
@@ -308,8 +308,8 @@ export default function PublicPagesManagement() {
       toast.success('Page supprimée avec succès')
       loadPages()
     } catch (error: any) {
-      console.error('Erreur suppression page:', error)
-      toast.error('Erreur lors de la suppression')
+      console.error('Error suppression page:', error)
+      toast.error('Error lors de la suppression')
     }
   }
 
@@ -350,8 +350,8 @@ export default function PublicPagesManagement() {
       toast.success(`${deletedCount} page${deletedCount > 1 ? 's' : ''} supprimée${deletedCount > 1 ? 's' : ''} avec succès`)
       loadPages()
     } catch (error: any) {
-      console.error('Erreur nettoyage pages:', error)
-      toast.error('Erreur lors du nettoyage')
+      console.error('Error nettoyage pages:', error)
+      toast.error('Error lors du nettoyage')
     }
   }
 
