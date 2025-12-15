@@ -302,8 +302,6 @@ function BlockPreview({
       style={{
         backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
         color: theme === 'dark' ? '#f9fafb' : '#111827',
-        // Forcer le thème sur tous les enfants en utilisant CSS variables
-        '--preview-theme' as any: theme,
       } as React.CSSProperties}
       data-theme-isolated
       data-preview-theme={theme}
