@@ -853,7 +853,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
 
   const content = (() => {
     switch (block.type) {
-    case 'heading':
+    case 'heading': {
       const headingLevel = block.data.level || 'h2'
       const HeadingTag = headingLevel === 'h1' ? 'h1' :
                         headingLevel === 'h2' ? 'h2' :
@@ -978,7 +978,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
     }
 
-    case 'button':
+    case 'button': {
       const buttonSizeClass = block.data.size === 'xs' ? 'px-2 py-1 text-xs' :
                               block.data.size === 'sm' ? 'px-3 py-1.5 text-sm' :
                               block.data.size === 'lg' ? 'px-8 py-4 text-lg' :
@@ -1066,7 +1066,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
     }
 
-    case 'spacer':
+    case 'spacer': {
       const spacerDirection = block.data.direction || 'vertical'
       if (spacerDirection === 'horizontal') {
         return (
@@ -1223,6 +1223,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
     case 'code': {
       const code = block.data.code || ''
