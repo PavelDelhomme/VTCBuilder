@@ -184,19 +184,24 @@ class WAFMiddleware(MiddlewareMixin):
         if request.path in ['/health/', '/api/health/']:
             return {'blocked': False}
         
-        # Check per minute
-        minute_key = f"waf_rate_limit_minute:{ip_address}"
-        minute_count = cache.get(minute_key, 0)
-        if minute_count >= settings.rate_limit_requests_per_minute:
-            return {
-                'blocked': True,
-                'reason': f'Rate limit exceeded: {minute_count} requests per minute'
-            }
-        cache.set(minute_key, minute_count + 1, 60)
-        
-        # Check per hour
-        hour_key = f"waf_rate_limit_hour:{ip_address}"
-        hour_count = cache.get(hour_key, 0)
+        try:
+            # Check per minute
+            minute_key = f"waf_rate_limit_minute:{ip_address}"
+            minute_count = cache.get(minute_key, 0)
+            if not isinstance(minute_count, (int, float)):
+                minute_count = 0
+            if minute_count >= settings.rate_limit_requests_per_minute:
+                return {
+                    'blocked': True,
+                    'reason': f'Rate limit exceeded: {minute_count} requests per minute'
+                }
+            cache.set(minute_key, minute_count + 1, 60)
+            
+            # Check per hour
+            hour_key = f"waf_rate_limit_hour:{ip_address}"
+            hour_count = cache.get(hour_key, 0)
+            if not isinstance(hour_count, (int, float)):
+                hour_count = 0
         if hour_count >= settings.rate_limit_requests_per_hour:
             return {
                 'blocked': True,
