@@ -1,10 +1,11 @@
 # Makefile pour VTCBuilder
 # Optimisé pour réduire la consommation mémoire et CPU
 
-.PHONY: help start stop restart build rebuild logs status clean monitor-performance compare-performance
+.PHONY: help up start stop restart build rebuild logs status clean monitor-performance compare-performance
 
 help:
 	@echo "Commandes disponibles:"
+	@echo "  make up                 - Démarrer tous les services (alias de start)"
 	@echo "  make start              - Démarrer tous les services"
 	@echo "  make stop               - Arrêter tous les services"
 	@echo "  make restart            - Redémarrer tous les services"
@@ -26,6 +27,8 @@ DOCKER_COMPOSE = docker-compose
 COMPOSE_FILE = docker-compose.yml
 
 # Services
+up: start
+
 start:
 	$(DOCKER_COMPOSE) -f $(COMPOSE_FILE) up -d
 
