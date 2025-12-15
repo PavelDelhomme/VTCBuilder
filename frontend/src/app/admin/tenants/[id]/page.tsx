@@ -269,7 +269,7 @@ function TenantUsersTab({ tenantId, tenantName }: { tenantId: number; tenantName
                           (error.response?.data?.username ? `Erreur: ${error.response.data.username.join(', ')}` : null) ||
                           'Error lors de la modification du mot de passe'
       toast.error(errorMessage)
-      console.error('Détails erreur:', error.response?.data)
+      console.error('Error details:', error.response?.data)
     } finally {
       setPasswordSaving({ ...passwordSaving, [userId]: false })
     }
