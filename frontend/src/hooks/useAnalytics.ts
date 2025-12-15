@@ -17,12 +17,13 @@ interface TrackActionParams {
 export function useAnalytics() {
   const pathname = usePathname()
 
-  // Vérifier si on est dans l'interface d'administration
+  // Vérifier si on est dans l'interface d'administration ou sur localhost:9494 (site public en dev)
   const isAdminInterface = pathname?.startsWith('/admin') || pathname?.startsWith('/dashboard')
+  const isPublicDevSite = typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '9494'
 
   const trackAction = useCallback(async (params: TrackActionParams) => {
-    // Ne pas tracker dans l'interface d'administration
-    if (isAdminInterface) {
+    // Ne pas tracker dans l'interface d'administration ou sur le site public en développement
+    if (isAdminInterface || isPublicDevSite) {
       return
     }
 
@@ -76,7 +77,7 @@ export function useAnalytics() {
   }, [trackAction])
 
   const trackPageView = useCallback((pageTitle?: string, pageId?: number | string) => {
-    if (isAdminInterface) {
+    if (isAdminInterface || isPublicDevSite) {
       return
     }
 
@@ -118,7 +119,7 @@ export function useAnalytics() {
 
   // Tracking automatique des vues de page
   useEffect(() => {
-    if (isAdminInterface) {
+    if (isAdminInterface || isPublicDevSite) {
       return
     }
 
@@ -133,7 +134,7 @@ export function useAnalytics() {
 
   // Tracking automatique des clics sur les boutons et liens
   useEffect(() => {
-    if (isAdminInterface) {
+    if (isAdminInterface || isPublicDevSite) {
       return
     }
 

@@ -10,33 +10,41 @@ interface MobileHeaderProps {
   title: string
   subtitle?: string
   onMenuClick?: () => void
+  saveStatus?: React.ReactNode
 }
 
-export default function MobileHeader({ title, subtitle, onMenuClick }: MobileHeaderProps) {
+export default function MobileHeader({ title, subtitle, onMenuClick, saveStatus }: MobileHeaderProps) {
   const { resolvedTheme, toggleTheme } = useTheme()
 
   return (
     <header className="lg:hidden bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 sticky top-0 z-30">
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-between px-3 py-2 gap-2">
         <button
           onClick={onMenuClick}
-          className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-1 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700"
+          className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-1.5 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 flex-shrink-0"
           aria-label="Ouvrir le menu"
         >
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
         
-        <div className="flex-1 text-center">
-          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{title}</h1>
-          {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>}
+        <div className="flex-1 text-center min-w-0">
+          <h1 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
+          {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 truncate hidden sm:block">{subtitle}</p>}
         </div>
+        
+        {/* Save Status - Visible sur mobile */}
+        {saveStatus && (
+          <div className="flex-shrink-0">
+            {saveStatus}
+          </div>
+        )}
         
         {/* Dark Mode Toggle */}
         <button
           onClick={toggleTheme}
-          className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-1 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors"
+          className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-1.5 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
           aria-label={resolvedTheme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
           title={resolvedTheme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
         >

@@ -18,6 +18,7 @@ import { useAutoSave } from '@/hooks/useAutoSave'
 import { useReconnect } from '@/contexts/ReconnectContext'
 import { restoreEditorStateAfterReconnect } from '@/hooks/useEditorStatePersistence'
 import { useConfirm } from '@/hooks/useConfirm'
+import SubscriptionInfo from '@/components/editor/SubscriptionInfo'
 import { findBlockInTree, duplicateBlockInTree, removeBlockFromTree } from '@/lib/block-utils'
 
 const PAGE_TITLES: Record<string, string> = {
@@ -49,6 +50,7 @@ export default function EditPublicPage() {
   const [status, setStatus] = useState<'draft' | 'published'>('draft')
   const [showPreview, setShowPreview] = useState(true)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light') // Thème de la prévisualisation uniquement
   const [availablePages, setAvailablePages] = useState<Array<{ slug: string; title: string; isSubPage?: boolean; parentSlug?: string }>>([])
   const [currentPageSubPages, setCurrentPageSubPages] = useState<Array<{ slug: string; title: string }>>([])
   const [headerVisible, setHeaderVisible] = useState(true)
@@ -59,6 +61,10 @@ export default function EditPublicPage() {
   const [modalBlockId, setModalBlockId] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<{ blockId: string; position: { x: number; y: number } } | null>(null)
   const [copiedBlock, setCopiedBlock] = useState<Block | null>(null)
+  const [canUndo, setCanUndo] = useState(false)
+  const [canRedo, setCanRedo] = useState(false)
+  const [showSeoExpanded, setShowSeoExpanded] = useState(false) // État pour afficher/masquer les paramètres SEO
+  const [showMoreMenu, setShowMoreMenu] = useState(false) // État pour le menu "Plus d'options"
   
   // État pour le redimensionnement des panneaux
   const [editorWidth, setEditorWidth] = useState<number>(() => {
@@ -347,6 +353,22 @@ export default function EditPublicPage() {
           })
         })
       })
+      
+      // Vérifier que la page actuelle est bien dans la liste
+      // Si ce n'est pas le cas (par exemple après création), l'ajouter
+      const currentPageExists = finalPagesList.some(p => p.slug === pageSlug)
+      if (!currentPageExists && pageSlug !== 'home') {
+        const publicPages = data.public_pages || {}
+        if (publicPages[pageSlug]) {
+          const pageData = publicPages[pageSlug]
+          const title = pageData.title || PAGE_TITLES[pageSlug] || pageSlug.charAt(0).toUpperCase() + pageSlug.slice(1)
+          finalPagesList.push({
+            slug: pageSlug,
+            title: title,
+            isSubPage: false,
+          })
+        }
+      }
       
       setAvailablePages(finalPagesList)
       
@@ -890,182 +912,200 @@ export default function EditPublicPage() {
       title={`Éditer ${PAGE_TITLES[pageSlug] || pageSlug}`}
       subtitle={`Créez et personnalisez la page ${pageSlug === 'home' ? 'd\'accueil' : pageSlug} avec l'éditeur de blocs complet`}
       hideHeader={!headerVisible}
+      projectBackButton={
+        projectId ? (
+          <button
+            onClick={() => {
+              router.push(`/admin/projects/${projectId}`)
+            }}
+            className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center"
+            title="Retourner à la page de détail du projet"
+          >
+            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+        ) : undefined
+      }
       saveStatus={
         <div className="flex items-center gap-2">
           {isAutoSaving ? (
             <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-xs sm:text-sm whitespace-nowrap">
               <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent flex-shrink-0"></div>
-              <span className="hidden sm:inline">Sauvegarde...</span>
-              <span className="sm:hidden">...</span>
+              <span className="hidden lg:inline">Sauvegarde...</span>
             </div>
           ) : lastSaved ? (
             <div className="flex items-center gap-2 px-2 sm:px-3 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-xs sm:text-sm whitespace-nowrap">
               <svg className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span className="hidden sm:inline">Sauvegardé {lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
-              <span className="sm:hidden">{lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span className="hidden lg:inline">Sauvegardé {lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+              <span className="lg:hidden">{lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           ) : null}
-          {/* Header Toggle - À côté de l'indicateur de sauvegarde */}
-          <button
-            onClick={() => setHeaderVisible(!headerVisible)}
-            className="p-2 rounded-lg transition-colors flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-            title={headerVisible ? 'Masquer la barre supérieure' : 'Afficher la barre supérieure'}
-          >
-            {headerVisible ? (
-              <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-              </svg>
-            ) : (
-              <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            )}
-          </button>
         </div>
       }
       headerActions={
-        <div className="flex flex-row gap-2 sm:gap-3 flex-wrap items-center w-full">
-          {/* Bouton Retour au projet - Afficher uniquement si projectId est présent */}
-          {projectId && (
-            <button
-              onClick={() => {
-                router.push(`/admin/projects/${projectId}`)
-              }}
-              className="px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 whitespace-nowrap"
-              title="Retourner à la page de détail du projet"
-            >
-              <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              <span className="hidden sm:inline">Retour au projet</span>
-              <span className="sm:hidden">Retour</span>
-            </button>
-          )}
-          
-          {/* Page Selector - Isolated for better readability */}
-          {availablePages.length > 1 && (
-            <div className="flex items-center gap-2 pr-2 sm:pr-3 border-r border-gray-300 dark:border-gray-600">
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                Page:
-              </label>
+        <div className="flex flex-row gap-1 sm:gap-2 flex-wrap items-center w-full">
+          {/* Header Toggle - En premier pour être toujours visible */}
+          <button
+            onClick={() => setHeaderVisible(!headerVisible)}
+            className="p-2.5 rounded-lg transition-colors flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
+            title={headerVisible ? 'Masquer la barre' : 'Afficher la barre'}
+          >
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {headerVisible ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              )}
+            </svg>
+          </button>
+          {/* Page Selector - Compact version, visible on medium screens and up */}
+          {availablePages.length > 0 && (
+            <div className="hidden md:flex items-center gap-2 pr-2 border-r border-gray-300 dark:border-gray-600">
               <select
-                value={pageSlug}
+                value={pageSlug || ''}
                 onChange={(e) => {
                   const url = projectId 
                     ? `/admin/pages-public/${e.target.value}/edit?projectId=${projectId}`
                     : `/admin/pages-public/${e.target.value}/edit`
                   router.push(url)
                 }}
-                className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm font-medium min-w-[150px] sm:min-w-[180px]"
+                className="px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-xs sm:text-sm font-medium min-w-[120px] sm:min-w-[150px]"
+                title="Sélectionner une page"
               >
                 {availablePages.map((page) => (
                   <option key={page.slug} value={page.slug}>
                     {page.isSubPage ? `  └─ ${page.title}` : page.title}
                   </option>
                 ))}
+                {/* S'assurer que la page actuelle est toujours dans la liste, même si elle vient d'être créée */}
+                {!availablePages.some(p => p.slug === pageSlug) && pageSlug && pageSlug !== 'home' && (
+                  <option value={pageSlug}>
+                    {pageSlug.includes('nouvelle-page') ? `Nouvelle page` : pageSlug}
+                  </option>
+                )}
               </select>
             </div>
           )}
 
-          {/* Afficher les sous-pages de la page actuelle */}
+          {/* Afficher les sous-pages de la page actuelle - Compact version */}
           {currentPageSubPages.length > 0 && (
-            <div className="flex items-center gap-2 pr-2 sm:pr-3 border-r border-gray-300 dark:border-gray-600">
-              <label className="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                Sous-pages:
-              </label>
-              <div className="flex items-center gap-1 flex-wrap">
-                {currentPageSubPages.map((subPage) => (
-                  <button
-                    key={subPage.slug}
-                    onClick={() => {
-                      const url = projectId 
-                        ? `/admin/pages-public/${subPage.slug}/edit?projectId=${projectId}`
-                        : `/admin/pages-public/${subPage.slug}/edit`
-                      router.push(url)
-                    }}
-                    className="px-2 py-1 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                    title={`Éditer ${subPage.title}`}
-                  >
-                    {subPage.title}
-                  </button>
-                ))}
-              </div>
+            <div className="hidden md:flex items-center gap-1 pr-2 border-r border-gray-300 dark:border-gray-600">
+              {currentPageSubPages.map((subPage) => (
+                <button
+                  key={subPage.slug}
+                  onClick={() => {
+                    const url = projectId 
+                      ? `/admin/pages-public/${subPage.slug}/edit?projectId=${projectId}`
+                      : `/admin/pages-public/${subPage.slug}/edit`
+                    router.push(url)
+                  }}
+                  className="px-2 py-1 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                  title={`Éditer ${subPage.title}`}
+                >
+                  {subPage.title}
+                </button>
+              ))}
             </div>
           )}
 
-          {/* Inspector Mode Toggle - Only when preview is visible */}
+          {/* Inspector Mode Toggle - Only when preview is visible - Hidden on small screens */}
           {showPreview && (
             <button
               onClick={() => setInspectorMode(!inspectorMode)}
-              className={`px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+              className={`hidden lg:flex p-2.5 rounded-lg transition-colors items-center justify-center ${
                 inspectorMode 
                   ? 'bg-purple-600 text-white hover:bg-purple-700' 
                   : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               title="Mode Inspecteur (comme DevTools)"
             >
-              <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-6 w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <span className="hidden sm:inline">{inspectorMode ? 'Désactiver' : 'Activer'} Inspecteur</span>
-              <span className="sm:hidden">🔍</span>
             </button>
           )}
 
           {/* Preview Toggle */}
           <button
             onClick={() => setShowPreview(!showPreview)}
-            className={`px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+            className={`p-2.5 rounded-lg transition-colors flex items-center justify-center ${
               showPreview 
                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
                 : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200'
             }`}
+            title={showPreview ? 'Masquer Prévisualisation' : 'Afficher Prévisualisation'}
           >
-            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-6 w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            <span className="hidden sm:inline">{showPreview ? 'Masquer' : 'Afficher'} Prévisualisation</span>
-            <span className="sm:hidden">{showPreview ? 'Masquer' : 'Afficher'}</span>
           </button>
 
           {/* Preview Mode Selector */}
           {showPreview && (
-            <div className="flex gap-1 bg-gray-100 dark:bg-gray-900 rounded-lg p-1">
+            <div className="flex gap-1 items-center bg-gray-100 dark:bg-gray-900 rounded-lg p-1">
               <button
                 onClick={() => setPreviewMode('desktop')}
-                className={`px-2 sm:px-3 py-1 rounded text-sm transition-colors ${
+                className={`p-2.5 rounded-lg transition-colors flex items-center justify-center ${
                   previewMode === 'desktop'
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
                 }`}
                 title="Desktop"
               >
-                💻
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
               </button>
               <button
                 onClick={() => setPreviewMode('tablet')}
-                className={`px-2 sm:px-3 py-1 rounded text-sm transition-colors ${
+                className={`p-2.5 rounded-lg transition-colors flex items-center justify-center ${
                   previewMode === 'tablet'
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
                 }`}
                 title="Tablette"
               >
-                📱
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
               </button>
               <button
                 onClick={() => setPreviewMode('mobile')}
-                className={`px-2 sm:px-3 py-1 rounded text-sm transition-colors ${
+                className={`p-2.5 rounded-lg transition-colors flex items-center justify-center ${
                   previewMode === 'mobile'
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
                 }`}
                 title="Mobile"
               >
-                📱
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </button>
+              {/* Toggle Theme pour la prévisualisation */}
+              <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+              <button
+                onClick={() => setPreviewTheme(previewTheme === 'light' ? 'dark' : 'light')}
+                className={`p-2.5 rounded-lg transition-colors flex items-center justify-center ${
+                  previewTheme === 'dark'
+                    ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+                title={previewTheme === 'light' ? 'Mode sombre (prévisualisation)' : 'Mode clair (prévisualisation)'}
+              >
+                {previewTheme === 'dark' ? (
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                ) : (
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                )}
               </button>
             </div>
           )}
@@ -1073,14 +1113,102 @@ export default function EditPublicPage() {
           {/* External Preview */}
           <button
             onClick={() => window.open(`/${pageSlug === 'home' ? '' : pageSlug}`, '_blank')}
-            className="px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 whitespace-nowrap"
+            className="p-2.5 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+            title="Ouvrir dans un nouvel onglet"
           >
-            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-6 w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
-            <span className="hidden sm:inline">Ouvrir dans un nouvel onglet</span>
-            <span className="sm:hidden">Ouvrir</span>
           </button>
+
+          {/* More Options Menu - 3 points verticaux */}
+          <div className="relative more-options-menu">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowMoreMenu(!showMoreMenu)
+              }}
+              className="p-2.5 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+              title="Plus d'options"
+            >
+              <svg className="h-6 w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              </svg>
+            </button>
+            {showMoreMenu && (
+              <>
+                {/* Overlay pour fermer le menu en cliquant ailleurs */}
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowMoreMenu(false)}
+                />
+                {/* Menu dropdown */}
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 py-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowSeoExpanded(!showSeoExpanded)
+                      setShowMoreMenu(false)
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    {showSeoExpanded ? 'Masquer les paramètres SEO' : 'Afficher les paramètres SEO'}
+                  </button>
+                  {availablePages.length > 0 && (
+                    <>
+                      <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                      <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                        Pages disponibles
+                      </div>
+                      {availablePages.map((page) => (
+                        <button
+                          key={page.slug}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const url = projectId 
+                              ? `/admin/pages-public/${page.slug}/edit?projectId=${projectId}`
+                              : `/admin/pages-public/${page.slug}/edit`
+                            router.push(url)
+                            setShowMoreMenu(false)
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          {page.isSubPage ? `  └─ ${page.title}` : page.title}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {currentPageSubPages.length > 0 && (
+                    <>
+                      <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                      <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                        Sous-pages
+                      </div>
+                      {currentPageSubPages.map((subPage) => (
+                        <button
+                          key={subPage.slug}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const url = projectId 
+                              ? `/admin/pages-public/${subPage.slug}/edit?projectId=${projectId}`
+                              : `/admin/pages-public/${subPage.slug}/edit`
+                            router.push(url)
+                            setShowMoreMenu(false)
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          {subPage.title}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
 
           {/* New Page Button */}
           <button
@@ -1116,28 +1244,79 @@ export default function EditPublicPage() {
                 await api.patch('/system-settings/', { public_pages: publicPages })
                 toast.success(`Page "${newPageTitle}" créée avec succès !`)
                 
-                // Naviguer vers l'éditeur de la nouvelle page
-                router.push(`/admin/pages-public/edit/${newSlug}`)
+                // Naviguer vers l'éditeur de la nouvelle page avec projectId si présent
+                const url = projectId 
+                  ? `/admin/pages-public/${newSlug}/edit?projectId=${projectId}`
+                  : `/admin/pages-public/${newSlug}/edit`
+                
+                // Naviguer vers la nouvelle page
+                router.push(url)
+                
+                // Recharger les données après la navigation pour mettre à jour le dropdown
+                // Utiliser un petit délai pour s'assurer que la navigation est terminée
+                setTimeout(() => {
+                  loadData()
+                }, 200)
               } catch (error) {
                 console.error('Erreur création nouvelle page:', error)
                 toast.error('Erreur lors de la création de la nouvelle page')
               }
             }}
-            className="p-2 sm:p-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
             title="Créer une nouvelle page"
           >
             <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            <svg className="h-4 w-4 ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </button>
+
+          {/* Undo Button - Icon only */}
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined' && (window as any).__blockEditorUndo) {
+                (window as any).__blockEditorUndo()
+              }
+            }}
+            disabled={!canUndo}
+            className={`p-2.5 rounded-lg transition-colors flex items-center justify-center ${
+              canUndo
+                ? 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+            }`}
+            title="Annuler (Ctrl+Z)"
+          >
+            <svg className="h-6 w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
             </svg>
           </button>
 
-          {/* Blocs Disponibles Button */}
+          {/* Redo Button - Icon only */}
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined' && (window as any).__blockEditorRedo) {
+                (window as any).__blockEditorRedo()
+              }
+            }}
+            disabled={!canRedo}
+            className={`p-2.5 rounded-lg transition-colors flex items-center justify-center ${
+              canRedo
+                ? 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+            }`}
+            title="Rétablir (Ctrl+Shift+Z)"
+          >
+            <svg className="h-6 w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+            </svg>
+          </button>
+
+          {/* Subscription Info - Afficher l'abonnement et les fonctionnalités */}
+          <SubscriptionInfo />
+
+          {/* Blocs Disponibles Button - Icon only */}
           <button
             onClick={() => setBlocksPaletteOpen(!blocksPaletteOpen)}
-            className={`px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+            className={`p-2 rounded-lg transition-colors flex items-center justify-center ${
               blocksPaletteOpen 
                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
                 : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -1147,28 +1326,37 @@ export default function EditPublicPage() {
             <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
             </svg>
-            <span className="hidden sm:inline">Blocs</span>
           </button>
 
-          {/* Save Button */}
+          {/* SEO Settings Button - Icon + Text - Toujours visible */}
+          <button
+            onClick={() => setShowSeoExpanded(!showSeoExpanded)}
+            className={`p-2.5 rounded-lg transition-colors flex items-center gap-2 ${
+              showSeoExpanded
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+            title={showSeoExpanded ? 'Masquer les paramètres SEO' : 'Afficher les paramètres SEO'}
+          >
+            <svg className="h-6 w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span className="text-sm font-medium">SEO</span>
+          </button>
+
+          {/* Save Button - Icon only */}
           <button
             onClick={handleManualSave}
             disabled={saving || isAutoSaving}
-            className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2 whitespace-nowrap"
+            className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center"
+            title={saving ? 'Sauvegarde en cours...' : 'Sauvegarder'}
           >
             {saving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white flex-shrink-0"></div>
-                <span className="hidden sm:inline">Sauvegarde...</span>
-                <span className="sm:hidden">...</span>
-              </>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white flex-shrink-0"></div>
             ) : (
-              <>
-                <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Sauvegarder</span>
-              </>
+              <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
             )}
           </button>
 
@@ -1188,47 +1376,37 @@ export default function EditPublicPage() {
       {/* Barre d'actions minimale quand la barre est masquée */}
       {!headerVisible && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 flex-wrap justify-end">
-          {/* Bouton Afficher Barre */}
+          {/* Bouton Afficher Barre - Icon only */}
           <button
             onClick={() => setHeaderVisible(true)}
-            className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            className="p-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
             title="Afficher la barre supérieure"
           >
             <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
-            <span className="hidden sm:inline">Afficher Barre</span>
-            <span className="sm:hidden">↑</span>
           </button>
           
-          {/* Bouton Sauvegarder */}
+          {/* Bouton Sauvegarder - Icon only */}
           <button
             onClick={handleManualSave}
             disabled={saving || isAutoSaving}
-            className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+            className="p-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center"
             title="Sauvegarder"
           >
             {saving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white flex-shrink-0"></div>
-                <span className="hidden sm:inline">Sauvegarde...</span>
-                <span className="sm:hidden">...</span>
-              </>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white flex-shrink-0"></div>
             ) : (
-              <>
-                <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="hidden sm:inline">Sauvegarder</span>
-                <span className="sm:hidden">Sauvegarder</span>
-              </>
+              <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
             )}
           </button>
           
-          {/* Bouton Blocs Disponibles */}
+          {/* Bouton Blocs Disponibles - Icon only */}
           <button
             onClick={() => setBlocksPaletteOpen(!blocksPaletteOpen)}
-            className={`px-3 sm:px-4 py-2 rounded-lg shadow-lg transition-colors flex items-center gap-2 ${
+            className={`p-2 rounded-lg shadow-lg transition-colors flex items-center justify-center ${
               blocksPaletteOpen 
                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
                 : 'bg-gray-700 dark:bg-gray-800 text-white hover:bg-gray-600 dark:hover:bg-gray-700'
@@ -1238,11 +1416,9 @@ export default function EditPublicPage() {
             <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
             </svg>
-            <span className="hidden sm:inline">Blocs</span>
-            <span className="sm:hidden">Blocs</span>
           </button>
           
-          {/* Bouton Nouvelle Page */}
+          {/* Bouton Nouvelle Page - Icon only */}
           <button
             onClick={async () => {
               try {
@@ -1274,67 +1450,69 @@ export default function EditPublicPage() {
                 toast.error('Erreur lors de la création de la page')
               }
             }}
-            className="px-3 sm:px-4 py-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+            className="p-2 bg-purple-600 text-white rounded-lg shadow-lg hover:bg-purple-700 transition-colors flex items-center justify-center"
             title="Créer une nouvelle page"
           >
             <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            <span className="hidden sm:inline">Nouvelle Page</span>
-            <span className="sm:hidden">+ Page</span>
           </button>
         </div>
       )}
 
       <div className="flex flex-col h-full min-h-0 overflow-hidden">
-        {/* SEO Settings Bar */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4 flex gap-3 sm:gap-4 items-center flex-wrap flex-shrink-0">
-          {pageSlug === 'home' && (
-            <div className="min-w-[150px]">
-              <label htmlFor="status" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Statut
+        {/* SEO Settings Bar - Affichage conditionnel */}
+        {showSeoExpanded && (
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4 flex gap-3 sm:gap-4 items-center flex-wrap flex-shrink-0">
+            {pageSlug === 'home' && (
+              <div className="min-w-[150px]">
+                <label htmlFor="status" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Statut
+                </label>
+                <select
+                  id="status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as 'draft' | 'published')}
+                  className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="draft">Brouillon</option>
+                  <option value="published">Publié</option>
+                </select>
+              </div>
+            )}
+            <div className="flex-1 min-w-[200px]">
+              <label htmlFor="meta_title" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Titre SEO ({metaTitle.length}/60 caractères)
               </label>
-              <select
-                id="status"
-                value={status}
-                onChange={(e) => setStatus(e.target.value as 'draft' | 'published')}
+              <input
+                id="meta_title"
+                type="text"
+                value={metaTitle}
+                onChange={(e) => setMetaTitle(e.target.value)}
                 className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="draft">Brouillon</option>
-                <option value="published">Publié</option>
-              </select>
+                placeholder="Titre pour les moteurs de recherche"
+                maxLength={60}
+              />
             </div>
-          )}
-          <div className="flex-1 min-w-[200px]">
-            <label htmlFor="meta_title" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Titre SEO
-            </label>
-            <input
-              id="meta_title"
-              type="text"
-              value={metaTitle}
-              onChange={(e) => setMetaTitle(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Titre pour les moteurs de recherche"
-            />
+            <div className="flex-1 min-w-[200px]">
+              <label htmlFor="meta_description" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Description SEO ({metaDescription.length}/160 caractères)
+              </label>
+              <input
+                id="meta_description"
+                type="text"
+                value={metaDescription}
+                onChange={(e) => setMetaDescription(e.target.value)}
+                className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Description pour les moteurs de recherche"
+                maxLength={160}
+              />
+            </div>
           </div>
-          <div className="flex-1 min-w-[200px]">
-            <label htmlFor="meta_description" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description SEO
-            </label>
-            <input
-              id="meta_description"
-              type="text"
-              value={metaDescription}
-              onChange={(e) => setMetaDescription(e.target.value)}
-              className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Description pour les moteurs de recherche"
-            />
-          </div>
-        </div>
+        )}
 
         {/* Main Editor Area with Split View - Redimensionnable */}
-        <div className="flex-1 flex overflow-hidden min-h-0 relative">
+        <div className="flex-1 flex overflow-hidden min-h-0 relative" style={{ height: 'calc(100vh - 120px)', minHeight: '700px' }}>
           {/* Editor Section - Largeur dynamique */}
           <div 
             className="border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-0 transition-none"
@@ -1387,6 +1565,10 @@ export default function EditPublicPage() {
                 selectedBlockId={selectedBlockId}
                 onBlockSelect={setSelectedBlockId}
                 showBlocksPalette={false} // Désactiver la sidebar de blocs (popup externe)
+                onUndoRedoChange={(canUndo, canRedo) => {
+                  setCanUndo(canUndo)
+                  setCanRedo(canRedo)
+                }}
               />
             </div>
             </div>
@@ -1480,6 +1662,7 @@ export default function EditPublicPage() {
                         blockTypes={blockTypes}
                         selectedBlockId={selectedBlockId}
                         onBlockSelect={setSelectedBlockId}
+                        theme={previewTheme}
                         onBlockDoubleClick={(blockId) => {
                           setModalBlockId(blockId)
                           setPropertiesModalOpen(true)

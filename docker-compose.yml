@@ -132,21 +132,21 @@ services:
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:9495
-      # Optimisation: Limiter l'utilisation mémoire de Node.js
-      - NODE_OPTIONS=--max-old-space-size=512
+      # Augmenter la limite mémoire pour éviter les redémarrages
+      - NODE_OPTIONS=--max-old-space-size=1024
     ports:
       - "9494:3000"  # Next.js sur le port 9494
     networks:
       - vtcbuilder_network
-    # Optimisation: Limiter les ressources frontend
+    # Augmenter les ressources frontend pour éviter les redémarrages
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 768M
+          cpus: '1.5'
+          memory: 1536M
         reservations:
-          cpus: '0.25'
-          memory: 256M
+          cpus: '0.5'
+          memory: 512M
 
   # PgAdmin (Development only)
   pgadmin:

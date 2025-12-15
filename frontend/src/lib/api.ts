@@ -1,4 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig, CancelTokenSource } from 'axios';
 import authService from '@/services/auth.service';
 
 // Déclaration pour les flags globaux
@@ -68,18 +68,17 @@ api.interceptors.request.use((config) => {
   }
   
   // Pour les requêtes PATCH vers /system-settings/, vérifier si l'utilisateur est super admin
-  // Si ce n'est pas le cas, bloquer complètement la requête AVANT qu'elle soit envoyée
+  // Si ce n'est pas le cas, annuler la requête AVANT qu'elle ne soit envoyée
   if (config.url?.includes('/system-settings/') && (config.method === 'patch' || config.method === 'PATCH')) {
-    // Vérifier si l'utilisateur est super admin de manière synchrone
     if (!authService.isSuperAdmin()) {
-      // Créer une erreur personnalisée avec un flag pour indiquer qu'elle doit être ignorée silencieusement
-      const cancelError: any = new Error('Request cancelled: user is not super admin');
-      cancelError.__isCancelled = true;
-      cancelError.__shouldRejectSilently = true;
-      cancelError.config = config;
-      cancelError.isAxiosError = true;
-      // Retourner une promesse rejetée - cela empêche la requête d'être envoyée
-      return Promise.reject(cancelError);
+      // Créer un CancelToken et annuler immédiatement
+      const source = axios.CancelToken.source();
+      source.cancel('Request cancelled: user is not super admin');
+      config.cancelToken = source.token;
+      // Marquer la config pour que l'intercepteur de réponse sache que c'est silencieux
+      (config as any).__shouldRejectSilently = true;
+      (config as any).__isCancelled = true;
+      (config as any).__silent = true;
     }
   }
   
@@ -122,13 +121,21 @@ api.interceptors.response.use(
     // Gérer les requêtes annulées pour /system-settings/ si l'utilisateur n'est pas super admin
     if (axios.isCancel(error)) {
       // Si c'est une requête annulée pour /system-settings/ et que l'utilisateur n'est pas super admin, ignorer silencieusement
-      if (originalRequest?.url?.includes('/system-settings/') && !authService.isSuperAdmin()) {
+      const requestUrl = originalRequest?.url || (error as any).config?.url || '';
+      if (requestUrl.includes('/system-settings/') && !authService.isSuperAdmin()) {
+        // Supprimer le message d'erreur pour éviter qu'il soit loggé
+        try {
+          if (error.message) {
+            Object.defineProperty(error, 'message', { value: '', writable: false, configurable: true });
+          }
+        } catch (e) {}
+        (error as any).silent = true;
         return Promise.resolve({ 
           data: {}, 
           status: 403, 
           statusText: 'Forbidden', 
           headers: {}, 
-          config: originalRequest 
+          config: originalRequest || (error as any).config
         });
       }
       // Pour les autres requêtes annulées, rejeter normalement
@@ -137,7 +144,14 @@ api.interceptors.response.use(
     
     // Gérer les erreurs personnalisées avec flag __shouldRejectSilently (requêtes bloquées dans l'intercepteur de requête)
     // Ces erreurs sont créées quand une requête est bloquée AVANT d'être envoyée
-    if ((error as any).__shouldRejectSilently || (error as any).__isCancelled) {
+    if ((error as any).__shouldRejectSilently || (error as any).__isCancelled || (originalRequest as any).__shouldRejectSilently || (originalRequest as any).__isCancelled) {
+      // Supprimer le message d'erreur pour éviter qu'il soit loggé
+      try {
+        if (error.message) {
+          Object.defineProperty(error, 'message', { value: '', writable: false, configurable: true });
+        }
+      } catch (e) {}
+      (error as any).silent = true;
       return Promise.resolve({ 
         data: {}, 
         status: 403, 
@@ -161,6 +175,20 @@ api.interceptors.response.use(
     // Si c'est le cas, retourner une promesse résolue silencieusement AVANT tout autre traitement
     if (status === 403 && url.includes('/system-settings/')) {
       if (!authService.isSuperAdmin()) {
+        // Marquer l'erreur comme silencieuse pour éviter qu'elle soit loggée
+        error.silent = true;
+        error.config = error.config || {};
+        error.config.silent = true;
+        // Supprimer l'erreur de la console en interceptant avant qu'elle soit loggée
+        // Empêcher le navigateur de logger cette erreur en masquant l'objet error
+        try {
+          Object.defineProperty(error, 'message', { value: '', writable: false, configurable: true });
+          Object.defineProperty(error, 'stack', { value: '', writable: false, configurable: true });
+          // Masquer aussi la requête pour éviter les logs dans la console réseau
+          if (error.request) {
+            Object.defineProperty(error.request, 'status', { value: 0, writable: false, configurable: true });
+          }
+        } catch (e) {}
         // Retourner une promesse résolue silencieusement sans logger
         return Promise.resolve({ 
           data: {}, 
@@ -217,9 +245,31 @@ api.interceptors.response.use(
           if (originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
           }
+          // Vérifier si c'est une requête vers /system-settings/ et si l'utilisateur n'est pas super admin
+          // Si c'est le cas, ne pas réessayer et retourner silencieusement
+          if (originalRequest.url?.includes('/system-settings/') && !authService.isSuperAdmin()) {
+            return Promise.resolve({ 
+              data: {}, 
+              status: 403, 
+              statusText: 'Forbidden', 
+              headers: {}, 
+              config: originalRequest 
+            });
+          }
           return api(originalRequest);
         } else {
           // Refresh token invalide, retourner une promesse résolue silencieusement
+          // Vérifier si l'utilisateur n'est pas super admin pour /system-settings/
+          if (url.includes('/system-settings/') && !authService.isSuperAdmin()) {
+            // Ne pas logger, retourner silencieusement
+            return Promise.resolve({ 
+              data: {}, 
+              status: 403, 
+              statusText: 'Forbidden', 
+              headers: {}, 
+              config: error.config 
+            });
+          }
           error.silent = true;
           return Promise.resolve({ 
             data: {}, 

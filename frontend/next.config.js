@@ -79,6 +79,13 @@ const nextConfig = {
   devIndicators: {
     buildActivity: false,  // Désactiver pour économiser les ressources
   },
+  // Optimisation: Réduire la consommation mémoire en développement
+  onDemandEntries: {
+    // Garder les pages en mémoire pendant 25 secondes (au lieu de 60 par défaut)
+    maxInactiveAge: 25 * 1000,
+    // Nombre de pages à garder simultanément
+    pagesBufferLength: 2,
+  },
   // Assurer que les fichiers statiques sont servis correctement
   experimental: {
     outputFileTracingIncludes: {

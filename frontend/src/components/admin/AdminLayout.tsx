@@ -16,11 +16,12 @@ interface AdminLayoutProps {
   hideHeader?: boolean
   showBackButton?: boolean
   backUrl?: string
+  projectBackButton?: React.ReactNode // Bouton de retour au projet (pour la page d'édition)
 }
 
 const SIDEBAR_STATE_KEY = 'vtcbuilder_admin_sidebar_open'
 
-export default function AdminLayout({ children, title, subtitle, headerActions, saveStatus, hideHeader = false, showBackButton = false, backUrl }: AdminLayoutProps) {
+export default function AdminLayout({ children, title, subtitle, headerActions, saveStatus, hideHeader = false, showBackButton = false, backUrl, projectBackButton }: AdminLayoutProps) {
   const { resolvedTheme, toggleTheme } = useTheme()
   const router = useRouter()
   const pathname = usePathname()
@@ -125,6 +126,7 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
         title={title} 
         subtitle={subtitle}
         onMenuClick={() => setSidebarOpen(true)}
+        saveStatus={saveStatus}
       />
       )}
 
@@ -142,51 +144,58 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
           <header className="hidden lg:block bg-white dark:bg-gray-800 shadow dark:shadow-gray-900/50 flex-shrink-0">
             <div className="w-full py-4 px-4 sm:px-6 lg:px-8">
               <div className="flex flex-col gap-4">
-                {/* First row: Title, headerActions and theme toggle */}
-                <div className="flex items-center justify-between gap-4 min-w-0">
-                  <div className="flex items-center space-x-4 min-w-0 flex-1">
-                    <button
-                      onClick={() => setSidebarOpen(!sidebarOpen)}
-                      className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-2 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
-                      aria-label="Toggle menu"
-                      title={sidebarOpen ? "Fermer le menu" : "Ouvrir le menu"}
-                    >
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
-                    </button>
-                    <div className="min-w-0 flex-1 flex items-center gap-3">
-                      <div className="min-w-0 flex-1">
-                        <h1 className="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
-                        {subtitle && <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 truncate">{subtitle}</p>}
-                      </div>
-                      {saveStatus && (
-                        <div className="flex-shrink-0">
-                          {saveStatus}
-                        </div>
-                      )}
+                {/* First row: Hamburger, Title, headerActions and theme toggle */}
+                <div className="flex items-center justify-between gap-3 min-w-0">
+                  {/* Hamburger Menu Button - Toujours visible et fixe */}
+                  <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-2 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+                    aria-label="Toggle menu"
+                    title={sidebarOpen ? "Fermer le menu" : "Ouvrir le menu"}
+                  >
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </button>
+                  
+                  {/* Title and Save Status */}
+                  <div className="min-w-0 flex-1 flex items-center gap-2 sm:gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h1 className="text-lg sm:text-xl xl:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
+                      {subtitle && <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate hidden sm:block">{subtitle}</p>}
                     </div>
-                    {/* Header Actions - Intégrés dans la même ligne */}
-                    {headerActions && (
-                      <div className="flex items-center gap-2 flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-shrink min-w-0">
-                        {headerActions}
+                    {saveStatus && (
+                      <div className="flex-shrink-0 hidden sm:flex">
+                        {saveStatus}
                       </div>
                     )}
                   </div>
-                  {/* Back Button and Dark Mode Toggle */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {shouldShowBackButton && finalBackUrl && (
-                      <button
-                        onClick={() => router.push(finalBackUrl)}
-                        className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-2 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
-                        aria-label="Retour"
-                        title="Retour"
-                      >
-                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                      </button>
-                    )}
+                  
+                  {/* Header Actions - Scroll horizontal si nécessaire */}
+                  {headerActions && (
+                    <div className="flex items-center gap-2 flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-shrink-0 min-w-0 max-w-[50%]">
+                      {headerActions}
+                    </div>
+                  )}
+                  {/* Back Button, Project Back Button (if any), and Dark Mode Toggle */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-shrink-0">
+                    {/* Sur petits écrans : empiler verticalement, sur grands écrans : horizontalement */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {shouldShowBackButton && finalBackUrl && (
+                        <button
+                          onClick={() => router.push(finalBackUrl)}
+                          className="text-gray-600 dark:text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-100 p-2 rounded-lg hover:bg-gray-100 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+                          aria-label="Retour"
+                          title="Retour"
+                        >
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                          </svg>
+                        </button>
+                      )}
+                      {/* Bouton de retour au projet (pour la page d'édition) */}
+                      {projectBackButton}
+                    </div>
                     {/* Dark Mode Toggle */}
                     <button
                       onClick={toggleTheme}

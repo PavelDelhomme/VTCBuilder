@@ -253,9 +253,20 @@ function BlockPreview({
       e.stopPropagation()
       
       const target = e.target as HTMLElement
-      const blockElement = target.closest('[data-block-id]') as HTMLElement
+      // Trouver le bloc le plus proche, mais ignorer les conteneurs si on clique sur un enfant
+      // Si on clique sur un enfant d'un conteneur, sélectionner l'enfant, pas le conteneur
+      let blockElement = target.closest('[data-block-id]') as HTMLElement
       
+      // Si on clique sur un enfant d'un conteneur, vérifier s'il y a un bloc enfant plus proche
       if (blockElement) {
+        const clickedBlockId = blockElement.getAttribute('data-block-id')
+        // Vérifier si le bloc cliqué a des enfants et si on a cliqué directement sur un enfant
+        const directChild = target.closest('[data-block-id]') as HTMLElement
+        if (directChild && directChild !== blockElement) {
+          // On a cliqué sur un enfant, utiliser celui-ci
+          blockElement = directChild
+        }
+        
         const blockId = blockElement.getAttribute('data-block-id')
         if (blockId && onBlockSelect) {
           onBlockSelect(blockId === selectedBlockId ? null : blockId)
@@ -1322,7 +1333,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
 
-    case 'container':
+    case 'container': {
+      const isDark = theme === 'dark'
       // Container should render its children, not just show placeholder text
       return (
         <div 
@@ -1334,6 +1346,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             maxHeight: block.maxHeight || 'none',
             width: '100%',
             maxWidth: '100%',
+            backgroundColor: isDark ? (block.styles?.background_color || '#1f2937') : (block.styles?.background_color || 'transparent'),
+            color: isDark ? '#f9fafb' : '#111827',
           }} 
           className="w-full max-w-full"
         >
@@ -1359,7 +1373,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                   className="p-6 border-2 border-dashed rounded-lg text-center"
                   style={{
                     borderColor: isDark ? '#4b5563' : '#d1d5db',
-                    color: isDark ? '#9ca3af' : '#6b7280'
+                    color: isDark ? '#9ca3af' : '#6b7280',
+                    backgroundColor: isDark ? '#1f2937' : '#f9fafb',
                   }}
                 >
                   <div className="text-2xl mb-2">📦</div>
@@ -1371,6 +1386,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
+    }
     
     case 'flex-container': {
       const isDark = theme === 'dark'
@@ -1441,6 +1457,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             borderColor: isDark ? '#4b5563' : '#d1d5db',
             borderWidth: '2px',
             borderStyle: 'dashed',
+            backgroundColor: isDark ? (block.styles?.background_color || '#1f2937') : (block.styles?.background_color || '#f9fafb'),
+            color: isDark ? '#f9fafb' : '#111827',
           }} 
           className="p-6 rounded-lg"
         >

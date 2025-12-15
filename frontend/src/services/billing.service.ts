@@ -150,6 +150,28 @@ class BillingService {
     return Array.isArray(response.data) ? response.data : response.data.results || [];
   }
 
+  async getCurrentSubscription(): Promise<Subscription | null> {
+    try {
+      // Récupérer l'abonnement actif du tenant courant
+      const subscriptions = await this.getSubscriptions({ status: 'active' });
+      if (subscriptions.length > 0) {
+        return subscriptions[0] as Subscription;
+      }
+      // Si pas d'abonnement actif, chercher un trial
+      const trialSubscriptions = await this.getSubscriptions({ status: 'trial' });
+      if (trialSubscriptions.length > 0) {
+        return trialSubscriptions[0] as Subscription;
+      }
+      return null;
+    } catch (error: any) {
+      // Erreur silencieuse si pas d'abonnement
+      if (error.response?.status === 401 || error.response?.status === 404 || error.silent) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
   async getSubscription(id: number) {
     const response = await api.get(`/subscriptions/${id}/`);
     return response.data;

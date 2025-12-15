@@ -343,6 +343,7 @@ export default function HomepageEditorPage() {
   }) // État de la palette (réduite ou non)
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false)
 
   // Fonction pour charger les données
   const loadData = useCallback(async () => {
@@ -538,126 +539,202 @@ export default function HomepageEditorPage() {
       title="Éditeur Site Publique"
       subtitle="Créez et personnalisez votre site public avec l'éditeur de blocs complet"
       headerActions={
-        <div className="flex gap-2 items-center flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {/* Preview Mode Selector */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="flex gap-1 bg-gray-100 dark:bg-gray-900 rounded-lg p-1">
-              <button
-                onClick={() => setPreviewMode('desktop')}
-                className={`px-3 py-1 rounded text-sm transition-colors ${
-                  previewMode === 'desktop'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
-                title="Desktop"
-              >
-                💻
-              </button>
-              <button
-                onClick={() => setPreviewMode('tablet')}
-                className={`px-3 py-1 rounded text-sm transition-colors ${
-                  previewMode === 'tablet'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
-                title="Tablette"
-              >
-                📱
-              </button>
-              <button
-                onClick={() => setPreviewMode('mobile')}
-                className={`px-3 py-1 rounded text-sm transition-colors ${
-                  previewMode === 'mobile'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-                }`}
-                title="Mobile"
-              >
-                📱
-              </button>
-            </div>
+        <div className="flex gap-1 items-center flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {/* Retour aux projets - Icon only */}
+          <button
+            onClick={() => router.push('/admin/projects')}
+            className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+            title="Retour aux projets"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+
+          {/* Preview Mode Selector - Ultra compact */}
+          <div className="flex items-center gap-0.5 flex-shrink-0 bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5">
+            <button
+              onClick={() => setPreviewMode('desktop')}
+              className={`p-1 rounded transition-colors ${
+                previewMode === 'desktop'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
+              }`}
+              title="Mode Desktop"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setPreviewMode('tablet')}
+              className={`p-1 rounded transition-colors ${
+                previewMode === 'tablet'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
+              }`}
+              title="Mode Tablette"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setPreviewMode('mobile')}
+              className={`p-1 rounded transition-colors ${
+                previewMode === 'mobile'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
+              }`}
+              title="Mode Mobile"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </button>
+            {/* Preview Theme Toggle - Light/Dark - Icon only */}
+            <button
+              onClick={() => setPreviewTheme(previewTheme === 'light' ? 'dark' : 'light')}
+              className={`p-1 rounded transition-colors ${
+                previewTheme === 'dark'
+                  ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              }`}
+              title={previewTheme === 'light' ? 'Mode sombre (prévisualisation)' : 'Mode clair (prévisualisation)'}
+            >
+              {previewTheme === 'dark' ? (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              )}
+            </button>
           </div>
 
-          {/* External Preview */}
+          {/* External Preview - Icon only */}
           <button
             onClick={() => window.open('/', '_blank')}
-            className="px-3 py-2 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 flex-shrink-0 whitespace-nowrap"
+            className="p-1.5 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+            title="Ouvrir le site dans un nouvel onglet"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
-            <span className="text-sm">Voir le site</span>
           </button>
 
-          {/* Auto-save indicator */}
+          {/* Auto-save indicator - Icon only with tooltip */}
           {isAutoSaving ? (
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg text-xs flex-shrink-0 whitespace-nowrap">
-              <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-600 dark:border-blue-400 border-t-transparent"></div>
-              <span>Sauvegarde...</span>
+            <div className="p-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg flex-shrink-0" title="Sauvegarde automatique en cours...">
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent"></div>
             </div>
           ) : lastSaved ? (
-            <div className="flex items-center gap-2 px-2 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg text-xs flex-shrink-0 whitespace-nowrap">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-1.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg flex-shrink-0" title={`Sauvegardé à ${lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span>Sauvegardé {lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           ) : null}
 
-          {/* Page Selector - Quick Navigation */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">Page:</span>
-            <select
-              value="home"
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                if (e.target.value !== 'home') {
-                  router.push(`/admin/pages-public/edit/${e.target.value}`)
-                }
-              }}
-              className="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 min-w-[140px]"
-            >
-              <option value="home">Page d'accueil</option>
-              {availablePages.map((page) => (
-                <option key={page.slug} value={page.slug}>
-                  {page.title}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => router.push('/admin/pages-public')}
-              className="px-2 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
-            >
-              Gérer →
-            </button>
+          {/* Menu déroulant pour options moins fréquentes */}
+          <div className="hidden lg:flex items-center gap-0.5 flex-shrink-0">
+            <div className="relative">
+              <button
+                onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+                className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                title="Plus d'options"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                </svg>
+              </button>
+              {showOptionsMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowOptionsMenu(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                    <div className="py-1">
+                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Pages</div>
+                      <div className="relative">
+                        <select
+                          value="home"
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                            if (e.target.value !== 'home') {
+                              router.push(`/admin/pages-public/edit/${e.target.value}`)
+                            }
+                            setShowOptionsMenu(false)
+                          }}
+                          className="w-full px-3 py-2 text-sm bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-0"
+                        >
+                          <option value="home">Page d'accueil</option>
+                          {availablePages.map((page) => (
+                            <option key={page.slug} value={page.slug}>
+                              {page.title}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <button
+                        onClick={() => {
+                          router.push('/admin/pages-public')
+                          setShowOptionsMenu(false)
+                        }}
+                        className="w-full px-3 py-2 text-sm text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Gérer les pages
+                      </button>
+                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 mt-1">Statut</div>
+                      <div className="relative">
+                        <select
+                          value={pageStatus}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                            setPageStatus(e.target.value as 'draft' | 'published')
+                            setShowOptionsMenu(false)
+                          }}
+                          className="w-full px-3 py-2 text-sm bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-0"
+                        >
+                          <option value="draft">📝 Brouillon</option>
+                          <option value="published">✅ Publié</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Status Selector */}
-          <select
-            value={pageStatus}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPageStatus(e.target.value as 'draft' | 'published')}
-            className="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 flex-shrink-0"
+          {/* Toggle liens - Icon only */}
+          <button
+            onClick={() => setPreviewLinksEnabled(!previewLinksEnabled)}
+            className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
+              previewLinksEnabled
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+            }`}
+            title={previewLinksEnabled ? 'Désactiver les liens' : 'Activer les liens'}
           >
-            <option value="draft">📝 Brouillon</option>
-            <option value="published">✅ Publié</option>
-          </select>
+            {previewLinksEnabled ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+            )}
+          </button>
 
-          {/* Toggle liens dans la prévisualisation */}
-          <div className="flex items-center gap-2 px-2 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 flex-shrink-0">
-            <label className="flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={previewLinksEnabled}
-                onChange={(e) => setPreviewLinksEnabled(e.target.checked)}
-                className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
-              />
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                {previewLinksEnabled ? '🔗 Liens' : '🔒 Liens'}
-              </span>
-            </label>
-          </div>
-
-          {/* Undo/Redo Buttons */}
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-900 rounded-lg p-1 flex-shrink-0">
+          {/* Undo/Redo Buttons - Ultra compact */}
+          <div className="flex items-center gap-0 bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5 flex-shrink-0">
             <button
               onClick={() => {
                 if (typeof window !== 'undefined' && (window as any).__blockEditorUndo) {
@@ -665,7 +742,7 @@ export default function HomepageEditorPage() {
                 }
               }}
               disabled={!canUndo}
-              className={`px-2 py-1.5 rounded text-sm transition-colors flex items-center gap-1 ${
+              className={`p-1.5 rounded transition-colors ${
                 canUndo
                   ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
                   : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
@@ -683,7 +760,7 @@ export default function HomepageEditorPage() {
                 }
               }}
               disabled={!canRedo}
-              className={`px-2 py-1.5 rounded text-sm transition-colors flex items-center gap-1 ${
+              className={`p-1.5 rounded transition-colors ${
                 canRedo
                   ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
                   : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
@@ -696,24 +773,39 @@ export default function HomepageEditorPage() {
             </button>
           </div>
 
-          {/* Save Button */}
+          {/* Toggle Palette Blocs - Icon only */}
+          <button
+            onClick={() => {
+              setIsPaletteCollapsed(!isPaletteCollapsed)
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('palette-collapsed', String(!isPaletteCollapsed))
+              }
+            }}
+            className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
+              isPaletteCollapsed
+                ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
+                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50'
+            }`}
+            title={isPaletteCollapsed ? 'Afficher la palette de blocs' : 'Masquer la palette de blocs'}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+          </button>
+
+          {/* Save Button - Icon only with tooltip */}
           <button
             onClick={handleSave}
             disabled={saving || isAutoSaving}
-            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap text-sm"
+            className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex-shrink-0"
+            title={saving ? 'Sauvegarde en cours...' : (pageStatus === 'draft' ? 'Sauvegarder le brouillon' : 'Publier la page')}
           >
             {saving ? (
-              <>
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
-                <span>Sauvegarde...</span>
-              </>
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
             ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{pageStatus === 'draft' ? 'Sauvegarder brouillon' : 'Publier'}</span>
-              </>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
             )}
           </button>
         </div>
@@ -722,18 +814,18 @@ export default function HomepageEditorPage() {
       <div className="flex flex-col h-[calc(100vh-180px)]">
         {/* SEO Settings Bar - Expandable */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="p-4">
+          <div className="p-2">
             <button
               onClick={() => setShowSeoExpanded(!showSeoExpanded)}
-              className="flex items-center justify-between w-full text-left"
+              className="flex items-center justify-between w-full text-left p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group relative"
+              title={showSeoExpanded ? 'Masquer les paramètres SEO' : 'Afficher les paramètres SEO'}
             >
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">Paramètres SEO</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  ({metaTitle.length}/60 caractères)
+                <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
+                  {showSeoExpanded ? 'Masquer' : 'Afficher'} les paramètres SEO ({metaTitle.length}/60)
                 </span>
               </div>
               <svg className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform ${showSeoExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">

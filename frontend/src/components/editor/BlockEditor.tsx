@@ -883,19 +883,22 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                 </div>
               </div>
 
-              {/* Bouton retour aux blocs */}
+              {/* Bouton retour aux blocs - Icon only with hover text */}
               <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <button
                   onClick={() => {
                     setSelectedBlock(null)
                     setSidebarOpen(true)
                   }}
-                  className="w-full px-4 py-2 text-sm font-medium bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="w-full p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center justify-center group relative"
+                  title="Retour aux blocs disponibles"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                   </svg>
-                  Retour aux blocs disponibles
+                  <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
+                    Retour aux blocs disponibles
+                  </span>
                 </button>
               </div>
             </>
@@ -2618,26 +2621,38 @@ function BlockPickerModal({
 
         {/* Onglets pour choisir entre nouveaux blocs et blocs existants */}
         {existingBlocks.length > 0 && (
-          <div className="flex border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6">
+          <div className="flex border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 gap-1">
             <button
               onClick={() => setActiveTab('new')}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors relative group ${
                 activeTab === 'new'
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
+              title={`Nouveaux blocs (${blockTypes.length})`}
             >
-              ✨ Nouveaux blocs ({blockTypes.length})
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
+                Nouveaux blocs ({blockTypes.length})
+              </span>
             </button>
             <button
               onClick={() => setActiveTab('existing')}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`px-3 py-3 text-sm font-medium border-b-2 transition-colors relative group ${
                 activeTab === 'existing'
                   ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                   : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
+              title={`Blocs existants (${existingBlocks.length})`}
             >
-              📋 Blocs existants ({existingBlocks.length})
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
+                Blocs existants ({existingBlocks.length})
+              </span>
             </button>
           </div>
         )}
