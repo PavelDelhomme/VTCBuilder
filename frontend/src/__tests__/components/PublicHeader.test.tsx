@@ -1,6 +1,8 @@
+import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import PublicHeader from '@/components/public/PublicHeader'
 import authService from '@/services/auth.service'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 
 // Mock auth service
 jest.mock('@/services/auth.service', () => ({
@@ -11,13 +13,17 @@ jest.mock('@/services/auth.service', () => ({
   },
 }))
 
+const renderWithTheme = (ui: React.ReactElement) => {
+  return render(<ThemeProvider>{ui}</ThemeProvider>)
+}
+
 describe('PublicHeader', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
 
   it('should render VTCBuilder logo', async () => {
-    render(<PublicHeader />)
+    renderWithTheme(<PublicHeader />)
 
     await waitFor(() => {
       expect(screen.getByText('VTCBuilder')).toBeInTheDocument()
@@ -27,7 +33,7 @@ describe('PublicHeader', () => {
   it('should show login link when not authenticated', async () => {
     ;(authService.isAuthenticated as jest.Mock).mockReturnValue(false)
 
-    render(<PublicHeader />)
+    renderWithTheme(<PublicHeader />)
 
     await waitFor(() => {
       expect(screen.getByText('Connexion')).toBeInTheDocument()
@@ -38,7 +44,7 @@ describe('PublicHeader', () => {
     ;(authService.isAuthenticated as jest.Mock).mockReturnValue(true)
     ;(authService.isSuperAdmin as jest.Mock).mockReturnValue(false)
 
-    render(<PublicHeader />)
+    renderWithTheme(<PublicHeader />)
 
     await waitFor(() => {
       expect(screen.getByText('Mon Dashboard')).toBeInTheDocument()
@@ -49,7 +55,7 @@ describe('PublicHeader', () => {
     ;(authService.isAuthenticated as jest.Mock).mockReturnValue(true)
     ;(authService.isSuperAdmin as jest.Mock).mockReturnValue(true)
 
-    render(<PublicHeader />)
+    renderWithTheme(<PublicHeader />)
 
     await waitFor(() => {
       expect(screen.getByText('Administration')).toBeInTheDocument()

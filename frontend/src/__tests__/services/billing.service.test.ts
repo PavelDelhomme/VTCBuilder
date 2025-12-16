@@ -31,7 +31,9 @@ describe('BillingService', () => {
 
       const result = await billingService.getPricingPlans()
 
-      expect(api.get).toHaveBeenCalledWith('/pricing-plans/')
+      expect(api.get).toHaveBeenCalledWith('/pricing-plans/', {
+        validateStatus: expect.any(Function)
+      })
       expect(result).toEqual(mockPlans)
     })
 
@@ -103,7 +105,7 @@ describe('BillingService', () => {
 
       const result = await billingService.getSubscriptions()
 
-      expect(api.get).toHaveBeenCalledWith('/subscriptions/')
+      expect(api.get).toHaveBeenCalledWith('/subscriptions/', { params: undefined })
       expect(result).toEqual(mockSubscriptions)
     })
   })
@@ -141,7 +143,7 @@ describe('BillingService', () => {
 
       const result = await billingService.getInvoices()
 
-      expect(api.get).toHaveBeenCalledWith('/invoices/')
+      expect(api.get).toHaveBeenCalledWith('/invoices/', { params: undefined })
       expect(result).toEqual(mockInvoices)
     })
   })

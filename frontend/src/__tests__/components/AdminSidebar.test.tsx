@@ -1,7 +1,9 @@
+import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { useRouter, usePathname } from 'next/navigation'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import authService from '@/services/auth.service'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -25,6 +27,10 @@ const mockRouter = {
   prefetch: jest.fn(),
 }
 
+const renderWithTheme = (ui: React.ReactElement) => {
+  return render(<ThemeProvider>{ui}</ThemeProvider>)
+}
+
 describe('AdminSidebar', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -37,7 +43,7 @@ describe('AdminSidebar', () => {
   })
 
   it('should render sidebar with menu items', () => {
-    render(<AdminSidebar isOpen={true} onClose={() => {}} />)
+    renderWithTheme(<AdminSidebar isOpen={true} onClose={() => {}} />)
 
     expect(screen.getByText('VTCBuilder')).toBeInTheDocument()
     expect(screen.getByText('Dashboard')).toBeInTheDocument()
@@ -51,7 +57,7 @@ describe('AdminSidebar', () => {
 
   it('should call onClose when close button is clicked', () => {
     const onClose = jest.fn()
-    render(<AdminSidebar isOpen={true} onClose={onClose} />)
+    renderWithTheme(<AdminSidebar isOpen={true} onClose={onClose} />)
 
     const closeButton = screen.getByLabelText('Fermer le menu')
     fireEvent.click(closeButton)
@@ -61,7 +67,7 @@ describe('AdminSidebar', () => {
 
   it('should call onClose when overlay is clicked', () => {
     const onClose = jest.fn()
-    render(<AdminSidebar isOpen={true} onClose={onClose} />)
+    renderWithTheme(<AdminSidebar isOpen={true} onClose={onClose} />)
 
     const overlay = screen.getByRole('generic').querySelector('[class*="bg-black"]')
     if (overlay) {
@@ -71,7 +77,7 @@ describe('AdminSidebar', () => {
   })
 
   it('should navigate when menu item is clicked', () => {
-    render(<AdminSidebar isOpen={true} onClose={() => {}} />)
+    renderWithTheme(<AdminSidebar isOpen={true} onClose={() => {}} />)
 
     const tenantsLink = screen.getByText('Tenants')
     fireEvent.click(tenantsLink)
@@ -80,7 +86,7 @@ describe('AdminSidebar', () => {
   })
 
   it('should display user information', () => {
-    render(<AdminSidebar isOpen={true} onClose={() => {}} />)
+    renderWithTheme(<AdminSidebar isOpen={true} onClose={() => {}} />)
 
     expect(screen.getByText('Admin User')).toBeInTheDocument()
     expect(screen.getByText('admin@example.com')).toBeInTheDocument()
@@ -91,7 +97,7 @@ describe('AdminSidebar', () => {
     ;(authService.logout as jest.Mock).mockImplementation(mockLogout)
     ;(useRouter as jest.Mock).mockReturnValue({ ...mockRouter, push: jest.fn() })
 
-    render(<AdminSidebar isOpen={true} onClose={() => {}} />)
+    renderWithTheme(<AdminSidebar isOpen={true} onClose={() => {}} />)
 
     const logoutButton = screen.getByTitle('Déconnexion')
     fireEvent.click(logoutButton)
@@ -101,7 +107,7 @@ describe('AdminSidebar', () => {
 
   it('should highlight active menu item', () => {
     ;(usePathname as jest.Mock).mockReturnValue('/admin/tenants')
-    render(<AdminSidebar isOpen={true} onClose={() => {}} />)
+    renderWithTheme(<AdminSidebar isOpen={true} onClose={() => {}} />)
 
     const tenantsLink = screen.getByText('Tenants')
     expect(tenantsLink.closest('button')).toHaveClass('bg-blue-50')

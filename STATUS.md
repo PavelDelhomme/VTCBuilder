@@ -6,6 +6,62 @@
 
 ## 🚨 PRIORITÉS ACTUELLES - EN COURS DE TRAITEMENT
 
+### 🧪 Corrections des Tests Frontend - COMPLÉTÉ (05/12/2025)
+
+**État Actuel** :
+- ✅ Correction des mocks API pour correspondre aux appels réels (params, validateStatus, etc.)
+- ✅ Correction de l'import authService (export default vs export nommé)
+- ✅ Ajout de ThemeProvider aux tests qui utilisent useTheme
+- ✅ Correction des chemins de modules (Sidebar, PublicHeader)
+- ✅ Correction des imports et props dans BlockPreview et BlockEditor tests
+- ✅ Suppression du test useEditorState (hook inexistant)
+
+**Corrections Effectuées** :
+
+1. **Mocks API Corrigés** :
+   - `page.service.test.ts` : `getById` attend maintenant `{ params: {} }`
+   - `template.service.test.ts` : `create` et `update` attendent le 3e paramètre `{}`
+   - `billing.service.test.ts` : `getPricingPlans` attend `{ validateStatus: ... }`, `getSubscriptions` et `getInvoices` attendent `{ params: undefined }`
+
+2. **Import authService Corrigé** :
+   - `auth.service.test.ts` : Passage de `{ authService }` à `authService` (export par défaut)
+   - Correction des mocks pour correspondre à la structure réelle du service
+
+3. **ThemeProvider Ajouté** :
+   - `AdminSidebar.test.tsx`, `MobileHeader.test.tsx`, `Navbar.test.tsx`, `PublicHeader.test.tsx` : Ajout de `ThemeProvider` avec helper `renderWithTheme`
+
+4. **Chemins de Modules Corrigés** :
+   - `TenantLayout.test.tsx` : `@/components/Sidebar` → `@/components/tenant/Sidebar`
+   - `PublicLayout.test.tsx` : `@/components/PublicHeader` → `@/components/public/PublicHeader`
+
+5. **Autres Corrections** :
+   - `BlockPreview.test.tsx` : Import corrigé et ajout de `ThemeProvider`
+   - `editor.test.tsx` : Import corrigé, props corrigées (`onBlocksChange` → `onChange`, `blockTypes` → `availableBlockTypes`), et ajout de `ThemeProvider`
+   - `useEditorState.test.ts` : Supprimé (hook inexistant)
+   - `ImpersonationBanner.test.tsx` : Correction des mocks
+
+**Fichiers Modifiés** :
+- `frontend/src/__tests__/services/page.service.test.ts`
+- `frontend/src/__tests__/services/template.service.test.ts`
+- `frontend/src/__tests__/services/billing.service.test.ts`
+- `frontend/tests/unit/services/auth.service.test.ts`
+- `frontend/src/__tests__/components/AdminSidebar.test.tsx`
+- `frontend/src/__tests__/components/TenantLayout.test.tsx`
+- `frontend/src/__tests__/components/PublicLayout.test.tsx`
+- `frontend/src/__tests__/components/MobileHeader.test.tsx`
+- `frontend/src/__tests__/components/Navbar.test.tsx`
+- `frontend/src/__tests__/components/ImpersonationBanner.test.tsx`
+- `frontend/src/__tests__/components/PublicHeader.test.tsx`
+- `frontend/tests/unit/components/BlockPreview.test.tsx`
+- `frontend/tests/integration/editor.test.tsx`
+
+**Prochaines Étapes** :
+1. ⏳ Exécuter `make test` pour vérifier que tous les tests passent
+2. ⏳ Corriger les éventuelles erreurs restantes
+3. ⏳ Améliorer la couverture de tests
+
+**Branche** : `feature/blocks-implementation-tests`
+
 ### 🔒 Système de Sécurité Complet - COMPLÉTÉ (04/12/2025)
 
 **État Actuel** :

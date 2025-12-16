@@ -168,6 +168,59 @@ npm run build       # Build production
 npm run lint        # Vérification code
 ```
 
+## 🧪 Tests et Qualité
+
+### Commandes Principales (depuis la racine)
+
+```bash
+# Installation complète de l'infrastructure
+make setup
+
+# Tous les tests (frontend + backend)
+make test
+
+# Qualité complète (analyse + tests)
+make quality
+
+# Analyse complète (sans tests)
+make analyze
+```
+
+### Tests par Type
+
+```bash
+make test-unit          # Tests unitaires uniquement
+make test-integration   # Tests d'intégration uniquement
+make test-e2e          # Tests E2E (Playwright)
+make test-coverage     # Tests avec couverture
+```
+
+### Tests par Composant
+
+```bash
+make test-frontend      # Tests frontend uniquement
+make test-backend       # Tests backend uniquement
+```
+
+### Qualité et Analyse
+
+```bash
+make quality            # Qualité complète (frontend + backend)
+make quality-frontend   # Qualité frontend
+make quality-backend    # Qualité backend
+make analyze           # Analyse sans tests
+make lint              # Linter tout le code
+make format            # Formater tout le code
+```
+
+### Voir Toutes les Commandes
+
+```bash
+make help              # Aide complète avec toutes les commandes
+```
+
+📚 **Documentation complète** : Voir [docs/COMMANDES.md](./docs/COMMANDES.md) pour le guide détaillé.
+
 ### Base de données
 
 ```bash

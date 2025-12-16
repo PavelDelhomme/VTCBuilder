@@ -308,16 +308,42 @@ else:
 
 # Logging Configuration
 # Créer le répertoire de logs s'il n'existe pas (avec gestion d'erreur)
+# Utiliser /tmp/vtcbuilder-logs pour éviter les problèmes de permissions avec les volumes montés
 import os
-LOGS_DIR = BASE_DIR / 'logs'
+import stat
+LOGS_DIR = Path('/tmp/vtcbuilder-logs')
 LOGS_ENABLED = True
 try:
-    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    # Créer le répertoire s'il n'existe pas
+    if not LOGS_DIR.exists():
+        try:
+            LOGS_DIR.mkdir(parents=True, exist_ok=True, mode=0o777)  # Permissions plus permissives
+        except (OSError, PermissionError):
+            # Si on ne peut pas créer, essayer avec les permissions par défaut
+            try:
+                LOGS_DIR.mkdir(parents=True, exist_ok=True)
+            except (OSError, PermissionError):
+                pass
+    # Essayer de définir les permissions (peut échouer si monté comme volume)
+    try:
+        # Essayer d'abord avec des permissions très permissives
+        os.chmod(LOGS_DIR, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # 777
+    except (OSError, PermissionError):
+        try:
+            # Si ça échoue, essayer avec des permissions standard
+            os.chmod(LOGS_DIR, stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)  # 755
+        except (OSError, PermissionError):
+            pass  # Ignorer si on ne peut pas changer les permissions (volume monté)
     # Tester l'écriture dans le répertoire
     test_file = LOGS_DIR / '.test_write'
-    test_file.touch()
-    test_file.unlink()
-    os.chmod(LOGS_DIR, 0o755)
+    try:
+        test_file.write_text('test')
+        test_file.unlink()
+    except (OSError, PermissionError) as e:
+        # Si on ne peut pas écrire, désactiver le logging fichier
+        LOGS_ENABLED = False
+        import logging
+        logging.warning(f"Impossible d'utiliser le répertoire de logs: {e}. Utilisation du handler console uniquement.")
 except (OSError, PermissionError) as e:
     # Si on ne peut pas créer/utiliser le répertoire, désactiver le logging fichier
     LOGS_ENABLED = False
@@ -343,14 +369,26 @@ LOGGING = {
         },
     },
     'handlers': {
-        'console': {
-            '()': 'api.middleware.Suppress401Handler',  # Use custom handler that suppresses 401
-            'filters': ['suppress_expected_401'],
-            'formatter': 'simple',
+        **{
+            'console': {
+                '()': 'api.middleware.Suppress401Handler',  # Use custom handler that suppresses 401
+                'filters': ['suppress_expected_401'],
+                'formatter': 'simple',
+            },
+            'null': {
+                'class': 'logging.NullHandler',
+            },
         },
-        'null': {
-            'class': 'logging.NullHandler',
-        },
+        **({
+            'file': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': str(LOGS_DIR / 'django.log'),
+                'maxBytes': 10 * 1024 * 1024,  # 10 MB
+                'backupCount': 5,
+                'formatter': 'verbose',
+                'filters': ['suppress_expected_401'],
+            },
+        } if LOGS_ENABLED else {}),
     },
     'root': {
         'handlers': ['console'],

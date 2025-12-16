@@ -62,7 +62,7 @@ describe('PageService', () => {
 
       const result = await pageService.getById(1)
 
-      expect(api.get).toHaveBeenCalledWith('/pages/1/')
+      expect(api.get).toHaveBeenCalledWith('/pages/1/', { params: {} })
       expect(result).toEqual(mockPage)
     })
   })

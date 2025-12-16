@@ -77,7 +77,8 @@ services:
     working_dir: /app
     volumes:
       - ./backend-django:/app
-      - ./backend-django/logs:/app/logs
+    # Ne pas monter le répertoire logs comme volume pour éviter les problèmes de permissions
+    # Les logs seront dans le conteneur uniquement (utiliser docker logs pour les voir)
     # Optimisation: Limiter les ressources pour réduire la consommation
     deploy:
       resources:

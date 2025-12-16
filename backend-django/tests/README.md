@@ -1,52 +1,66 @@
-# Tests API - Configuration
+# Tests Backend
 
-## Variables d'environnement
+Ce dossier contient tous les tests pour le backend Django.
 
-Les tests utilisent des variables d'environnement pour la configuration. Vous pouvez les définir de plusieurs façons :
+## Structure
 
-### 1. Fichier .env (recommandé)
-
-Créez un fichier `.env` à la racine du projet `backend-django/` avec :
-
-```env
-# Test Configuration
-TEST_API_URL=http://localhost:9495/api
-TEST_EMAIL=admin@vtcbuilder.com
-TEST_PASSWORD=admin123
+```
+tests/
+├── unit/              # Tests unitaires
+│   ├── models/        # Tests des modèles
+│   ├── views/         # Tests des vues
+│   ├── serializers/   # Tests des sérialiseurs
+│   └── utils/         # Tests des utilitaires
+├── integration/       # Tests d'intégration
+│   ├── api/           # Tests des endpoints API
+│   └── workflows/     # Tests des workflows complets
+└── fixtures/          # Données de test
 ```
 
-### 2. Variables d'environnement système
+## Commandes
 
 ```bash
-export TEST_API_URL=http://localhost:9495/api
-export TEST_EMAIL=admin@vtcbuilder.com
-export TEST_PASSWORD=admin123
+# Exécuter tous les tests
+make test
+
+# Tests unitaires uniquement
+make test-unit
+
+# Tests d'intégration uniquement
+make test-integration
+
+# Tests avec couverture
+make test-coverage
+
+# Analyse complète (lint + format + tests)
+make analyze
 ```
 
-### 3. Valeurs par défaut
+## Écriture de tests
 
-Si les variables ne sont pas définies, les valeurs par défaut suivantes seront utilisées :
+### Exemple de test de modèle
 
-- `TEST_API_URL`: `http://localhost:9495/api`
-- `TEST_EMAIL`: `admin@vtcbuilder.com`
-- `TEST_PASSWORD`: `admin123`
+```python
+import pytest
+from django.test import TestCase
+from myapp.models import MyModel
 
-## Exécution des tests
-
-```bash
-# Depuis le répertoire backend-django/
-python tests/api/test_endpoints.py
+class TestMyModel(TestCase):
+    def test_model_creation(self):
+        obj = MyModel.objects.create(name="Test")
+        self.assertEqual(obj.name, "Test")
 ```
 
-## Variables disponibles
+### Exemple de test d'API
 
-| Variable | Description | Défaut |
-|----------|-------------|--------|
-| `TEST_API_URL` | URL de base de l'API à tester | `http://localhost:9495/api` |
-| `TEST_EMAIL` | Email de l'utilisateur de test | `admin@vtcbuilder.com` |
-| `TEST_PASSWORD` | Mot de passe de l'utilisateur de test | `admin123` |
+```python
+import pytest
+from rest_framework.test import APIClient
+from rest_framework import status
 
-## Sécurité
-
-⚠️ **Important** : Ne commitez jamais le fichier `.env` contenant des mots de passe réels dans le dépôt Git. Utilisez `.env.example` pour documenter les variables nécessaires.
-
+@pytest.mark.api
+def test_api_endpoint():
+    client = APIClient()
+    response = client.get('/api/endpoint/')
+    assert response.status_code == status.HTTP_200_OK
+```

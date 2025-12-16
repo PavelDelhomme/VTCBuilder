@@ -83,7 +83,7 @@ describe('TemplateService', () => {
 
       const result = await templateService.create(newTemplate)
 
-      expect(api.post).toHaveBeenCalledWith('/templates/', newTemplate)
+      expect(api.post).toHaveBeenCalledWith('/templates/', newTemplate, {})
       expect(result).toEqual(mockResponse.data)
     })
   })
@@ -96,7 +96,7 @@ describe('TemplateService', () => {
 
       const result = await templateService.update(1, updates)
 
-      expect(api.patch).toHaveBeenCalledWith('/templates/1/', updates)
+      expect(api.patch).toHaveBeenCalledWith('/templates/1/', updates, {})
       expect(result).toEqual(mockResponse.data)
     })
   })

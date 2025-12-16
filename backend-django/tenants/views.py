@@ -181,7 +181,7 @@ class TenantViewSet(viewsets.ModelViewSet):
                 from django.core.management import call_command
                 call_command('migrate_schemas', schema_name=tenant.schema_name, verbosity=0, interactive=False)
             except Exception as e:
-                logger.warning(f&quot;Error migration schéma pour tenant {tenant_slug}: {e}")
+                logger.warning(f"Error migration schéma pour tenant {tenant_slug}: {e}")
             
             serializer = TenantSerializer(tenant)
             response = Response({
@@ -194,7 +194,7 @@ class TenantViewSet(viewsets.ModelViewSet):
             return response
             
         except Exception as e:
-            logger.error(f&quot;Error création automatique tenant {tenant_slug}: {e}", exc_info=True)
+            logger.error(f"Error création automatique tenant {tenant_slug}: {e}", exc_info=True)
             response = Response(
                 {'error': f'Error création tenant: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

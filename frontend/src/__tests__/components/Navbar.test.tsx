@@ -1,7 +1,9 @@
+import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/components/shared/Navbar'
 import authService from '@/services/auth.service'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -22,6 +24,10 @@ const mockRouter = {
   push: mockPush,
 }
 
+const renderWithTheme = (ui: React.ReactElement) => {
+  return render(<ThemeProvider>{ui}</ThemeProvider>)
+}
+
 describe('Navbar', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -29,20 +35,20 @@ describe('Navbar', () => {
   })
 
   it('should render title', () => {
-    render(<Navbar title="Test Title" />)
+    renderWithTheme(<Navbar title="Test Title" />)
 
     expect(screen.getByText('Test Title')).toBeInTheDocument()
   })
 
   it('should render subtitle', () => {
-    render(<Navbar title="Test Title" subtitle="Test Subtitle" />)
+    renderWithTheme(<Navbar title="Test Title" subtitle="Test Subtitle" />)
 
     expect(screen.getByText('Test Title')).toBeInTheDocument()
     expect(screen.getByText('Test Subtitle')).toBeInTheDocument()
   })
 
   it('should display user name', () => {
-    render(<Navbar title="Test Title" />)
+    renderWithTheme(<Navbar title="Test Title" />)
 
     expect(screen.getByText('Test User')).toBeInTheDocument()
   })
@@ -51,7 +57,7 @@ describe('Navbar', () => {
     const mockLogout = jest.fn()
     ;(authService.logout as jest.Mock).mockImplementation(mockLogout)
 
-    render(<Navbar title="Test Title" />)
+    renderWithTheme(<Navbar title="Test Title" />)
 
     const logoutButton = screen.getByText('Déconnexion')
     fireEvent.click(logoutButton)

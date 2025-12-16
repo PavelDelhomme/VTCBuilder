@@ -2,13 +2,13 @@ import { render, screen } from '@testing-library/react'
 import PublicLayout from '@/components/public/PublicLayout'
 
 // Mock PublicHeader and PublicFooter
-jest.mock('@/components/PublicHeader', () => {
+jest.mock('@/components/public/PublicHeader', () => {
   return function MockPublicHeader() {
     return <header data-testid="public-header">PublicHeader</header>
   }
 })
 
-jest.mock('@/components/PublicFooter', () => {
+jest.mock('@/components/public/PublicFooter', () => {
   return function MockPublicFooter() {
     return <footer data-testid="public-footer">PublicFooter</footer>
   }

@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import TenantLayout from '@/components/tenant/TenantLayout'
 
 // Mock Sidebar and ImpersonationBanner
-jest.mock('@/components/Sidebar', () => {
+jest.mock('@/components/tenant/Sidebar', () => {
   return function MockSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
     return <div data-testid="sidebar">Sidebar</div>
   }

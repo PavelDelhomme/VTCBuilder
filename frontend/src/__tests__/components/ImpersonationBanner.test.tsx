@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import ImpersonationBanner from '@/components/admin/ImpersonationBanner'
+import authService from '@/services/auth.service'
 
 // Mock authService
 jest.mock('@/services/auth.service', () => ({
@@ -24,13 +25,11 @@ describe('ImpersonationBanner', () => {
   })
 
   it('should render when impersonating', () => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const authService = require('@/services/auth.service').default
-    authService.isImpersonating = jest.fn(() => true)
-    authService.getImpersonationInfo = jest.fn(() => ({
+    ;(authService.isImpersonating as jest.Mock).mockReturnValue(true)
+    ;(authService.getImpersonationInfo as jest.Mock).mockReturnValue({
       original_user: { email: 'admin@test.com' },
       impersonated_user: { email: 'user@test.com' },
-    }))
+    })
 
     render(<ImpersonationBanner />)
     // The banner should be visible when impersonating

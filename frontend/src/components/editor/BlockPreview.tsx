@@ -8,6 +8,14 @@ import { Block } from './types'
 import blocksService, { BlockType } from '@/services/blocks.service'
 import { renderBlockFromTemplate } from '@/lib/block-renderer'
 import Captcha from '@/components/shared/Captcha'
+import { renderHeading, renderText, renderImage, renderButton } from './renderers/basic'
+import { renderHero, renderFeaturesGrid, renderCTASection, renderContactForm } from './renderers/complex'
+import { renderBookingForm, renderPricingTable, renderServiceZones, renderVehicleGallery, renderContactButtons, renderMap, renderFareCalculator, renderAvailabilityCalendar } from './renderers/vtc'
+import { renderForm, renderFormMultiStep, renderFormConditional, renderFormCalculator, renderFormPayment } from './renderers/forms'
+import { renderAccordion, renderTabs, renderCountdown, renderProgressBar } from './renderers/interactive'
+import { renderHeader, renderFooter, renderContainer } from './renderers/layout'
+import { renderCarousel, renderLogoGrid, renderImageSlider, renderLightbox } from './renderers/media'
+import { renderBadges } from './renderers/data'
 
 interface BlockPreviewProps {
   blocks: Block[]
@@ -2555,29 +2563,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     }
 
     case 'accordion': {
-      const accordionItems = block.data.items || []
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data.title && (
-            <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-100 mb-8">
-              {block.data.title}
-            </h2>
-          )}
-          <div className="space-y-2">
-            {accordionItems.map((item: any, index: number) => (
-              <div key={index} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="px-6 py-4 font-semibold text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700">
-                  {item.title || `Item ${index + 1}`}
-                </div>
-                <div className="px-6 py-4 text-gray-700 dark:text-gray-300">
-                  {item.content || 'Content...'}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )
-      }
+      return renderAccordion({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'stats': {
       const stats = block.data.stats || []
@@ -2637,375 +2624,32 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       }
 
     case 'booking-form': {
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data.title && (
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-              {block.data.title}
-            </h2>
-          )}
-          <form className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 space-y-4">
-            {block.data.show_pickup !== false && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Point de prise en charge
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Adresse de départ"
-                />
-              </div>
-            )}
-            {block.data.show_dropoff !== false && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Point de destination
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Adresse d'arrivée"
-                />
-              </div>
-            )}
-            {block.data.show_date !== false && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Date et heure
-                </label>
-                <input
-                  type="datetime-local"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            )}
-            {block.data.show_passengers && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Nombre de passagers
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="8"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            )}
-            {block.data.show_vehicle && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Type de véhicule
-                </label>
-                <select className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option>Berline</option>
-                  <option>Van</option>
-                  <option>Luxe</option>
-                </select>
-              </div>
-            )}
-            {block.data.show_phone !== false && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Téléphone
-                </label>
-                <input
-                  type="tel"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="+33 6 12 34 56 78"
-                />
-              </div>
-            )}
-            {block.data.show_notes && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Notes spéciales
-                </label>
-                <textarea
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
-                  placeholder="Informations supplémentaires..."
-                />
-              </div>
-            )}
-            {block.data.enable_captcha && (
-              <div className="mt-4">
-                <Captcha
-                  onVerify={(isValid) => {
-                    // La validation est gérée par le composant Captcha lui-même
-                  }}
-                  theme={block.data.captcha_theme || 'light'}
-                />
-              </div>
-            )}
-            <button
-              type="submit"
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              {block.data.button_text || 'Réserver'}
-            </button>
-          </form>
-        </div>
-      )
+      return renderBookingForm({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
     }
 
     case 'pricing-table': {
-      const pricingRows = block.data.rows || []
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data.title && (
-            <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-100 mb-8">
-              {block.data.title}
-            </h2>
-          )}
-          <div className="overflow-x-auto">
-            <table className="w-full bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Trajet</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Prix</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">Durée</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {pricingRows.length > 0 ? (
-                  pricingRows.map((row: any, index: number) => (
-                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                        {row.route || 'Trajet'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-blue-600 dark:text-blue-400">
-                        {row.price || 'Prix'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                        {row.duration || 'Durée'}
-                      </td>
-                    </tr>
-                  ))
-                  }
-                ) : (
-                  <tr>
-                    <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                      No pricing configured
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )
+      return renderPricingTable({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'service-zones': {
-      const zones = block.data.zones || []
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data.title && (
-            <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-100 mb-8">
-              {block.data.title}
-            </h2>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {zones.length > 0 ? (
-              zones.map((zone: any, index: number) => (
-                <div key={index} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 text-center">
-                  {zone.icon && (
-                    <div className="text-4xl mb-3">{zone.icon}</div>
-                  )}
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                    {zone.name || 'Zone'}
-                  </h3>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    {zone.description || 'Description de la zone'}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-                No zone configured
-              </div>
-            )}
-          </div>
-        </div>
-      )
-      }
+      return renderServiceZones({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'vehicle-gallery': {
-      const vehicles = block.data.vehicles || []
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data.title && (
-            <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-gray-100 mb-8">
-              {block.data.title}
-            </h2>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {vehicles.length > 0 ? (
-              vehicles.map((vehicle: any, index: number) => (
-                <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  {vehicle.image ? (
-                    <img
-                      src={vehicle.image}
-                      alt={vehicle.name}
-                      className="w-full h-48 object-cover"
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                        (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23ddd" width="400" height="300"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="18" dy="10.5" font-weight="bold" x="50%25" y="50%25" text-anchor="middle"%3EVéhicule%3C/text%3E%3C/svg%3E'
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                      <span className="text-gray-400">Image</span>
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                      {vehicle.name || 'Véhicule'}
-                    </h3>
-                    <p className="text-gray-700 dark:text-gray-300 mb-3">
-                      {vehicle.description || 'Description du véhicule'}
-                    </p>
-                    {vehicle.features && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {vehicle.features}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-                No vehicle configured
-              </div>
-            )}
-          </div>
-        </div>
-      )
+      return renderVehicleGallery({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'contact-buttons': {
-      const contacts = block.data.contacts || []
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data.title && (
-            <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-6">
-              {block.data.title}
-            </h2>
-          )}
-          <div className="flex flex-wrap justify-center gap-4">
-            {contacts.length > 0 ? (
-              contacts.map((contact: any, index: number) => {
-                const getHref = () => {
-                  switch (contact.type) {
-                    case 'phone': {
-                      return `tel:${contact.value}`
-                    case 'whatsapp': {
-                      return `https://wa.me/${contact.value.replace(/[^0-9]/g, '')}`
-                    case 'email': {
-                      return `mailto:${contact.value}`
-                    case 'sms': {
-                      return `sms:${contact.value}`
-                    default:
-                      return '#'
-                  }
-                }
-                return (
-                  <a
-                    key={index}
-                    href={getHref()}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                  >
-                    {contact.icon && <span className="text-xl">{contact.icon}</span>}
-                    <span>{contact.label || contact.type}</span>
-                  </a>
-                )
-              })
-            ) : (
-              <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded w-full">
-                No contact configured
-              </div>
-            )}
-          </div>
-        </div>
-      )
+      return renderContactButtons({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'map': {
-      const mapAddress = block.data.address || ''
-      const mapHeight = block.data.height || 400
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data.title && (
-            <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-6">
-              {block.data.title}
-            </h2>
-          )}
-          <div className="bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600" style={{ height: `${mapHeight}px` }}>
-            {mapAddress ? (
-              <iframe
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                src={`https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=${encodeURIComponent(mapAddress)}`}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
-                <div className="text-center">
-                  <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <p>Configurez une adresse pour afficher la carte</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )
+      return renderMap({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'badges': {
-      const badges = block.data.badges || []
-      const getBadgeColor = (color: string) => {
-        const colors: Record<string, string> = {
-          blue: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-          green: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-          red: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-          yellow: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-          purple: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-          gray: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-        }
-        return colors[color] || colors.blue
-      }
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data.title && (
-            <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-6">
-              {block.data.title}
-            </h2>
-          )}
-          <div className="flex flex-wrap justify-center gap-3">
-            {badges.length > 0 ? (
-              badges.map((badge: any, index: number) => (
-                <div
-                  key={index}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-medium ${getBadgeColor(badge.color || 'blue')}`}
-                >
-                  {badge.icon && <span className="text-lg">{badge.icon}</span>}
-                  <span>{badge.text || 'Badge'}</span>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded w-full">
-                No badge configured
-              </div>
-            )}
-          </div>
-        </div>
-      )
-      }
+      return renderBadges({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'gallery': {
       const images = block.data.images || []
@@ -3039,286 +2683,30 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
-      }
+    }
 
     case 'form': {
-      const formFields = block.data.fields || []
-      return (
-        <div style={wrapperStyles} className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-          {block.data.title && (
-            <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">{block.data.title}</h3>
-          )}
-          <form className="space-y-4">
-            {formFields.length > 0 ? (
-              formFields.map((field: any, i: number) => (
-                <div key={i}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {field.label || 'Champ'}
-                    {field.required && <span className="text-red-500 ml-1">*</span>}
-                  </label>
-                  {field.type === 'textarea' ? (
-                    <textarea
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows={4}
-                      placeholder={field.placeholder || ''}
-                      disabled
-                    />
-                  ) : (
-                    <input
-                      type={field.type || 'text'}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder={field.placeholder || ''}
-                      disabled
-                    />
-                  )}
-                </div>
-              ))
-              }
-            ) : (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom</label>
-                  <input type="text" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" disabled />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                  <input type="email" className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" disabled />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
-                  <textarea className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" rows={4} disabled />
-                </div>
-              </>
-            )}
-            {block.data.enable_captcha && (
-              <div className="mt-4">
-                <Captcha
-                  onVerify={(isValid) => {
-                    // La validation est gérée par le composant Captcha lui-même
-                  }}
-                  theme={block.data.captcha_theme || 'light'}
-                />
-              </div>
-            )}
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              disabled
-            >
-              {block.data.submit_text || 'Envoyer'}
-            </button>
-          </form>
-        </div>
-      )
+      return renderForm({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'accordion': {
-      const items = block.data.items || []
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          <div className="space-y-2">
-            {items.length > 0 ? (
-              items.map((item: any, i: number) => (
-                <details
-                  key={i}
-                  className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-                >
-                  <summary className="p-4 cursor-pointer font-semibold text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                    {item.title || `Élément ${i + 1}`}
-                  </summary>
-                  <div className="p-4 pt-0 text-gray-700 dark:text-gray-300">
-                    {item.content || 'Contenu...'}
-                  </div>
-                </details>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-                No accordion items
-              </div>
-            )}
-          </div>
-        </div>
-      )
-      }
+      return renderAccordion({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'tabs': {
-      const tabs = block.data.tabs || []
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {tabs.length > 0 ? (
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-              <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                {tabs.map((tab: any, i: number) => (
-                  <button
-                    key={i}
-                    className={`px-4 py-2 font-medium text-sm transition-colors ${
-                      i === 0
-                        ? 'bg-white dark:bg-gray-900 text-blue-600 border-b-2 border-blue-600'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                    }`}
-                    disabled
-                  >
-                    {tab.title || `Onglet ${i + 1}`}
-                  </button>
-                ))}
-              </div>
-              <div className="p-4 bg-white dark:bg-gray-900">
-                {tabs[0]?.content || 'Contenu de l\'onglet...'}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-              No tabs
-            </div>
-          )}
-        </div>
-      )
+      return renderTabs({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
     }
 
     case 'hero': {
-      // Convertir le gradient Tailwind en CSS gradient
-      const getGradientFromTailwind = (gradient: string) => {
-        if (!gradient) return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-        
-        // Extraire les couleurs du gradient Tailwind (ex: "from-blue-500 via-purple-600 to-pink-500")
-        const fromMatch = gradient.match(/from-(\w+)-(\d+)/)
-        const viaMatch = gradient.match(/via-(\w+)-(\d+)/)
-        const toMatch = gradient.match(/to-(\w+)-(\d+)/)
-        
-        // Mapping simplifié des couleurs Tailwind
-        const colorMap: Record<string, Record<string, string>> = {
-          blue: { '500': '#3b82f6', '600': '#2563eb' },
-          purple: { '600': '#9333ea', '500': '#a855f7' },
-          pink: { '500': '#ec4899', '600': '#db2777' },
-        }
-        
-        const fromColor = fromMatch ? (colorMap[fromMatch[1]]?.[fromMatch[2]] || '#3b82f6') : '#3b82f6'
-        const viaColor = viaMatch ? (colorMap[viaMatch[1]]?.[viaMatch[2]] || '#9333ea') : '#9333ea'
-        const toColor = toMatch ? (colorMap[toMatch[1]]?.[toMatch[2]] || '#ec4899') : '#ec4899'
-        
-        return `linear-gradient(135deg, ${fromColor} 0%, ${viaColor} 50%, ${toColor} 100%)`
-      }
-      
-      // Déterminer le fond selon le type
-      let heroBg = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' // Par défaut
-      const heroPreviewBackgroundType = block.data.background_type || (block.data.background_image ? 'image' : 'gradient')
-      
-      if (heroPreviewBackgroundType === 'image' && block.data.background_image) {
-        heroBg = `url(${block.data.background_image})`
-      } else if (heroPreviewBackgroundType === 'color' && block.data.background_color) {
-        heroBg = block.data.background_color
-      } else if (heroPreviewBackgroundType === 'gradient' && block.data.background_gradient) {
-        heroBg = getGradientFromTailwind(block.data.background_gradient)
-      } else if (block.data.background_gradient) {
-        // Fallback pour l'ancien format
-        heroBg = getGradientFromTailwind(block.data.background_gradient)
-      } else if (block.data.background_image) {
-        // Fallback pour l'ancien format
-        heroBg = `url(${block.data.background_image})`
-      }
-      
-      // Construire les boutons depuis primary_button_text/link et secondary_button_text/link
-      const heroButtons: Array<{ text: string; url: string; style: 'primary' | 'secondary' }> = []
-      if (block.data.primary_button_text && block.data.primary_button_link) {
-        heroButtons.push({
-          text: block.data.primary_button_text,
-          url: block.data.primary_button_link,
-          style: 'primary'
-        })
-      }
-      if (block.data.secondary_button_text && block.data.secondary_button_link) {
-        heroButtons.push({
-          text: block.data.secondary_button_text,
-          url: block.data.secondary_button_link,
-          style: 'secondary'
-        })
-      }
-      
-      // Fallback vers l'ancien format si les nouveaux champs ne sont pas définis
-      if (heroButtons.length === 0) {
-        if (block.data.buttons && Array.isArray(block.data.buttons) && block.data.buttons.length > 0) {
-          heroButtons.push(...block.data.buttons)
-        } else if (block.data.button_text) {
-          heroButtons.push({
-            text: block.data.button_text,
-            url: block.data.button_url || '#',
-            style: 'primary'
-          })
-        } else {
-          // Boutons par défaut si aucun bouton n'est défini
-          heroButtons.push(
-            { text: 'Démarrer gratuitement', url: '/register', style: 'primary' },
-            { text: 'Voir les tarifs', url: '#pricing', style: 'secondary' }
-          )
-        }
-      }
-      
-      return (
-        <div 
-          style={{
-            // Copier wrapperStyles sans les propriétés de padding et color pour éviter les conflits
-            // (la couleur doit être appliquée uniquement au contenu, pas au conteneur)
-            ...Object.fromEntries(
-              Object.entries(wrapperStyles).filter(([key]) => 
-                !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'color'].includes(key)
-              )
-              }
-            ),
-            background: heroBg,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            // Utiliser les propriétés individuelles au lieu de padding shorthand
-            paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '5rem',
-            paddingRight: block.styles?.padding_right || block.styles?.padding_horizontal || '2rem',
-            paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '8rem',
-            paddingLeft: block.styles?.padding_left || block.styles?.padding_horizontal || '2rem',
-            textAlign: block.styles?.text_align || 'center',
-            minHeight: '400px',
-          }}
-          className="mb-6 relative rounded-lg overflow-hidden"
-        >
-          {block.data.overlay && (
-            <div className="absolute inset-0 bg-black bg-opacity-50"></div>
-          )}
-          <div className="relative z-10" style={{ color: block.styles?.color || '#ffffff' }}>
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-6">{block.data.title || 'Hero Title'}</h1>
-            {block.data.subtitle && (
-              <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90">{block.data.subtitle}</p>
-            )}
-            {heroButtons.length > 0 && (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                {heroButtons.map((btn: any, index: number) => (
-                  <a
-                    key={index}
-                    href={btn.url || '#'}
-                    onClick={(e) => {
-                      // Si c'est un lien d'ancrage (#pricing), faire défiler vers l'élément
-                      if (btn.url && btn.url.startsWith('#')) {
-                        e.preventDefault()
-                        const targetId = btn.url.substring(1)
-                        const targetElement = document.getElementById(targetId)
-                        if (targetElement) {
-                          targetElement.scrollIntoView({ behavior: 'smooth' })
-                        }
-                      }
-                    }}
-                    className={`px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-xl ${
-                      btn.style === 'primary'
-                        ? 'bg-white text-blue-600 hover:bg-blue-50'
-                        : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30 border border-white/30'
-                    }`}
-                  >
-                    {btn.text}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )
+      return renderHero({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
     }
 
-    case 'features-grid': {
+    case 'features-grid':
     case 'features_grid': { // Alias pour compatibilité
+      return renderFeaturesGrid({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
+
+    case 'features-grid-old': {
       const features = block.data.features || []
       const columns = block.data.columns || 3
       const isDark = theme === 'dark'
@@ -3353,7 +2741,6 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               features.map((feature: any, i: number) => {
                 // Style sympa avec gradient et ombre comme le Hero
                 // En mode clair, utiliser un dégradé similaire au Hero (bleu-violet-rose)
-                }
                 const cardStyle: React.CSSProperties = {
                   background: isDark 
                     ? 'linear-gradient(135deg, #1f2937 0%, #111827 100%)'
@@ -3431,8 +2818,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
     }
 
-    case 'cta-section': {
-    case 'cta_section': // Alias pour compatibilité
+    case 'cta-section':
+    case 'cta_section': { // Alias pour compatibilité
+      return renderCTASection({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
+
+    case 'cta-section-old': {
       // Fonction pour convertir le gradient Tailwind en CSS
       const getGradientFromTailwindCTA = (gradient: string) => {
         if (!gradient) return 'linear-gradient(to right, #2563eb, #9333ea)'
@@ -3497,7 +2888,6 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               Object.entries(contentStyles).filter(([key]) => 
                 !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'].includes(key)
               )
-              }
             ),
             ...backgroundStyle,
             // Ne pas utiliser padding shorthand si on a des propriétés individuelles
@@ -3538,70 +2928,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
     case 'contact-form': {
-      return (
-        <div style={wrapperStyles} className="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-          {block.data.title && (
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-              {block.data.title}
-            </h2>
-          )}
-          <form className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Nom complet *
-              </label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email *
-              </label>
-              <input
-                type="email"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-                required
-              />
-            </div>
-            {block.data.show_subject !== false && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Sujet *
-                </label>
-                <select className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100">
-                  <option>Sélectionnez un sujet</option>
-                  <option>Support technique</option>
-                  <option>Question commerciale</option>
-                  <option>Question de facturation</option>
-                  <option>Suggestion de fonctionnalité</option>
-                  <option>Autre</option>
-                </select>
-              </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Message *
-              </label>
-              <textarea
-                rows={6}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              {block.data.submit_text || 'Envoyer le message'}
-            </button>
-          </form>
-        </div>
-      )
+      return renderContactForm({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'faq-section': {
       const faqItems = block.data.items || []
@@ -3613,7 +2944,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           theme={theme}
         />
       )
-      }
+    }
 
     case 'banner': {
       return (
@@ -3624,7 +2955,6 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               Object.entries(wrapperStyles).filter(([key]) => 
                 !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'].includes(key)
               )
-              }
             ),
             backgroundImage: block.data.background_image ? `url(${block.data.background_image})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             backgroundSize: 'cover',
@@ -3667,240 +2997,14 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
     case 'header': {
-      const headerLinks = block.data.links || []
-      const logoText = block.data.logo_text || 'VTCBuilder'
-      const logoUrl = block.data.logo_url || '/'
-      const showThemeToggle = block.data.show_theme_toggle !== false
-      const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-      
-      return (
-        <header 
-          style={{
-            ...wrapperStyles,
-            position: block.data.sticky ? 'sticky' : 'static',
-            top: block.data.sticky ? '0' : undefined,
-            zIndex: block.data.sticky ? 50 : undefined,
-          }}
-          className={`mb-6 ${block.data.sticky ? 'sticky top-0 z-50' : ''} ${
-            block.styles?.background_color || block.styles?.backgroundColor
-              ? ''
-              : 'bg-white/95 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm'
-          }`}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between flex-wrap gap-2 min-w-0">
-              <a href={logoUrl} className="flex items-center space-x-2 flex-shrink-0 min-w-0">
-                {block.data.logo_image && (
-                  <img src={block.data.logo_image} alt={logoText} className="h-6 sm:h-8 w-auto flex-shrink-0" />
-                )}
-                <h1 className={`text-lg sm:text-2xl font-bold truncate ${
-                  block.styles?.color || 'text-gray-900 dark:text-white'
-                }`}>
-                  {logoText}
-                </h1>
-                {block.data.badge && (
-                  <span className={`text-xs flex-shrink-0 ${
-                    block.styles?.color || 'text-gray-400 dark:text-gray-500'
-                  }`}>
-                    {block.data.badge}
-                  </span>
-                )}
-              </a>
-              <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-                {showThemeToggle && (
-                  <button
-                    className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
-                      block.styles?.color || 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                    title="Toggle theme"
-                  >
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                  </button>
-                )}
-                {headerLinks.length > 0 && (
-                  <>
-                    {/* Menu mobile hamburger */}
-                    <button
-                      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                      className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                      aria-label="Menu"
-                    >
-                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {mobileMenuOpen ? (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        ) : (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                        )}
-                      </svg>
-                    </button>
-                    {/* Navigation desktop */}
-                    <nav className="hidden md:flex items-center space-x-4 lg:space-x-6 flex-wrap">
-                      {headerLinks.map((link: any, index: number) => (
-                        <a
-                          key={index}
-                          href={link.url || '#'}
-                          className={`font-medium transition-colors whitespace-nowrap ${link.custom_class || ''} ${
-                            !link.color && !link.custom_class
-                              ? (block.styles?.color || 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100')
-                              : ''
-                          }`}
-                          style={{
-                            color: link.color || undefined,
-                            fontSize: link.font_size || undefined,
-                            fontWeight: link.font_weight || undefined,
-                            ...(link.hover_color ? {
-                              '--hover-color': link.hover_color,
-                            } as React.CSSProperties : {}),
-                          } as React.CSSProperties}
-                          onMouseEnter={(e) => {
-                            if (link.hover_color) {
-                              e.currentTarget.style.color = link.hover_color
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (link.color) {
-                              e.currentTarget.style.color = link.color
-                            }
-                          }}
-                        >
-                          {link.label || `Lien ${index + 1}`}
-                        </a>
-                      ))}
-                    </nav>
-                    {/* Navigation mobile */}
-                    {mobileMenuOpen && (
-                      <nav className="absolute top-full left-0 right-0 md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg z-50">
-                        <div className="px-4 py-2 space-y-2">
-                          {headerLinks.map((link: any, index: number) => (
-                            <a
-                              key={index}
-                              href={link.url || '#'}
-                              className={`block px-4 py-2 rounded-lg font-medium transition-colors ${link.custom_class || ''} ${
-                                !link.color && !link.custom_class
-                                  ? (block.styles?.color || 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100')
-                                  : ''
-                              }`}
-                              style={{
-                                color: link.color || undefined,
-                                fontSize: link.font_size || undefined,
-                                fontWeight: link.font_weight || undefined,
-                              } as React.CSSProperties}
-                              onClick={() => setMobileMenuOpen(false)}
-                            >
-                              {link.label || `Lien ${index + 1}`}
-                            </a>
-                          ))}
-                        </div>
-                      </nav>
-                    )}
-                  </>
-                )}
-                {block.data.cta_button && (
-                  <a
-                    href={block.data.cta_button.url || '#'}
-                    className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base whitespace-nowrap flex-shrink-0 ${
-                      block.data.cta_button.style === 'primary'
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {block.data.cta_button.text || 'Action'}
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
-      )
-    
+      return renderHeader({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
+
     case 'footer': {
-      const footerColumns = block.data.columns || []
-      const currentYear = new Date().getFullYear()
-      const defaultCopyright = block.data.copyright || `© ${currentYear} VTCBuilder. Tous droits réservés.`
-      const defaultAdditionalText = block.data.additional_text || 'vtcbuilder.com - Développé avec ❤️ en France'
-      const supportDarkMode = block.styles?.support_dark_mode !== false
-      const footerIsDark = theme === 'dark' && supportDarkMode
-      
-      return (
-        <footer style={wrapperStyles} className={`mb-0 ${footerIsDark ? 'bg-gray-800' : 'bg-gray-100'} ${footerIsDark ? 'text-gray-100' : 'text-gray-900'} py-8 sm:py-12 w-full min-w-0 overflow-hidden`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full min-w-0">
-            {footerColumns.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 w-full min-w-0 mb-8">
-                {footerColumns.map((column: any, colIndex: number) => (
-                  <div key={colIndex} className="min-w-0 overflow-hidden">
-                    {column.title && (
-                      <h3 className={`${colIndex === 0 ? 'text-lg sm:text-xl font-bold' : 'font-bold text-base sm:text-lg'} mb-3 sm:mb-4 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'} break-words`}>
-                        {column.title}
-                      </h3>
-                    )}
-                    {column.description && (
-                      <p className={`text-sm sm:text-base ${footerIsDark ? 'text-gray-300' : 'text-gray-600'} mb-3 sm:mb-4 break-words`}>{column.description}</p>
-                    )}
-                    {(column.links || []).length > 0 && (
-                      <ul className={`space-y-2 text-sm sm:text-base ${footerIsDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {column.links.map((link: any, linkIndex: number) => (
-                          <li key={linkIndex} className="break-words">
-                            <a
-                              href={link.url || '#'}
-                              className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors break-words`}
-                            >
-                              {link.label || 'Lien'}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              // Footer par défaut si aucune colonne n'est configurée
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-                <div>
-                  <h3 className={`text-xl font-bold mb-4 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'}`}>VTCBuilder</h3>
-                  <p className={footerIsDark ? 'text-gray-300' : 'text-gray-600'}>
-                    La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.
-                  </p>
-                </div>
-                <div>
-                  <h4 className={`font-bold mb-4 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'}`}>Produit</h4>
-                  <ul className={`space-y-2 ${footerIsDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    <li><a href="/#pricing" className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Tarifs</a></li>
-                    <li><a href="/features" className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Fonctionnalités</a></li>
-                    <li><a href="/templates" className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Templates</a></li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className={`font-bold mb-4 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'}`}>Support</h4>
-                  <ul className={`space-y-2 ${footerIsDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    <li><a href="/docs" className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Documentation</a></li>
-                    <li><a href="/contact" className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Contact</a></li>
-                    <li><a href="/faq" className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>FAQ</a></li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className={`font-bold mb-4 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'}`}>Légal</h4>
-                  <ul className={`space-y-2 ${footerIsDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    <li><a href="/legal/terms" className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>CGV</a></li>
-                    <li><a href="/legal/privacy" className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors`}>Confidentialité</a></li>
-                  </ul>
-                </div>
-              </div>
-            )}
-            {/* Copyright et texte additionnel - toujours affichés */}
-            <div className={`border-t ${footerIsDark ? 'border-gray-700' : 'border-gray-300'} mt-8 pt-8 text-center ${footerIsDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              <p className="text-sm sm:text-base">{defaultCopyright}</p>
-              {defaultAdditionalText && (
-                <p className="mt-2 text-xs sm:text-sm">{defaultAdditionalText}</p>
-              )}
-            </div>
-          </div>
-        </footer>
-      )
+      return renderFooter({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
     }
 
     case 'section': {
@@ -3948,102 +3052,19 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
     case 'carousel': {
-      const carouselItems = block.data.items || []
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {carouselItems.length > 0 ? (
-            <div className="relative overflow-hidden rounded-lg">
-              <div className="flex transition-transform duration-500" style={{ transform: `translateX(0)` }}>
-                {carouselItems.map((item: any, index: number) => (
-                  <div key={index} className="min-w-full relative">
-                    {item.image && (
-                      <img
-                        src={item.image}
-                        alt={item.title || `Slide ${index + 1}`}
-                        className="w-full h-96 object-cover"
-                        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                          (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="400"%3E%3Crect fill="%23ddd" width="800" height="400"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="24" dy="10.5" font-weight="bold" x="50%25" y="50%25" text-anchor="middle"%3ESlide%3C/text%3E%3C/svg%3E'
-                        }}
-                      />
-                    )}
-                    {(item.title || item.description) && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
-                        {item.title && <h3 className="text-2xl font-bold mb-2">{item.title}</h3>}
-                        {item.description && <p>{item.description}</p>}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-              Aucun élément dans le carousel
-            </div>
-          )}
-        </div>
-      )
+      return renderCarousel({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'countdown': {
-      const targetDate = block.data.target_date ? new Date(block.data.target_date).getTime() : null
-      const now = Date.now()
-      const timeLeft = targetDate && targetDate > now ? targetDate - now : 0
-      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24))
-      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000)
-      
-      return (
-        <div style={wrapperStyles} className="mb-6 bg-gradient-to-br from-blue-600 to-purple-600 text-white p-8 rounded-lg text-center">
-          {block.data.title && (
-            <h3 className="text-2xl font-bold mb-6">{block.data.title}</h3>
-          )}
-          <div className="grid grid-cols-4 gap-4">
-            <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
-              <div className="text-3xl font-bold">{days}</div>
-              <div className="text-sm opacity-90">Jours</div>
-            </div>
-            <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
-              <div className="text-3xl font-bold">{hours}</div>
-              <div className="text-sm opacity-90">Heures</div>
-            </div>
-            <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
-              <div className="text-3xl font-bold">{minutes}</div>
-              <div className="text-sm opacity-90">Minutes</div>
-            </div>
-            <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
-              <div className="text-3xl font-bold">{seconds}</div>
-              <div className="text-sm opacity-90">Secondes</div>
-            </div>
-          </div>
-        </div>
-      )
-      }
+      return renderCountdown({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'progress-bar': {
-      const percentage = Math.min(100, Math.max(0, block.data.percentage || 0))
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data.label && (
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{block.data.label}</span>
-              <span className="text-sm text-gray-600 dark:text-gray-400">{percentage}%</span>
-            </div>
-          )}
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${percentage}%`,
-                backgroundColor: block.data.color || '#3B82F6',
-              }}
-            />
-          </div>
-        </div>
-      )
-      }
+      return renderProgressBar({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'quote': {
       return (
@@ -4063,7 +3084,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </blockquote>
         </div>
       )
-      }
+    }
 
     case 'icon-box': {
       return (
@@ -4088,7 +3109,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
-      }
+    }
 
     case 'feature-card': {
       return (
@@ -4121,7 +3142,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
-      }
+    }
 
     case 'video-embed': {
       const videoUrl = block.data.url || ''
@@ -4159,7 +3180,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
-      }
+    }
 
     case 'team-member': {
       return (
@@ -4211,50 +3232,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
     case 'logo-grid': {
-      const logos = block.data.logos || []
-      const logoColumns = block.data.columns || 4
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data.title && (
-            <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100 mb-6">
-              {block.data.title}
-            </h2>
-          )}
-          <div 
-            className="grid gap-6 items-center justify-items-center"
-            style={{
-              gridTemplateColumns: `repeat(${logoColumns}, 1fr)`,
-            }}
-          >
-            {logos.length > 0 ? (
-              logos.map((logo: any, i: number) => (
-                <div key={i} className="flex items-center justify-center p-4 grayscale hover:grayscale-0 transition-all opacity-60 hover:opacity-100">
-                  {logo.url ? (
-                    <img
-                      src={logo.url}
-                      alt={logo.alt || `Logo ${i + 1}`}
-                      className="max-h-12 max-w-full object-contain"
-                      onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                        (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="120" height="60"%3E%3Crect fill="%23ddd" width="120" height="60"/%3E%3Ctext fill="%23999" font-family="sans-serif" font-size="12" dy="20" font-weight="bold" x="50%25" y="50%25" text-anchor="middle"%3ELogo%3C/text%3E%3C/svg%3E'
-                      }}
-                    />
-                  ) : (
-                    <div className="w-24 h-12 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center text-gray-400 text-xs">
-                      Logo
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-8 text-gray-400 border-2 border-dashed border-gray-300 rounded">
-                No logo configured
-              </div>
-            )}
-          </div>
-        </div>
-      )
+      return renderLogoGrid({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
     }
 
     case 'card': {
@@ -4305,7 +3286,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
     }
 
-    case 'tabs': {
+    case 'tabs-old': {
       const tabs = block.data.tabs || []
       // Utiliser un composant séparé pour gérer l'état
       const TabsPreview = () => {
@@ -4362,7 +3343,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
-      }
+    }
 
     case 'breadcrumb': {
       const breadcrumbItems = block.data.items || []
@@ -4387,7 +3368,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </nav>
         </div>
       )
-      }
+    }
 
     case 'tags': {
       const tags = block.data.tags || []
@@ -4411,7 +3392,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
-      }
+    }
 
     case 'progress-circle': {
       const progressPercentage = block.data.percentage || 75
@@ -4459,6 +3440,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
+    }
 
     case 'search-bar': {
       return (
@@ -4484,7 +3466,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </form>
         </div>
       )
-      }
+    }
 
     case 'audio-player': {
       return (
@@ -4513,7 +3495,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
-      }
+    }
 
     case 'modal': {
       const ModalPreview = () => {
@@ -4562,13 +3544,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <div className="h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 rounded">
               Graphique {block.data.chart_type || 'line'} - Prévisualisation (nécessite Chart.js)
-              }
             </div>
             <p className="text-xs text-gray-500 mt-2">Type: {block.data.chart_type || 'line'}</p>
           </div>
         </div>
       )
-      }
+    }
 
     case 'calendar': {
       return (
@@ -4576,7 +3557,6 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <div className="h-96 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 rounded">
               Calendrier {block.data.calendar_type || 'month'} - Prévisualisation (nécessite bibliothèque calendrier)
-              }
             </div>
             {block.data.show_events !== false && (
               <p className="text-xs text-gray-500 mt-2">Événements activés</p>
@@ -4584,7 +3564,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
-      }
+    }
 
     case 'pagination': {
       const currentPage = block.data.current_page || 1
@@ -4630,7 +3610,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </nav>
         </div>
       )
-      }
+    }
 
     case 'list': {
       const listItems = block.data.items || []
@@ -4647,7 +3627,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
-      }
+    }
 
     case 'link': {
       return (
@@ -4668,7 +3648,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       return (
         <div style={wrapperStyles} className="mb-6" dangerouslySetInnerHTML={{ __html: block.data?.html || '' }} />
       )
-      }
+    }
 
     case 'markdown': {
       // Note: Pour un vrai rendu Markdown, il faudrait une bibliothèque comme react-markdown
@@ -4683,7 +3663,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       return (
         <div style={wrapperStyles} className="mb-6" dangerouslySetInnerHTML={{ __html: block.data?.html || '' }} />
       )
-      }
+    }
 
     case 'icon': {
       const iconSize = block.data?.size === 'sm' ? 'text-2xl' : block.data?.size === 'lg' ? 'text-5xl' : block.data?.size === 'xl' ? 'text-6xl' : 'text-4xl'
@@ -4694,7 +3674,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </span>
         </div>
       )
-      }
+    }
 
     case 'label': {
       return (
@@ -4704,7 +3684,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </label>
         </div>
       )
-      }
+    }
 
     case 'tooltip': {
       return (
@@ -4717,7 +3697,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </span>
         </div>
       )
-      }
+    }
 
     case 'popover': {
       return (
@@ -4728,7 +3708,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           {/* Note: Le popover nécessiterait une bibliothèque comme Radix UI pour un vrai rendu */}
         </div>
       )
-      }
+    }
 
     case 'dropdown': {
       return (
@@ -4740,7 +3720,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </select>
         </div>
       )
-      }
+    }
 
     case 'categories': {
       return (
@@ -4755,7 +3735,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
-      }
+    }
 
     case 'author-box': {
       return (
@@ -4776,7 +3756,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
-      }
+    }
 
     case 'related-posts': {
       return (
@@ -4787,7 +3767,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
-      }
+    }
 
     case 'table-of-contents': {
       return (
@@ -4798,7 +3778,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
-      }
+    }
 
     case 'reading-time': {
       return (
@@ -4808,7 +3788,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </span>
         </div>
       )
-      }
+    }
 
     case 'share-buttons': {
       return (
@@ -4825,69 +3805,22 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
       }
 
-    case 'flexbox': {
-    case 'grid': {
-    case 'stack': {
-    case 'inline': {
-    case 'group': {
+    case 'flexbox':
+    case 'grid':
+    case 'stack':
+    case 'inline':
+    case 'group':
     case 'wrapper': {
-      // Ces blocs sont des conteneurs, ils affichent leurs enfants
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            {block.type === 'flexbox' && '📐 Flexbox Container'}
-            {block.type === 'grid' && '⚏ Grid Container'}
-            {block.type === 'stack' && '📚 Stack Container'}
-            {block.type === 'inline' && '➡️ Inline Container'}
-            {block.type === 'group' && '👥 Group Container'}
-            {block.type === 'wrapper' && '📦 Wrapper Container'}
-          </div>
-          {/* Les enfants seront rendus par le composant parent */}
-        </div>
-      )
-      }
+      return renderContainer({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'image-slider': {
-      const sliderImages = block.data?.images || []
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data?.title && <h3 className="text-lg font-semibold mb-3">{block.data.title}</h3>}
-          <div className="relative overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800" style={{ height: '400px' }}>
-            {sliderImages.length > 0 ? (
-              <div className="flex h-full">
-                {sliderImages.slice(0, 1).map((img: any, index: number) => (
-                  <img key={index} src={img.url || ''} alt={img.alt || ''} className="w-full h-full object-cover" />
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-400">No image</div>
-            )}
-          </div>
-        </div>
-      )
-      }
+      return renderImageSlider({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'lightbox': {
-      const lightboxImages = block.data?.images || []
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          <div className="grid grid-cols-3 gap-2">
-            {lightboxImages.slice(0, 6).map((img: any, index: number) => (
-              <div key={index} className="aspect-square bg-gray-100 dark:bg-gray-800 rounded overflow-hidden">
-                {img.thumbnail || img.url ? (
-                  <img src={img.thumbnail || img.url || ''} alt={img.alt || ''} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Image {index + 1}</div>
-                )}
-              </div>
-            ))}
-          </div>
-          {lightboxImages.length === 0 && (
-            <div className="text-center py-8 text-gray-400">No images in lightbox</div>
-          )}
-        </div>
-      )
-      }
+      return renderLightbox({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'vimeo-embed': {
       const vimeoId = block.data?.vimeoId || (block.data?.url ? block.data.url.match(/vimeo\.com\/(\d+)/)?.[1] : '')
@@ -4911,7 +3844,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
-      }
+    }
 
     case 'counter': {
       return (
@@ -4924,7 +3857,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
-      }
+    }
 
     case 'card-grid': {
       const gridCards = block.data?.cards || []
@@ -4955,7 +3888,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
-      }
+    }
 
     case 'logo-carousel': {
       const carouselLogos = block.data?.logos || []
@@ -5032,385 +3965,26 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
     case 'fare-calculator': {
-      const pricingRules = block.data?.pricing_rules || []
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data?.title && (
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-              {block.data.title}
-            </h2>
-          )}
-          {block.data?.description && (
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {block.data.description}
-            </p>
-          )}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Distance (km)
-                  </label>
-                  <input
-                    type="number"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    placeholder="0"
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Durée (min)
-                    }
-                  </label>
-                  <input
-                    type="number"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    placeholder="0"
-                    readOnly
-                  />
-                </div>
-              </div>
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="space-y-2">
-                  {pricingRules.length > 0 ? (
-                    pricingRules.map((rule: any, index: number) => (
-                      <div key={index} className="flex justify-between items-center text-sm">
-                        <span className="text-gray-700 dark:text-gray-300">{rule.label || 'Tarif'}</span>
-                        <span className="font-semibold text-gray-900 dark:text-gray-100">
-                          {rule.amount || 0} {block.data?.currency || 'EUR'}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                      No pricing rule configured
-                    </div>
-                  )}
-                </div>
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                  <span className="text-lg font-bold text-gray-900 dark:text-gray-100">Total</span>
-                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    0 {block.data?.currency || 'EUR'}
-                  </span>
-                </div>
-              </div>
-              <button
-                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                disabled
-              >
-                Calculer le tarif
-              </button>
-            </div>
-          </div>
-        </div>
-      )
+      return renderFareCalculator({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'availability-calendar': {
-      const availableDays = block.data?.available_days || []
-      const viewMode = block.data?.view_mode || 'month'
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          {block.data?.title && (
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-              {block.data.title}
-            </h2>
-          )}
-          {block.data?.description && (
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              {block.data.description}
-            </p>
-          )}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex gap-2">
-                <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600" disabled>
-                  ←
-                </button>
-                <span className="px-4 py-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-                </span>
-                <button className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600" disabled>
-                  →
-                </button>
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                Mode: {viewMode === 'month' ? 'Mois' : viewMode === 'week' ? 'Semaine' : 'Jour'}
-              </div>
-            </div>
-            <div className="grid grid-cols-7 gap-2 mb-4">
-              {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
-                <div key={day} className="text-center text-xs font-semibold text-gray-600 dark:text-gray-400 py-2">
-                  {day}
-                </div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-2">
-              {Array.from({ length: 35 }).map((_, index) => {
-                const day = index + 1
-                const isAvailable = availableDays.length === 0 || Math.random() > 0.3
-                return (
-                  <div
-                    key={index}
-                    className={`aspect-square flex items-center justify-center text-sm rounded ${
-                      isAvailable
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
-                    }`}
-                  >
-                    {day <= 31 ? day : ''}
-                  </div>
-                )
-                }
-              })}
-            </div>
-            {block.data?.show_time_slots && (
-              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Créneaux horaires</p>
-                <div className="flex flex-wrap gap-2">
-                  {['08:00', '10:00', '12:00', '14:00', '16:00', '18:00'].map((time) => (
-                    <button
-                      key={time}
-                      className="px-3 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50"
-                      disabled
-                    >
-                      {time}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {block.data?.allow_booking && (
-              <button
-                className="mt-4 w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                disabled
-              >
-                Réserver
-              </button>
-            )}
-          </div>
-        </div>
-      )
+      return renderAvailabilityCalendar({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+    }
 
     case 'form-multi-step': {
-      const steps = block.data.steps || []
-      const [currentStep, setCurrentStep] = useState(0)
-      
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            {block.data.title && (
-              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{block.data.title}</h3>
-            )}
-            {steps.length > 0 && (
-              <>
-                <div className="flex items-center justify-between mb-6">
-                  {steps.map((step: any, index: number) => (
-                    <div key={index} className="flex items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        index === currentStep ? 'bg-blue-600 text-white' : 
-                        index < currentStep ? 'bg-green-500 text-white' : 
-                        'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                      }`}>
-                        {index + 1}
-                      </div>
-                      {index < steps.length - 1 && (
-                        <div className={`w-12 h-1 mx-2 ${
-                          index < currentStep ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'
-                        }`} />
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {steps[currentStep] && (
-                  <div className="space-y-4">
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      {steps[currentStep].title || `Étape ${currentStep + 1}`}
-                    </h4>
-                    {(steps[currentStep].fields || []).map((field: any, fIndex: number) => (
-                      <div key={fIndex}>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          {field.label || 'Champ'}
-                          {field.required && <span className="text-red-500 ml-1">*</span>}
-                        </label>
-                        {field.type === 'textarea' ? (
-                          <textarea
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                            rows={3}
-                            disabled
-                          />
-                        ) : (
-                          <input
-                            type={field.type || 'text'}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                            disabled
-                          />
-                        )}
-                      </div>
-                    ))}
-                    <div className="flex justify-between mt-6">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
-                        disabled={currentStep === 0}
-                        className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Précédent
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
-                        disabled={currentStep === steps.length - 1}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {currentStep === steps.length - 1 ? 'Envoyer' : 'Suivant'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </form>
-        </div>
-      )
+      return renderFormMultiStep({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
     }
     
     case 'form-conditional': {
-      const fields = block.data.fields || []
-      const [formData, setFormData] = useState<Record<string, any>>({})
-      
-      const shouldShowField = (field: any) => {
-        if (!field.conditions || field.conditions.length === 0) return true
-        return field.conditions.some((condition: any) => {
-          const fieldValue = formData[condition.field]
-          if (condition.operator === 'equals') return fieldValue === condition.value
-          if (condition.operator === 'not_equals') return fieldValue !== condition.value
-          if (condition.operator === 'contains') return String(fieldValue || '').includes(condition.value)
-          return true
-        })
-      }
-      
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            {block.data.title && (
-              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{block.data.title}</h3>
-            )}
-            <div className="space-y-4">
-              {fields.map((field: any, index: number) => {
-                if (!shouldShowField(field)) return null
-                return (
-                  <div key={index}>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      {field.label || 'Champ'}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    {field.type === 'select' ? (
-                      <select
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        disabled
-                      >
-                        <option>Sélectionner...</option>
-                      </select>
-                    ) : field.type === 'checkbox' ? (
-                      <label className="flex items-center gap-2">
-                        <input type="checkbox" disabled className="w-4 h-4" />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">Case à cocher</span>
-                      </label>
-                    ) : field.type === 'radio' ? (
-                      <div className="space-y-2">
-                        <label className="flex items-center gap-2">
-                          <input type="radio" name={`radio-${index}`} disabled className="w-4 h-4" />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">Option 1</span>
-                        </label>
-                        <label className="flex items-center gap-2">
-                          <input type="radio" name={`radio-${index}`} disabled className="w-4 h-4" />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">Option 2</span>
-                        </label>
-                      </div>
-                    ) : (
-                      <input
-                        type={field.type || 'text'}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                        disabled
-                      />
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-            <button
-              type="submit"
-              className="mt-6 w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              disabled
-            >
-              Envoyer
-            </button>
-          </form>
-        </div>
-      )
+      return renderFormConditional({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
     }
     
     case 'form-calculator': {
-      const fields = block.data.fields || []
-      const [values, setValues] = useState<Record<string, number>>({})
-      const [result, setResult] = useState<number | null>(null)
-      
-      const calculate = () => {
-        if (!block.data.formula) return
-        try {
-          let formula = block.data.formula
-          fields.forEach((field: any) => {
-            const value = values[field.name] || field.default_value || 0
-            formula = formula.replace(new RegExp(field.name, 'g'), String(value))
-          })
-          // Évaluer la formule de manière sécurisée
-          const calculated = Function(`"use strict"; return (${formula})`)()
-          setResult(calculated)
-        } catch (e) {
-          console.error('Calculation error:', e)
-        }
-      }
-      
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            {block.data.title && (
-              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{block.data.title}</h3>
-            )}
-            <div className="space-y-4">
-              {fields.map((field: any, index: number) => (
-                <div key={index}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    {field.label || field.name}
-                  </label>
-                  <input
-                    type="number"
-                    value={values[field.name] || field.default_value || 0}
-                    onChange={(e) => {
-                      const newValues = { ...values, [field.name]: parseFloat(e.target.value) || 0 }
-                      setValues(newValues)
-                      calculate()
-                      }
-                    }}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    step="0.01"
-                  />
-                </div>
-              ))}
-            </div>
-            {result !== null && (
-              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Résultat:</p>
-                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{result.toFixed(2)}</p>
-              </div>
-            )}
-          </form>
-        </div>
-      )
+      return renderFormCalculator({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
     }
     
     case 'form-file-upload': {
@@ -5449,99 +4023,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     }
     
     case 'form-payment': {
-      const paymentMethods = block.data.payment_methods || ['stripe']
-      const amount = block.data.amount || 0
-      const currency = block.data.currency || 'EUR'
-      
-      const formatAmount = (amt: number, curr: string) => {
-        return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: curr }).format(amt)
-      }
-      
-      return (
-        <div style={wrapperStyles} className="mb-6">
-          <form className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-            {block.data.title && (
-              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">{block.data.title}</h3>
-            )}
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <p className="text-sm text-gray-700 dark:text-gray-300">Montant à payer:</p>
-              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                {formatAmount(amount, currency)}
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Nom sur la carte
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  placeholder="Jean Dupont"
-                  disabled
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Numéro de carte
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  placeholder="1234 5678 9012 3456"
-                  disabled
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Date d'expiration
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    placeholder="MM/AA"
-                    disabled
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    CVV
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    placeholder="123"
-                    disabled
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="mt-6">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Méthodes de paiement:</p>
-              <div className="flex gap-4">
-                {paymentMethods.includes('stripe') && (
-                  <div className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg">
-                    <span className="text-sm text-gray-700 dark:text-gray-300">💳 Stripe</span>
-                  </div>
-                )}
-                {paymentMethods.includes('paypal') && (
-                  <div className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg">
-                    <span className="text-sm text-gray-700 dark:text-gray-300">🅿️ PayPal</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <button
-              type="submit"
-              className="mt-6 w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              disabled
-            >
-              Payer {formatAmount(amount, currency)}
-            </button>
-          </form>
-        </div>
-      )
+      return renderFormPayment({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
     }
     
     case 'form-quiz': {
@@ -6011,7 +4493,6 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                     {block.data?.reviews_count && (
                       <span className="text-sm text-gray-500 dark:text-gray-400">
                         ({block.data.reviews_count} avis)
-                        }
                       </span>
                     )}
                   </div>
@@ -6029,6 +4510,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
     case 'email-button': {
       return (
@@ -6044,7 +4526,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </a>
         </div>
       )
-      }
+    }
 
     case 'sms-button': {
       return (
@@ -6060,7 +4542,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </a>
         </div>
       )
-      }
+    }
 
     case 'vehicle-comparison': {
       const comparisonVehicles = block.data?.vehicles || []
@@ -6105,6 +4587,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </div>
         </div>
       )
+    }
 
     case 'service-packages': {
       const packages = block.data?.packages || []
@@ -6185,6 +4668,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           )}
         </div>
       )
+    }
 
     case 'product-details': {
       return (

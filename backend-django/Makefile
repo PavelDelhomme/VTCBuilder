@@ -286,6 +286,20 @@ test: ## Exécuter les tests avec pytest
 	@docker exec $(BACKEND_CONTAINER) pytest --verbose --tb=short -v
 	@printf "$(GREEN)✅ Tests terminés !$(NC)\n"
 
+test-unit: ## Exécuter uniquement les tests unitaires
+	@printf "$(GREEN)🧪 Exécution des tests unitaires...$(NC)\n"
+	@$(DOCKER_COMPOSE) up -d postgres redis backend
+	@sleep 5
+	@docker exec $(BACKEND_CONTAINER) pytest -m unit --verbose --tb=short -v
+	@printf "$(GREEN)✅ Tests unitaires terminés !$(NC)\n"
+
+test-integration: ## Exécuter uniquement les tests d'intégration
+	@printf "$(GREEN)🧪 Exécution des tests d'intégration...$(NC)\n"
+	@$(DOCKER_COMPOSE) up -d postgres redis backend
+	@sleep 5
+	@docker exec $(BACKEND_CONTAINER) pytest -m integration --verbose --tb=short -v
+	@printf "$(GREEN)✅ Tests d'intégration terminés !$(NC)\n"
+
 test-security-internal: ## Exécuter les tests de sécurité (WAF, Firewall, Alerts, Logs, Settings)
 	@printf "$(GREEN)🔒 Tests de Sécurité (WAF, Firewall, Alerts, Logs, Settings)...$(NC)\n"
 	@$(DOCKER_COMPOSE) up -d postgres redis backend
@@ -413,12 +427,46 @@ lint: ## Vérification du code avec flake8
 	@docker exec $(BACKEND_CONTAINER) flake8 .
 	@printf "$(GREEN)✅ Vérification terminée !$(NC)\n"
 
+lint-pylint: ## Vérification du code avec pylint
+	@printf "$(BLUE)🔍 Vérification du code avec pylint...$(NC)\n"
+	@$(DOCKER_COMPOSE) up -d postgres redis backend
+	@sleep 5
+	@docker exec $(BACKEND_CONTAINER) pylint --rcfile=.pylintrc api/ security/ billing/ || true
+	@printf "$(GREEN)✅ Vérification pylint terminée !$(NC)\n"
+
+lint-mypy: ## Vérification des types avec mypy
+	@printf "$(BLUE)📘 Vérification des types avec mypy...$(NC)\n"
+	@$(DOCKER_COMPOSE) up -d postgres redis backend
+	@sleep 5
+	@docker exec $(BACKEND_CONTAINER) mypy api/ security/ billing/ --ignore-missing-imports || true
+	@printf "$(GREEN)✅ Vérification mypy terminée !$(NC)\n"
+
 format: ## Formatage du code avec black
 	@printf "$(BLUE)🎨 Formatage du code...$(NC)\n"
 	@$(DOCKER_COMPOSE) up -d postgres redis backend
 	@sleep 5
 	@docker exec $(BACKEND_CONTAINER) black .
 	@printf "$(GREEN)✅ Code formaté !$(NC)\n"
+
+format-check: ## Vérifier le formatage sans modifier
+	@printf "$(BLUE)🎨 Vérification du formatage...$(NC)\n"
+	@$(DOCKER_COMPOSE) up -d postgres redis backend
+	@sleep 5
+	@docker exec $(BACKEND_CONTAINER) black --check . || (printf "$(YELLOW)⚠️  Fichiers non formatés détectés$(NC)\n" && exit 1)
+	@printf "$(GREEN)✅ Formatage OK !$(NC)\n"
+
+format-imports: ## Trier les imports avec isort
+	@printf "$(BLUE)📦 Tri des imports...$(NC)\n"
+	@$(DOCKER_COMPOSE) up -d postgres redis backend
+	@sleep 5
+	@docker exec $(BACKEND_CONTAINER) isort .
+	@printf "$(GREEN)✅ Imports triés !$(NC)\n"
+
+analyze: lint format-check test ## Analyse complète du code (lint + format + tests)
+	@printf "$(GREEN)✨ Analyse complète terminée !$(NC)\n"
+
+quality: analyze ## Alias pour analyse complète
+	@printf "$(GREEN)✨ Qualité du code vérifiée !$(NC)\n"
 
 ##@ Logs
 

@@ -31,10 +31,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 # Create necessary directories
-RUN mkdir -p /app/media /app/static /app/logs /var/log
+RUN mkdir -p /app/media /app/static /tmp/vtcbuilder-logs
 
-# Set ownership
-RUN chown -R $user:$user /app
+# Copy init script
+COPY init_logs.sh /app/init_logs.sh
+
+# Set ownership and permissions (avant de changer d'utilisateur)
+RUN chown -R $user:$user /app && \
+    chown -R $user:$user /tmp/vtcbuilder-logs && \
+    chmod -R 775 /tmp/vtcbuilder-logs && \
+    chmod +x /app/init_logs.sh
 
 # Switch to user
 USER $user
@@ -45,5 +51,9 @@ EXPOSE 8000
 # Run Django
 # Optimisation: Réduire les workers pour économiser la mémoire
 # Utiliser 2 workers au lieu de 4 (réduction de 50% de la mémoire)
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "2", "--worker-class", "sync", "--timeout", "120", "--keep-alive", "5", "--max-requests", "1000", "--max-requests-jitter", "100", "vtcbuilder.wsgi:application"]
+# Timeout augmenté à 180 secondes pour éviter les timeouts sur les requêtes longues
+# Graceful timeout pour permettre aux workers de terminer proprement
+# Initialiser les logs avant de démarrer Gunicorn
+# Le script init_logs.sh s'exécute en tant qu'utilisateur vtcbuilder et utilise sudo si nécessaire
+CMD ["/bin/bash", "-c", "/app/init_logs.sh && gunicorn --bind 0.0.0.0:8000 --workers 2 --threads 2 --worker-class sync --timeout 180 --graceful-timeout 30 --keep-alive 5 --max-requests 1000 --max-requests-jitter 100 vtcbuilder.wsgi:application"]
 

@@ -1,0 +1,39 @@
+[MASTER]
+ignore=migrations,venv,.venv,__pycache__
+jobs=0
+suggestion-mode=yes
+
+[MESSAGES CONTROL]
+disable=
+    C0111,  # missing-docstring
+    C0103,  # invalid-name
+    R0903,  # too-few-public-methods
+    R0913,  # too-many-arguments
+    W0212,  # protected-access
+
+[FORMAT]
+max-line-length=100
+indent-string='    '
+
+[BASIC]
+good-names=i,j,k,ex,Run,_,id,db,qs
+
+[DESIGN]
+max-args=7
+max-locals=15
+max-returns=6
+max-branches=12
+max-statements=50
+max-parents=7
+max-attributes=7
+min-public-methods=1
+max-public-methods=20
+
+[IMPORTS]
+import-order-style=google
+known-django=django
+known-rest-framework=rest_framework
+
+[TYPECHECK]
+ignored-modules=django,rest_framework
+
