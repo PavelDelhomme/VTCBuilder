@@ -851,7 +851,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
   const containerClass = block.container === 'container-fluid' ? 'w-full' :
     block.container === 'none' ? '' : 'max-w-7xl mx-auto'
 
-  const content = (() => {
+  // Function to render block content (replacing IIFE for better compiler compatibility)
+  const getBlockContent = (): React.ReactElement => {
     switch (block.type) {
     case 'heading': {
       const headingLevel = block.data.level || 'h2'
@@ -6317,7 +6318,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         </div>
       )
     }
-  })()
+  }
+
+  const content = getBlockContent()
 
   // Generate hover animation classes
   const getHoverAnimationClass = () => {
