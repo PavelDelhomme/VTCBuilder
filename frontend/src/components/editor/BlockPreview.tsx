@@ -2144,6 +2144,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           show_title: block.data.show_title !== undefined ? block.data.show_title : true,
         }
       }
+      // Capturer les variables du scope parent
+      const currentTheme = theme
+      const currentWrapperStyles = wrapperStyles
       // Utiliser le même rendu que 'pricing' mais avec un style spécifique
       const PricingCardsPreview = () => {
         const [plans, setPlans] = useState<any[]>(pricingCardsBlock.data.plans || [])
@@ -2260,12 +2263,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price)
         }
         
-        const isDark = theme === 'dark'
+        const isDark = currentTheme === 'dark'
         
         return (
           <div 
             style={{
-              ...wrapperStyles,
+              ...currentWrapperStyles,
               backgroundColor: isDark ? '#111827' : '#f9fafb',
               color: isDark ? '#f9fafb' : '#111827'
             }} 
@@ -2331,7 +2334,6 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                       }
                     }
                     const buttonStyleObj = getButtonStyle(buttonStyle)
-                    }
                     
                     const buttonUrl = plan.button_url || `/register?plan=${plan.slug || plan.id || index}`
                     const buttonText = plan.button_text || `Choisir ${plan.name || 'ce plan'}`
@@ -2745,6 +2747,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           </form>
         </div>
       )
+    }
 
     case 'pricing-table': {
       const pricingRows = block.data.rows || []

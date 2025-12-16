@@ -257,14 +257,11 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 GUARDIAN_MONKEY_PATCH = False
 
 # Cache Configuration - Optimisation mémoire
+# Configuration compatible avec Django 5.0 et redis-py 5.0.1
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': config('REDIS_URL', default='redis://redis:6379/1'),  # DB 1 pour le cache
-        'OPTIONS': {
-            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-            'IGNORE_EXCEPTIONS': True,  # Ne pas planter si Redis est down
-        },
         'KEY_PREFIX': 'vtcbuilder',
         'TIMEOUT': 300,  # 5 minutes par défaut
         'MAX_ENTRIES': 1000,  # Limiter le nombre d'entrées en mémoire
