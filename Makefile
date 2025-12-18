@@ -228,14 +228,16 @@ restart-frontend: ## Redémarrer uniquement le frontend (Docker)
 	@docker-compose -f docker-compose.simple.yml restart frontend
 	@printf "$(GREEN)✅ Frontend redémarré !$(NC)\n"
 
-restart-frontend-dev: ## Redémarrer le frontend en développement (Next.js)
-	@printf "$(YELLOW)🔄 Redémarrage du frontend Next.js...$(NC)\n"
-	@if [ -f frontend/.next ]; then \
-		printf "$(YELLOW)📦 Nettoyage du cache Next.js...$(NC)\n"; \
+restart-frontend-dev: ## Redémarrer le frontend en développement (Next.js - nettoie le cache)
+	@printf "$(YELLOW)🔄 Nettoyage du cache Next.js pour recharger les variables d'environnement...$(NC)\n"
+	@if [ -d frontend/.next ]; then \
 		rm -rf frontend/.next; \
+		printf "$(GREEN)✅ Cache Next.js nettoyé !$(NC)\n"; \
+		printf "$(YELLOW)💡 Redémarrez maintenant le serveur Next.js (Ctrl+C puis 'cd frontend && npm run dev' ou 'make start')$(NC)\n"; \
+	else \
+		printf "$(YELLOW)⚠️  Pas de cache à nettoyer$(NC)\n"; \
+		printf "$(YELLOW)💡 Les variables d'environnement seront rechargées au prochain redémarrage$(NC)\n"; \
 	fi
-	@printf "$(GREEN)✅ Cache nettoyé. Redémarrez manuellement avec 'cd frontend && npm run dev'$(NC)\n"
-	@printf "$(YELLOW)💡 Ou utilisez 'make start' pour redémarrer toute la stack$(NC)\n"
 
 down: ## Arrêter et supprimer les containers
 	@printf "$(RED)🗑️  Arrêt et suppression des containers...$(NC)\n"
