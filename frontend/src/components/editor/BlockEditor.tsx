@@ -1620,6 +1620,7 @@ const SortableBlock = React.memo(function SortableBlock({
   onMove,
   allBlocks,
   findBlockInTree,
+  selectedBlockId,
 }: {
   block: Block
   blockTypes: BlockType[]
@@ -1634,6 +1635,7 @@ const SortableBlock = React.memo(function SortableBlock({
   onMove?: (blockId: string, targetContainerId: string | 'root') => void
   allBlocks?: Block[]
   findBlockInTree?: (blocks: Block[], blockId: string) => { block: Block; parent: Block[] | null; index: number } | null
+  selectedBlockId?: string | null
 }) {
   // État pour le menu contextuel
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
@@ -2091,31 +2093,12 @@ const SortableBlock = React.memo(function SortableBlock({
                 onUpdate({ children: newChildren })
               }}
               onSelectChild={(childId) => {
-                // Sélectionner l'enfant en trouvant son ID dans l'arbre
-                const findBlockById = (blocks: Block[] | undefined, id: string): Block | null => {
-                  if (!blocks || !Array.isArray(blocks)) return null
-                  for (const b of blocks) {
-                    if (b.id === id) return b
-                    if (b.children) {
-                      const found = findBlockById(b.children, id)
-                      if (found) return found
-                    }
-                  }
-                  return null
-                }
-                // Trouver le bloc dans l'arbre complet - utiliser history.state directement
-                const blocksToSearch = Array.isArray(history.state) ? history.state : []
-                const childBlock = findBlockById(blocksToSearch, childId)
-                if (childBlock) {
-                  setSelectedBlock(childId)
-                  setSidebarOpen(true) // Ouvrir la sidebar pour afficher les paramètres
-                  // Notifier le parent si nécessaire
-                  if (onBlockSelect) {
-                    onBlockSelect(childId)
-                  }
+                // Utiliser onSelectChild du parent pour gérer la sélection
+                if (onSelectChild) {
+                  onSelectChild(childId)
                 }
               }}
-              selectedBlockId={selectedBlock}
+              selectedBlockId={selectedBlockId}
               onMoveChild={(childId, targetContainerId) => {
                 // Trouver l'enfant à déplacer
                 const childToMove = children.find(c => c.id === childId)
