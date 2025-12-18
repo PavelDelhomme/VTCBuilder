@@ -31,6 +31,7 @@ class UserStatusMiddleware:
             '/api/auth/reset-password/verify/',
             '/api/auth/invitation/verify/',
             '/api/auth/invitation/complete/',
+            '/api/analytics/block-usage/',  # Allow analytics tracking without auth
         ]
 
         if any(request.path.startswith(path) for path in public_paths):

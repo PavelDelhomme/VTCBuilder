@@ -85,13 +85,19 @@ NEXT_PUBLIC_BLOCK_VALIDATION_PHASE=4
    ```bash
    NEXT_PUBLIC_BLOCK_VALIDATION_PHASE=1
    ```
-3. **Redémarrez** le serveur de développement Next.js :
+3. **Redémarrez** le serveur de développement :
    ```bash
+   # Option 1 : Avec Make (recommandé)
+   make restart-frontend-dev
+   # Puis relancez manuellement : cd frontend && npm run dev
+   
+   # Option 2 : Redémarrer toute la stack
+   make restart
+   
+   # Option 3 : Manuellement
    # Arrêtez le serveur (Ctrl+C)
    # Puis relancez-le
-   npm run dev
-   # ou
-   yarn dev
+   cd frontend && npm run dev
    ```
 
 ## ⚠️ Important

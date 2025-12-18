@@ -223,10 +223,19 @@ restart-backend: ## Redémarrer uniquement le backend
 	@docker-compose -f docker-compose.simple.yml restart backend
 	@printf "$(GREEN)✅ Backend redémarré !$(NC)\n"
 
-restart-frontend: ## Redémarrer uniquement le frontend
-	@printf "$(YELLOW)🔄 Redémarrage du frontend...$(NC)\n"
+restart-frontend: ## Redémarrer uniquement le frontend (Docker)
+	@printf "$(YELLOW)🔄 Redémarrage du frontend (Docker)...$(NC)\n"
 	@docker-compose -f docker-compose.simple.yml restart frontend
 	@printf "$(GREEN)✅ Frontend redémarré !$(NC)\n"
+
+restart-frontend-dev: ## Redémarrer le frontend en développement (Next.js)
+	@printf "$(YELLOW)🔄 Redémarrage du frontend Next.js...$(NC)\n"
+	@if [ -f frontend/.next ]; then \
+		printf "$(YELLOW)📦 Nettoyage du cache Next.js...$(NC)\n"; \
+		rm -rf frontend/.next; \
+	fi
+	@printf "$(GREEN)✅ Cache nettoyé. Redémarrez manuellement avec 'cd frontend && npm run dev'$(NC)\n"
+	@printf "$(YELLOW)💡 Ou utilisez 'make start' pour redémarrer toute la stack$(NC)\n"
 
 down: ## Arrêter et supprimer les containers
 	@printf "$(RED)🗑️  Arrêt et suppression des containers...$(NC)\n"
