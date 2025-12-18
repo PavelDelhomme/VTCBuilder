@@ -370,6 +370,17 @@ export default function HomepageEditorPage() {
   const [canRedo, setCanRedo] = useState(false)
   const [showOptionsMenu, setShowOptionsMenu] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const optionsButtonRef = useRef<HTMLButtonElement>(null)
+  const optionsDropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Mettre à jour la position du dropdown quand il s'ouvre
+  useEffect(() => {
+    if (showOptionsMenu && optionsButtonRef.current && optionsDropdownRef.current) {
+      const rect = optionsButtonRef.current.getBoundingClientRect()
+      optionsDropdownRef.current.style.left = `${rect.left}px`
+      optionsDropdownRef.current.style.top = `${rect.bottom + 4}px`
+    }
+  }, [showOptionsMenu])
 
   // Fonction pour charger les données
   const loadData = useCallback(async () => {
@@ -642,20 +653,9 @@ export default function HomepageEditorPage() {
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-2" style={{ marginTop: '-1rem' }}>
         <div className="flex gap-1 items-center flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* Menu déroulant pour options */}
-          <div className="relative flex-shrink-0" ref={(el) => {
-            if (el && showOptionsMenu) {
-              const button = el.querySelector('button') as HTMLElement
-              if (button) {
-                const rect = button.getBoundingClientRect()
-                const dropdown = el.querySelector('[data-options-dropdown]') as HTMLElement
-                if (dropdown) {
-                  dropdown.style.left = `${rect.left}px`
-                  dropdown.style.top = `${rect.bottom + 4}px`
-                }
-              }
-            }
-          }}>
+          <div className="relative flex-shrink-0">
             <button
+              ref={optionsButtonRef}
               onClick={(e) => {
                 e.stopPropagation()
                 setShowOptionsMenu(!showOptionsMenu)
@@ -675,7 +675,7 @@ export default function HomepageEditorPage() {
                   onClick={() => setShowOptionsMenu(false)}
                 />
                 <div 
-                  data-options-dropdown
+                  ref={optionsDropdownRef}
                   className="fixed bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-[10001] w-48 min-w-max" 
                   onClick={(e) => e.stopPropagation()}
                 >
