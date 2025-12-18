@@ -1021,7 +1021,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       // Prioriser block.styles.text_align (panneau Style) puis block.data.align (panneau Contenu) puis contentStyles.textAlign
       const textAlign = block.styles?.text_align || block.data.align || contentStyles.textAlign || 'left'
       // Prioriser block.styles.color (défini dans le panneau Style) puis block.data.color (défini dans le panneau Contenu)
-      const textColor = block.styles?.color || block.data.color || (isDark ? '#d1d5db' : (contentStyles.color || '#111827'))
+      const content = block.data.content || ''
+      const isEmpty = !content.trim()
+      const displayContent = isEmpty ? 'Entrez votre texte' : content.replace(/\n/g, '<br />')
+      const textColor = isEmpty
+        ? (isDark ? '#6b7280' : '#9ca3af')
+        : (block.styles?.color || block.data.color || (isDark ? '#d1d5db' : (contentStyles.color || '#111827')))
       return (
         <div className="mb-6 prose max-w-none" style={{ 
           textAlign: textAlign,
@@ -1030,7 +1035,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         }}>
           <div 
             dangerouslySetInnerHTML={{ 
-              __html: (block.data.content || '').replace(/\n/g, '<br />')
+              __html: displayContent
             }}
             style={{
               ...contentStyles,
@@ -1039,7 +1044,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               color: textColor,
               textAlign: textAlign,
               display: 'block',
-              width: '100%'
+              width: '100%',
+              fontStyle: isEmpty ? 'italic' : 'normal',
             }}
           />
         </div>

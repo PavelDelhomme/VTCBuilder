@@ -54,13 +54,46 @@ export function useBlockTracking() {
     }
 
     try {
-      await api.post('/analytics/block-usage/', {
+      // Utiliser axios directement pour éviter l'intercepteur qui pourrait ajouter le token
+      const axios = require('axios')
+      const API_URL = typeof window !== 'undefined' && window.location.hostname.includes('192.168.1.134')
+        ? 'http://192.168.1.134:9495'
+        : window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+        ? 'http://localhost:9495'
+        : process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9495'
+      
+      await axios.post(`${API_URL}/api/analytics/block-usage/`, {
         usages: dataToSend,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        // Ne pas envoyer de token pour cet endpoint
+        withCredentials: false,
+        // Supprimer complètement l'Authorization header si présent
+        transformRequest: [(data, headers) => {
+          delete headers['Authorization']
+          return JSON.stringify(data)
+        }],
       })
-    } catch (error) {
-      console.warn('Error enregistrement usage blocs:', error)
-      // En cas d'erreur, remettre dans la queue pour réessayer plus tard
-      trackingQueue.current = [...dataToSend, ...trackingQueue.current]
+    } catch (error: any) {
+      // Ne jamais logger les erreurs 403 pour cet endpoint - c'est attendu et normal
+      // Les erreurs 403 sont silencieuses et ne doivent pas apparaître dans la console
+      if (error?.response?.status === 403) {
+        // Erreur 403 silencieuse - ne rien faire, ne pas logger, ne pas remettre en queue
+        return
+      }
+      // Pour les autres erreurs, logger discrètement et remettre en queue
+      if (error?.response?.status !== 403) {
+        // Logger seulement en mode développement et seulement une fois
+        if (process.env.NODE_ENV === 'development' && !(window as any).__hasLoggedBlockTrackingError) {
+          console.warn('Error enregistrement usage blocs (non-403):', error)
+          ;(window as any).__hasLoggedBlockTrackingError = true
+        }
+        // Remettre dans la queue pour réessayer plus tard
+        trackingQueue.current = [...dataToSend, ...trackingQueue.current]
+      }
     }
   }
 

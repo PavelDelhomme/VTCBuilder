@@ -91,6 +91,15 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const [blockTypes, setBlockTypes] = useState<BlockType[]>([])
   const [selectedBlock, setSelectedBlock] = useState<string | null>(externalSelectedBlockId || null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null) // ID du bloc en cours de drag
+  // Référence pour stocker la position initiale du drag et l'offset du clic
+  const dragStartPositionRef = useRef<{ 
+    blockX: number; 
+    blockY: number; 
+    clickX?: number; 
+    clickY?: number;
+    offsetX?: number;
+    offsetY?: number;
+  } | null>(null)
   
   const [sidebarOpen, setSidebarOpen] = useState(true) // Ouvrir par défaut sur desktop
   const [blocksPaletteOpen, setBlocksPaletteOpen] = useState(true) // Palette de blocs ouverte par défaut
@@ -190,8 +199,15 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   // Tracking des blocs
   const { trackBlockAction } = useBlockTracking()
 
+  // Référence pour capturer l'événement de clic initial
+  const dragStartEventRef = useRef<MouseEvent | null>(null)
+  
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // Distance minimale avant d'activer le drag
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -422,22 +438,91 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveDragId(event.active.id as string)
+    // Stocker la position visuelle exacte du bloc au moment du drag
+    const blockElement = document.querySelector(`[data-block-id="${event.active.id}"]`) as HTMLElement
+    const mouseEvent = dragStartEventRef.current
+    
+    if (blockElement) {
+      // Utiliser getBoundingClientRect pour obtenir la position visuelle exacte (sans scroll)
+      const rect = blockElement.getBoundingClientRect()
+      
+      if (mouseEvent) {
+        // Calculer l'offset du clic par rapport au coin supérieur gauche du bloc
+        const offsetX = mouseEvent.clientX - rect.left
+        const offsetY = mouseEvent.clientY - rect.top
+        
+        dragStartPositionRef.current = { 
+          blockX: rect.left,  // Position X du bloc dans la fenêtre
+          blockY: rect.top,  // Position Y du bloc dans la fenêtre
+          clickX: mouseEvent.clientX,  // Position X du clic
+          clickY: mouseEvent.clientY,  // Position Y du clic
+          offsetX: offsetX,  // Offset du clic par rapport au bloc
+          offsetY: offsetY,  // Offset du clic par rapport au bloc
+        }
+      } else {
+        // Fallback si pas d'événement de souris - centrer le bloc
+        dragStartPositionRef.current = { 
+          blockX: rect.left,
+          blockY: rect.top,
+          offsetX: rect.width / 2,
+          offsetY: rect.height / 2,
+        }
+      }
+    }
+    
+    // Réinitialiser la référence de l'événement
+    dragStartEventRef.current = null
   }, [])
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
     setActiveDragId(null) // Réinitialiser après le drag
 
-    if (!over) return
+    // Debug: afficher les informations de drag
+    console.log('DragEnd:', { activeId: active.id, overId: over?.id, activeData: active.data.current, overData: over?.data.current })
+
+    if (!over) {
+      // Si on lâche sans cible, ne rien faire
+      console.log('DragEnd: Pas de cible (over)')
+      return
+    }
 
     // Vérifier si on drop sur une zone de conteneur (peut être un ID de drop zone)
     const overId = String(over.id || '')
     const isContainerDropZone = overId.startsWith('container-drop-')
-    const containerId = isContainerDropZone ? overId.replace('container-drop-', '') : (over.data.current?.containerId as string || '')
+    let containerId = isContainerDropZone ? overId.replace('container-drop-', '') : ''
     
-    // Si on drop sur un bloc conteneur directement (pas sa zone de drop), ignorer
-    // pour éviter de remplacer le conteneur
-    if (active.data.current?.type === 'block' && over.data.current?.type === 'container' && !isContainerDropZone) {
+    // Si ce n'est pas une zone de drop mais que c'est un conteneur, utiliser son ID directement
+    if (!containerId && over.data.current?.type === 'container') {
+      containerId = over.data.current.containerId as string || String(over.id)
+    }
+    
+    // Si toujours pas d'ID, essayer de trouver l'ID du conteneur depuis les données
+    if (!containerId && over.data.current?.containerId) {
+      containerId = String(over.data.current.containerId)
+    }
+    
+    // Vérifier si le bloc cible est un conteneur
+    const isTargetContainer = containerId && (() => {
+      const findContainer = (blocks: Block[]): Block | null => {
+        for (const block of blocks) {
+          if (block.id === containerId) {
+            const containerTypes = ['container', 'flex-container', 'grid-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
+            if (containerTypes.includes(block.type)) return block
+          }
+          if (block.children) {
+            const found = findContainer(block.children)
+            if (found) return found
+          }
+        }
+        return null
+      }
+      return findContainer(history.state) !== null
+    })()
+    
+    // Si on drop sur un bloc conteneur directement (pas sa zone de drop), permettre le drop si c'est un conteneur
+    // Sinon, ignorer pour éviter de remplacer le conteneur
+    if (active.data.current?.type === 'block' && over.data.current?.type === 'container' && !isContainerDropZone && !isTargetContainer) {
       return
     }
 
@@ -475,24 +560,78 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       
       const newBlocks = addBlockToContainer(history.state, containerId, newChild)
       history.set(newBlocks, true)
+      onChange(newBlocks)
       trackBlockAction(blockType.name, 'add')
       return
     }
 
     // Gérer le déplacement d'un bloc existant dans un conteneur
     // IMPORTANT: Utiliser uniquement la zone de drop (container-drop-*) pour éviter de remplacer le conteneur
-    if (active.data.current?.type === 'block' && isContainerDropZone) {
+    // OU accepter le drop directement sur un conteneur si containerId est défini
+    if (active.data.current?.type === 'block' && (isContainerDropZone || containerId)) {
+      console.log('DragEnd: Tentative de déplacement dans conteneur', { 
+        blockId: active.id, 
+        containerId, 
+        isContainerDropZone,
+        overId,
+        overData: over.data.current 
+      })
       const blockId = active.id as string
       
+      // Si containerId n'est pas défini mais qu'on est sur une zone de drop, l'extraire
+      if (!containerId && isContainerDropZone) {
+        containerId = overId.replace('container-drop-', '')
+      }
+      
+      // Si toujours pas d'ID, essayer depuis les données
+      if (!containerId && over.data.current?.containerId) {
+        containerId = String(over.data.current.containerId)
+      }
+      
+      // Si toujours pas d'ID, utiliser l'ID de over directement si c'est un conteneur
+      if (!containerId && over.id) {
+        const overBlockId = String(over.id)
+        const findContainer = (blocks: Block[]): Block | null => {
+          for (const block of blocks) {
+            if (block.id === overBlockId) {
+              const containerTypes = ['container', 'flex-container', 'grid-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
+              if (containerTypes.includes(block.type)) return block
+            }
+            if (block.children) {
+              const found = findContainer(block.children)
+              if (found) return found
+            }
+          }
+          return null
+        }
+        const containerBlock = findContainer(history.state)
+        if (containerBlock) {
+          containerId = containerBlock.id
+        }
+      }
+      
+      if (!containerId) {
+        console.log('DragEnd: Impossible de trouver l\'ID du conteneur')
+        return
+      }
+      
       // Ne pas permettre de déplacer un bloc dans lui-même
-      if (blockId === containerId) return
+      if (blockId === containerId) {
+        console.log('DragEnd: Impossible de déplacer un bloc dans lui-même')
+        return
+      }
       
       // Trouver le bloc à déplacer
       const blockToMoveResult = findBlockInTree(history.state, blockId)
-      if (!blockToMoveResult) return
+      if (!blockToMoveResult) {
+        console.log('DragEnd: Bloc à déplacer non trouvé')
+        return
+      }
       const blockToMove = blockToMoveResult.block
       
-      // Vérifier que le conteneur cible n'est pas un enfant du bloc à déplacer (éviter les boucles)
+      // Vérifier que le conteneur cible n'est pas un descendant direct ou indirect du bloc à déplacer (éviter les boucles)
+      // IMPORTANT: On vérifie uniquement si le conteneur cible est DANS les enfants du bloc à déplacer
+      // Si le conteneur cible est à côté (même niveau ou parent), c'est autorisé
       const isDescendant = (blocks: Block[], targetId: string): boolean => {
         for (const block of blocks) {
           if (block.id === targetId) return true
@@ -503,9 +642,47 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         return false
       }
       
-      if (blockToMove.children && isDescendant(blockToMove.children, containerId)) {
-        // Ne pas permettre de déplacer un conteneur dans un de ses enfants
-        return
+      // Fonction pour trouver le parent d'un bloc dans l'arbre
+      const findBlockParent = (blocks: Block[], searchId: string, parentId?: string): string | null => {
+        for (const block of blocks) {
+          if (block.id === searchId) {
+            return parentId || null
+          }
+          if (block.children && block.children.length > 0) {
+            const found = findBlockParent(block.children, searchId, block.id)
+            if (found !== null) return found
+          }
+        }
+        return null
+      }
+      
+      // Vérifier que le conteneur cible n'est pas un descendant du bloc à déplacer
+      // Mais seulement si le bloc à déplacer a des enfants (c'est un conteneur)
+      if (blockToMove.children && blockToMove.children.length > 0) {
+        if (isDescendant(blockToMove.children, containerId)) {
+          // Ne pas permettre de déplacer un conteneur dans un de ses descendants directs
+          console.log('DragEnd: Impossible de déplacer un conteneur dans un de ses descendants', {
+            blockToMoveId: blockId,
+            containerId,
+            blockToMoveChildren: blockToMove.children.map(c => c.id)
+          })
+          return
+        }
+      }
+      
+      // Vérifier que le bloc à déplacer n'est pas un descendant du conteneur cible
+      // (éviter de déplacer un bloc dans un de ses ancêtres)
+      // On vérifie si le conteneur cible est dans la chaîne des parents du bloc à déplacer
+      let currentParent = findBlockParent(history.state, blockId)
+      while (currentParent) {
+        if (currentParent === containerId) {
+          console.log('DragEnd: Impossible de déplacer un bloc dans un de ses ancêtres', {
+            blockToMoveId: blockId,
+            containerId
+          })
+          return
+        }
+        currentParent = findBlockParent(history.state, currentParent)
       }
       
       // Retirer le bloc de sa position actuelle
@@ -514,8 +691,99 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       // Ajouter le bloc dans le conteneur cible
       newBlocks = addBlockToContainer(newBlocks, containerId, blockToMove)
       
+      console.log('DragEnd: Déplacement réussi', { newBlocks, containerId })
       history.set(newBlocks, true)
-      trackBlockAction(blockToMove.block.type, 'move')
+      onChange(newBlocks)
+      trackBlockAction(blockToMove.type, 'move')
+      return
+    }
+    
+    // Si on drop sur un conteneur directement (pas sa zone de drop), essayer quand même
+    if (active.data.current?.type === 'block' && over.data.current?.type === 'container' && !isContainerDropZone) {
+      console.log('DragEnd: Drop sur conteneur directement (pas zone de drop), tentative de déplacement')
+      const blockId = active.id as string
+      const containerId = over.id as string
+      
+      // Ne pas permettre de déplacer un bloc dans lui-même
+      if (blockId === containerId) {
+        console.log('DragEnd: Impossible de déplacer un bloc dans lui-même')
+        return
+      }
+      
+      // Trouver le bloc à déplacer
+      const blockToMoveResult = findBlockInTree(history.state, blockId)
+      if (!blockToMoveResult) {
+        console.log('DragEnd: Bloc à déplacer non trouvé')
+        return
+      }
+      const blockToMove = blockToMoveResult.block
+      
+      // Vérifier que le conteneur cible n'est pas un descendant direct ou indirect du bloc à déplacer (éviter les boucles)
+      // IMPORTANT: On vérifie uniquement si le conteneur cible est DANS les enfants du bloc à déplacer
+      // Si le conteneur cible est à côté (même niveau ou parent), c'est autorisé
+      const isDescendant = (blocks: Block[], targetId: string): boolean => {
+        for (const block of blocks) {
+          if (block.id === targetId) return true
+          if (block.children && block.children.length > 0) {
+            if (isDescendant(block.children, targetId)) return true
+          }
+        }
+        return false
+      }
+      
+      // Fonction pour trouver le parent d'un bloc dans l'arbre
+      const findBlockParent = (blocks: Block[], searchId: string, parentId?: string): string | null => {
+        for (const block of blocks) {
+          if (block.id === searchId) {
+            return parentId || null
+          }
+          if (block.children && block.children.length > 0) {
+            const found = findBlockParent(block.children, searchId, block.id)
+            if (found !== null) return found
+          }
+        }
+        return null
+      }
+      
+      // Vérifier que le conteneur cible n'est pas un descendant du bloc à déplacer
+      // Mais seulement si le bloc à déplacer a des enfants (c'est un conteneur)
+      if (blockToMove.children && blockToMove.children.length > 0) {
+        if (isDescendant(blockToMove.children, containerId)) {
+          // Ne pas permettre de déplacer un conteneur dans un de ses descendants directs
+          console.log('DragEnd: Impossible de déplacer un conteneur dans un de ses descendants', {
+            blockToMoveId: blockId,
+            containerId,
+            blockToMoveChildren: blockToMove.children.map(c => c.id)
+          })
+          return
+        }
+      }
+      
+      // Vérifier que le bloc à déplacer n'est pas un descendant du conteneur cible
+      // (éviter de déplacer un bloc dans un de ses ancêtres)
+      // On vérifie si le conteneur cible est dans la chaîne des parents du bloc à déplacer
+      let currentParent = findBlockParent(history.state, blockId)
+      while (currentParent) {
+        if (currentParent === containerId) {
+          console.log('DragEnd: Impossible de déplacer un bloc dans un de ses ancêtres', {
+            blockToMoveId: blockId,
+            containerId
+          })
+          return
+        }
+        currentParent = findBlockParent(history.state, currentParent)
+      }
+      
+      // Retirer le bloc de sa position actuelle
+      let newBlocks = removeBlockFromTree(history.state, blockId)
+      
+      // Ajouter le bloc dans le conteneur cible
+      newBlocks = addBlockToContainer(newBlocks, containerId, blockToMove)
+      
+      console.log('DragEnd: Déplacement réussi (drop direct sur conteneur)', { newBlocks })
+      history.set(newBlocks, true)
+      onChange(newBlocks)
+      trackBlockAction(blockToMove.type, 'move')
       return
     }
 
@@ -546,6 +814,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           }
           const newBlocks = updateParent(history.state)
           history.set(newBlocks, true)
+          onChange(newBlocks)
         }
       } else {
         // Blocs à des niveaux différents, essayer un réordonnancement simple au niveau racine
@@ -555,10 +824,11 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         if (oldIndex !== -1 && newIndex !== -1) {
           const newBlocks = arrayMove(history.state, oldIndex, newIndex)
           history.set(newBlocks, true)
+          onChange(newBlocks)
         }
       }
     }
-  }, [history, trackBlockAction, findBlockInTree, removeBlockFromTree, addBlockToContainer, isContainerType])
+  }, [history, trackBlockAction, findBlockInTree, removeBlockFromTree, addBlockToContainer, isContainerType, onChange])
 
   const addBlock = useCallback((blockType: BlockType) => {
     // Si ce n'est pas un conteneur et qu'aucun conteneur n'existe, empêcher l'ajout
@@ -636,6 +906,10 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     const updateBlockInTree = (blocks: Block[]): Block[] => {
       return blocks.map((b: Block) => {
         if (b.id === blockId) {
+          // Si on met à jour les children, s'assurer de les fusionner correctement
+          if (updates.children !== undefined) {
+            return { ...b, ...updates, children: updates.children }
+          }
           return { ...b, ...updates }
         }
         if (b.children && b.children.length > 0) {
@@ -648,22 +922,15 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     const block = findBlockById(history.state, blockId)
     const newBlocks = updateBlockInTree(history.state)
     
-    // Pour les changements de style (padding, margin, couleur dans styles, etc.), utiliser un debounce
-    // Pour les changements de contenu (texte, enfants, level, align, color dans data, etc.), mettre à jour immédiatement
-    const isStyleUpdate = (updates.styles !== undefined || 
-                         updates.layout !== undefined || 
-                         updates.container !== undefined ||
-                         updates.position !== undefined) &&
-                         updates.children === undefined && // Les enfants doivent être mis à jour immédiatement
-                         updates.data === undefined // Les modifications de data (level, align, color, etc.) doivent être immédiates
-    
+    // Toutes les mises à jour sont maintenant immédiates pour que Ctrl+S fonctionne correctement
+    // Les styles sont mis à jour immédiatement pour que la prévisualisation soit en temps réel
     const updateHistory = (callOnChangeDirectly: boolean = false) => {
       // Si on a fait undo avant (futur non vide), créer une nouvelle branche
       // Le hook useHistory gère déjà cela en effaçant le futur et créant une nouvelle branche
       history.set(newBlocks, true)
       
-      // Pour les mises à jour immédiates (data, children), appeler onChange directement
-      // pour que la prévisualisation se mette à jour instantanément
+      // Pour toutes les mises à jour (data, children, styles), appeler onChange directement
+      // pour que la prévisualisation se mette à jour instantanément et que Ctrl+S fonctionne
       if (callOnChangeDirectly) {
         isInternalUpdate.current = true
         onChange(newBlocks)
@@ -676,24 +943,13 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       }
     }
     
-    if (immediate || !isStyleUpdate) {
-      // Mise à jour immédiate pour le contenu (data, children, etc.)
-      if (updateBlockTimeoutRef.current[blockId]) {
-        clearTimeout(updateBlockTimeoutRef.current[blockId])
-        delete updateBlockTimeoutRef.current[blockId]
-      }
-      // Appeler onChange directement pour les mises à jour de data (align, level, color, etc.)
-      updateHistory(true)
-    } else {
-      // Debounce pour les styles uniquement (100ms au lieu de 300ms pour plus de réactivité)
-      if (updateBlockTimeoutRef.current[blockId]) {
-        clearTimeout(updateBlockTimeoutRef.current[blockId])
-      }
-      updateBlockTimeoutRef.current[blockId] = setTimeout(() => {
-        updateHistory()
-        delete updateBlockTimeoutRef.current[blockId]
-      }, 100) // Réduit de 300ms à 100ms pour plus de réactivité
+    // Mise à jour immédiate pour tout (styles, data, children, etc.)
+    if (updateBlockTimeoutRef.current[blockId]) {
+      clearTimeout(updateBlockTimeoutRef.current[blockId])
+      delete updateBlockTimeoutRef.current[blockId]
     }
+    // Appeler onChange directement pour toutes les mises à jour
+    updateHistory(true)
   }, [history, trackBlockAction])
 
   // Gérer l'ouverture des paramètres - afficher dans la sidebar (OPTIMISÉ)
@@ -857,6 +1113,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                       block={selectedBlockData.block}
                       onUpdate={(updates) => updateBlock(selectedBlock, updates)}
                       allBlocks={history.state}
+                      blockTypes={blockTypes}
                     />
                   ) : null
                 ) : propertiesTab === 'style' ? (
@@ -877,13 +1134,82 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                           onClick={() => {
                             if (selectedBlockData?.block) {
                               const block = selectedBlockData.block
-                              const newBlock: Block = {
-                                ...block,
-                                id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                              
+                              // Fonction récursive pour trouver le bloc et son parent dans l'arbre
+                              const findBlockAndParent = (blocks: Block[], targetId: string, parent: Block | null = null): { block: Block | null, parent: Block | null, parentChildren: Block[] | null } => {
+                                for (let i = 0; i < blocks.length; i++) {
+                                  if (blocks[i].id === targetId) {
+                                    return { block: blocks[i], parent, parentChildren: parent ? parent.children || [] : blocks }
+                                  }
+                                  if (blocks[i].children && blocks[i].children.length > 0) {
+                                    const found = findBlockAndParent(blocks[i].children, targetId, blocks[i])
+                                    if (found.block) return found
+                                  }
+                                }
+                                return { block: null, parent: null, parentChildren: null }
                               }
-                              const currentIndex = history.state.findIndex((b: Block) => b.id === block.id)
-                              const newBlocks = [...history.state]
-                              newBlocks.splice(currentIndex + 1, 0, newBlock)
+                              
+                              const result = findBlockAndParent(history.state, block.id)
+                              
+                              if (!result.block) return
+                              
+                              // Créer une copie profonde du bloc avec un nouvel ID
+                              const deepClone = (b: Block): Block => {
+                                const cloned: Block = {
+                                  ...b,
+                                  id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                                  children: b.children ? b.children.map(deepClone) : undefined
+                                }
+                                return cloned
+                              }
+                              
+                              const newBlock = deepClone(result.block)
+                              
+                              // Fonction récursive pour insérer le bloc dupliqué au même niveau
+                              const insertDuplicate = (blocks: Block[]): Block[] => {
+                                return blocks.map((b: Block) => {
+                                  if (b.id === block.id) {
+                                    // Si c'est le bloc à dupliquer, retourner le bloc original
+                                    // Le nouveau bloc sera inséré après dans le tableau parent
+                                    return b
+                                  }
+                                  if (b.children && b.children.length > 0) {
+                                    return { ...b, children: insertDuplicate(b.children) }
+                                  }
+                                  return b
+                                })
+                              }
+                              
+                              let newBlocks = insertDuplicate(history.state)
+                              
+                              // Insérer le nouveau bloc après le bloc original
+                              if (result.parent && result.parentChildren) {
+                                // Le bloc est dans un conteneur
+                                const childIndex = result.parentChildren.findIndex((b: Block) => b.id === block.id)
+                                if (childIndex !== -1) {
+                                  const updateParentChildren = (blocks: Block[]): Block[] => {
+                                    return blocks.map((b: Block) => {
+                                      if (b.id === result.parent!.id) {
+                                        const newChildren = [...(b.children || [])]
+                                        newChildren.splice(childIndex + 1, 0, newBlock)
+                                        return { ...b, children: newChildren }
+                                      }
+                                      if (b.children && b.children.length > 0) {
+                                        return { ...b, children: updateParentChildren(b.children) }
+                                      }
+                                      return b
+                                    })
+                                  }
+                                  newBlocks = updateParentChildren(newBlocks)
+                                }
+                              } else {
+                                // Le bloc est à la racine
+                                const rootIndex = newBlocks.findIndex((b: Block) => b.id === block.id)
+                                if (rootIndex !== -1) {
+                                  newBlocks.splice(rootIndex + 1, 0, newBlock)
+                                }
+                              }
+                              
                               history.set(newBlocks)
                               onChange(newBlocks)
                               trackBlockAction(block.type, 'add')
@@ -1383,7 +1709,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       {!showOnlyPalette && (
       <div className="flex-1 flex min-w-0 w-full h-full border-r border-gray-200 dark:border-gray-700">
         {/* Editor Panel */}
-        <div className={`flex-1 flex flex-col min-w-0 h-full transition-all duration-300 w-full ${!blocksPaletteOpen ? 'ml-0' : ''}`}>
+        <div className={`flex-1 flex flex-col min-w-0 h-full transition-all duration-300 w-full ${!blocksPaletteOpen ? 'ml-0' : ''}`} style={{ position: 'relative' }}>
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -1446,6 +1772,10 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                     blockTypes={blockTypes}
                     isSelected={selectedBlock === block.id}
                     onSelect={() => handleSelectBlock(block.id)}
+                    onDragStartCapture={(e: React.PointerEvent) => {
+                      // Capturer l'événement de clic initial pour calculer l'offset
+                      dragStartEventRef.current = e.nativeEvent as MouseEvent
+                    }}
                     onMove={(blockId, targetContainerId) => {
                       // Déplacer le bloc vers un conteneur ou à la racine
                       const blockToMoveResult = findBlockInTree(history.state, blockId)
@@ -1549,7 +1879,15 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                 )}
               </div>
             </SortableContext>
-            <DragOverlay>
+            <DragOverlay 
+              adjustScale={false} 
+              dropAnimation={null}
+              style={{
+                cursor: 'grabbing',
+                zIndex: 99999,
+                pointerEvents: 'none',
+              }}
+            >
               {activeDragId ? (
                 (() => {
                   // Trouver le bloc en cours de drag
@@ -1569,28 +1907,86 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   const blockType = blockTypes.find(bt => bt.name === draggedBlock.type)
                   if (!blockType) return null
                   
+                  // Afficher une version réduite mais reconnaissable du bloc qui suit la souris
+                  // Le DragOverlay de dnd-kit applique automatiquement transform: translate3d(x, y, 0)
+                  // où x et y sont les coordonnées de la souris (clientX, clientY)
+                  // On doit compenser avec un offset pour que le bloc apparaisse exactement où il était visuellement
+                  // L'offset est la différence entre la position du clic et le coin supérieur gauche du bloc
+                  const offsetX = dragStartPositionRef.current?.offsetX ?? 0
+                  const offsetY = dragStartPositionRef.current?.offsetY ?? 0
+                  
+                  // Debug: vérifier que l'offset est bien calculé
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('DragOverlay offset:', { offsetX, offsetY, position: dragStartPositionRef.current })
+                  }
+                  
                   return (
-                    <div className="bg-white dark:bg-gray-800 border-2 border-blue-500 rounded-lg shadow-2xl p-4 opacity-90 rotate-2 max-w-xs">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                          <span className="text-blue-600 dark:text-blue-400 text-sm font-bold">
+                    <div 
+                      className="bg-white dark:bg-gray-800 border-2 border-blue-500 rounded-xl shadow-2xl pointer-events-none"
+                      style={{
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                        maxWidth: '280px',
+                        minWidth: '200px',
+                        opacity: 1,
+                        // dnd-kit positionne le DragOverlay à la position de la souris (clientX, clientY)
+                        // On utilise l'offset du clic pour compenser et faire apparaître le bloc
+                        // exactement où il était visuellement au moment du clic
+                        transform: `translate(-${offsetX}px, -${offsetY}px)`,
+                        willChange: 'transform',
+                      }}
+                    >
+                      {/* Header du bloc */}
+                      <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-b border-blue-200 dark:border-blue-700">
+                        <div className="w-8 h-8 rounded bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
+                          <span className="text-blue-600 dark:text-blue-400 text-lg">
                             {blockType.icon || '📦'}
                           </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
-                            {blockType.label || blockType.name}
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">
+                            {blockType.label || draggedBlock.type}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {blockType.category || 'Bloc'}
-                          </div>
+                          {blockType.description && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {blockType.description}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      {draggedBlock.data && Object.keys(draggedBlock.data).length > 0 && (
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                          {JSON.stringify(draggedBlock.data).substring(0, 50)}...
-                        </div>
-                      )}
+                      {/* Aperçu du contenu */}
+                      <div className="p-3">
+                        {draggedBlock.data && Object.keys(draggedBlock.data).length > 0 ? (
+                          <div className="text-xs text-gray-400 dark:text-gray-500 space-y-1">
+                            {draggedBlock.data.text && (
+                              <div className="truncate">{draggedBlock.data.text}</div>
+                            )}
+                            {draggedBlock.data.title && (
+                              <div className="font-medium truncate">{draggedBlock.data.title}</div>
+                            )}
+                            {draggedBlock.data.label && (
+                              <div className="truncate">{draggedBlock.data.label}</div>
+                            )}
+                            {!draggedBlock.data.text && !draggedBlock.data.title && !draggedBlock.data.label && (
+                              <div className="text-gray-400 dark:text-gray-500 italic">Contenu du bloc</div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400 dark:text-gray-500 italic">
+                            Bloc vide
+                          </div>
+                        )}
+                        {draggedBlock.children && draggedBlock.children.length > 0 && (
+                          <div className="mt-2 text-xs text-blue-600 dark:text-blue-400">
+                            {draggedBlock.children.length} enfant{draggedBlock.children.length > 1 ? 's' : ''}
+                          </div>
+                        )}
+                      </div>
+                      {/* Indicateur de déplacement */}
+                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                        </svg>
+                      </div>
                     </div>
                   )
                 })()
@@ -1621,6 +2017,7 @@ const SortableBlock = React.memo(function SortableBlock({
   allBlocks,
   findBlockInTree,
   selectedBlockId,
+  onDragStartCapture,
 }: {
   block: Block
   blockTypes: BlockType[]
@@ -1636,11 +2033,11 @@ const SortableBlock = React.memo(function SortableBlock({
   allBlocks?: Block[]
   findBlockInTree?: (blocks: Block[], blockId: string) => { block: Block; parent: Block[] | null; index: number } | null
   selectedBlockId?: string | null
+  onDragStartCapture?: (e: React.PointerEvent) => void
 }) {
   // État pour le menu contextuel
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [showMenu, setShowMenu] = useState(false)
-  const [showMoveModal, setShowMoveModal] = useState(false)
   // Utiliser l'état passé en prop ou un état local par défaut
   const isExpanded = isCollapsed !== undefined ? !isCollapsed : true
   const {
@@ -1661,7 +2058,7 @@ const SortableBlock = React.memo(function SortableBlock({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isDragging ? 'none' : transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.3 : 1, // Plus transparent pendant le drag pour voir le DragOverlay
   }
 
   const blockType = blockTypes.find(bt => bt.name === block.type)
@@ -1917,7 +2314,20 @@ const SortableBlock = React.memo(function SortableBlock({
         }}
         data-block-id={block.id}
         style={style}
-        className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] ${isResizing ? 'select-none' : ''} group cursor-pointer`}
+        className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] ${isResizing ? 'select-none' : ''} group cursor-move`}
+        {...attributes}
+        {...(listeners ? {
+          ...listeners,
+          onPointerDown: (e: React.PointerEvent) => {
+            // Capturer l'événement de clic initial pour calculer l'offset
+            if (onDragStartCapture) {
+              onDragStartCapture(e)
+            }
+            if (listeners.onPointerDown) {
+              listeners.onPointerDown(e)
+            }
+          },
+        } : {})}
         onClick={handleBlockClick}
         onDoubleClick={handleDoubleClick}
         onContextMenu={(e) => {
@@ -2015,8 +2425,13 @@ const SortableBlock = React.memo(function SortableBlock({
           </button>
           <div 
             className={`flex-shrink-0 ${getIconContainerSize()} rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm border border-gray-200 dark:border-gray-700`}
-            {...attributes}
-            {...listeners}
+            {...(!isSelected ? { ...attributes, ...listeners } : {})}
+            onClick={(e) => {
+              // Si le bloc est sélectionné, les listeners sont sur le bloc principal
+              if (isSelected) {
+                e.stopPropagation()
+              }
+            }}
           >
             <span className={getIconSize()}>{blockType?.icon || '📦'}</span>
           </div>
@@ -2048,12 +2463,14 @@ const SortableBlock = React.memo(function SortableBlock({
             </svg>
           </button>
         </div>
-        {/* Aide contextuelle pour drag and drop */}
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-          <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700" title="Glissez-déposez ce bloc pour le déplacer ou le mettre dans un conteneur">
-            <span className="text-gray-600 dark:text-gray-400">🖱️</span> Glisser-déposer
+        {/* Aide contextuelle pour drag and drop - visible quand sélectionné */}
+        {isSelected && (
+          <div className="absolute top-2 right-2 opacity-100 transition-opacity z-10">
+            <div className="text-xs text-blue-600 dark:text-blue-400 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700" title="Glissez-déposez ce bloc pour le déplacer ou le mettre dans un conteneur">
+              <span className="text-blue-600 dark:text-blue-400">🖱️</span> Glisser pour déplacer
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Block Content - Simple and Clean */}
@@ -2160,6 +2577,11 @@ const SortableBlock = React.memo(function SortableBlock({
             e.stopPropagation()
             // Empêcher la propagation pour éviter que le clic ne déclenche handleBlockClick
           }}
+          onContextMenu={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+            // Empêcher l'ouverture d'un nouveau menu contextuel si on fait un clic droit dans le menu
+          }}
         >
           <button
             onClick={(e) => {
@@ -2178,15 +2600,19 @@ const SortableBlock = React.memo(function SortableBlock({
           <button
             onClick={(e) => {
               e.stopPropagation()
-              setShowMoveModal(true)
+              // Fermer le menu et permettre le drag & drop direct
+              // L'utilisateur peut maintenant glisser le bloc vers n'importe quel conteneur
               closeContextMenu()
+              // Sélectionner le bloc pour le rendre draggable
+              onSelect()
             }}
             className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+            title="Fermer le menu et glisser le bloc vers un autre conteneur"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
             </svg>
-            Déplacer
+            Déplacer (glisser le bloc)
           </button>
           {onToggleCollapse && (
             <button
@@ -2237,147 +2663,230 @@ const SortableBlock = React.memo(function SortableBlock({
         </div>
       )}
 
-      {/* Modal de déplacement */}
-      {showMoveModal && onMove && allBlocks && findBlockInTree && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4"
-          onClick={() => setShowMoveModal(false)}
-        >
-          <div
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Déplacer le bloc</h3>
-              <button
-                onClick={() => setShowMoveModal(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto flex-1">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Choisissez où déplacer le bloc "{blockTypes.find(bt => bt.name === block.type)?.label || block.type}"
-              </p>
-              
-              {/* Option: Déplacer à la racine */}
-              <button
-                onClick={() => {
-                  if (onMove) {
-                    onMove(block.id, 'root')
-                    setShowMoveModal(false)
-                  }
-                }}
-                className="w-full px-4 py-3 text-left bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg mb-2 transition-colors flex items-center gap-3"
-              >
-                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <div>
-                  <div className="font-medium text-gray-900 dark:text-gray-100">Racine (niveau principal)</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Déplacer le bloc au niveau principal</div>
-                </div>
-              </button>
-
-              {/* Liste des conteneurs disponibles */}
-              <div className="mt-4">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Déplacer dans un conteneur :</h4>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {(() => {
-                    // Fonction récursive pour trouver tous les conteneurs
-                    const findContainers = (blocks: Block[], currentBlockId: string, depth = 0): Array<{ block: Block; path: string }> => {
-                      const containers: Array<{ block: Block; path: string }> = []
-                      const containerTypes = ['container', 'flex-container', 'grid-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
-                      
-                      for (const b of blocks) {
-                        // Ignorer le bloc actuel et ses enfants
-                        if (b.id === currentBlockId) continue
-                        
-                        // Vérifier si c'est un conteneur
-                        if (containerTypes.includes(b.type)) {
-                          const blockType = blockTypes.find(bt => bt.name === b.type)
-                          const indent = '  '.repeat(depth)
-                          containers.push({
-                            block: b,
-                            path: `${indent}${blockType?.label || b.type}`
-                          })
-                          
-                          // Vérifier que le bloc actuel n'est pas un enfant de ce conteneur
-                          const isDescendant = (blocks: Block[], targetId: string): boolean => {
-                            for (const block of blocks) {
-                              if (block.id === targetId) return true
-                              if (block.children && block.children.length > 0) {
-                                if (isDescendant(block.children, targetId)) return true
-                              }
-                            }
-                            return false
-                          }
-                          
-                          if (b.children && !isDescendant(b.children, currentBlockId)) {
-                            // Ajouter les conteneurs enfants
-                            containers.push(...findContainers(b.children, currentBlockId, depth + 1))
-                          }
-                        } else if (b.children && b.children.length > 0) {
-                          // Chercher dans les enfants même si ce n'est pas un conteneur
-                          containers.push(...findContainers(b.children, currentBlockId, depth + 1))
-                        }
-                      }
-                      return containers
-                    }
-                    
-                    const availableContainers = allBlocks ? findContainers(allBlocks, block.id) : []
-                    
-                    if (availableContainers.length === 0) {
-                      return (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 italic py-2">
-                          Aucun conteneur disponible
-                        </div>
-                      )
-                    }
-                    
-                    return availableContainers.map(({ block: container, path }) => {
-                      const containerBlockType = blockTypes.find(bt => bt.name === container.type)
-                      return (
-                        <button
-                          key={container.id}
-                          onClick={() => {
-                            if (onMove) {
-                              onMove(block.id, container.id)
-                              setShowMoveModal(false)
-                            }
-                          }}
-                          className="w-full px-4 py-3 text-left bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex items-center gap-3"
-                        >
-                          <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                          </svg>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                              {containerBlockType?.label || container.type}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                              {path}
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })
-                  })()}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
     </>
   )
 })
 
 // Container Children Renderer - Affiche et gère les enfants d'un conteneur
+// Composant séparé pour chaque enfant draggable (pour respecter les règles des Hooks React)
+function DraggableChildBlock({
+  child,
+  childBlockType,
+  blockTypes,
+  selectedBlockId,
+  onSelectChild,
+  onUpdateChild,
+  onDeleteChild,
+  onMoveChild,
+  findBlockInTree,
+  allBlocks,
+  showMenu,
+  setShowMenu,
+  contextMenu,
+  setContextMenu,
+  closeContextMenu,
+  toggleChildCollapse,
+  collapsedChildren,
+}: {
+  child: Block
+  childBlockType?: BlockType
+  blockTypes: BlockType[]
+  selectedBlockId?: string | null
+  onSelectChild: (childId: string) => void
+  onUpdateChild: (childId: string, updates: Partial<Block>) => void
+  onDeleteChild: (childId: string) => void
+  onMoveChild?: (childId: string, targetContainerId: string | 'root') => void
+  findBlockInTree?: (blocks: Block[], blockId: string) => { block: Block; parent: Block[] | null; index: number } | null
+  allBlocks?: Block[]
+  showMenu: boolean
+  setShowMenu: (show: boolean) => void
+  contextMenu: { x: number; y: number; childId?: string } | null
+  setContextMenu: (menu: { x: number; y: number; childId?: string } | null) => void
+  closeContextMenu: () => void
+  toggleChildCollapse: (childId: string) => void
+  collapsedChildren: Set<string>
+}) {
+  // Utiliser useDraggable au niveau du composant (pas dans une boucle)
+  const { attributes: childAttributes, listeners: childListeners, setNodeRef: setChildNodeRef, transform: childTransform, isDragging: isChildDragging } = useDraggable({
+    id: child.id,
+    data: {
+      type: 'block',
+      block: child,
+    }
+  })
+  
+  const childStyle = {
+    transform: CSS.Transform.toString(childTransform),
+    opacity: isChildDragging ? 0.3 : 1,
+  }
+  
+  return (
+    <div
+      ref={setChildNodeRef}
+      style={childStyle}
+      data-child-block-id={child.id}
+      className={`bg-white dark:bg-gray-800 rounded-lg border transition-colors overflow-hidden group relative ${
+        selectedBlockId === child.id
+          ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-300 dark:ring-blue-600 shadow-md cursor-move'
+          : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer'
+      }`}
+      {...(selectedBlockId === child.id ? { ...childAttributes, ...childListeners } : {})}
+      onClick={(e) => {
+        e.stopPropagation()
+        onSelectChild(child.id)
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (showMenu) {
+          closeContextMenu()
+        }
+        onSelectChild(child.id)
+        setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
+        setShowMenu(true)
+      }}
+    >
+      {/* Header du bloc enfant */}
+      <div className={`flex items-center justify-between p-3 border-b relative transition-colors ${
+        selectedBlockId === child.id
+          ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700'
+          : 'border-gray-200 dark:border-gray-700'
+      }`}>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              toggleChildCollapse(child.id)
+            }}
+            className="flex-shrink-0 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            title={collapsedChildren.has(child.id) ? "Développer" : "Réduire"}
+          >
+            <svg 
+              className={`w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-200 ${collapsedChildren.has(child.id) ? '' : 'rotate-90'}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <span className="text-lg flex-shrink-0">{childBlockType?.icon || '📦'}</span>
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+            {childBlockType?.label || child.type}
+          </span>
+        </div>
+        {/* Bouton Supprimer et indicateur drag - visible au survol */}
+        <div className="flex items-center gap-2 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
+          {selectedBlockId === child.id && (
+            <div className="text-xs text-blue-600 dark:text-blue-400 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700" title="Glisser pour déplacer">
+              <span className="text-blue-600 dark:text-blue-400">🖱️</span> Glisser
+            </div>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onDeleteChild(child.id)
+            }}
+            className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded flex-shrink-0"
+            title="Supprimer"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      {/* Contenu du bloc enfant */}
+      {!collapsedChildren.has(child.id) && childBlockType && (
+        <div 
+          className="p-3"
+          data-child-block-id={child.id}
+          onClick={(e) => {
+            e.stopPropagation()
+            onSelectChild(child.id)
+          }}
+          onDoubleClick={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+            onSelectChild(child.id)
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (showMenu) {
+              closeContextMenu()
+            }
+            onSelectChild(child.id)
+            setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
+            setShowMenu(true)
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+          }}
+        >
+          {/* Si l'enfant est un conteneur, utiliser ContainerChildrenRenderer */}
+          {(child.type === 'container' || child.type === 'flex-container' || child.type === 'grid-container' || 
+            child.type === 'flexbox' || child.type === 'grid' || child.type === 'stack' || 
+            child.type === 'inline' || child.type === 'group' || child.type === 'wrapper' || child.type === 'section' || child.type === 'rows') ? (
+            <ContainerChildrenRenderer
+              block={child}
+              blockTypes={blockTypes}
+              allBlocks={allBlocks}
+              onAddChild={(newChildBlock) => {
+                const newChildren = [...(child.children || []), newChildBlock]
+                onUpdateChild(child.id, { children: newChildren })
+              }}
+              onUpdateChild={(grandChildId, updates) => {
+                const newChildren = (child.children || []).map((grandChild) =>
+                  grandChild.id === grandChildId ? { ...grandChild, ...updates } : grandChild
+                )
+                onUpdateChild(child.id, { children: newChildren })
+              }}
+              onDeleteChild={(grandChildId) => {
+                const newChildren = (child.children || []).filter((grandChild) => grandChild.id !== grandChildId)
+                onUpdateChild(child.id, { children: newChildren })
+              }}
+              onSelectChild={(grandChildId) => {
+                onSelectChild(grandChildId)
+              }}
+              selectedBlockId={selectedBlockId}
+              onMoveChild={(grandChildId, targetContainerId) => {
+                const newChildren = (child.children || []).filter((grandChild) => grandChild.id !== grandChildId)
+                onUpdateChild(child.id, { children: newChildren })
+                if (onMoveChild) {
+                  onMoveChild(grandChildId, targetContainerId)
+                }
+              }}
+              findBlockInTree={findBlockInTree}
+            />
+          ) : (
+            <div 
+              data-child-block-id={child.id}
+              onContextMenu={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                if (showMenu) {
+                  closeContextMenu()
+                }
+                onSelectChild(child.id)
+                setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
+                setShowMenu(true)
+              }}
+            >
+              <BlockRenderer 
+                block={{ ...child, data: child.data || {} }} 
+                blockType={childBlockType} 
+                blockTypes={blockTypes}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ContainerChildrenRenderer({
   block,
   blockTypes,
@@ -2387,6 +2896,8 @@ function ContainerChildrenRenderer({
   onSelectChild,
   allBlocks, // Tous les blocs de l'éditeur pour permettre de choisir un bloc existant
   selectedBlockId, // ID du bloc actuellement sélectionné
+  onMoveChild, // Fonction pour déplacer un enfant vers un autre conteneur
+  findBlockInTree, // Fonction pour trouver un bloc dans l'arbre
 }: {
   block: Block
   blockTypes: BlockType[]
@@ -2396,14 +2907,14 @@ function ContainerChildrenRenderer({
   onSelectChild: (childId: string) => void
   allBlocks?: Block[] // Tous les blocs disponibles dans l'éditeur
   selectedBlockId?: string | null // ID du bloc actuellement sélectionné
+  onMoveChild?: (childId: string, targetContainerId: string | 'root') => void // Fonction pour déplacer un enfant
+  findBlockInTree?: (blocks: Block[], blockId: string) => { block: Block; parent: Block[] | null; index: number } | null // Fonction pour trouver un bloc
 }) {
   const children = block.children || []
   const [showAddMenu, setShowAddMenu] = useState(false)
   const [collapsedChildren, setCollapsedChildren] = useState<Set<string>>(new Set())
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; childId: string } | null>(null)
   const [showMenu, setShowMenu] = useState(false)
-  const [showMoveModal, setShowMoveModal] = useState(false)
-  const [moveTargetChildId, setMoveTargetChildId] = useState<string | null>(null)
   
   // Fonction pour vérifier si un bloc est un conteneur
   const isContainerType = useCallback((blockTypeName: string): boolean => {
@@ -2428,20 +2939,25 @@ function ContainerChildrenRenderer({
     setShowMenu(false)
   }, [])
   
-  // Fermer le menu si on clique ailleurs
+  // Fermer le menu si on clique ailleurs (clic gauche ou droit)
   useEffect(() => {
     if (showMenu) {
       const handleClickOutside = (e: MouseEvent) => {
         const target = e.target as HTMLElement
-        if (!target.closest('[data-context-menu]') && !target.closest('[data-child-block-id]')) {
+        // Fermer le menu si on clique n'importe où sauf sur le menu lui-même
+        if (!target.closest('[data-context-menu]')) {
           closeContextMenu()
         }
       }
+      // Écouter les clics gauches et droits
       document.addEventListener('click', handleClickOutside, true)
       document.addEventListener('contextmenu', handleClickOutside, true)
+      // Écouter aussi les mousedown pour fermer plus rapidement
+      document.addEventListener('mousedown', handleClickOutside, true)
       return () => {
         document.removeEventListener('click', handleClickOutside, true)
         document.removeEventListener('contextmenu', handleClickOutside, true)
+        document.removeEventListener('mousedown', handleClickOutside, true)
       }
     }
   }, [showMenu, closeContextMenu])
@@ -2514,183 +3030,26 @@ function ContainerChildrenRenderer({
               {children.map((child) => {
                 const childBlockType = blockTypes.find((bt) => bt.name === child.type)
                 return (
-                  <div
+                  <DraggableChildBlock
                     key={child.id}
-                    data-child-block-id={child.id}
-                    className={`bg-white dark:bg-gray-800 rounded-lg border transition-colors cursor-pointer overflow-hidden group relative ${
-                      selectedBlockId === child.id
-                        ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-300 dark:ring-blue-600 shadow-md'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
-                    }`}
-                    onClick={(e) => {
-                      // Empêcher la propagation vers le conteneur parent
-                      e.stopPropagation()
-                      onSelectChild(child.id)
-                    }}
-                    onContextMenu={(e) => {
-                      // Gérer le clic droit sur les enfants pour ouvrir le menu contextuel
-                      e.preventDefault()
-                      e.stopPropagation()
-                      // Fermer le menu précédent immédiatement
-                      if (showMenu) {
-                        closeContextMenu()
-                      }
-                      // Sélectionner l'enfant et ouvrir le menu immédiatement
-                      onSelectChild(child.id)
-                      setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
-                      setShowMenu(true)
-                    }}
-                  >
-                    {/* Header du bloc enfant */}
-                    <div className={`flex items-center justify-between p-3 border-b relative transition-colors ${
-                      selectedBlockId === child.id
-                        ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700'
-                        : 'border-gray-200 dark:border-gray-700'
-                    }`}>
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleChildCollapse(child.id)
-                          }}
-                          className="flex-shrink-0 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                          title={collapsedChildren.has(child.id) ? "Développer" : "Réduire"}
-                        >
-                          <svg 
-                            className={`w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-200 ${collapsedChildren.has(child.id) ? '' : 'rotate-90'}`} 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </button>
-                        <span className="text-lg flex-shrink-0">{childBlockType?.icon || '📦'}</span>
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                          {childBlockType?.label || child.type}
-                        </span>
-                      </div>
-                      {/* Bouton Supprimer - visible au survol (pas d'indicateur clic droit car double-clic suffit) */}
-                      <div className="flex items-center gap-2 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onDeleteChild(child.id)
-                          }}
-                          className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded flex-shrink-0"
-                          title="Supprimer"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    {/* Contenu du bloc enfant */}
-                    {!collapsedChildren.has(child.id) && childBlockType && (
-                      <div 
-                        className="p-3"
-                        data-child-block-id={child.id}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          // Sélectionner l'enfant si on clique dans son contenu
-                          onSelectChild(child.id)
-                        }}
-                        onDoubleClick={(e) => {
-                          e.stopPropagation()
-                          e.preventDefault()
-                          // Sélectionner l'enfant et ouvrir les paramètres
-                          onSelectChild(child.id)
-                        }}
-                        onContextMenu={(e) => {
-                          // Empêcher la propagation du clic droit vers le parent
-                          e.preventDefault()
-                          e.stopPropagation()
-                          // Fermer le menu précédent immédiatement
-                          if (showMenu) {
-                            closeContextMenu()
-                          }
-                          // Sélectionner l'enfant et ouvrir le menu immédiatement
-                          onSelectChild(child.id)
-                          setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
-                          setShowMenu(true)
-                        }}
-                        onMouseDown={(e) => {
-                          // Empêcher la propagation même au mousedown
-                          e.stopPropagation()
-                        }}
-                      >
-                        {/* Si l'enfant est un conteneur, utiliser ContainerChildrenRenderer pour avoir le menu contextuel */}
-                        {(child.type === 'container' || child.type === 'flex-container' || child.type === 'grid-container' || 
-                          child.type === 'flexbox' || child.type === 'grid' || child.type === 'stack' || 
-                          child.type === 'inline' || child.type === 'group' || child.type === 'wrapper' || child.type === 'section' || child.type === 'rows') ? (
-                          <ContainerChildrenRenderer
-                            block={child}
-                            blockTypes={blockTypes}
-                            allBlocks={allBlocks}
-                            onAddChild={(newChildBlock) => {
-                              const newChildren = [...(child.children || []), newChildBlock]
-                              onUpdateChild(child.id, { children: newChildren })
-                            }}
-                            onUpdateChild={(grandChildId, updates) => {
-                              const newChildren = (child.children || []).map((grandChild) =>
-                                grandChild.id === grandChildId ? { ...grandChild, ...updates } : grandChild
-                              )
-                              onUpdateChild(child.id, { children: newChildren })
-                            }}
-                            onDeleteChild={(grandChildId) => {
-                              const newChildren = (child.children || []).filter((grandChild) => grandChild.id !== grandChildId)
-                              onUpdateChild(child.id, { children: newChildren })
-                            }}
-                            onSelectChild={(grandChildId) => {
-                              // Sélectionner le petit-enfant récursivement
-                              onSelectChild(grandChildId)
-                            }}
-                            selectedBlockId={selectedBlockId}
-                          />
-                        ) : (
-                          <div 
-                            data-child-block-id={child.id}
-                            onContextMenu={(e) => {
-                              // Empêcher la propagation du clic droit vers le parent
-                              e.preventDefault()
-                              e.stopPropagation()
-                              // Fermer le menu précédent immédiatement
-                              if (showMenu) {
-                                closeContextMenu()
-                              }
-                              // Sélectionner l'enfant et ouvrir le menu immédiatement
-                              onSelectChild(child.id)
-                              setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
-                              setShowMenu(true)
-                            }}
-                          >
-                            <BlockRenderer 
-                              block={{ ...child, data: child.data || {} }} 
-                              blockType={childBlockType} 
-                              onUpdate={(updates) => onUpdateChild(child.id, updates)} 
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {collapsedChildren.has(child.id) && (
-                      <div 
-                        className="p-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onSelectChild(child.id)
-                        }}
-                        onMouseDown={(e) => {
-                          e.stopPropagation()
-                        }}
-                      >
-                        <span className="text-xs text-gray-500 dark:text-gray-400 italic">
-                          Bloc réduit - Cliquez sur la flèche pour développer
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                    child={child}
+                    childBlockType={childBlockType}
+                    blockTypes={blockTypes}
+                    selectedBlockId={selectedBlockId}
+                    onSelectChild={onSelectChild}
+                    onUpdateChild={onUpdateChild}
+                    onDeleteChild={onDeleteChild}
+                    onMoveChild={onMoveChild}
+                    findBlockInTree={findBlockInTree}
+                    allBlocks={allBlocks}
+                    showMenu={showMenu}
+                    setShowMenu={setShowMenu}
+                    contextMenu={contextMenu}
+                    setContextMenu={setContextMenu}
+                    closeContextMenu={closeContextMenu}
+                    toggleChildCollapse={toggleChildCollapse}
+                    collapsedChildren={collapsedChildren}
+                  />
                 )
               })}
             </div>
@@ -2712,6 +3071,11 @@ function ContainerChildrenRenderer({
           }}
           onMouseDown={(e) => {
             e.stopPropagation()
+          }}
+          onContextMenu={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+            // Empêcher l'ouverture d'un nouveau menu contextuel si on fait un clic droit dans le menu
           }}
         >
           <button
@@ -2738,17 +3102,20 @@ function ContainerChildrenRenderer({
             onClick={(e) => {
               e.stopPropagation()
               if (contextMenu.childId) {
-                setMoveTargetChildId(contextMenu.childId)
-                setShowMoveModal(true)
+                // Fermer le menu et permettre le drag & drop direct
+                // L'utilisateur peut maintenant glisser le bloc enfant vers n'importe quel conteneur
+                closeContextMenu()
+                // Sélectionner l'enfant pour le rendre draggable
+                onSelectChild(contextMenu.childId)
               }
-              closeContextMenu()
             }}
             className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+            title="Fermer le menu et glisser le bloc vers un autre conteneur"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
             </svg>
-            Déplacer
+            Déplacer (glisser le bloc)
           </button>
           <button
             onClick={(e) => {
@@ -2826,159 +3193,6 @@ function ContainerChildrenRenderer({
         </div>
       )}
 
-      {/* Modal de déplacement pour enfants */}
-      {showMoveModal && moveTargetChildId && onMoveChild && allBlocks && findBlockInTree && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4"
-          onClick={() => {
-            setShowMoveModal(false)
-            setMoveTargetChildId(null)
-          }}
-        >
-          <div
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Déplacer le bloc</h3>
-              <button
-                onClick={() => {
-                  setShowMoveModal(false)
-                  setMoveTargetChildId(null)
-                }}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto flex-1">
-              {(() => {
-                const childToMove = children.find(c => c.id === moveTargetChildId)
-                if (!childToMove) return null
-                const childBlockType = blockTypes.find(bt => bt.name === childToMove.type)
-                
-                return (
-                  <>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                      Choisissez où déplacer le bloc "{childBlockType?.label || childToMove.type}"
-                    </p>
-                    
-                    {/* Option: Déplacer à la racine */}
-                    <button
-                      onClick={() => {
-                        if (onMoveChild) {
-                          onMoveChild(moveTargetChildId, 'root')
-                          setShowMoveModal(false)
-                          setMoveTargetChildId(null)
-                        }
-                      }}
-                      className="w-full px-4 py-3 text-left bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg mb-2 transition-colors flex items-center gap-3"
-                    >
-                      <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                      </svg>
-                      <div>
-                        <div className="font-medium text-gray-900 dark:text-gray-100">Racine (niveau principal)</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Déplacer le bloc au niveau principal</div>
-                      </div>
-                    </button>
-
-                    {/* Liste des conteneurs disponibles */}
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Déplacer dans un conteneur :</h4>
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {(() => {
-                          // Fonction récursive pour trouver tous les conteneurs
-                          const findContainers = (blocks: Block[], currentBlockId: string, depth = 0): Array<{ block: Block; path: string }> => {
-                            const containers: Array<{ block: Block; path: string }> = []
-                            const containerTypes = ['container', 'flex-container', 'grid-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
-                            
-                            for (const b of blocks) {
-                              // Ignorer le bloc actuel et ses enfants
-                              if (b.id === currentBlockId) continue
-                              
-                              // Vérifier si c'est un conteneur
-                              if (containerTypes.includes(b.type)) {
-                                const blockType = blockTypes.find(bt => bt.name === b.type)
-                                const indent = '  '.repeat(depth)
-                                containers.push({
-                                  block: b,
-                                  path: `${indent}${blockType?.label || b.type}`
-                                })
-                                
-                                // Vérifier que le bloc actuel n'est pas un enfant de ce conteneur
-                                const isDescendant = (blocks: Block[], targetId: string): boolean => {
-                                  for (const block of blocks) {
-                                    if (block.id === targetId) return true
-                                    if (block.children && block.children.length > 0) {
-                                      if (isDescendant(block.children, targetId)) return true
-                                    }
-                                  }
-                                  return false
-                                }
-                                
-                                if (b.children && !isDescendant(b.children, currentBlockId)) {
-                                  // Ajouter les conteneurs enfants
-                                  containers.push(...findContainers(b.children, currentBlockId, depth + 1))
-                                }
-                              } else if (b.children && b.children.length > 0) {
-                                // Chercher dans les enfants même si ce n'est pas un conteneur
-                                containers.push(...findContainers(b.children, currentBlockId, depth + 1))
-                              }
-                            }
-                            return containers
-                          }
-                          
-                          const availableContainers = allBlocks ? findContainers(allBlocks, moveTargetChildId) : []
-                          
-                          if (availableContainers.length === 0) {
-                            return (
-                              <div className="text-sm text-gray-500 dark:text-gray-400 italic py-2">
-                                Aucun conteneur disponible
-                              </div>
-                            )
-                          }
-                          
-                          return availableContainers.map(({ block: container, path }) => {
-                            const containerBlockType = blockTypes.find(bt => bt.name === container.type)
-                            return (
-                              <button
-                                key={container.id}
-                                onClick={() => {
-                                  if (onMoveChild) {
-                                    onMoveChild(moveTargetChildId, container.id)
-                                    setShowMoveModal(false)
-                                    setMoveTargetChildId(null)
-                                  }
-                                }}
-                                className="w-full px-4 py-3 text-left bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex items-center gap-3"
-                              >
-                                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                </svg>
-                                <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                                    {containerBlockType?.label || container.type}
-                                  </div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                                    {path}
-                                  </div>
-                                </div>
-                              </button>
-                            )
-                          })
-                        })()}
-                      </div>
-                    </div>
-                  </>
-                )
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Bouton pour ajouter un bloc */}
       <button
@@ -9043,10 +9257,12 @@ export function BlockLayoutPanel({
   block,
   onUpdate,
   allBlocks = [],
+  blockTypes = [],
 }: {
   block: Block
   onUpdate: (updates: Partial<Block>) => void
   allBlocks?: Block[]
+  blockTypes?: BlockType[]
 }) {
   // S'assurer que block.data existe pour éviter les erreurs
   const safeBlock = { ...block, data: block.data || {} }
@@ -9191,7 +9407,16 @@ export function BlockLayoutPanel({
 
       {/* Configuration Layout (Largeur, Conteneur, Z-index) */}
       <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-        <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wider">Mise en page du conteneur</h4>
+        <h4 className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wider">
+          {(() => {
+            const blockType = blockTypes?.find((bt: BlockType) => bt.name === block.type)
+            const blockLabel = blockType?.label || block.type
+            if (block.type === 'container' || block.type === 'grid-container' || block.type === 'flex-container' || block.type === 'columns') {
+              return 'Mise en page du conteneur'
+            }
+            return `Mise en page de ${blockLabel}`
+          })()}
+        </h4>
         <div className="space-y-3">
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -9445,6 +9670,8 @@ export function BlockStylePanel({
       newStyles[key] = value
     }
     
+    // Mise à jour immédiate pour les styles (comme pour data)
+    // Passer un objet avec immediate: true pour forcer la mise à jour immédiate
     onUpdate({
       styles: newStyles,
     })
@@ -9465,10 +9692,16 @@ export function BlockStylePanel({
     { name: 'Rose', value: '#ec4899', class: 'bg-pink-500' },
   ]
 
+  // Déterminer si c'est un conteneur (pas besoin de couleur de texte ni typographie)
+  const isContainer = block.type === 'container' || 
+                     block.type === 'grid-container' || 
+                     block.type === 'flex-container' || 
+                     block.type === 'columns'
+
   return (
-    <div className="space-y-2.5 pb-4">
+    <div className="space-y-4 pb-4">
       {/* Support du mode sombre */}
-      <div>
+      <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
         <label className="flex items-center gap-2 text-xs">
           <input
             type="checkbox"
@@ -9483,8 +9716,16 @@ export function BlockStylePanel({
         </p>
       </div>
       
+      {/* Section Couleurs */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Couleurs</span>
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+        </div>
+      
       {/* Couleur de fond */}
-      <div>
+      <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Couleur de fond
         </label>
@@ -9520,33 +9761,39 @@ export function BlockStylePanel({
         </div>
       </div>
 
-      {/* Couleur de texte */}
-      <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          Couleur de texte
-        </label>
-        <div className="flex items-center gap-2">
-          <input
-            type="color"
-            value={block.styles?.color || '#000000'}
-            onChange={(e) => updateStyle('color', e.target.value)}
-            className="w-12 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
-          />
-          <input
-            type="text"
-            value={block.styles?.color || '#000000'}
-            onChange={(e) => updateStyle('color', e.target.value)}
-            className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-            placeholder="#000000"
-          />
+      {/* Couleur de texte - Masquer pour les conteneurs */}
+      {!isContainer && (
+        <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            Couleur de texte
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={block.styles?.color || '#000000'}
+              onChange={(e) => updateStyle('color', e.target.value)}
+              className="w-12 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+            />
+            <input
+              type="text"
+              value={block.styles?.color || '#000000'}
+              onChange={(e) => updateStyle('color', e.target.value)}
+              className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="#000000"
+            />
+          </div>
         </div>
+      )}
       </div>
 
-      {/* Section Typographie */}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">📝 Typographie</span>
-        </div>
+      {/* Section Typographie - Masquer pour les conteneurs */}
+      {!isContainer && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+            <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">📝 Typographie</span>
+            <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+          </div>
 
         {/* Famille de police */}
         <div className="mb-3">
@@ -9903,13 +10150,16 @@ export function BlockStylePanel({
             ))}
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Propriétés avancées - Premium */}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-3 mt-3">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Propriétés avancées</span>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Propriétés avancées</span>
           <span className="px-2 py-0.5 text-[10px] font-bold text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400 rounded">PREMIUM</span>
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
         </div>
         
         {/* Z-index */}
@@ -10167,8 +10417,16 @@ export function BlockStylePanel({
         </div>
       </div>
 
+      {/* Section Espacement */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Espacement</span>
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+        </div>
+      
       {/* Padding */}
-      <div>
+      <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Espacement interne (Padding)
         </label>
@@ -10216,7 +10474,7 @@ export function BlockStylePanel({
       </div>
 
       {/* Margin */}
-      <div>
+      <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Espacement externe (Margin)
         </label>
@@ -10243,9 +10501,18 @@ export function BlockStylePanel({
           </div>
         </div>
       </div>
+      </div>
 
+      {/* Section Bordures */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Bordures</span>
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+        </div>
+      
       {/* Bordures */}
-      <div>
+      <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Bordures
         </label>
@@ -10314,52 +10581,33 @@ export function BlockStylePanel({
           </div>
         </div>
       </div>
-
-      {/* Ombres */}
-      <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          Ombres
-        </label>
-        <select
-          value={block.styles?.box_shadow || 'none'}
-          onChange={(e) => updateStyle('box_shadow', e.target.value)}
-          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-        >
-          <option value="none">Aucune</option>
-          <option value="sm">Petite (sm)</option>
-          <option value="md">Moyenne (md)</option>
-          <option value="lg">Grande (lg)</option>
-          <option value="xl">Très grande (xl)</option>
-          <option value="2xl">Énorme (2xl)</option>
-        </select>
       </div>
 
-      {/* Alignement du texte */}
-      <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          Alignement du texte
-        </label>
-        <div className="flex gap-1">
-          {[
-            { value: 'left', icon: '⬅️', label: 'Gauche' },
-            { value: 'center', icon: '↔️', label: 'Centre' },
-            { value: 'right', icon: '➡️', label: 'Droite' },
-            { value: 'justify', icon: '↔️', label: 'Justifié' },
-          ].map((align) => (
-            <button
-              key={align.value}
-              type="button"
-              onClick={() => updateStyle('text_align', align.value)}
-              className={`flex-1 px-2 py-2 text-xs rounded border ${
-                block.styles?.text_align === align.value
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-              }`}
-              title={align.label}
-            >
-              {align.icon}
-            </button>
-          ))}
+      {/* Section Ombres */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Ombres</span>
+          <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+        </div>
+      
+        {/* Ombres */}
+        <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            Ombres
+          </label>
+          <select
+            value={block.styles?.box_shadow || 'none'}
+            onChange={(e) => updateStyle('box_shadow', e.target.value)}
+            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          >
+            <option value="none">Aucune</option>
+            <option value="sm">Petite (sm)</option>
+            <option value="md">Moyenne (md)</option>
+            <option value="lg">Grande (lg)</option>
+            <option value="xl">Très grande (xl)</option>
+            <option value="2xl">Énorme (2xl)</option>
+          </select>
         </div>
       </div>
     </div>

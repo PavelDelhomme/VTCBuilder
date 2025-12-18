@@ -62,6 +62,10 @@ export const renderHeading = ({ block, contentStyles, theme }: RendererProps): R
 
 export const renderText = ({ block, contentStyles, theme }: RendererProps): React.ReactElement => {
   const isDark = theme === 'dark'
+  const content = block.data.content || ''
+  const isEmpty = !content.trim()
+  const displayContent = isEmpty ? 'Entrez votre texte' : content.replace(/\n/g, '<br />')
+  
   return (
     <div className="mb-6 prose max-w-none" style={{ 
       textAlign: contentStyles.textAlign,
@@ -69,13 +73,16 @@ export const renderText = ({ block, contentStyles, theme }: RendererProps): Reac
     }}>
       <div 
         dangerouslySetInnerHTML={{ 
-          __html: (block.data.content || '').replace(/\n/g, '<br />')
+          __html: displayContent
         }}
         style={{
           ...contentStyles,
           fontSize: block.styles?.font_size || '1rem',
           lineHeight: block.styles?.line_height || '1.6',
-          color: isDark ? '#d1d5db' : (contentStyles.color || '#111827'),
+          color: isEmpty 
+            ? (isDark ? '#6b7280' : '#9ca3af') 
+            : (isDark ? '#d1d5db' : (contentStyles.color || '#111827')),
+          fontStyle: isEmpty ? 'italic' : 'normal',
         }}
       />
     </div>

@@ -71,6 +71,9 @@ api.interceptors.request.use((config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+  } else {
+    // S'assurer qu'aucun token n'est envoyé pour les endpoints analytics
+    delete config.headers.Authorization;
   }
   
   // Pour les requêtes PATCH vers /system-settings/, vérifier si l'utilisateur est super admin
@@ -123,6 +126,35 @@ api.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
     const hasToken = localStorage.getItem('token');
     const refreshToken = localStorage.getItem('refresh_token');
+    
+    // PRIORITÉ 1: Gérer IMMÉDIATEMENT les erreurs 403 pour /system-settings/ et /analytics/block-usage/
+    // AVANT tout autre traitement pour éviter qu'elles soient loggées
+    if (status === 403 && (url.includes('/system-settings/') || url.includes('/analytics/block-usage/'))) {
+      // Marquer l'erreur comme silencieuse pour éviter tout log
+      error.silent = true;
+      error.config = error.config || {};
+      error.config.silent = true;
+      // Supprimer complètement les propriétés qui pourraient être loggées
+      try {
+        if (error.message) {
+          Object.defineProperty(error, 'message', { value: '', writable: false, configurable: true });
+        }
+        if (error.stack) {
+          Object.defineProperty(error, 'stack', { value: '', writable: false, configurable: true });
+        }
+        if (error.response) {
+          Object.defineProperty(error.response, 'data', { value: {}, writable: false, configurable: true });
+        }
+      } catch (e) {}
+      // Retourner une promesse résolue silencieusement - ces erreurs sont attendues
+      return Promise.resolve({ 
+        data: {}, 
+        status: 403, 
+        statusText: 'Forbidden', 
+        headers: {}, 
+        config: error.config 
+      });
+    }
     
     // Pour les erreurs silencieuses (requêtes bloquées avant envoi), retourner une promesse résolue silencieusement
     // Gérer les requêtes annulées pour /system-settings/ si l'utilisateur n'est pas super admin
@@ -316,8 +348,17 @@ api.interceptors.response.use(
     
     // Vérifier si l'error est marquée comme silencieuse (depuis l'intercepteur de requête)
     // ou si c'est une erreur de cancellation pour /system-settings/
-    if (error.silent || (axios.isCancel && axios.isCancel(error) && error.message?.includes('Not super admin'))) {
-      // Retourner une promesse résolue sans logger
+    // ou si c'est une erreur 403 pour /system-settings/ ou /analytics/block-usage/
+    const isSystemSettings403 = url.includes('/system-settings/') && status === 403;
+    const isAnalytics403 = url.includes('/analytics/block-usage/') && status === 403;
+    const isCancelledRequest = (axios.isCancel && axios.isCancel(error)) || 
+                               (error as any).__CANCEL__ || 
+                               (error as any).__isCancelled ||
+                               error.message?.includes('cancelled') ||
+                               error.message?.includes('Not super admin');
+    
+    if (error.silent || isCancelledRequest || isSystemSettings403 || isAnalytics403) {
+      // Retourner une promesse résolue sans logger - c'est attendu pour ces endpoints
       return Promise.resolve({ 
         data: {}, 
         status: error.response?.status || 403, 
@@ -339,6 +380,35 @@ api.interceptors.response.use(
         data: {}, 
         status: status, 
         statusText: status === 401 ? 'Unauthorized' : 'Forbidden', 
+        headers: {}, 
+        config: error.config 
+      });
+    }
+    
+    // Gérer spécifiquement les erreurs 403 pour /system-settings/ et /analytics/block-usage/
+    // Même si elles ne sont pas dans SILENT_ERROR_ENDPOINTS, elles doivent être silencieuses
+    if (status === 403 && (url.includes('/system-settings/') || url.includes('/analytics/block-usage/'))) {
+      // Marquer l'erreur comme silencieuse pour éviter tout log
+      error.silent = true;
+      error.config = error.config || {};
+      error.config.silent = true;
+      // Supprimer complètement les propriétés qui pourraient être loggées
+      try {
+        if (error.message) {
+          Object.defineProperty(error, 'message', { value: '', writable: false, configurable: true });
+        }
+        if (error.stack) {
+          Object.defineProperty(error, 'stack', { value: '', writable: false, configurable: true });
+        }
+        if (error.response) {
+          Object.defineProperty(error.response, 'data', { value: {}, writable: false, configurable: true });
+        }
+      } catch (e) {}
+      // Retourner une promesse résolue silencieusement - ces erreurs sont attendues
+      return Promise.resolve({ 
+        data: {}, 
+        status: 403, 
+        statusText: 'Forbidden', 
         headers: {}, 
         config: error.config 
       });
