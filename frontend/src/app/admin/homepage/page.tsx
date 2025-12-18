@@ -639,31 +639,30 @@ export default function HomepageEditorPage() {
       }
     >
       {/* Barre d'outils sous le header - Pas d'espace avec le header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-2 relative" style={{ marginTop: '-1rem' }}>
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-2" style={{ marginTop: '-1rem' }}>
         <div className="flex gap-1 items-center flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* Menu déroulant pour options */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <div className="relative">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setShowOptionsMenu(!showOptionsMenu)
-                }}
-                className="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-1 flex-shrink-0"
-                title="Plus d'options"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                </svg>
-                <span className="text-xs font-medium whitespace-nowrap hidden md:inline">Options</span>
-              </button>
-              {showOptionsMenu && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-[10000]" 
-                    onClick={() => setShowOptionsMenu(false)}
-                  />
-                  <div className="absolute left-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-[10001] w-48" onClick={(e) => e.stopPropagation()}>
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowOptionsMenu(!showOptionsMenu)
+              }}
+              className="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-1 flex-shrink-0"
+              title="Plus d'options"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              </svg>
+              <span className="text-xs font-medium whitespace-nowrap hidden md:inline">Options</span>
+            </button>
+            {showOptionsMenu && (
+              <>
+                <div 
+                  className="fixed inset-0 z-[10000]" 
+                  onClick={() => setShowOptionsMenu(false)}
+                />
+                <div className="absolute left-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-[10001] w-48 min-w-max" onClick={(e) => e.stopPropagation()}>
                     <div className="py-1">
                       <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Pages</div>
                       <div className="relative">
@@ -716,7 +715,6 @@ export default function HomepageEditorPage() {
                   </div>
                 </>
               )}
-            </div>
           </div>
 
           {/* Toggle Palette Blocs */}

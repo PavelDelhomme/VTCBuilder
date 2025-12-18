@@ -1,4 +1,4 @@
-.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-coverage analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean start up stop restart restart-backend restart-frontend down logs status
+.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-coverage analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean start up stop restart restart-backend restart-frontend down logs status migrate
 
 BLUE = \033[0;34m
 GREEN = \033[0;32m
@@ -237,6 +237,12 @@ restart-frontend-dev: ## Nettoyer le cache Next.js (pour recharger .env.local) -
 	else \
 		printf "$(GREEN)✅ Pas de cache à nettoyer$(NC)\n"; \
 	fi
+
+migrate: ## Exécuter les migrations Django
+	@printf "$(GREEN)🗄️  Exécution des migrations Django...$(NC)\n"
+	@docker-compose -f docker-compose.simple.yml exec -T backend python manage.py makemigrations || printf "$(YELLOW)⚠️  Aucune nouvelle migration à créer$(NC)\n"
+	@docker-compose -f docker-compose.simple.yml exec -T backend python manage.py migrate || (printf "$(RED)❌ Erreur lors des migrations$(NC)\n" && exit 1)
+	@printf "$(GREEN)✅ Migrations terminées !$(NC)\n"
 
 clean-frontend-cache: ## Nettoyer le cache Next.js avec sudo (si créé par Docker)
 	@printf "$(YELLOW)🔄 Nettoyage du cache Next.js avec sudo...$(NC)\n"
