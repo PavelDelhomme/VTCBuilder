@@ -620,10 +620,33 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const updateBlockTimeoutRef = useRef<{ [key: string]: NodeJS.Timeout }>({})
   
   const updateBlock = useCallback((blockId: string, updates: Partial<Block>, immediate: boolean = false) => {
-    const block = history.state.find((b: Block) => b.id === blockId)
-    const newBlocks = history.state.map((b: Block) =>
-      b.id === blockId ? { ...b, ...updates } : b
-    )
+    // Fonction récursive pour trouver un bloc par son ID dans l'arbre complet
+    const findBlockById = (blocks: Block[], id: string): Block | null => {
+      for (const b of blocks) {
+        if (b.id === id) return b
+        if (b.children && b.children.length > 0) {
+          const found = findBlockById(b.children, id)
+          if (found) return found
+        }
+      }
+      return null
+    }
+    
+    // Fonction récursive pour mettre à jour un bloc par son ID dans l'arbre complet
+    const updateBlockInTree = (blocks: Block[]): Block[] => {
+      return blocks.map((b: Block) => {
+        if (b.id === blockId) {
+          return { ...b, ...updates }
+        }
+        if (b.children && b.children.length > 0) {
+          return { ...b, children: updateBlockInTree(b.children) }
+        }
+        return b
+      })
+    }
+    
+    const block = findBlockById(history.state, blockId)
+    const newBlocks = updateBlockInTree(history.state)
     
     // Pour les changements de style (padding, margin, couleur dans styles, etc.), utiliser un debounce
     // Pour les changements de contenu (texte, enfants, level, align, color dans data, etc.), mettre à jour immédiatement
