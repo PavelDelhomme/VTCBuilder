@@ -2497,7 +2497,7 @@ function ContainerChildrenRenderer({
                   <div
                     key={child.id}
                     data-child-block-id={child.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer overflow-hidden"
+                    className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer overflow-hidden group relative"
                     onClick={(e) => {
                       // Empêcher la propagation vers le conteneur parent
                       e.stopPropagation()
@@ -2518,7 +2518,7 @@ function ContainerChildrenRenderer({
                     }}
                   >
                     {/* Header du bloc enfant */}
-                    <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700 relative">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <button
                           onClick={(e) => {
@@ -2541,6 +2541,12 @@ function ContainerChildrenRenderer({
                         <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                           {childBlockType?.label || child.type}
                         </span>
+                      </div>
+                      {/* Indicateur clic droit paramètres - visible au survol */}
+                      <div className="flex items-center gap-2 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700" title="Clic droit pour ouvrir les paramètres du bloc">
+                          <span className="text-blue-600 dark:text-blue-400">⚙️</span> Clic droit paramètres
+                        </div>
                       </div>
                       <button
                         onClick={(e) => {
