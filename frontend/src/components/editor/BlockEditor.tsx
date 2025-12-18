@@ -2765,6 +2765,160 @@ function ContainerChildrenRenderer({
         </div>
       )}
 
+      {/* Modal de déplacement pour enfants */}
+      {showMoveModal && moveTargetChildId && onMoveChild && allBlocks && findBlockInTree && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4"
+          onClick={() => {
+            setShowMoveModal(false)
+            setMoveTargetChildId(null)
+          }}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Déplacer le bloc</h3>
+              <button
+                onClick={() => {
+                  setShowMoveModal(false)
+                  setMoveTargetChildId(null)
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1">
+              {(() => {
+                const childToMove = children.find(c => c.id === moveTargetChildId)
+                if (!childToMove) return null
+                const childBlockType = blockTypes.find(bt => bt.name === childToMove.type)
+                
+                return (
+                  <>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      Choisissez où déplacer le bloc "{childBlockType?.label || childToMove.type}"
+                    </p>
+                    
+                    {/* Option: Déplacer à la racine */}
+                    <button
+                      onClick={() => {
+                        if (onMoveChild) {
+                          onMoveChild(moveTargetChildId, 'root')
+                          setShowMoveModal(false)
+                          setMoveTargetChildId(null)
+                        }
+                      }}
+                      className="w-full px-4 py-3 text-left bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg mb-2 transition-colors flex items-center gap-3"
+                    >
+                      <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-gray-100">Racine (niveau principal)</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Déplacer le bloc au niveau principal</div>
+                      </div>
+                    </button>
+
+                    {/* Liste des conteneurs disponibles */}
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Déplacer dans un conteneur :</h4>
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {(() => {
+                          // Fonction récursive pour trouver tous les conteneurs
+                          const findContainers = (blocks: Block[], currentBlockId: string, depth = 0): Array<{ block: Block; path: string }> => {
+                            const containers: Array<{ block: Block; path: string }> = []
+                            const containerTypes = ['container', 'flex-container', 'grid-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows']
+                            
+                            for (const b of blocks) {
+                              // Ignorer le bloc actuel et ses enfants
+                              if (b.id === currentBlockId) continue
+                              
+                              // Vérifier si c'est un conteneur
+                              if (containerTypes.includes(b.type)) {
+                                const blockType = blockTypes.find(bt => bt.name === b.type)
+                                const indent = '  '.repeat(depth)
+                                containers.push({
+                                  block: b,
+                                  path: `${indent}${blockType?.label || b.type}`
+                                })
+                                
+                                // Vérifier que le bloc actuel n'est pas un enfant de ce conteneur
+                                const isDescendant = (blocks: Block[], targetId: string): boolean => {
+                                  for (const block of blocks) {
+                                    if (block.id === targetId) return true
+                                    if (block.children && block.children.length > 0) {
+                                      if (isDescendant(block.children, targetId)) return true
+                                    }
+                                  }
+                                  return false
+                                }
+                                
+                                if (b.children && !isDescendant(b.children, currentBlockId)) {
+                                  // Ajouter les conteneurs enfants
+                                  containers.push(...findContainers(b.children, currentBlockId, depth + 1))
+                                }
+                              } else if (b.children && b.children.length > 0) {
+                                // Chercher dans les enfants même si ce n'est pas un conteneur
+                                containers.push(...findContainers(b.children, currentBlockId, depth + 1))
+                              }
+                            }
+                            return containers
+                          }
+                          
+                          const availableContainers = allBlocks ? findContainers(allBlocks, moveTargetChildId) : []
+                          
+                          if (availableContainers.length === 0) {
+                            return (
+                              <div className="text-sm text-gray-500 dark:text-gray-400 italic py-2">
+                                Aucun conteneur disponible
+                              </div>
+                            )
+                          }
+                          
+                          return availableContainers.map(({ block: container, path }) => {
+                            const containerBlockType = blockTypes.find(bt => bt.name === container.type)
+                            return (
+                              <button
+                                key={container.id}
+                                onClick={() => {
+                                  if (onMoveChild) {
+                                    onMoveChild(moveTargetChildId, container.id)
+                                    setShowMoveModal(false)
+                                    setMoveTargetChildId(null)
+                                  }
+                                }}
+                                className="w-full px-4 py-3 text-left bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex items-center gap-3"
+                              >
+                                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                                    {containerBlockType?.label || container.type}
+                                  </div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                                    {path}
+                                  </div>
+                                </div>
+                              </button>
+                            )
+                          })
+                        })()}
+                      </div>
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bouton pour ajouter un bloc */}
       <button
         onClick={() => setShowAddMenu(true)}
