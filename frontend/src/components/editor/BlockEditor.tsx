@@ -732,7 +732,14 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             <>
               {/* Header */}
               <div className="flex items-center justify-between p-2 sm:p-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Paramètres du bloc</h3>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Paramètres du bloc</h3>
+                  {selectedBlockData?.blockType && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                      {selectedBlockData.blockType.label || selectedBlockData.blockType.name}
+                    </p>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   {/* Bouton Supprimer */}
                   <button
@@ -1400,6 +1407,28 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                     blockTypes={blockTypes}
                     isSelected={selectedBlock === block.id}
                     onSelect={() => handleSelectBlock(block.id)}
+                    onMove={(blockId, targetContainerId) => {
+                      // Déplacer le bloc vers un conteneur ou à la racine
+                      const blockToMoveResult = findBlockInTree(history.state, blockId)
+                      if (!blockToMoveResult) return
+                      const blockToMove = blockToMoveResult.block
+                      
+                      // Retirer le bloc de sa position actuelle
+                      let newBlocks = removeBlockFromTree(history.state, blockId)
+                      
+                      if (targetContainerId === 'root') {
+                        // Ajouter à la racine
+                        newBlocks = [...newBlocks, blockToMove]
+                      } else {
+                        // Ajouter dans le conteneur cible
+                        newBlocks = addBlockToContainer(newBlocks, targetContainerId, blockToMove)
+                      }
+                      
+                      history.set(newBlocks, true)
+                      trackBlockAction(blockToMove.type, 'move')
+                    }}
+                    allBlocks={history.state}
+                    findBlockInTree={findBlockInTree}
                     onSelectChild={(childId) => {
                       // Trouver le bloc enfant dans l'arbre et le sélectionner
                       const findBlockById = (blocks: Block[] | undefined, id: string): Block | null => {
@@ -1451,6 +1480,28 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                     }}
                     isCollapsed={collapsedBlocks.has(block.id)}
                     onToggleCollapse={() => toggleBlockCollapse(block.id)}
+                    onMove={(blockId, targetContainerId) => {
+                      // Déplacer le bloc vers un conteneur ou à la racine
+                      const blockToMoveResult = findBlockInTree(history.state, blockId)
+                      if (!blockToMoveResult) return
+                      const blockToMove = blockToMoveResult.block
+                      
+                      // Retirer le bloc de sa position actuelle
+                      let newBlocks = removeBlockFromTree(history.state, blockId)
+                      
+                      if (targetContainerId === 'root') {
+                        // Ajouter à la racine
+                        newBlocks = [...newBlocks, blockToMove]
+                      } else {
+                        // Ajouter dans le conteneur cible
+                        newBlocks = addBlockToContainer(newBlocks, targetContainerId, blockToMove)
+                      }
+                      
+                      history.set(newBlocks, true)
+                      trackBlockAction(blockToMove.type, 'move')
+                    }}
+                    allBlocks={history.state}
+                    findBlockInTree={findBlockInTree}
                   />
                           </div>
                         )
@@ -1527,6 +1578,9 @@ const SortableBlock = React.memo(function SortableBlock({
   onDuplicate,
   isCollapsed,
   onToggleCollapse,
+  onMove,
+  allBlocks,
+  findBlockInTree,
 }: {
   block: Block
   blockTypes: BlockType[]
@@ -1538,10 +1592,14 @@ const SortableBlock = React.memo(function SortableBlock({
   onDuplicate: () => void
   isCollapsed?: boolean
   onToggleCollapse?: () => void
+  onMove?: (blockId: string, targetContainerId: string | 'root') => void
+  allBlocks?: Block[]
+  findBlockInTree?: (blocks: Block[], blockId: string) => { block: Block; parent: Block[] | null; index: number } | null
 }) {
   // État pour le menu contextuel
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
   const [showMenu, setShowMenu] = useState(false)
+  const [showMoveModal, setShowMoveModal] = useState(false)
   // Utiliser l'état passé en prop ou un état local par défaut
   const isExpanded = isCollapsed !== undefined ? !isCollapsed : true
   const {
@@ -2070,17 +2128,10 @@ const SortableBlock = React.memo(function SortableBlock({
           <button
             onClick={(e) => {
               e.stopPropagation()
-              // Sélectionner le bloc pour activer le drag
-              onSelect()
-              // Afficher un message informatif (optionnel)
-              if (typeof window !== 'undefined') {
-                const message = 'Cliquez et maintenez sur l\'icône du bloc pour le déplacer'
-                // On pourrait utiliser un toast ici, mais pour l'instant on ferme juste le menu
-              }
+              setShowMoveModal(true)
               closeContextMenu()
             }}
             className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
-            title="Sélectionne le bloc pour le déplacer en cliquant sur son icône"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
