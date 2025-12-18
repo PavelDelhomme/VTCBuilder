@@ -2106,6 +2106,7 @@ const SortableBlock = React.memo(function SortableBlock({
                   }
                 }
               }}
+              selectedBlockId={selectedBlock}
               onMoveChild={(childId, targetContainerId) => {
                 // Trouver l'enfant à déplacer
                 const childToMove = children.find(c => c.id === childId)
@@ -2398,6 +2399,7 @@ function ContainerChildrenRenderer({
   onDeleteChild,
   onSelectChild,
   allBlocks, // Tous les blocs de l'éditeur pour permettre de choisir un bloc existant
+  selectedBlockId, // ID du bloc actuellement sélectionné
 }: {
   block: Block
   blockTypes: BlockType[]
@@ -2406,6 +2408,7 @@ function ContainerChildrenRenderer({
   onDeleteChild: (childId: string) => void
   onSelectChild: (childId: string) => void
   allBlocks?: Block[] // Tous les blocs disponibles dans l'éditeur
+  selectedBlockId?: string | null // ID du bloc actuellement sélectionné
 }) {
   const children = block.children || []
   const [showAddMenu, setShowAddMenu] = useState(false)
@@ -2527,7 +2530,11 @@ function ContainerChildrenRenderer({
                   <div
                     key={child.id}
                     data-child-block-id={child.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer overflow-hidden group relative"
+                    className={`bg-white dark:bg-gray-800 rounded-lg border transition-colors cursor-pointer overflow-hidden group relative ${
+                      selectedBlockId === child.id
+                        ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-300 dark:ring-blue-600 shadow-md'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+                    }`}
                     onClick={(e) => {
                       // Empêcher la propagation vers le conteneur parent
                       e.stopPropagation()
@@ -2548,7 +2555,11 @@ function ContainerChildrenRenderer({
                     }}
                   >
                     {/* Header du bloc enfant */}
-                    <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700 relative">
+                    <div className={`flex items-center justify-between p-3 border-b relative transition-colors ${
+                      selectedBlockId === child.id
+                        ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 border-blue-200 dark:border-blue-700'
+                        : 'border-gray-200 dark:border-gray-700'
+                    }`}>
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <button
                           onClick={(e) => {
