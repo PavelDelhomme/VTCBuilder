@@ -2489,9 +2489,10 @@ function ContainerChildrenRenderer({
       </div>
 
       {/* Popup modale pour la liste des blocs */}
+      {/* Permettre tous les blocs, y compris les conteneurs imbriqués */}
       {showAddMenu && (
         <BlockPickerModal
-          blockTypes={blockTypes} {/* Permettre tous les blocs, y compris les conteneurs imbriqués */}
+          blockTypes={blockTypes}
           existingBlocks={Array.isArray(allBlocks) ? allBlocks.filter(b => b.id !== block.id && !isBlockInContainer(b, block.id)) : []}
           onSelectNew={(blockType) => {
             handleAddBlock(blockType)
