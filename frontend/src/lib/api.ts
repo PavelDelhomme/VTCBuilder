@@ -62,9 +62,15 @@ export const api = axios.create({
 
 // Intercepteur pour ajouter le token et gérer FormData
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  // Ne pas envoyer le token pour les endpoints analytics qui acceptent AllowAny
+  // Cela évite les erreurs 403 si le token est invalide/expiré
+  const isAnalyticsEndpoint = config.url?.includes('/analytics/block-usage/');
+  
+  if (!isAnalyticsEndpoint) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   
   // Pour les requêtes PATCH vers /system-settings/, vérifier si l'utilisateur est super admin
@@ -105,6 +111,7 @@ const SILENT_ERROR_ENDPOINTS = [
   '/blocks/types/', // Peut être en erreur temporaire (401 normal si non connecté)
   '/tenants/features/', // Endpoint de features - erreurs 401 normales si non connecté
   '/analytics/actions/', // Endpoint d'analytics - erreurs 401/403 normales si non connecté
+  '/analytics/block-usage/', // Endpoint de tracking - erreurs 401/403 normales si non connecté
 ];
 
 // Intercepteur pour gérer les erreurs

@@ -1673,25 +1673,32 @@ const SortableBlock = React.memo(function SortableBlock({
 
   // Gérer le clic droit pour afficher le menu contextuel
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Vérifier si on fait un clic droit sur un enfant
+    // Vérifier si on fait un clic droit sur un enfant dans ContainerChildrenRenderer
+    // Les enfants dans ContainerChildrenRenderer ont data-child-block-id directement sur leur div
     const childElement = (e.target as HTMLElement).closest('[data-child-block-id]')
     if (childElement && onSelectChild) {
       const childId = childElement.getAttribute('data-child-block-id')
       if (childId) {
         e.preventDefault()
         e.stopPropagation()
-        // Fermer le menu précédent immédiatement
-        if (showMenu) {
-          closeContextMenu()
-        }
-        // Sélectionner l'enfant et ouvrir le menu immédiatement
+        // Ne pas afficher le menu du parent - l'enfant gère son propre menu
+        // Juste sélectionner l'enfant pour ouvrir les paramètres
         onSelectChild(childId)
-        setContextMenu({ x: e.clientX, y: e.clientY })
-        setShowMenu(true)
         return
       }
     }
     
+    // Vérifier aussi si on clique dans le contenu d'un enfant (même si pas directement sur data-child-block-id)
+    // Cela peut arriver si on clique sur BlockRenderer à l'intérieur d'un enfant
+    const clickedInChildContent = (e.target as HTMLElement).closest('[data-child-block-id]')
+    if (clickedInChildContent && onSelectChild) {
+      e.preventDefault()
+      e.stopPropagation()
+      // Ne pas afficher le menu du parent
+      return
+    }
+    
+    // Sinon, afficher le menu contextuel du bloc parent
     e.preventDefault()
     e.stopPropagation()
     // Fermer le menu précédent immédiatement
@@ -2265,6 +2272,19 @@ function ContainerChildrenRenderer({
                           // Sélectionner l'enfant et ouvrir les paramètres
                           onSelectChild(child.id)
                         }}
+                        onContextMenu={(e) => {
+                          // Empêcher la propagation du clic droit vers le parent
+                          e.preventDefault()
+                          e.stopPropagation()
+                          // Fermer le menu précédent immédiatement
+                          if (showMenu) {
+                            closeContextMenu()
+                          }
+                          // Sélectionner l'enfant et ouvrir le menu immédiatement
+                          onSelectChild(child.id)
+                          setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
+                          setShowMenu(true)
+                        }}
                         onMouseDown={(e) => {
                           // Empêcher la propagation même au mousedown
                           e.stopPropagation()
@@ -2471,7 +2491,7 @@ function ContainerChildrenRenderer({
       {/* Popup modale pour la liste des blocs */}
       {showAddMenu && (
         <BlockPickerModal
-          blockTypes={blockTypes.filter((bt) => bt.name !== 'container' && bt.name !== 'flex-container' && bt.name !== 'grid-container')}
+          blockTypes={blockTypes} {/* Permettre tous les blocs, y compris les conteneurs imbriqués */}
           existingBlocks={Array.isArray(allBlocks) ? allBlocks.filter(b => b.id !== block.id && !isBlockInContainer(b, block.id)) : []}
           onSelectNew={(blockType) => {
             handleAddBlock(blockType)
