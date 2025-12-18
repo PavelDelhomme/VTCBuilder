@@ -642,7 +642,19 @@ export default function HomepageEditorPage() {
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-2" style={{ marginTop: '-1rem' }}>
         <div className="flex gap-1 items-center flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* Menu déroulant pour options */}
-          <div className="relative flex-shrink-0">
+          <div className="relative flex-shrink-0" ref={(el) => {
+            if (el && showOptionsMenu) {
+              const button = el.querySelector('button') as HTMLElement
+              if (button) {
+                const rect = button.getBoundingClientRect()
+                const dropdown = el.querySelector('[data-options-dropdown]') as HTMLElement
+                if (dropdown) {
+                  dropdown.style.left = `${rect.left}px`
+                  dropdown.style.top = `${rect.bottom + 4}px`
+                }
+              }
+            }
+          }}>
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -662,7 +674,11 @@ export default function HomepageEditorPage() {
                   className="fixed inset-0 z-[10000]" 
                   onClick={() => setShowOptionsMenu(false)}
                 />
-                <div className="absolute left-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-[10001] w-48 min-w-max" onClick={(e) => e.stopPropagation()}>
+                <div 
+                  data-options-dropdown
+                  className="fixed bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-[10001] w-48 min-w-max" 
+                  onClick={(e) => e.stopPropagation()}
+                >
                     <div className="py-1">
                       <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Pages</div>
                       <div className="relative">
