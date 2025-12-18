@@ -414,8 +414,11 @@ export default function HomepageEditorPage() {
       
       // PHASE DE VALIDATION : Ne garder que quelques blocs pour tester étape par étape
       // Étape 1 : Blocs de mise en page de base (1-3 blocs max)
-      // Pour activer les phases, définir NEXT_PUBLIC_BLOCK_VALIDATION_PHASE dans .env.local
-      const validationPhase = process.env.NEXT_PUBLIC_BLOCK_VALIDATION_PHASE || '1'
+      // Pour activer les phases, définir NEXT_PUBLIC_BLOCK_VALIDATION_PHASE dans frontend/.env.local
+      // Voir PHASES_VALIDATION.md pour la documentation complète
+      const validationPhase = typeof window !== 'undefined' 
+        ? (window as any).__BLOCK_VALIDATION_PHASE__ || process.env.NEXT_PUBLIC_BLOCK_VALIDATION_PHASE || '1'
+        : process.env.NEXT_PUBLIC_BLOCK_VALIDATION_PHASE || '1'
       let filteredBlockTypes = blockTypesData
       
       // Filtrer uniquement les blocs actifs
