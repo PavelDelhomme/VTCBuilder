@@ -982,7 +982,7 @@ class TemplateViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
         except Exception as e:
-            logger.error(f&quot;Error lors de la génération de la preview: {e}", exc_info=True)
+            logger.error(f"Error lors de la génération de la preview: {e}", exc_info=True)
             response = Response(
                 {'error': f'Error lors de la génération: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

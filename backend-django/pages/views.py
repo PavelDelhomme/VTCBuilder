@@ -3,7 +3,7 @@ API views for page models
 """
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.utils import timezone
 from api.mixins import CORSMixin
@@ -14,7 +14,7 @@ from .serializers import PageSerializer, PageListSerializer, PageContentSerializ
 
 class PageViewSet(CORSMixin, viewsets.ModelViewSet):
     """ViewSet for managing pages"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # Allow unauthenticated access for list, but check in methods
 
     def get_queryset(self):
         """Return empty queryset - actual querying done in tenant_context in methods"""
@@ -37,6 +37,24 @@ class PageViewSet(CORSMixin, viewsets.ModelViewSet):
         from tenants.models import Tenant
         
         user = request.user
+        
+        # Allow unauthenticated access for published pages only
+        status_filter = request.query_params.get('status')
+        if not user or not user.is_authenticated:
+            if status_filter == 'published':
+                # Return empty list for unauthenticated users requesting published pages
+                # This is handled by the frontend which should use a public endpoint
+                response = Response([], status=status.HTTP_200_OK)
+                add_cors_headers(response, request)
+                return response
+            else:
+                # For other status filters, require authentication
+                response = Response({
+                    'error': 'Authentication required',
+                    'message': 'You must be authenticated to access this resource'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+                add_cors_headers(response, request)
+                return response
         
         # Tenant admin/users see only their tenant's pages
         if hasattr(user, 'tenant') and user.tenant:

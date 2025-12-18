@@ -554,7 +554,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
                 # Ne pas bloquer la création de l'abonnement si l'activation des features échoue
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(f&quot;Error activation fonctionnalités pour tenant {tenant.slug}: {e}")
+                logger.warning(f"Error activation fonctionnalités pour tenant {tenant.slug}: {e}")
             
             headers = self.get_success_headers(serializer.data)
             response = Response(
@@ -731,7 +731,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(f&quot;Error synchronisation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
+                logger.warning(f"Error synchronisation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
             
             return Response({
                 'status': 'Subscription plan updated',
@@ -773,7 +773,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(f&quot;Error activation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
+                logger.warning(f"Error activation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
         elif new_status == 'trial':
             # Activer les fonctionnalités lors du passage en trial
             try:
@@ -782,7 +782,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
-                logger.warning(f&quot;Error activation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
+                logger.warning(f"Error activation fonctionnalités pour tenant {subscription.tenant.slug}: {e}")
         
         subscription.save(update_fields=['status', 'cancelled_at'])
         

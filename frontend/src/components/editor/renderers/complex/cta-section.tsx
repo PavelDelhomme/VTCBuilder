@@ -5,7 +5,7 @@
 import React from 'react'
 import { RendererProps } from '../types'
 
-export const renderCTASection = ({ block, contentStyles }: RendererProps): React.ReactElement => {
+export const renderCTASection = ({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles }: RendererProps): React.ReactElement => {
   // Fonction pour convertir le gradient Tailwind en CSS
   const getGradientFromTailwindCTA = (gradient: string) => {
     if (!gradient) return 'linear-gradient(to right, #2563eb, #9333ea)'

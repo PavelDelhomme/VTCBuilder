@@ -5,7 +5,7 @@
 import React from 'react'
 import { RendererProps } from '../types'
 
-export const renderContactForm = ({ block, wrapperStyles }: RendererProps): React.ReactElement => {
+export const renderContactForm = ({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles }: RendererProps): React.ReactElement => {
   const fields = block.data?.fields || []
   const submitText = block.data?.submit_text || 'Envoyer'
   

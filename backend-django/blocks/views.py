@@ -4,7 +4,7 @@ API views for Block models
 from django.db import models
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from api.mixins import CORSMixin
 from api.utils import add_cors_headers
@@ -32,9 +32,10 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
     """
     ViewSet for BlockType - Full CRUD operations
     Super admin can manage all block types, others see only active ones
+    Unauthenticated users can view active block types
     """
     serializer_class = BlockTypeSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # Allow unauthenticated access for list, but check in methods
     pagination_class = None  # Disable pagination - return all block types at once
 
     def get_queryset(self):
@@ -114,14 +115,8 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
                 add_cors_headers(response, request)
                 return response
             
-            # Check authentication
-            if not request.user or not request.user.is_authenticated:
-                error_response = Response({
-                    'error': 'Authentication required',
-                    'message': 'You must be authenticated to access block types'
-                }, status=status.HTTP_401_UNAUTHORIZED)
-                add_cors_headers(error_response, request)
-                return error_response
+            # Allow unauthenticated access - return only active block types
+            # Authenticated users get filtered results based on permissions
             
             if not BLOCKS_MODELS_AVAILABLE or BlockType is None:
                 error_response = Response({
@@ -131,8 +126,8 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
                 add_cors_headers(error_response, request)
                 return error_response
             
-            # Auto-create default blocks if none exist
-            if not BlockType.objects.exists():
+            # Auto-create default blocks if none exist (only for authenticated users)
+            if request.user and request.user.is_authenticated and not BlockType.objects.exists():
                 logger.info("No block types found, creating default blocks...")
                 try:
                     from django.core.management import call_command
@@ -142,8 +137,16 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
                     logger.error(f"Error creating default block types: {e}", exc_info=True)
                     # Continue anyway - will return empty list
             
-            # Get queryset
-            queryset = self.get_queryset()
+            # Get queryset - if not authenticated, return only active block types
+            if not request.user or not request.user.is_authenticated:
+                queryset = BlockType.objects.filter(is_active=True)
+                # Filter by category if provided
+                category = request.query_params.get('category')
+                if category:
+                    queryset = queryset.filter(category=category)
+                queryset = queryset.order_by('category', 'order', 'label')
+            else:
+                queryset = self.get_queryset()
             
             # Pagination
             page = self.paginate_queryset(queryset)
@@ -174,6 +177,21 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
                 }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
                 add_cors_headers(error_response, request)
                 return error_response
+            
+            # Allow unauthenticated access - but only for active block types
+            if not request.user or not request.user.is_authenticated:
+                try:
+                    instance = BlockType.objects.get(pk=kwargs.get('pk'), is_active=True)
+                    serializer = self.get_serializer(instance)
+                    response = Response(serializer.data)
+                    add_cors_headers(response, request)
+                    return response
+                except BlockType.DoesNotExist:
+                    error_response = Response({
+                        'error': 'Block type not found'
+                    }, status=status.HTTP_404_NOT_FOUND)
+                    add_cors_headers(error_response, request)
+                    return error_response
             
             response = super().retrieve(request, *args, **kwargs)
             add_cors_headers(response, request)

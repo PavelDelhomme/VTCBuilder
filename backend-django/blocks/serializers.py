@@ -49,7 +49,7 @@ class BlockTypeSerializer(serializers.ModelSerializer):
             'render_template', 'call_to_action', 
             'call_to_actions', 'call_to_action_ids',
             'available_plans', 'available_plan_ids', 'plan_names',
-            'is_active', 'order',
+            'is_active', 'is_admin_only', 'order',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']

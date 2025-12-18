@@ -27,7 +27,7 @@ wait_for_service() {
     echo "⏳ Attente du démarrage de $service..."
 
     while [ $attempt -le $max_attempts ]; do
-        if docker-compose ps $service 2>/dev/null | grep -q "Up"; then
+        if docker-compose -f docker-compose.simple.yml ps $service 2>/dev/null | grep -q "Up"; then
             echo "✅ $service est démarré !"
             return 0
         fi
@@ -43,7 +43,7 @@ wait_for_service() {
 
 # Démarrer les services de base
 echo "🔧 Démarrage de PostgreSQL et Redis..."
-docker-compose up -d postgres redis
+docker-compose -f docker-compose.simple.yml up -d postgres redis
 
 # Attendre PostgreSQL
 wait_for_service postgres
@@ -53,7 +53,7 @@ wait_for_service redis
 
 # Démarrer le backend Django
 echo "🔧 Démarrage du backend Django..."
-docker-compose up -d backend
+docker-compose -f docker-compose.simple.yml up -d backend
 
 # Attendre que Django soit prêt
 sleep 10
@@ -62,19 +62,19 @@ sleep 10
 echo "🗄️  Exécution des migrations Django..."
 # Migrer le schéma public d'abord (pour les modèles partagés)
 echo "   📦 Migration du schéma public (shared)..."
-docker-compose exec -T backend python manage.py migrate_schemas --shared --noinput || {
+docker-compose -f docker-compose.simple.yml exec -T backend python manage.py migrate_schemas --shared --noinput || {
     echo "⚠️  Erreur lors des migrations shared, mais on continue..."
 }
 
 # Migrer tous les schémas des tenants existants
 echo "   📦 Migration des schémas des tenants..."
-docker-compose exec -T backend python manage.py migrate_all_tenant_schemas || {
+docker-compose -f docker-compose.simple.yml exec -T backend python manage.py migrate_all_tenant_schemas || {
     echo "⚠️  Erreur lors des migrations tenants, mais on continue..."
 }
 
 # Créer le super admin s'il n'existe pas
 echo "👤 Vérification du super admin..."
-docker-compose exec -T backend python manage.py shell -c "
+docker-compose -f docker-compose.simple.yml exec -T backend python manage.py shell -c "
 from tenants.models import User
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -100,11 +100,11 @@ else:
 
 # Démarrer le frontend
 echo "🔧 Démarrage du frontend Next.js..."
-docker-compose up -d frontend
+docker-compose -f docker-compose.simple.yml up -d frontend
 
 # Démarrer PgAdmin
 echo "🔧 Démarrage de PgAdmin..."
-docker-compose up -d pgadmin
+docker-compose -f docker-compose.simple.yml up -d pgadmin
 
 echo ""
 echo "🎉 VTCBuilder (Django + Frontend) est démarré !"

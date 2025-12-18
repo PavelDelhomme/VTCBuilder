@@ -27,6 +27,52 @@ class IsAuthenticatedOrOptions(BasePermission):
         return request.user and request.user.is_authenticated
 
 
+class IsSuperAdminOrReadOnly(BasePermission):
+    """
+    Permission class that allows GET and OPTIONS requests without authentication
+    but requires super admin status for POST, PATCH, PUT, DELETE.
+    
+    IMPORTANT: Cette classe vérifie le statut super admin UNIQUEMENT depuis le token JWT,
+    jamais depuis les paramètres de requête ou request.data pour éviter les manipulations.
+    """
+    def has_permission(self, request, view):
+        import logging
+        from api.utils import is_super_admin_from_token
+        logger = logging.getLogger(__name__)
+        
+        # Allow OPTIONS requests without authentication (for CORS preflight)
+        if request.method == 'OPTIONS':
+            logger.info(f"IsSuperAdminOrReadOnly: Allowing OPTIONS request for {request.path}")
+            return True
+        
+        # Allow GET requests without authentication (public read access)
+        if request.method == 'GET':
+            logger.debug(f"IsSuperAdminOrReadOnly: Allowing GET request for {request.path} (public read)")
+            return True
+        
+        # For all other methods (POST, PATCH, PUT, DELETE), require super admin
+        is_super_admin = is_super_admin_from_token(request)
+        
+        if not is_super_admin:
+            user_email = 'unknown'
+            if request.user and hasattr(request.user, 'email'):
+                user_email = request.user.email
+            logger.warning(
+                f"IsSuperAdminOrReadOnly: Permission denied for {request.method} {request.path}. "
+                f"User: {user_email} is not super admin (verified from JWT token)."
+            )
+        else:
+            user_email = 'unknown'
+            if request.user and hasattr(request.user, 'email'):
+                user_email = request.user.email
+            logger.info(
+                f"IsSuperAdminOrReadOnly: Permission granted for {request.method} {request.path}. "
+                f"User: {user_email} is super admin (verified from JWT token)."
+            )
+        
+        return is_super_admin
+
+
 class IsSuperAdminOrOptions(BasePermission):
     """
     Permission class that allows OPTIONS requests without authentication
@@ -151,7 +197,7 @@ def add_cors_headers(response, request):
 
 
 @api_view(['GET', 'POST', 'PATCH', 'PUT', 'OPTIONS'])
-@permission_classes([IsSuperAdminOrOptions])
+@permission_classes([IsSuperAdminOrReadOnly])
 def system_settings_view(request):
     """Get, create or update system settings (singleton)"""
     try:
@@ -314,7 +360,7 @@ def system_settings_view(request):
                     
                     logger.info(f"Synchronisation terminée: {len(synced_pages)} pages synchronisées avec le projet système")
             except Exception as sync_error:
-                logger.error(f&quot;Error synchronisation pages publiques avec projet: {sync_error}", exc_info=True)
+                logger.error(f"Error synchronisation pages publiques avec projet: {sync_error}", exc_info=True)
             
             status_code = status.HTTP_200_OK if instance.pk else status.HTTP_201_CREATED
             response = Response(serializer.data, status=status_code)
@@ -505,7 +551,7 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     """ViewSet for managing system settings"""
     queryset = SystemSettings.objects.all()
     serializer_class = SystemSettingsSerializer
-    permission_classes = [IsSuperAdminOrOptions]  # Require super admin for all methods except OPTIONS
+    permission_classes = [IsSuperAdminOrReadOnly]  # Allow GET without auth, require super admin for modifications
     http_method_names = ['get', 'put', 'patch', 'options', 'head']
     
     def get_queryset(self):
@@ -532,17 +578,8 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     
     def list(self, request, *args, **kwargs):
         """Return the singleton settings instance"""
-        # Vérifier si l'utilisateur est super admin
-        # Vérification sécurisée depuis le token JWT uniquement
-        is_super_admin = is_super_admin_from_token(request)
-        
-        if not is_super_admin:
-            error_response = Response(
-                {'error': 'Only super admin can view system settings'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-            add_cors_headers(error_response, request)
-            return error_response
+        # GET requests are allowed without authentication (public read access)
+        # Only modifications require super admin (handled by permission class)
         try:
             # get_or_create will create if doesn't exist
             instance = SystemSettings.get_settings()
@@ -574,17 +611,8 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     
     def retrieve(self, request, *args, **kwargs):
         """Get settings instance"""
-        # Vérifier si l'utilisateur est super admin
-        # Vérification sécurisée depuis le token JWT uniquement
-        is_super_admin = is_super_admin_from_token(request)
-        
-        if not is_super_admin:
-            error_response = Response(
-                {'error': 'Only super admin can view system settings'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-            add_cors_headers(error_response, request)
-            return error_response
+        # GET requests are allowed without authentication (public read access)
+        # Only modifications require super admin (handled by permission class)
         response = super().retrieve(request, *args, **kwargs)
         add_cors_headers(response, request)
         return response

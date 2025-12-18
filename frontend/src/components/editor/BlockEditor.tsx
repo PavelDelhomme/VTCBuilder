@@ -211,7 +211,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             type: 'container',
             data: {},
             styles: {},
-            layout: 12,
+            layout: 3, // Par défaut, 3 colonnes sur 12 (1/4 de la largeur)
             container: 'container',
             children: []
           }
@@ -241,21 +241,10 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       isInternalUpdate.current = true
       lastBlocksHashRef.current = historyHash
       
-      // Debounce pour éviter trop d'appels (surtout pour les changements de couleur)
-      if (onChangeTimeoutRef.current) {
-        clearTimeout(onChangeTimeoutRef.current)
-      }
-      
-      onChangeTimeoutRef.current = setTimeout(() => {
-        onChange(history.state)
-        isInternalUpdate.current = false
-      }, 50) // 50ms de debounce pour les mises à jour de style
-    }
-    
-    return () => {
-      if (onChangeTimeoutRef.current) {
-        clearTimeout(onChangeTimeoutRef.current)
-      }
+      // Mise à jour immédiate pour une réactivité maximale
+      // Le debounce a été supprimé pour que les modifications soient visibles instantanément
+      onChange(history.state)
+      isInternalUpdate.current = false
     }
   }, [history.state, onChange])
 
@@ -455,7 +444,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: blockType.name,
         data: {},
-        layout: 12,
+        layout: 3, // Par défaut, 3 colonnes sur 12 (1/4 de la largeur)
         children: isContainerType(blockType.name) ? [] : undefined,
       }
       
@@ -577,7 +566,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       type: blockType.name,
       data: {},
       styles: blockType.default_styles || {},
-      layout: 12, // Par défaut, pleine largeur (12/12)
+      layout: 3, // Par défaut, 3 colonnes sur 12 (1/4 de la largeur)
       container: 'container',
     }
 
@@ -630,13 +619,14 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       b.id === blockId ? { ...b, ...updates } : b
     )
     
-    // Pour les changements de style (padding, margin, couleur, etc.), utiliser un debounce
-    // Pour les changements de contenu (texte, enfants, etc.), mettre à jour immédiatement
+    // Pour les changements de style (padding, margin, couleur dans styles, etc.), utiliser un debounce
+    // Pour les changements de contenu (texte, enfants, level, align, color dans data, etc.), mettre à jour immédiatement
     const isStyleUpdate = (updates.styles !== undefined || 
                          updates.layout !== undefined || 
                          updates.container !== undefined ||
                          updates.position !== undefined) &&
-                         updates.children === undefined // Les enfants doivent être mis à jour immédiatement
+                         updates.children === undefined && // Les enfants doivent être mis à jour immédiatement
+                         updates.data === undefined // Les modifications de data (level, align, color, etc.) doivent être immédiates
     
     const updateHistory = () => {
       // Si on a fait undo avant (futur non vide), créer une nouvelle branche
@@ -650,21 +640,21 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     }
     
     if (immediate || !isStyleUpdate) {
-      // Mise à jour immédiate pour le contenu
+      // Mise à jour immédiate pour le contenu (data, children, etc.)
       if (updateBlockTimeoutRef.current[blockId]) {
         clearTimeout(updateBlockTimeoutRef.current[blockId])
         delete updateBlockTimeoutRef.current[blockId]
       }
       updateHistory()
     } else {
-      // Debounce pour les styles (300ms)
+      // Debounce pour les styles uniquement (100ms au lieu de 300ms pour plus de réactivité)
       if (updateBlockTimeoutRef.current[blockId]) {
         clearTimeout(updateBlockTimeoutRef.current[blockId])
       }
       updateBlockTimeoutRef.current[blockId] = setTimeout(() => {
         updateHistory()
         delete updateBlockTimeoutRef.current[blockId]
-      }, 300)
+      }, 100) // Réduit de 300ms à 100ms pour plus de réactivité
     }
   }, [history, trackBlockAction])
 
@@ -1420,7 +1410,11 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                       const blocksToSearch = Array.isArray(history.state) ? history.state : blocks
                       const childBlock = findBlockById(blocksToSearch, childId)
                       if (childBlock) {
-                        handleSelectBlock(childId)
+                        setSelectedBlock(childId)
+                        setSidebarOpen(true) // Ouvrir la sidebar pour afficher les paramètres
+                        if (onBlockSelect) {
+                          onBlockSelect(childId)
+                        }
                       }
                     }}
                     onUpdate={(updates) => updateBlock(block.id, updates)}
@@ -1686,13 +1680,12 @@ const SortableBlock = React.memo(function SortableBlock({
       if (childId) {
         e.preventDefault()
         e.stopPropagation()
-        // Sélectionner l'enfant d'abord
-        onSelectChild(childId)
-        // Puis ouvrir le menu contextuel pour l'enfant
-        // Fermer le menu précédent s'il existe
+        // Fermer le menu précédent immédiatement
         if (showMenu) {
           closeContextMenu()
         }
+        // Sélectionner l'enfant et ouvrir le menu immédiatement
+        onSelectChild(childId)
         setContextMenu({ x: e.clientX, y: e.clientY })
         setShowMenu(true)
         return
@@ -1701,19 +1694,13 @@ const SortableBlock = React.memo(function SortableBlock({
     
     e.preventDefault()
     e.stopPropagation()
-    // Toujours fermer le menu précédent avant d'en ouvrir un nouveau
+    // Fermer le menu précédent immédiatement
     if (showMenu) {
       closeContextMenu()
-      // Attendre un peu avant de rouvrir pour éviter les conflits
-      setTimeout(() => {
-        setContextMenu({ x: e.clientX, y: e.clientY })
-        setShowMenu(true)
-      }, 50)
-    } else {
-      // Ouvrir le menu contextuel
-      setContextMenu({ x: e.clientX, y: e.clientY })
-      setShowMenu(true)
     }
+    // Ouvrir le menu contextuel immédiatement
+    setContextMenu({ x: e.clientX, y: e.clientY })
+    setShowMenu(true)
   }
 
   // Fermer le menu contextuel
@@ -2195,29 +2182,14 @@ function ContainerChildrenRenderer({
                       // Gérer le clic droit sur les enfants pour ouvrir le menu contextuel
                       e.preventDefault()
                       e.stopPropagation()
-                      // Sélectionner l'enfant d'abord
-                      onSelectChild(child.id)
-                      // Ouvrir le menu contextuel pour l'enfant
-                      if (showMenu && contextMenu?.childId === child.id) {
+                      // Fermer le menu précédent immédiatement
+                      if (showMenu) {
                         closeContextMenu()
-                        // Attendre un peu avant de rouvrir pour éviter les conflits
-                        setTimeout(() => {
-                          setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
-                          setShowMenu(true)
-                        }, 50)
-                      } else {
-                        // Fermer le menu précédent s'il existe
-                        if (showMenu) {
-                          closeContextMenu()
-                          setTimeout(() => {
-                            setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
-                            setShowMenu(true)
-                          }, 50)
-                        } else {
-                          setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
-                          setShowMenu(true)
-                        }
                       }
+                      // Sélectionner l'enfant et ouvrir le menu immédiatement
+                      onSelectChild(child.id)
+                      setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
+                      setShowMenu(true)
                     }}
                   >
                     {/* Header du bloc enfant */}

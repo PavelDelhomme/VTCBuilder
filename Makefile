@@ -1,4 +1,4 @@
-.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-coverage analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean
+.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-coverage analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean start up stop restart restart-backend restart-frontend down logs status
 
 BLUE = \033[0;34m
 GREEN = \033[0;32m
@@ -202,6 +202,49 @@ type-check: type-check-frontend ## Vérifier les types (frontend uniquement)
 	@printf "$(GREEN)✨ Vérification des types terminée !$(NC)\n"
 
 type-check-frontend: frontend-type-check ## Vérifier TypeScript frontend
+
+##@ Gestion des Services
+
+start: ## Démarrer toute la stack (backend + frontend + services)
+	@printf "$(GREEN)🚀 Démarrage de toute la stack VTCBuilder...$(NC)\n"
+	@./start.sh
+
+up: start ## Alias pour start - Démarrer toute la stack
+
+stop: ## Arrêter tous les services
+	@printf "$(YELLOW)⏸️  Arrêt de tous les services...$(NC)\n"
+	@docker-compose -f docker-compose.simple.yml stop
+	@printf "$(GREEN)✅ Services arrêtés !$(NC)\n"
+
+restart: stop start ## Redémarrer tous les services
+
+restart-backend: ## Redémarrer uniquement le backend
+	@printf "$(YELLOW)🔄 Redémarrage du backend...$(NC)\n"
+	@docker-compose -f docker-compose.simple.yml restart backend
+	@printf "$(GREEN)✅ Backend redémarré !$(NC)\n"
+
+restart-frontend: ## Redémarrer uniquement le frontend
+	@printf "$(YELLOW)🔄 Redémarrage du frontend...$(NC)\n"
+	@docker-compose -f docker-compose.simple.yml restart frontend
+	@printf "$(GREEN)✅ Frontend redémarré !$(NC)\n"
+
+down: ## Arrêter et supprimer les containers
+	@printf "$(RED)🗑️  Arrêt et suppression des containers...$(NC)\n"
+	@docker-compose -f docker-compose.simple.yml down
+	@printf "$(GREEN)✅ Containers supprimés !$(NC)\n"
+
+logs: ## Afficher les logs de tous les services
+	@docker-compose -f docker-compose.simple.yml logs -f
+
+status: ## Afficher le statut des services
+	@printf "$(BLUE)📊 Statut des services...$(NC)\n"
+	@docker-compose -f docker-compose.simple.yml ps
+	@printf "$(BLUE)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)\n"
+	@printf "$(GREEN)🌐 URLs d'accès :$(NC)\n"
+	@printf "  $(YELLOW)Frontend:$(NC)     http://localhost:9494\n"
+	@printf "  $(YELLOW)API Django:$(NC)   http://localhost:9495/api/\n"
+	@printf "  $(YELLOW)Admin Django:$(NC)  http://localhost:9495/admin/\n"
+	@printf "  $(YELLOW)PgAdmin:$(NC)       http://localhost:9498\n"
 
 ##@ Utilitaires
 

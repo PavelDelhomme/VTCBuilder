@@ -120,6 +120,7 @@ class BlockType(models.Model):
     
     # Configuration
     is_active = models.BooleanField(default=True, help_text="Activer/désactiver ce type de bloc")
+    is_admin_only = models.BooleanField(default=False, help_text="Réservé aux administrateurs uniquement (non visible pour les utilisateurs normaux)")
     order = models.IntegerField(default=0, help_text="Ordre d'affichage dans la palette")
     
     # Timestamps

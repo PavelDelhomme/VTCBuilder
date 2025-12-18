@@ -218,22 +218,75 @@ function BlockPreview({
 
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement
+      
+      // Prioriser le hover sur un enfant si on survole un élément avec data-child-block-id
+      const childElement = target.closest('[data-child-block-id]') as HTMLElement
+      if (childElement) {
+        const childId = childElement.getAttribute('data-child-block-id')
+        if (childId && childId !== selectedBlockId && childElement !== currentHovered) {
+          // Nettoyer le hover précédent
+          if (currentHovered && currentHovered.getAttribute('data-block-id') !== selectedBlockId) {
+            currentHovered.style.outline = ''
+            currentHovered.style.outlineOffset = ''
+            currentHovered.style.cursor = ''
+          }
+          childElement.style.outline = '2px dashed #3b82f6'
+          childElement.style.outlineOffset = '2px'
+          childElement.style.cursor = 'pointer'
+          currentHovered = childElement
+          setHoveredElement(childElement)
+          return
+        }
+      }
+      
+      // Sinon, trouver le bloc le plus proche
       const blockElement = target.closest('[data-block-id]') as HTMLElement
       
       if (blockElement && blockElement !== currentHovered) {
-        // Remove outline from previous element
+        // Vérifier si on survole un enfant plus proche dans le DOM
+        const allBlockElements = target.closest('.block-preview-container')?.querySelectorAll('[data-block-id]')
+        let elementToHighlight: HTMLElement = blockElement
+        
+        if (allBlockElements) {
+          let closestChild: HTMLElement | null = null
+          let closestDistance = Infinity
+          
+          allBlockElements.forEach((el) => {
+            const elBlockId = el.getAttribute('data-block-id')
+            if (elBlockId && el.contains(target) && el !== blockElement) {
+              // Calculer la distance dans le DOM
+              let distance = 0
+              let current: HTMLElement | null = target as HTMLElement
+              while (current && current !== el && distance < 20) {
+                current = current.parentElement
+                distance++
+              }
+              if (distance < closestDistance) {
+                closestDistance = distance
+                closestChild = el as HTMLElement
+              }
+            }
+          })
+          
+          if (closestChild && closestChild.getAttribute('data-block-id') !== selectedBlockId) {
+            elementToHighlight = closestChild
+          }
+        }
+        
+        // Nettoyer le hover précédent
         if (currentHovered && currentHovered.getAttribute('data-block-id') !== selectedBlockId) {
           currentHovered.style.outline = ''
           currentHovered.style.outlineOffset = ''
+          currentHovered.style.cursor = ''
         }
         
-        // Add outline to new element
-        currentHovered = blockElement
-        setHoveredElement(blockElement)
-        if (blockElement.getAttribute('data-block-id') !== selectedBlockId) {
-          blockElement.style.outline = '2px dashed #3b82f6'
-          blockElement.style.outlineOffset = '2px'
-          blockElement.style.cursor = 'pointer'
+        // Ajouter le hover au nouvel élément
+        currentHovered = elementToHighlight
+        setHoveredElement(elementToHighlight)
+        if (elementToHighlight.getAttribute('data-block-id') !== selectedBlockId) {
+          elementToHighlight.style.outline = '2px dashed #3b82f6'
+          elementToHighlight.style.outlineOffset = '2px'
+          elementToHighlight.style.cursor = 'pointer'
         }
       }
     }
@@ -261,18 +314,48 @@ function BlockPreview({
       e.stopPropagation()
       
       const target = e.target as HTMLElement
-      // Trouver le bloc le plus proche, mais ignorer les conteneurs si on clique sur un enfant
-      // Si on clique sur un enfant d'un conteneur, sélectionner l'enfant, pas le conteneur
+      
+      // Prioriser la sélection d'un enfant si on clique sur un élément avec data-child-block-id
+      const childElement = target.closest('[data-child-block-id]') as HTMLElement
+      if (childElement) {
+        const childId = childElement.getAttribute('data-child-block-id')
+        if (childId && onBlockSelect) {
+          onBlockSelect(childId === selectedBlockId ? null : childId)
+          return
+        }
+      }
+      
+      // Sinon, trouver le bloc le plus proche
       let blockElement = target.closest('[data-block-id]') as HTMLElement
       
       // Si on clique sur un enfant d'un conteneur, vérifier s'il y a un bloc enfant plus proche
       if (blockElement) {
-        const clickedBlockId = blockElement.getAttribute('data-block-id')
-        // Vérifier si le bloc cliqué a des enfants et si on a cliqué directement sur un enfant
-        const directChild = target.closest('[data-block-id]') as HTMLElement
-        if (directChild && directChild !== blockElement) {
-          // On a cliqué sur un enfant, utiliser celui-ci
-          blockElement = directChild
+        // Vérifier si on a cliqué directement sur un enfant (plus proche dans le DOM)
+        const allBlockElements = target.closest('.block-preview-container')?.querySelectorAll('[data-block-id]')
+        if (allBlockElements) {
+          let closestChild: HTMLElement | null = null
+          let closestDistance = Infinity
+          
+          allBlockElements.forEach((el) => {
+            const elBlockId = el.getAttribute('data-block-id')
+            if (elBlockId && el.contains(target) && el !== blockElement) {
+              // Calculer la distance dans le DOM (nombre d'ancêtres)
+              let distance = 0
+              let current: HTMLElement | null = target as HTMLElement
+              while (current && current !== el && distance < 20) {
+                current = current.parentElement
+                distance++
+              }
+              if (distance < closestDistance) {
+                closestDistance = distance
+                closestChild = el as HTMLElement
+              }
+            }
+          })
+          
+          if (closestChild) {
+            blockElement = closestChild
+          }
         }
         
         const blockId = blockElement.getAttribute('data-block-id')
@@ -868,47 +951,63 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                         headingLevel === 'h2' ? 'h2' :
                         headingLevel === 'h3' ? 'h3' :
                         headingLevel === 'h4' ? 'h4' : 'h2'
-      const headingAlign = block.data.align || contentStyles.textAlign || 'left'
+      // Prioriser block.styles.text_align (panneau Style) puis block.data.align (panneau Contenu) puis contentStyles.textAlign
+      const headingAlign = block.styles?.text_align || block.data.align || contentStyles.textAlign || 'left'
+      // Prioriser block.styles.color (défini dans le panneau Style) puis block.data.color (défini dans le panneau Contenu)
+      // Appliquer la couleur même en mode sombre si elle est explicitement définie
+      const headingColor = block.styles?.color || block.data.color || (theme === 'dark' ? undefined : contentStyles.color)
       return (
-        <div className="mb-6" style={{ textAlign: headingAlign }}>
-          {HeadingTag === 'h1' && <h1 className="font-bold inline-block" style={{
+        <div className="mb-6" style={{ textAlign: headingAlign, width: '100%' }}>
+          {HeadingTag === 'h1' && <h1 className="font-bold" style={{
             ...contentStyles,
             fontSize: block.styles?.font_size || '2rem',
             fontWeight: block.styles?.font_weight || 'bold',
             marginBottom: block.styles?.margin_bottom || '1rem',
-            color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
+            color: headingColor,
+            textAlign: headingAlign,
+            display: 'block',
+            width: '100%'
           }}>
             {block.data.text || 'Title'}
           </h1>}
           {HeadingTag === 'h2' && (
-            <h2 className="font-bold inline-block" style={{
+            <h2 className="font-bold" style={{
               ...contentStyles,
               fontSize: block.styles?.font_size || '2rem',
               fontWeight: block.styles?.font_weight || 'bold',
               marginBottom: block.styles?.margin_bottom || '1rem',
-              color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
+              color: headingColor,
+              textAlign: headingAlign,
+              display: 'block',
+              width: '100%'
             }}>
               {block.data.text || 'Title'}
             </h2>
           )}
           {HeadingTag === 'h3' && (
-            <h3 className="font-bold inline-block" style={{
+            <h3 className="font-bold" style={{
               ...contentStyles,
               fontSize: block.styles?.font_size || '2rem',
               fontWeight: block.styles?.font_weight || 'bold',
               marginBottom: block.styles?.margin_bottom || '1rem',
-              color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
+              color: headingColor,
+              textAlign: headingAlign,
+              display: 'block',
+              width: '100%'
             }}>
               {block.data.text || 'Title'}
             </h3>
           )}
           {HeadingTag === 'h4' && (
-            <h4 className="font-bold inline-block" style={{
+            <h4 className="font-bold" style={{
               ...contentStyles,
               fontSize: block.styles?.font_size || '2rem',
               fontWeight: block.styles?.font_weight || 'bold',
               marginBottom: block.styles?.margin_bottom || '1rem',
-              color: theme === 'dark' ? undefined : (block.data.color || contentStyles.color || undefined)
+              color: headingColor,
+              textAlign: headingAlign,
+              display: 'block',
+              width: '100%'
             }}>
               {block.data.text || 'Title'}
             </h4>
@@ -919,9 +1018,14 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
 
     case 'text': {
       const isDark = theme === 'dark'
+      // Prioriser block.styles.text_align (panneau Style) puis block.data.align (panneau Contenu) puis contentStyles.textAlign
+      const textAlign = block.styles?.text_align || block.data.align || contentStyles.textAlign || 'left'
+      // Prioriser block.styles.color (défini dans le panneau Style) puis block.data.color (défini dans le panneau Contenu)
+      const textColor = block.styles?.color || block.data.color || (isDark ? '#d1d5db' : (contentStyles.color || '#111827'))
       return (
         <div className="mb-6 prose max-w-none" style={{ 
-          textAlign: contentStyles.textAlign,
+          textAlign: textAlign,
+          width: '100%',
           color: isDark ? '#d1d5db' : undefined
         }}>
           <div 
@@ -932,7 +1036,10 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               ...contentStyles,
               fontSize: block.styles?.font_size || '1rem',
               lineHeight: block.styles?.line_height || '1.6',
-              color: isDark ? '#d1d5db' : (contentStyles.color || '#111827'),
+              color: textColor,
+              textAlign: textAlign,
+              display: 'block',
+              width: '100%'
             }}
           />
         </div>
@@ -955,10 +1062,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         )
       }
       const imageUrl = block.data.url || block.data.src
-      const imageAlign = block.data.align || contentStyles.textAlign || 'center'
+      // Prioriser block.styles.text_align (panneau Style) puis block.data.align (panneau Contenu) puis contentStyles.textAlign
+      const imageAlign = block.styles?.text_align || block.data.align || contentStyles.textAlign || 'center'
       return (
-        <div className="mb-6">
-          <div style={{ textAlign: imageAlign }}>
+        <div className="mb-6" style={{ width: '100%' }}>
+          <div style={{ textAlign: imageAlign, width: '100%' }}>
             <img
               src={imageUrl}
               alt={block.data.alt || ''}
@@ -1005,10 +1113,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         ? 'bg-transparent text-blue-600 hover:underline'
         : `border-2 border-blue-600 text-blue-600 ${theme === 'dark' ? 'hover:bg-blue-900' : 'hover:bg-blue-50'}`
       
-      const buttonAlign = block.data.align || contentStyles.textAlign || 'left'
+      // Prioriser block.styles.text_align (panneau Style) puis block.data.align (panneau Contenu) puis contentStyles.textAlign
+      const buttonAlign = block.styles?.text_align || block.data.align || contentStyles.textAlign || 'left'
       
       return (
-        <div className="mb-6" style={{ textAlign: buttonAlign }}>
+        <div className="mb-6" style={{ textAlign: buttonAlign, width: '100%' }}>
           <a
             href={block.data.url || '#'}
             className={`${block.data.full_width ? 'w-full block text-center' : 'inline-block'} ${buttonSizeClass} rounded-lg font-medium transition-colors ${buttonStyleClass}`}
@@ -1021,6 +1130,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               borderRadius: contentStyles.borderRadius || block.styles?.border_radius || '0.5rem',
               backgroundColor: block.data.bg_color || contentStyles.backgroundColor || undefined,
               color: theme === 'dark' ? undefined : (block.data.text_color || contentStyles.color || undefined),
+              textAlign: buttonAlign,
             }}
           >
             {block.data.text || 'Bouton'}
@@ -1389,6 +1499,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       // Container should render its children, not just show placeholder text
       return (
         <div 
+          data-block-id={block.id}
           style={{
             ...wrapperStyles,
             ...contentStyles,
@@ -1406,13 +1517,14 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             // Render children blocks recursively
             <div className="space-y-0">
               {block.children.map((childBlock: Block, idx: number) => (
-                <BlockPreviewRenderer
-                  key={childBlock.id || idx}
-                  block={childBlock}
-                  blockType={blockTypes?.find((bt: BlockType) => bt.name === childBlock.type)}
-                  blockTypes={blockTypes}
-                  theme={theme}
-                />
+                <div key={childBlock.id || idx} data-block-id={childBlock.id} data-child-block-id={childBlock.id}>
+                  <BlockPreviewRenderer
+                    block={childBlock}
+                    blockType={blockTypes?.find((bt: BlockType) => bt.name === childBlock.type)}
+                    blockTypes={blockTypes}
+                    theme={theme}
+                  />
+                </div>
               ))}
             </div>
           ) : (
@@ -1546,6 +1658,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       const columnCount = block.data.columns_count || 2
       return (
         <div 
+          data-block-id={block.id}
           style={{
             ...contentStyles,
             display: 'grid',
@@ -1556,7 +1669,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         >
           {block.children && block.children.length > 0 ? (
             block.children.map((childBlock: Block, i: number) => (
-              <div key={childBlock.id || i} className="min-h-[100px]">
+              <div key={childBlock.id || i} data-block-id={childBlock.id} data-child-block-id={childBlock.id} className="min-h-[100px]">
                 <BlockPreviewRenderer
                   block={childBlock}
                   blockType={blockTypes?.find((bt: BlockType) => bt.name === childBlock.type)}
@@ -1686,11 +1799,21 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
 
     case 'paragraph': {
       const isDark = theme === 'dark'
+      // Prioriser block.styles.text_align (panneau Style) puis block.data.align (panneau Contenu) puis contentStyles.textAlign
+      const paragraphAlign = block.styles?.text_align || block.data.align || contentStyles.textAlign || 'left'
+      // Prioriser block.styles.color (défini dans le panneau Style) puis block.data.color (défini dans le panneau Contenu)
+      const paragraphColor = block.styles?.color || block.data.color || (isDark ? '#d1d5db' : (contentStyles.color || '#374151'))
       return (
-        <div style={wrapperStyles} className="mb-6">
+        <div style={{ ...wrapperStyles, width: '100%' }} className="mb-6">
           <p 
             className="text-base leading-relaxed whitespace-pre-wrap"
-            style={{ color: isDark ? '#d1d5db' : '#374151' }}
+            style={{ 
+              ...contentStyles,
+              color: paragraphColor,
+              textAlign: paragraphAlign,
+              display: 'block',
+              width: '100%'
+            }}
           >
             {block.data.content || 'Empty paragraph'}
           </p>
@@ -1700,11 +1823,21 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
 
     case 'line': {
       const isDark = theme === 'dark'
+      // Prioriser block.styles.text_align (panneau Style) puis block.data.align (panneau Contenu) puis contentStyles.textAlign
+      const lineAlign = block.styles?.text_align || block.data.align || contentStyles.textAlign || 'left'
+      // Prioriser block.styles.color (défini dans le panneau Style) puis block.data.color (défini dans le panneau Contenu)
+      const lineColor = block.styles?.color || block.data.color || (isDark ? '#d1d5db' : (contentStyles.color || '#374151'))
       return (
-        <div style={wrapperStyles} className="mb-6">
+        <div style={{ ...wrapperStyles, width: '100%' }} className="mb-6">
           <span 
             className="text-base"
-            style={{ color: isDark ? '#d1d5db' : '#374151' }}
+            style={{ 
+              ...contentStyles,
+              color: lineColor,
+              textAlign: lineAlign,
+              display: 'block',
+              width: '100%'
+            }}
           >
             {block.data.text || 'Single line text'}
           </span>
@@ -3010,6 +3143,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     case 'section': {
       return (
         <div
+          data-block-id={block.id}
           style={{
             ...contentStyles,
             backgroundImage: block.data.background_image ? `url(${block.data.background_image})` : undefined,
@@ -3035,7 +3169,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           <div className="relative z-10">
             {block.children && block.children.length > 0 ? (
               block.children.map((childBlock: Block, i: number) => (
-                <div key={childBlock.id || i}>
+                <div key={childBlock.id || i} data-block-id={childBlock.id} data-child-block-id={childBlock.id}>
                   <BlockPreviewRenderer
                     block={childBlock}
                     blockType={blockTypes?.find((bt: BlockType) => bt.name === childBlock.type)}

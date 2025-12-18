@@ -101,27 +101,34 @@ export default function PageSelector({ value, onChange, placeholder = 'Sélectio
     ...publicPages.map(p => ({ slug: p.slug === 'home' ? '/' : `/${p.slug}`, title: p.title, type: 'public' })),
   ]
 
+  // Détecter le thème depuis le document ou utiliser 'light' par défaut
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  
   return (
     <div className="space-y-2">
       <select
         value={value || ''}
         onChange={handleChange}
-        className={className || 'w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}
+        className={className || 'w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'}
+        style={{
+          backgroundColor: isDark ? '#1f2937' : '#ffffff',
+          color: isDark ? '#f9fafb' : '#111827',
+        }}
       >
-        <option value="">{placeholder}</option>
+        <option value="" style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', color: isDark ? '#f9fafb' : '#111827' }}>{placeholder}</option>
         {allPages.length > 0 && (
           <>
-            <optgroup label="Pages du tenant">
+            <optgroup label="Pages du tenant" style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', color: isDark ? '#f9fafb' : '#111827' }}>
               {pages.map((page) => (
-                <option key={page.id} value={`/${page.slug}`}>
+                <option key={page.id} value={`/${page.slug}`} style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', color: isDark ? '#f9fafb' : '#111827' }}>
                   {page.title} ({page.slug})
                 </option>
               ))}
             </optgroup>
             {publicPages.length > 0 && (
-              <optgroup label="Pages publiques">
+              <optgroup label="Pages publiques" style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', color: isDark ? '#f9fafb' : '#111827' }}>
                 {publicPages.map((page) => (
-                  <option key={page.slug} value={page.slug === 'home' ? '/' : `/${page.slug}`}>
+                  <option key={page.slug} value={page.slug === 'home' ? '/' : `/${page.slug}`} style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', color: isDark ? '#f9fafb' : '#111827' }}>
                     {page.title}
                   </option>
                 ))}
@@ -129,11 +136,11 @@ export default function PageSelector({ value, onChange, placeholder = 'Sélectio
             )}
           </>
         )}
-        <option value="custom">🔗 URL personnalisée...</option>
+        <option value="custom" style={{ backgroundColor: isDark ? '#1f2937' : '#ffffff', color: isDark ? '#f9fafb' : '#111827' }}>🔗 URL personnalisée...</option>
       </select>
       {value && (
         <div className="text-xs text-gray-500 dark:text-gray-400">
-          URL: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{value}</code>
+          URL: <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded text-gray-900 dark:text-gray-100">{value}</code>
         </div>
       )}
     </div>

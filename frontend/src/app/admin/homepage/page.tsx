@@ -287,21 +287,46 @@ export default function HomepageEditorPage() {
   const router = useRouter()
   
   // Supprimer complètement l'error 403 de la console pour /system-settings/
+  // Utiliser useRef pour stocker la fonction originale et éviter les re-renders
+  const originalErrorRef = useRef<typeof console.error | null>(null)
+  const isSetupRef = useRef(false)
+  
   useEffect(() => {
-    const originalError = console.error
-    console.error = (...args: any[]) => {
+    // Ne configurer qu'une seule fois
+    if (isSetupRef.current) {
+      return
+    }
+    
+    // Stocker la fonction originale une seule fois
+    if (!originalErrorRef.current) {
+      originalErrorRef.current = console.error.bind(console)
+    }
+    
+    // Créer une nouvelle fonction qui filtre les erreurs
+    const filteredError = (...args: any[]) => {
       // Filtrer les erreurs 403 pour /system-settings/
       const errorString = args.join(' ')
       if (errorString.includes('403') && errorString.includes('/system-settings/')) {
         return // Ne pas logger cette erreur
       }
-      originalError.apply(console, args)
+      // Appeler la fonction originale
+      if (originalErrorRef.current) {
+        originalErrorRef.current.apply(console, args)
+      }
     }
     
+    // Remplacer console.error
+    console.error = filteredError
+    isSetupRef.current = true
+    
     return () => {
-      console.error = originalError
+      // Restaurer la fonction originale au démontage
+      if (originalErrorRef.current) {
+        console.error = originalErrorRef.current
+        isSetupRef.current = false
+      }
     }
-  }, [])
+  }, []) // Dépendances vides - ne s'exécute qu'une fois
   
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -311,7 +336,7 @@ export default function HomepageEditorPage() {
   const [metaDescription, setMetaDescription] = useState('')
   const [showPreview, setShowPreview] = useState(true)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
-  const [showSeoExpanded, setShowSeoExpanded] = useState(false)
+  const [showSeoModal, setShowSeoModal] = useState(false)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [availablePages, setAvailablePages] = useState<Array<{ slug: string; title: string }>>([])
   // SEO avancé
@@ -344,6 +369,7 @@ export default function HomepageEditorPage() {
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
   const [showOptionsMenu, setShowOptionsMenu] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
 
   // Fonction pour charger les données
   const loadData = useCallback(async () => {
@@ -526,6 +552,33 @@ export default function HomepageEditorPage() {
     }
   }, [blocks, metaTitle, metaDescription, ogTitle, ogDescription, ogImage, twitterCardType, twitterImage, metaKeywords, canonicalUrl, robots, pageStatus, updateLastSaved])
 
+  // Gestion du raccourci clavier Ctrl+S (ou Cmd+S sur Mac) pour sauvegarder
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S (Windows/Linux) ou Cmd+S (Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault() // Empêcher le comportement par défaut (sauvegarde de la page)
+        
+        // Ne pas sauvegarder si on est déjà en train de sauvegarder
+        if (saving || isAutoSaving) {
+          return
+        }
+        
+        // Sauvegarder immédiatement, peu importe ce que l'utilisateur est en train d'éditer
+        // Cela fonctionne même si l'utilisateur est en train d'éditer un champ de formulaire ou un bloc
+        handleSave()
+      }
+    }
+
+    // Ajouter l'écouteur d'événements au niveau du document
+    // Cela fonctionne même si l'utilisateur est en train d'éditer un champ de formulaire ou un bloc
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [handleSave, saving, isAutoSaving])
+
   if (loading) {
     return (
       <AdminLayout title="Éditeur Site Publique" subtitle="Chargement...">
@@ -540,123 +593,46 @@ export default function HomepageEditorPage() {
       subtitle="Créez et personnalisez votre site public avec l'éditeur de blocs complet"
       headerActions={
         <div className="flex gap-1 items-center flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {/* Retour aux projets - Icon only */}
+          {/* Retour aux projets - Toujours visible */}
           <button
             onClick={() => router.push('/admin/projects')}
-            className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+            className="px-2 sm:px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0 flex items-center gap-1 sm:gap-2"
             title="Retour aux projets"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
+            <span className="text-sm font-medium hidden md:inline">Retour</span>
           </button>
-
-          {/* Preview Mode Selector - Ultra compact */}
-          <div className="flex items-center gap-0.5 flex-shrink-0 bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5">
-            <button
-              onClick={() => setPreviewMode('desktop')}
-              className={`p-1 rounded transition-colors ${
-                previewMode === 'desktop'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-              }`}
-              title="Mode Desktop"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setPreviewMode('tablet')}
-              className={`p-1 rounded transition-colors ${
-                previewMode === 'tablet'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-              }`}
-              title="Mode Tablette"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setPreviewMode('mobile')}
-              className={`p-1 rounded transition-colors ${
-                previewMode === 'mobile'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800'
-              }`}
-              title="Mode Mobile"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-            </button>
-            {/* Preview Theme Toggle - Light/Dark - Icon only */}
-            <button
-              onClick={() => setPreviewTheme(previewTheme === 'light' ? 'dark' : 'light')}
-              className={`p-1 rounded transition-colors ${
-                previewTheme === 'dark'
-                  ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-              }`}
-              title={previewTheme === 'light' ? 'Mode sombre (prévisualisation)' : 'Mode clair (prévisualisation)'}
-            >
-              {previewTheme === 'dark' ? (
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-              ) : (
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              )}
-            </button>
-          </div>
-
-          {/* External Preview - Icon only */}
-          <button
-            onClick={() => window.open('/', '_blank')}
-            className="p-1.5 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
-            title="Ouvrir le site dans un nouvel onglet"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </button>
-
-          {/* Auto-save indicator - Icon only with tooltip */}
-          {isAutoSaving ? (
-            <div className="p-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg flex-shrink-0" title="Sauvegarde automatique en cours...">
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent"></div>
-            </div>
-          ) : lastSaved ? (
-            <div className="p-1.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg flex-shrink-0" title={`Sauvegardé à ${lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          ) : null}
-
-          {/* Menu déroulant pour options moins fréquentes */}
-          <div className="hidden lg:flex items-center gap-0.5 flex-shrink-0">
+        </div>
+      }
+    >
+      {/* Barre d'outils sous le header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-2 relative">
+        <div className="flex gap-1 items-center flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {/* Menu déroulant pour options */}
+          <div className="flex items-center gap-1 flex-shrink-0">
             <div className="relative">
               <button
-                onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-                className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowOptionsMenu(!showOptionsMenu)
+                }}
+                className="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center gap-1 flex-shrink-0"
                 title="Plus d'options"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                 </svg>
+                <span className="text-xs font-medium whitespace-nowrap hidden md:inline">Options</span>
               </button>
               {showOptionsMenu && (
                 <>
                   <div 
-                    className="fixed inset-0 z-40" 
+                    className="fixed inset-0 z-[10000]" 
                     onClick={() => setShowOptionsMenu(false)}
                   />
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                  <div className="absolute left-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-[10001] w-48">
                     <div className="py-1">
                       <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Pages</div>
                       <div className="relative">
@@ -712,13 +688,88 @@ export default function HomepageEditorPage() {
             </div>
           </div>
 
-          {/* Toggle liens - Icon only */}
+          {/* Toggle Palette Blocs */}
+          <button
+            onClick={() => {
+              setIsPaletteCollapsed(!isPaletteCollapsed)
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('palette-collapsed', String(!isPaletteCollapsed))
+              }
+            }}
+            className={`px-2 py-1.5 rounded-lg transition-colors flex-shrink-0 flex items-center gap-1 ${
+              isPaletteCollapsed
+                ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
+                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50'
+            }`}
+            title={isPaletteCollapsed ? 'Afficher la palette de blocs' : 'Masquer la palette de blocs'}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            <span className="text-xs font-medium whitespace-nowrap hidden md:inline">Palette</span>
+          </button>
+
+          {/* Undo/Redo Buttons */}
+          <div className="flex items-center gap-0.5 bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5 flex-shrink-0">
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined' && (window as any).__blockEditorUndo) {
+                  (window as any).__blockEditorUndo()
+                }
+              }}
+              disabled={!canUndo}
+              className={`px-2 py-1.5 rounded transition-colors flex items-center gap-1 ${
+                canUndo
+                  ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                  : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
+              }`}
+              title="Annuler (Ctrl+Z)"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              </svg>
+              <span className="text-xs font-medium whitespace-nowrap hidden lg:inline">Annuler</span>
+            </button>
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined' && (window as any).__blockEditorRedo) {
+                  (window as any).__blockEditorRedo()
+                }
+              }}
+              disabled={!canRedo}
+              className={`px-2 py-1.5 rounded transition-colors flex items-center gap-1 ${
+                canRedo
+                  ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
+                  : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
+              }`}
+              title="Rétablir (Ctrl+Y)"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+              </svg>
+              <span className="text-xs font-medium whitespace-nowrap hidden lg:inline">Rétablir</span>
+            </button>
+          </div>
+
+          {/* Bouton SEO - Ouvre un modal */}
+          <button
+            onClick={() => setShowSeoModal(true)}
+            className="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex-shrink-0 flex items-center gap-1"
+            title="Paramètres SEO"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span className="text-xs font-medium whitespace-nowrap hidden md:inline">SEO</span>
+          </button>
+
+          {/* Toggle liens - Déplacé de la barre de prévisualisation */}
           <button
             onClick={() => setPreviewLinksEnabled(!previewLinksEnabled)}
-            className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
+            className={`px-2 py-1.5 rounded-lg transition-colors flex-shrink-0 flex items-center gap-1 ${
               previewLinksEnabled
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
             title={previewLinksEnabled ? 'Désactiver les liens' : 'Activer les liens'}
           >
@@ -731,271 +782,34 @@ export default function HomepageEditorPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
               </svg>
             )}
+            <span className="text-xs font-medium whitespace-nowrap hidden md:inline">Liens</span>
           </button>
 
-          {/* Undo/Redo Buttons - Ultra compact */}
-          <div className="flex items-center gap-0 bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5 flex-shrink-0">
-            <button
-              onClick={() => {
-                if (typeof window !== 'undefined' && (window as any).__blockEditorUndo) {
-                  (window as any).__blockEditorUndo()
-                }
-              }}
-              disabled={!canUndo}
-              className={`p-1.5 rounded transition-colors ${
-                canUndo
-                  ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                  : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
-              }`}
-              title="Annuler (Ctrl+Z)"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-              </svg>
-            </button>
-            <button
-              onClick={() => {
-                if (typeof window !== 'undefined' && (window as any).__blockEditorRedo) {
-                  (window as any).__blockEditorRedo()
-                }
-              }}
-              disabled={!canRedo}
-              className={`p-1.5 rounded transition-colors ${
-                canRedo
-                  ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800'
-                  : 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
-              }`}
-              title="Rétablir (Ctrl+Y)"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Toggle Palette Blocs - Icon only */}
-          <button
-            onClick={() => {
-              setIsPaletteCollapsed(!isPaletteCollapsed)
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('palette-collapsed', String(!isPaletteCollapsed))
-              }
-            }}
-            className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
-              isPaletteCollapsed
-                ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'
-                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50'
-            }`}
-            title={isPaletteCollapsed ? 'Afficher la palette de blocs' : 'Masquer la palette de blocs'}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-            </svg>
-          </button>
-
-          {/* Save Button - Icon only with tooltip */}
+          {/* Save Button */}
           <button
             onClick={handleSave}
             disabled={saving || isAutoSaving}
-            className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex-shrink-0"
+            className="px-2 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex-shrink-0 flex items-center gap-1"
             title={saving ? 'Sauvegarde en cours...' : (pageStatus === 'draft' ? 'Sauvegarder le brouillon' : 'Publier la page')}
           >
             {saving ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                <span className="text-xs font-medium">Sauvegarde...</span>
+              </>
             ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-xs font-medium whitespace-nowrap">{pageStatus === 'draft' ? 'Sauvegarder' : 'Publier'}</span>
+              </>
             )}
           </button>
         </div>
-      }
-    >
-      <div className="flex flex-col h-[calc(100vh-180px)]">
-        {/* SEO Settings Bar - Expandable */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="p-2">
-            <button
-              onClick={() => setShowSeoExpanded(!showSeoExpanded)}
-              className="flex items-center justify-between w-full text-left p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group relative"
-              title={showSeoExpanded ? 'Masquer les paramètres SEO' : 'Afficher les paramètres SEO'}
-            >
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <span className="absolute left-full ml-2 px-2 py-1 text-xs font-medium text-white bg-gray-900 dark:bg-gray-700 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
-                  {showSeoExpanded ? 'Masquer' : 'Afficher'} les paramètres SEO ({metaTitle.length}/60)
-                </span>
-              </div>
-              <svg className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform ${showSeoExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </div>
-          
-          {showSeoExpanded && (
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
-              {/* Basic SEO */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="meta_title" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Titre SEO <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="meta_title"
-                    type="text"
-                    value={metaTitle}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMetaTitle(e.target.value)}
-                    className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Titre pour les moteurs de recherche (50-60 caractères)"
-                    maxLength={60}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">{metaTitle.length}/60 caractères</p>
-                </div>
-                <div>
-                  <label htmlFor="meta_description" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Description SEO
-                  </label>
-                  <textarea
-                    id="meta_description"
-                    value={metaDescription}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMetaDescription(e.target.value)}
-                    className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Description pour les moteurs de recherche (150-160 caractères)"
-                    rows={2}
-                    maxLength={160}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">{metaDescription.length}/160 caractères</p>
-                </div>
-              </div>
+      </div>
 
-              {/* Open Graph */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Open Graph (Réseaux sociaux)</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      OG Title
-                    </label>
-                    <input
-                      type="text"
-                      value={ogTitle || metaTitle}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOgTitle(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
-                      placeholder="Titre pour Facebook, LinkedIn..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      OG Image URL
-                    </label>
-                    <input
-                      type="url"
-                      value={ogImage || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOgImage(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
-                      placeholder="https://..."
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      OG Description
-                    </label>
-                    <textarea
-                      value={ogDescription || metaDescription}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setOgDescription(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
-                      placeholder="Description pour les réseaux sociaux"
-                      rows={2}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Twitter Cards */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Twitter Cards</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Type de carte
-                    </label>
-                    <select
-                      value={twitterCardType || 'summary'}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTwitterCardType(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
-                    >
-                      <option value="summary">Summary</option>
-                      <option value="summary_large_image">Summary Large Image</option>
-                      <option value="app">App</option>
-                      <option value="player">Player</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Twitter Image URL
-                    </label>
-                    <input
-                      type="url"
-                      value={twitterImage || ogImage || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTwitterImage(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
-                      placeholder="https://..."
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Additional Meta */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Méta tags supplémentaires</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Mots-clés (séparés par des virgules)
-                    </label>
-                    <input
-                      type="text"
-                      value={metaKeywords || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMetaKeywords(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
-                      placeholder="vtc, chauffeur, transport..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Canonical URL
-                    </label>
-                    <input
-                      type="url"
-                      value={canonicalUrl || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCanonicalUrl(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
-                      placeholder="https://..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Robots (indexation)
-                    </label>
-                    <select
-                      value={robots || 'index, follow'}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRobots(e.target.value)}
-                      className="w-full px-3 py-1.5 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
-                    >
-                      <option value="index, follow">Indexer et suivre</option>
-                      <option value="noindex, follow">Ne pas indexer, suivre</option>
-                      <option value="index, nofollow">Indexer, ne pas suivre</option>
-                      <option value="noindex, nofollow">Ne pas indexer, ne pas suivre</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
+      <div className="flex flex-col h-[calc(100vh-240px)]">
         {/* Main Editor Area - 3 colonnes : Palette | Éditeur | Prévisualisation */}
         <EditorResizableLayout>
           {({ sidebarWidth, setSidebarWidth, isResizing, startResize }) => {
@@ -1168,11 +982,11 @@ export default function HomepageEditorPage() {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {/* Toggle thème pour la prévisualisation uniquement - Amélioré avec label visible - Tout le bouton est cliquable */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Toggle thème pour la prévisualisation uniquement */}
                     <button
                       onClick={() => setPreviewTheme(previewTheme === 'light' ? 'dark' : 'light')}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors cursor-pointer"
+                      className="flex items-center justify-center px-3 py-2 rounded-lg border transition-colors cursor-pointer"
                       style={{
                         backgroundColor: previewTheme === 'dark' ? '#1f2937' : '#f3f4f6',
                         borderColor: previewTheme === 'dark' ? '#4b5563' : '#d1d5db'
@@ -1185,26 +999,20 @@ export default function HomepageEditorPage() {
                       }}
                       title={previewTheme === 'dark' ? 'Passer en mode clair (prévisualisation uniquement)' : 'Passer en mode sombre (prévisualisation uniquement)'}
                     >
-                      <span 
-                        className="text-xs font-medium whitespace-nowrap"
-                        style={{ color: previewTheme === 'dark' ? '#d1d5db' : '#374151' }}
-                      >
-                        {previewTheme === 'dark' ? '🌙' : '☀️'} {previewTheme === 'dark' ? 'Sombre' : 'Clair'}
-                      </span>
                       {previewTheme === 'dark' ? (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: previewTheme === 'dark' ? '#9ca3af' : '#4b5563' }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: previewTheme === 'dark' ? '#d1d5db' : '#374151' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                         </svg>
                       ) : (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: previewTheme === 'dark' ? '#9ca3af' : '#4b5563' }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: previewTheme === 'dark' ? '#d1d5db' : '#374151' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                       )}
                     </button>
                     <select
                       value={previewMode}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPreviewMode(e.target.value as 'desktop' | 'tablet' | 'mobile')}
-                      className="text-xs px-3 py-1.5 border rounded-lg hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="text-xs px-2 sm:px-3 py-1.5 border rounded-lg hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       style={{
                         backgroundColor: previewTheme === 'dark' ? '#1f2937' : '#ffffff',
                         borderColor: previewTheme === 'dark' ? '#4b5563' : '#d1d5db',
@@ -1215,6 +1023,7 @@ export default function HomepageEditorPage() {
                       <option value="tablet">📱 Tablette</option>
                       <option value="mobile">📱 Mobile</option>
                     </select>
+
                   </div>
                 </div>
                 <div 
@@ -1310,6 +1119,205 @@ export default function HomepageEditorPage() {
           }}
         </EditorResizableLayout>
       </div>
+
+      {/* Modal SEO */}
+      {showSeoModal && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-[10000]"
+            onClick={() => setShowSeoModal(false)}
+          />
+          <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
+            <div 
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Paramètres SEO</h2>
+                <button
+                  onClick={() => setShowSeoModal(false)}
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="p-6 space-y-6">
+                {/* Basic SEO */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">SEO de base</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="modal_meta_title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Titre SEO <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="modal_meta_title"
+                        type="text"
+                        value={metaTitle}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMetaTitle(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Titre pour les moteurs de recherche (50-60 caractères)"
+                        maxLength={60}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">{metaTitle.length}/60 caractères</p>
+                    </div>
+                    <div>
+                      <label htmlFor="modal_meta_description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Description SEO
+                      </label>
+                      <textarea
+                        id="modal_meta_description"
+                        value={metaDescription}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMetaDescription(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Description pour les moteurs de recherche (150-160 caractères)"
+                        rows={3}
+                        maxLength={160}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">{metaDescription.length}/160 caractères</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Open Graph */}
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Open Graph (Réseaux sociaux)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        OG Title
+                      </label>
+                      <input
+                        type="text"
+                        value={ogTitle || metaTitle}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOgTitle(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
+                        placeholder="Titre pour Facebook, LinkedIn..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        OG Image URL
+                      </label>
+                      <input
+                        type="url"
+                        value={ogImage || ''}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOgImage(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        OG Description
+                      </label>
+                      <textarea
+                        value={ogDescription || metaDescription}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setOgDescription(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
+                        placeholder="Description pour les réseaux sociaux"
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Twitter Cards */}
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Twitter Cards</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Type de carte
+                      </label>
+                      <select
+                        value={twitterCardType || 'summary'}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTwitterCardType(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
+                      >
+                        <option value="summary">Summary</option>
+                        <option value="summary_large_image">Summary Large Image</option>
+                        <option value="app">App</option>
+                        <option value="player">Player</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Twitter Image URL
+                      </label>
+                      <input
+                        type="url"
+                        value={twitterImage || ogImage || ''}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTwitterImage(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
+                        placeholder="https://..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Meta */}
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Méta tags supplémentaires</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Mots-clés (séparés par des virgules)
+                      </label>
+                      <input
+                        type="text"
+                        value={metaKeywords || ''}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMetaKeywords(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
+                        placeholder="vtc, chauffeur, transport..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Canonical URL
+                      </label>
+                      <input
+                        type="url"
+                        value={canonicalUrl || ''}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCanonicalUrl(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Robots (indexation)
+                      </label>
+                      <select
+                        value={robots || 'index, follow'}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setRobots(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-lg"
+                      >
+                        <option value="index, follow">Indexer et suivre</option>
+                        <option value="noindex, follow">Ne pas indexer, suivre</option>
+                        <option value="index, nofollow">Indexer, ne pas suivre</option>
+                        <option value="noindex, nofollow">Ne pas indexer, ne pas suivre</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6 flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowSeoModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </AdminLayout>
   )
 }

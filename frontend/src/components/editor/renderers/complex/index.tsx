@@ -259,3 +259,7 @@ export const renderFeaturesGrid = ({ block, wrapperStyles, theme }: RendererProp
   )
 }
 
+// Réexporter les renderers depuis les fichiers individuels
+export { renderCTASection } from './cta-section'
+export { renderContactForm } from './contact-form'
+

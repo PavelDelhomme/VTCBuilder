@@ -202,13 +202,22 @@ class TenantViewSet(viewsets.ModelViewSet):
             add_cors_headers(response, request)
             return response
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def features(self, request):
         """
         Get all available features for the current user's tenant based on their subscription plan.
         Super admin has access to all features.
+        If user is not authenticated, return all active features (public access).
         """
         try:
+            # Si l'utilisateur n'est pas authentifié, retourner toutes les features actives
+            if not request.user or not request.user.is_authenticated:
+                features = Feature.objects.filter(is_active=True)
+                serializer = FeatureSerializer(features, many=True)
+                response = Response(serializer.data)
+                add_cors_headers(response, request)
+                return response
+            
             user = request.user
             
             # Super admin a accès à toutes les features
@@ -221,10 +230,10 @@ class TenantViewSet(viewsets.ModelViewSet):
             
             # Pour les autres utilisateurs, filtrer selon leur plan
             if not user.tenant:
-                response = Response(
-                    {'error': 'User has no tenant associated'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                # Si pas de tenant, retourner toutes les features actives (comme pour les utilisateurs non authentifiés)
+                features = Feature.objects.filter(is_active=True)
+                serializer = FeatureSerializer(features, many=True)
+                response = Response(serializer.data)
                 add_cors_headers(response, request)
                 return response
             
@@ -1106,13 +1115,12 @@ class UserViewSet(viewsets.ModelViewSet):
                 self._add_cors_headers(response, request)
                 return response
             
-            # Check authentication
+            # If not authenticated, return default response (not impersonating)
             if not request.user or not request.user.is_authenticated:
                 response = Response({
                     'is_impersonating': False,
                     'impersonating': False,  # Alias for compatibility
-                    'error': 'Authentication required'
-                }, status=status.HTTP_401_UNAUTHORIZED)
+                })
                 self._add_cors_headers(response, request)
                 return response
             

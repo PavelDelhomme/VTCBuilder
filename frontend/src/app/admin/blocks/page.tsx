@@ -27,6 +27,7 @@ export default function AdminBlocksPage() {
     call_to_action: '{}',
     available_plans: [] as number[],
     is_active: true,
+    is_admin_only: false,
     order: 0,
   })
   const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([])
@@ -117,6 +118,7 @@ export default function AdminBlocksPage() {
         call_to_action: ctaValidation.data,
         available_plans: formData.available_plans,
         is_active: formData.is_active,
+        is_admin_only: formData.is_admin_only,
         order: formData.order,
       }
 
@@ -174,6 +176,7 @@ export default function AdminBlocksPage() {
       call_to_action: '{}',
       available_plans: [],
       is_active: true,
+      is_admin_only: false,
       order: 0,
     })
     setActiveTab('info')
@@ -490,15 +493,29 @@ export default function AdminBlocksPage() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Statut
                   </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.is_active}
-                      onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                      className="mr-2"
-                    />
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Actif</span>
-                  </label>
+                  <div className="space-y-2">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_active}
+                        onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Actif</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_admin_only}
+                        onChange={(e) => setFormData({ ...formData, is_admin_only: e.target.checked })}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Réservé aux administrateurs uniquement</span>
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                      Si coché, ce bloc ne sera visible que pour les administrateurs dans l'éditeur
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -770,19 +787,26 @@ export default function AdminBlocksPage() {
             key: 'is_active',
             label: 'Statut',
             render: (block) => (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleToggleActive(block)
-                }}
-                className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
-                  block.is_active
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    : 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200'
-                }`}
-              >
-                {block.is_active ? 'Actif' : 'Inactif'}
-              </button>
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleToggleActive(block)
+                  }}
+                  className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
+                    block.is_active
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200'
+                  }`}
+                >
+                  {block.is_active ? 'Actif' : 'Inactif'}
+                </button>
+                {(block as any).is_admin_only && (
+                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 whitespace-nowrap">
+                    Admin
+                  </span>
+                )}
+              </div>
             ),
             sortable: true,
             minWidth: '90px',
