@@ -657,10 +657,18 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                          updates.children === undefined && // Les enfants doivent être mis à jour immédiatement
                          updates.data === undefined // Les modifications de data (level, align, color, etc.) doivent être immédiates
     
-    const updateHistory = () => {
+    const updateHistory = (callOnChangeDirectly: boolean = false) => {
       // Si on a fait undo avant (futur non vide), créer une nouvelle branche
       // Le hook useHistory gère déjà cela en effaçant le futur et créant une nouvelle branche
       history.set(newBlocks, true)
+      
+      // Pour les mises à jour immédiates (data, children), appeler onChange directement
+      // pour que la prévisualisation se mette à jour instantanément
+      if (callOnChangeDirectly) {
+        isInternalUpdate.current = true
+        onChange(newBlocks)
+        isInternalUpdate.current = false
+      }
       
       // Tracker la modification du bloc
       if (block) {
@@ -674,7 +682,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         clearTimeout(updateBlockTimeoutRef.current[blockId])
         delete updateBlockTimeoutRef.current[blockId]
       }
-      updateHistory()
+      // Appeler onChange directement pour les mises à jour de data (align, level, color, etc.)
+      updateHistory(true)
     } else {
       // Debounce pour les styles uniquement (100ms au lieu de 300ms pour plus de réactivité)
       if (updateBlockTimeoutRef.current[blockId]) {
