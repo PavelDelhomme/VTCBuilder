@@ -2076,7 +2076,7 @@ const SortableBlock = React.memo(function SortableBlock({
             <ContainerChildrenRenderer
               block={block}
               blockTypes={blockTypes}
-              allBlocks={history.state} // Passer tous les blocs pour permettre de choisir un bloc existant
+              allBlocks={allBlocks || []} // Passer tous les blocs pour permettre de choisir un bloc existant
               onAddChild={(childBlock) => {
                 const newChildren = [...(block.children || []), childBlock]
                 console.log('Ajout enfant au conteneur:', block.id, childBlock, newChildren)
