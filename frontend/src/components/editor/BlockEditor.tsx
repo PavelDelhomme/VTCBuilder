@@ -2542,24 +2542,24 @@ function ContainerChildrenRenderer({
                           {childBlockType?.label || child.type}
                         </span>
                       </div>
-                      {/* Indicateur clic droit paramètres - visible au survol */}
+                      {/* Indicateur clic droit paramètres et bouton Supprimer - visible au survol */}
                       <div className="flex items-center gap-2 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
                         <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700" title="Clic droit pour ouvrir les paramètres du bloc">
                           <span className="text-blue-600 dark:text-blue-400">⚙️</span> Clic droit paramètres
                         </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onDeleteChild(child.id)
+                          }}
+                          className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded flex-shrink-0"
+                          title="Supprimer"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onDeleteChild(child.id)
-                        }}
-                        className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded flex-shrink-0"
-                        title="Supprimer"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
                     </div>
                     {/* Contenu du bloc enfant */}
                     {!collapsedChildren.has(child.id) && childBlockType && (
