@@ -1,0 +1,1 @@
+ajouter la bonne remoite ssh pour le repos pas en https pour pouoir push correcmtnet 
