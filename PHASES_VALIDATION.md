@@ -87,11 +87,11 @@ NEXT_PUBLIC_BLOCK_VALIDATION_PHASE=4
    ```
 3. **Redémarrez** le serveur de développement :
    ```bash
-   # Option 1 : Avec Make (recommandé)
-   make restart-frontend-dev
-   # Puis relancez manuellement : cd frontend && npm run dev
+   # Option 1 : Redémarrer toute la stack (recommandé)
+   make restart
    
-   # Option 2 : Redémarrer toute la stack
+   # Option 2 : Si le cache pose problème (fichiers créés par Docker)
+   make clean-frontend-cache
    make restart
    
    # Option 3 : Manuellement

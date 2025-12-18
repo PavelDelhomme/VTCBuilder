@@ -228,15 +228,24 @@ restart-frontend: ## Redémarrer uniquement le frontend (Docker)
 	@docker-compose -f docker-compose.simple.yml restart frontend
 	@printf "$(GREEN)✅ Frontend redémarré !$(NC)\n"
 
-restart-frontend-dev: ## Redémarrer le frontend en développement (Next.js - nettoie le cache)
-	@printf "$(YELLOW)🔄 Nettoyage du cache Next.js pour recharger les variables d'environnement...$(NC)\n"
+restart-frontend-dev: ## Nettoyer le cache Next.js (pour recharger .env.local) - nécessite arrêt du serveur
+	@printf "$(YELLOW)🔄 Nettoyage du cache Next.js...$(NC)\n"
 	@if [ -d frontend/.next ]; then \
-		rm -rf frontend/.next; \
-		printf "$(GREEN)✅ Cache Next.js nettoyé !$(NC)\n"; \
-		printf "$(YELLOW)💡 Redémarrez maintenant le serveur Next.js (Ctrl+C puis 'cd frontend && npm run dev' ou 'make start')$(NC)\n"; \
+		printf "$(YELLOW)⚠️  Arrêtez d'abord le serveur Next.js (Ctrl+C) avant de nettoyer le cache$(NC)\n"; \
+		printf "$(YELLOW)💡 Utilisez plutôt 'make restart' pour redémarrer toute la stack$(NC)\n"; \
+		printf "$(YELLOW)   ou arrêtez le serveur puis exécutez: sudo rm -rf frontend/.next$(NC)\n"; \
 	else \
-		printf "$(YELLOW)⚠️  Pas de cache à nettoyer$(NC)\n"; \
-		printf "$(YELLOW)💡 Les variables d'environnement seront rechargées au prochain redémarrage$(NC)\n"; \
+		printf "$(GREEN)✅ Pas de cache à nettoyer$(NC)\n"; \
+	fi
+
+clean-frontend-cache: ## Nettoyer le cache Next.js avec sudo (si créé par Docker)
+	@printf "$(YELLOW)🔄 Nettoyage du cache Next.js avec sudo...$(NC)\n"
+	@if [ -d frontend/.next ]; then \
+		sudo rm -rf frontend/.next || (printf "$(RED)❌ Erreur lors du nettoyage$(NC)\n" && exit 1); \
+		printf "$(GREEN)✅ Cache Next.js nettoyé !$(NC)\n"; \
+		printf "$(YELLOW)💡 Redémarrez maintenant avec 'make restart' ou 'cd frontend && npm run dev'$(NC)\n"; \
+	else \
+		printf "$(GREEN)✅ Pas de cache à nettoyer$(NC)\n"; \
 	fi
 
 down: ## Arrêter et supprimer les containers
