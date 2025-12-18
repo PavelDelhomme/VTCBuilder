@@ -688,10 +688,17 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
 
   // Mémoriser le bloc sélectionné pour éviter les recherches répétées (OPTIMISATION PERFORMANCE)
   // Utiliser une Map pour des recherches O(1) au lieu de O(n)
+  // Inclure tous les blocs, y compris les enfants dans les conteneurs
   const blocksMap = useMemo(() => {
     const map = new Map<string, Block>()
-    history.state.forEach((block: Block) => {
+    const addBlockToMap = (block: Block) => {
       map.set(block.id, block)
+      if (block.children && block.children.length > 0) {
+        block.children.forEach(child => addBlockToMap(child))
+      }
+    }
+    history.state.forEach((block: Block) => {
+      addBlockToMap(block)
     })
     return map
   }, [history.state])
