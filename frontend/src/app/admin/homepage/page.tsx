@@ -459,20 +459,22 @@ export default function HomepageEditorPage() {
       const allPages: Array<{ slug: string; title: string }> = []
       const existingSlugs = new Set<string>()
       
-      // Homepage - toujours ajouter en premier
-      allPages.push({
-        slug: 'home',
-        title: 'Page d\'accueil',
-      })
-      existingSlugs.add('home')
+      // Homepage - toujours ajouter en premier si elle existe
+      if (data.public_homepage_blocks !== undefined) {
+        allPages.push({
+          slug: 'home',
+          title: 'Page d\'accueil',
+        })
+        existingSlugs.add('home')
+      }
       
-      // Autres pages publiques
-      if (data.public_pages && Array.isArray(data.public_pages)) {
-        data.public_pages.forEach((slug: string) => {
+      // Autres pages publiques (public_pages est un objet, pas un tableau)
+      if (data.public_pages && typeof data.public_pages === 'object' && !Array.isArray(data.public_pages)) {
+        Object.entries(data.public_pages).forEach(([slug, pageData]: [string, any]) => {
           // Éviter les doublons (home et autres)
           if (!existingSlugs.has(slug)) {
-            // Extraire le titre depuis le slug
-            const title = slug
+            // Utiliser le titre depuis pageData si disponible, sinon générer depuis le slug
+            const title = pageData?.title || slug
               .split('/')
               .map(part => part.charAt(0).toUpperCase() + part.slice(1))
               .join(' / ')
@@ -694,7 +696,6 @@ export default function HomepageEditorPage() {
                           }}
                           className="w-full px-3 py-2 text-sm bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-0"
                         >
-                          <option value="home">Page d'accueil</option>
                           {availablePages.map((page) => (
                             <option key={page.slug} value={page.slug}>
                               {page.title}
