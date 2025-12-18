@@ -709,7 +709,7 @@ export default function HomepageEditorPage() {
         if (hasChanges()) {
           handleSave()
         } else {
-          toast.info('Aucune modification à sauvegarder')
+          toast('Aucune modification à sauvegarder', { icon: 'ℹ️' })
         }
       }
     }
