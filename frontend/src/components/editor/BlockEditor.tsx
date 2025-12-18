@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react'
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, useDroppable, useDraggable, DragOverlay } from '@dnd-kit/core'
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, useDroppable, useDraggable, DragOverlay } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import {
   RichTextEditorConfig,
@@ -90,6 +90,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const { resolvedTheme, toggleTheme } = useTheme()
   const [blockTypes, setBlockTypes] = useState<BlockType[]>([])
   const [selectedBlock, setSelectedBlock] = useState<string | null>(externalSelectedBlockId || null)
+  const [activeDragId, setActiveDragId] = useState<string | null>(null) // ID du bloc en cours de drag
   
   const [sidebarOpen, setSidebarOpen] = useState(true) // Ouvrir par défaut sur desktop
   const [blocksPaletteOpen, setBlocksPaletteOpen] = useState(true) // Palette de blocs ouverte par défaut
@@ -419,8 +420,13 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   }, [])
 
 
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string)
+  }, [])
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
+    setActiveDragId(null) // Réinitialiser après le drag
 
     if (!over) return
 
@@ -1335,6 +1341,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={history.state.map((b: Block) => b.id)} strategy={verticalListSortingStrategy}>
@@ -1452,6 +1459,53 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                 )}
               </div>
             </SortableContext>
+            <DragOverlay>
+              {activeDragId ? (
+                (() => {
+                  // Trouver le bloc en cours de drag
+                  const findBlockById = (blocks: Block[], id: string): Block | null => {
+                    for (const block of blocks) {
+                      if (block.id === id) return block
+                      if (block.children) {
+                        const found = findBlockById(block.children, id)
+                        if (found) return found
+                      }
+                    }
+                    return null
+                  }
+                  const draggedBlock = findBlockById(history.state, activeDragId)
+                  if (!draggedBlock) return null
+                  
+                  const blockType = blockTypes.find(bt => bt.name === draggedBlock.type)
+                  if (!blockType) return null
+                  
+                  return (
+                    <div className="bg-white dark:bg-gray-800 border-2 border-blue-500 rounded-lg shadow-2xl p-4 opacity-90 rotate-2 max-w-xs">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                          <span className="text-blue-600 dark:text-blue-400 text-sm font-bold">
+                            {blockType.icon || '📦'}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
+                            {blockType.label || blockType.name}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {blockType.category || 'Bloc'}
+                          </div>
+                        </div>
+                      </div>
+                      {draggedBlock.data && Object.keys(draggedBlock.data).length > 0 && (
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                          {JSON.stringify(draggedBlock.data).substring(0, 50)}...
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()
+              ) : null}
+            </DragOverlay>
           </DndContext>
         </div>
       </div>
@@ -1664,6 +1718,19 @@ const SortableBlock = React.memo(function SortableBlock({
 
   // Gérer le double-clic pour ouvrir les paramètres
   const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Vérifier si on double-clique sur un enfant dans un conteneur
+    const childElement = (e.target as HTMLElement).closest('[data-child-block-id]')
+    if (childElement && onSelectChild) {
+      const childId = childElement.getAttribute('data-child-block-id')
+      if (childId) {
+        e.stopPropagation()
+        e.preventDefault()
+        // Sélectionner l'enfant et ouvrir les paramètres
+        onSelectChild(childId)
+        return
+      }
+    }
+    
     e.stopPropagation()
     e.preventDefault()
     // Ouvrir les paramètres en sélectionnant le bloc
@@ -2097,6 +2164,12 @@ function ContainerChildrenRenderer({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; childId: string } | null>(null)
   const [showMenu, setShowMenu] = useState(false)
   
+  // Fonction pour vérifier si un bloc est un conteneur
+  const isContainerType = useCallback((blockTypeName: string): boolean => {
+    const containerTypes = ['container', 'flex-container', 'grid-container', 'flexbox', 'grid', 'stack', 'inline', 'group', 'wrapper', 'section', 'rows', 'columns']
+    return containerTypes.includes(blockTypeName)
+  }, [])
+  
   const toggleChildCollapse = useCallback((childId: string) => {
     setCollapsedChildren(prev => {
       const newSet = new Set(prev)
@@ -2133,16 +2206,20 @@ function ContainerChildrenRenderer({
   }, [showMenu, closeContextMenu])
 
   const handleAddBlock = useCallback((blockType: BlockType) => {
-    const newChild: Block = {
-      id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type: blockType.name,
-      data: {},
-      layout: block.type === 'grid-container' ? undefined : 12,
-    }
-    // Ajouter le bloc immédiatement
-    onAddChild(newChild)
-    // Fermer la popup après l'ajout
-    setShowAddMenu(false)
+    // Utiliser startTransition pour optimiser les performances
+    startTransition(() => {
+      const newChild: Block = {
+        id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: blockType.name,
+        data: {},
+        layout: block.type === 'grid-container' ? undefined : 3, // Par défaut 3 colonnes
+        children: isContainerType(blockType.name) ? [] : undefined,
+      }
+      // Ajouter le bloc immédiatement
+      onAddChild(newChild)
+      // Fermer la popup après l'ajout
+      setShowAddMenu(false)
+    })
   }, [block.type, onAddChild])
 
   const handleAddExistingBlock = useCallback((existingBlock: Block) => {
@@ -2371,12 +2448,9 @@ function ContainerChildrenRenderer({
               e.stopPropagation()
               e.preventDefault()
               if (contextMenu.childId) {
-                // Sélectionner l'enfant et ouvrir les paramètres
+                // Sélectionner l'enfant et ouvrir les paramètres immédiatement
                 onSelectChild(contextMenu.childId)
-                // Attendre un peu pour s'assurer que la sélection est bien effectuée
-                setTimeout(() => {
-                  closeContextMenu()
-                }, 100)
+                closeContextMenu()
               } else {
                 closeContextMenu()
               }
