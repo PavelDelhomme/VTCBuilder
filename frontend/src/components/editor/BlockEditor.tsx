@@ -2065,6 +2065,27 @@ const SortableBlock = React.memo(function SortableBlock({
                   }
                 }
               }}
+              onMoveChild={(childId, targetContainerId) => {
+                // Trouver l'enfant à déplacer
+                const childToMove = children.find(c => c.id === childId)
+                if (!childToMove) return
+                
+                // Retirer l'enfant du conteneur actuel
+                const newChildren = children.filter(c => c.id !== childId)
+                onUpdate({ children: newChildren })
+                
+                if (targetContainerId === 'root') {
+                  // Ajouter à la racine
+                  const newBlocks = [...history.state, childToMove]
+                  history.set(newBlocks, true)
+                } else {
+                  // Ajouter dans le conteneur cible
+                  const newBlocks = addBlockToContainer(history.state, targetContainerId, childToMove)
+                  history.set(newBlocks, true)
+                }
+                trackBlockAction(childToMove.type, 'move')
+              }}
+              findBlockInTree={findBlockInTree}
             />
           ) : (
             <BlockRenderer block={block} blockType={blockType} onUpdate={onUpdate} />
@@ -2350,6 +2371,8 @@ function ContainerChildrenRenderer({
   const [collapsedChildren, setCollapsedChildren] = useState<Set<string>>(new Set())
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; childId: string } | null>(null)
   const [showMenu, setShowMenu] = useState(false)
+  const [showMoveModal, setShowMoveModal] = useState(false)
+  const [moveTargetChildId, setMoveTargetChildId] = useState<string | null>(null)
   
   // Fonction pour vérifier si un bloc est un conteneur
   const isContainerType = useCallback((blockTypeName: string): boolean => {
@@ -2649,6 +2672,22 @@ function ContainerChildrenRenderer({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             Paramètres
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (contextMenu.childId) {
+                setMoveTargetChildId(contextMenu.childId)
+                setShowMoveModal(true)
+              }
+              closeContextMenu()
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+            </svg>
+            Déplacer
           </button>
           <button
             onClick={(e) => {
