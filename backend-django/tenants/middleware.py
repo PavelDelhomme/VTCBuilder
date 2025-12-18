@@ -32,6 +32,9 @@ class UserStatusMiddleware:
             '/api/auth/invitation/verify/',
             '/api/auth/invitation/complete/',
             '/api/analytics/block-usage/',  # Allow analytics tracking without auth
+            '/api/users/impersonation-status/',  # Allow checking impersonation status without auth
+            '/api/blocks/types/',  # Allow viewing block types without auth
+            '/api/system-settings/',  # Allow viewing system settings without auth (GET only)
         ]
 
         if any(request.path.startswith(path) for path in public_paths):

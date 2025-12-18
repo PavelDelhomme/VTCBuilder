@@ -127,9 +127,15 @@ api.interceptors.response.use(
     const hasToken = localStorage.getItem('token');
     const refreshToken = localStorage.getItem('refresh_token');
     
-    // PRIORITÉ 1: Gérer IMMÉDIATEMENT les erreurs 403 pour /system-settings/ et /analytics/block-usage/
+    // PRIORITÉ 1: Gérer IMMÉDIATEMENT les erreurs 403 pour les endpoints publics
     // AVANT tout autre traitement pour éviter qu'elles soient loggées
-    if (status === 403 && (url.includes('/system-settings/') || url.includes('/analytics/block-usage/'))) {
+    const publicEndpoints403 = [
+      '/system-settings/',
+      '/analytics/block-usage/',
+      '/users/impersonation-status/',
+      '/blocks/types/',
+    ];
+    if (status === 403 && publicEndpoints403.some(endpoint => url.includes(endpoint))) {
       // Marquer l'erreur comme silencieuse pour éviter tout log
       error.silent = true;
       error.config = error.config || {};

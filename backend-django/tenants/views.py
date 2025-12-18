@@ -1100,7 +1100,7 @@ class UserViewSet(viewsets.ModelViewSet):
             }
         })
 
-    @action(detail=False, methods=['get', 'options'], url_path='impersonation-status')
+    @action(detail=False, methods=['get', 'options'], url_path='impersonation-status', permission_classes=[AllowAny])
     def impersonation_status(self, request):
         """
         Check if currently impersonating a user

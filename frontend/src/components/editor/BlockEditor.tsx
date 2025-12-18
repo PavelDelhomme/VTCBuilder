@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react'
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, useDroppable, useDraggable, DragOverlay } from '@dnd-kit/core'
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, DragStartEvent, DragOverEvent, useDroppable, useDraggable, DragOverlay } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import {
   RichTextEditorConfig,
@@ -91,6 +91,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const [blockTypes, setBlockTypes] = useState<BlockType[]>([])
   const [selectedBlock, setSelectedBlock] = useState<string | null>(externalSelectedBlockId || null)
   const [activeDragId, setActiveDragId] = useState<string | null>(null) // ID du bloc en cours de drag
+  const [hoveredDropZone, setHoveredDropZone] = useState<string | null>(null) // ID de la zone de drop survolée
   // Référence pour stocker la position initiale du drag et l'offset du clic
   const dragStartPositionRef = useRef<{ 
     blockX: number; 
@@ -444,13 +445,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const blockId = event.active.id as string
     setActiveDragId(blockId)
-    
-    // Sélectionner le bloc qui est en train d'être dragué
-    if (blockId) {
-      // Utiliser directement setSelectedBlock et setSidebarOpen pour éviter la dépendance circulaire
-      setSelectedBlock(blockId)
-      setSidebarOpen(true)
-    }
+    setHoveredDropZone(null) // Réinitialiser la zone survolée
     
     // Stocker la position visuelle exacte du bloc au moment du drag
     // Chercher d'abord dans les enfants
@@ -461,31 +456,29 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     }
     const mouseEvent = dragStartEventRef.current
     
-    if (blockElement) {
+    if (blockElement && mouseEvent) {
       // Utiliser getBoundingClientRect pour obtenir la position visuelle exacte (sans scroll)
       const rect = blockElement.getBoundingClientRect()
       
-      if (mouseEvent) {
-        // Calculer l'offset du clic par rapport au coin supérieur gauche du bloc
-        const offsetX = mouseEvent.clientX - rect.left
-        const offsetY = mouseEvent.clientY - rect.top
-        
-        dragStartPositionRef.current = { 
-          blockX: rect.left,  // Position X du bloc dans la fenêtre
-          blockY: rect.top,  // Position Y du bloc dans la fenêtre
-          clickX: mouseEvent.clientX,  // Position X du clic
-          clickY: mouseEvent.clientY,  // Position Y du clic
-          offsetX: offsetX,  // Offset du clic par rapport au bloc
-          offsetY: offsetY,  // Offset du clic par rapport au bloc
-        }
-      } else {
-        // Fallback si pas d'événement de souris - centrer le bloc
-        dragStartPositionRef.current = { 
-          blockX: rect.left,
-          blockY: rect.top,
-          offsetX: rect.width / 2,
-          offsetY: rect.height / 2,
-        }
+      // Calculer l'offset du clic par rapport au coin supérieur gauche du bloc
+      const offsetX = mouseEvent.clientX - rect.left
+      const offsetY = mouseEvent.clientY - rect.top
+      
+      dragStartPositionRef.current = { 
+        blockX: rect.left,  // Position X du bloc dans la fenêtre
+        blockY: rect.top,  // Position Y du bloc dans la fenêtre
+        clickX: mouseEvent.clientX,  // Position X du clic
+        clickY: mouseEvent.clientY,  // Position Y du clic
+        offsetX: offsetX,  // Offset du clic par rapport au bloc
+        offsetY: offsetY,  // Offset du clic par rapport au bloc
+      }
+    } else {
+      // Fallback si pas d'événement de souris - centrer le bloc
+      dragStartPositionRef.current = { 
+        blockX: 0,
+        blockY: 0,
+        offsetX: 0,
+        offsetY: 0,
       }
     }
     
@@ -493,14 +486,141 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     dragStartEventRef.current = null
   }, [])
 
+  // Gérer le survol d'une zone de drop pour l'affichage visuel
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const { over } = event
+    if (over) {
+      const overId = String(over.id || '')
+      // Si c'est une zone de drop de conteneur, la marquer comme survolée
+      if (overId.startsWith('container-drop-')) {
+        setHoveredDropZone(overId)
+      } else if (over.data.current?.type === 'container') {
+        // Si c'est un conteneur directement, utiliser son ID
+        setHoveredDropZone(`container-drop-${over.id}`)
+      } else {
+        setHoveredDropZone(null)
+      }
+    } else {
+      setHoveredDropZone(null)
+    }
+  }, [])
+
+  // Gérer le clic pour déposer le bloc dans la zone surlignée
+  useEffect(() => {
+    if (!activeDragId || !hoveredDropZone) return
+
+    // Référence pour suivre si le drag est en cours (pour éviter les conflits avec dnd-kit)
+    let isDragging = true
+    const dragStartTime = Date.now()
+
+    const handleClick = (e: MouseEvent) => {
+      // Ne pas déposer si le drag vient de commencer (moins de 100ms) pour éviter les conflits avec dnd-kit
+      if (Date.now() - dragStartTime < 100) {
+        return
+      }
+
+      // Vérifier que le clic n'est pas sur un élément interactif
+      const target = e.target as HTMLElement
+      const clickedOnInteractive = target.closest('button, input, textarea, select, a, [role="button"], [data-context-menu]')
+      
+      if (clickedOnInteractive) {
+        return // Ne pas déposer si on clique sur un élément interactif
+      }
+
+      // Vérifier que le clic est bien sur la zone de drop surlignée ou à proximité
+      const dropZoneElement = document.querySelector(`[id="${hoveredDropZone}"]`) || 
+                             document.querySelector(`[data-container-id="${hoveredDropZone.replace('container-drop-', '')}"]`)
+      
+      if (!dropZoneElement) {
+        return
+      }
+
+      // Extraire l'ID du conteneur depuis la zone de drop surlignée
+      const containerId = hoveredDropZone.replace('container-drop-', '')
+      
+      if (!containerId) return
+
+      // Trouver le bloc à déplacer
+      const blockToMoveResult = findBlockInTree(history.state, activeDragId)
+      if (!blockToMoveResult) {
+        setActiveDragId(null)
+        setHoveredDropZone(null)
+        return
+      }
+      const blockToMove = blockToMoveResult.block
+
+      // Vérifier que le conteneur cible n'est pas le bloc lui-même
+      if (activeDragId === containerId) {
+        setActiveDragId(null)
+        setHoveredDropZone(null)
+        return
+      }
+
+      // Vérifier que le conteneur cible n'est pas un descendant du bloc à déplacer
+      const isDescendant = (blocks: Block[], targetId: string): boolean => {
+        for (const block of blocks) {
+          if (block.id === targetId) return true
+          if (block.children && block.children.length > 0) {
+            if (isDescendant(block.children, targetId)) return true
+          }
+        }
+        return false
+      }
+
+      if (blockToMove.children && blockToMove.children.length > 0) {
+        if (isDescendant(blockToMove.children, containerId)) {
+          setActiveDragId(null)
+          setHoveredDropZone(null)
+          return
+        }
+      }
+
+      // Retirer le bloc de sa position actuelle
+      let newBlocks = removeBlockFromTree(history.state, activeDragId)
+      
+      // Ajouter le bloc dans le conteneur cible
+      newBlocks = addBlockToContainer(newBlocks, containerId, blockToMove)
+      
+      history.set(newBlocks, true)
+      onChange(newBlocks)
+      trackBlockAction(blockToMove.type, 'update')
+      
+      // Réinitialiser les états
+      setActiveDragId(null)
+      setHoveredDropZone(null)
+      isDragging = false
+      
+      // Empêcher le comportement par défaut
+      e.preventDefault()
+      e.stopPropagation()
+    }
+
+    document.addEventListener('click', handleClick, { capture: true })
+    return () => {
+      document.removeEventListener('click', handleClick, { capture: true })
+    }
+  }, [activeDragId, hoveredDropZone, history.state, onChange, trackBlockAction, findBlockInTree, removeBlockFromTree, addBlockToContainer])
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event
-    setActiveDragId(null) // Réinitialiser après le drag
-
+    const blockId = active.id as string
+    
+    // Réinitialiser la zone de drop survolée
+    setHoveredDropZone(null)
+    
     if (!over) {
-      // Si on lâche sans cible, ne rien faire
+      // Si on lâche sans cible, garder la sélection et réinitialiser le drag
+      setActiveDragId(null)
+      // S'assurer que le bloc reste sélectionné
+      if (blockId) {
+        setSelectedBlock(blockId)
+        setSidebarOpen(true)
+      }
       return
     }
+    
+    // Garder la sélection du bloc après le drag pour que les paramètres restent affichés
+    // Ne pas réinitialiser activeDragId immédiatement pour garder la sélection visible
 
     // Vérifier si on drop sur une zone de conteneur (peut être un ID de drop zone)
     const overId = String(over.id || '')
@@ -836,7 +956,18 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         }
       }
     }
-  }, [history, trackBlockAction, findBlockInTree, removeBlockFromTree, addBlockToContainer, isContainerType, onChange])
+    
+    // Réinitialiser le drag après un court délai pour permettre à l'utilisateur de voir le résultat
+    // Mais garder la sélection active pour que les paramètres restent affichés
+    setTimeout(() => {
+      setActiveDragId(null)
+      // S'assurer que le bloc reste sélectionné après le drag
+      if (blockId) {
+        setSelectedBlock(blockId)
+        setSidebarOpen(true)
+      }
+    }, 100)
+  }, [history, trackBlockAction, findBlockInTree, removeBlockFromTree, addBlockToContainer, isContainerType, onChange, setSelectedBlock, setSidebarOpen])
 
   const addBlock = useCallback((blockType: BlockType) => {
     // Si ce n'est pas un conteneur et qu'aucun conteneur n'existe, empêcher l'ajout
@@ -1727,6 +1858,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={history.state.map((b: Block) => b.id)} strategy={verticalListSortingStrategy}>
@@ -1921,64 +2053,10 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   const blockType = blockTypes.find(bt => bt.name === draggedBlock.type)
                   if (!blockType) return null
                   
-                  // Afficher une version réduite mais reconnaissable du bloc qui suit la souris
-                  // Le DragOverlay de dnd-kit applique automatiquement transform: translate3d(x, y, 0)
-                  // où x et y sont les coordonnées de la souris (clientX, clientY)
-                  // On doit compenser avec un offset pour que le bloc apparaisse exactement où il était visuellement
-                  // L'offset est la différence entre la position du clic et le coin supérieur gauche du bloc
+                  // Le DragOverlay de dnd-kit positionne automatiquement le bloc à la position de la souris
+                  // On utilise un offset minimal pour que le bloc suive directement le curseur
                   const offsetX = dragStartPositionRef.current?.offsetX ?? 0
                   const offsetY = dragStartPositionRef.current?.offsetY ?? 0
-                  
-                  // Décaler le DragOverlay vers la droite pour éviter qu'il soit caché par la sidebar
-                  // Calculer le décalage en fonction de la taille de l'écran
-                  // Sur mobile, la sidebar est en overlay donc pas besoin de décalage
-                  // Sur desktop, la sidebar fait environ 320-400px de large
-                  const getSidebarOffset = () => {
-                    if (!sidebarOpen) return 0
-                    // Vérifier si on est sur mobile (largeur < 1024px)
-                    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-                      // Sur mobile, la sidebar est en overlay, pas besoin de décalage horizontal
-                      return 0
-                    }
-                    // Sur desktop, décaler selon la largeur de l'écran
-                    const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1920
-                    
-                    // Décalage adaptatif selon la taille de l'écran
-                    if (screenWidth < 1280) {
-                      // Petits écrans desktop (1024-1280px)
-                      return 350
-                    } else if (screenWidth < 1600) {
-                      // Écrans moyens (1280-1600px) comme 1440px
-                      return 450
-                    } else if (screenWidth < 1920) {
-                      // Grands écrans (1600-1920px)
-                      return 550
-                    } else {
-                      // Très grands écrans (1920px+)
-                      return 600
-                    }
-                  }
-                  
-                  const sidebarOffset = getSidebarOffset()
-                  
-                  // Décaler aussi vers le bas pour une meilleure visibilité
-                  // Moins de décalage vertical sur mobile
-                  const getVerticalOffset = () => {
-                    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-                      return 50 // Moins de décalage sur mobile
-                    }
-                  // Sur desktop, décalage adaptatif - moins de décalage vertical pour ne pas bloquer
-                  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1920
-                  if (screenWidth < 1280) {
-                    return 80
-                  } else if (screenWidth < 1600) {
-                    return 100 // Pour les écrans de 1440px - moins de décalage
-                  } else {
-                    return 120
-                  }
-                  }
-                  
-                  const verticalOffset = getVerticalOffset()
                   
                   return (
                     <div 
@@ -1988,11 +2066,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                         maxWidth: '280px',
                         minWidth: '200px',
                         opacity: 1,
-                        // dnd-kit positionne le DragOverlay à la position de la souris (clientX, clientY)
-                        // On utilise l'offset du clic pour compenser et faire apparaître le bloc
-                        // exactement où il était visuellement au moment du clic
-                        // On ajoute un décalage vers la droite pour éviter la sidebar et vers le bas
-                        transform: `translate(calc(-${offsetX}px + ${sidebarOffset}px), calc(-${offsetY}px + ${verticalOffset}px))`,
+                        // Positionner le bloc directement sous le curseur avec l'offset du clic
+                        transform: `translate(-${offsetX}px, -${offsetY}px)`,
                         willChange: 'transform',
                       }}
                     >
@@ -2302,26 +2377,27 @@ const SortableBlock = React.memo(function SortableBlock({
   const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
     // Vérifier si on fait un clic droit sur un enfant dans ContainerChildrenRenderer
     // Les enfants dans ContainerChildrenRenderer ont data-child-block-id directement sur leur div
-    const childElement = (e.target as HTMLElement).closest('[data-child-block-id]')
-    if (childElement && onSelectChild) {
-      const childId = childElement.getAttribute('data-child-block-id')
-      if (childId) {
-        e.preventDefault()
-        e.stopPropagation()
-        // Ne pas afficher le menu du parent - l'enfant gère son propre menu
-        // Juste sélectionner l'enfant pour ouvrir les paramètres
-        onSelectChild(childId)
-        return
+    // Vérifier récursivement pour gérer les blocs imbriqués (texte dans conteneur dans conteneur)
+    let currentElement: HTMLElement | null = e.target as HTMLElement
+    let childElement: HTMLElement | null = null
+    let childId: string | null = null
+    
+    // Chercher récursivement un élément avec data-child-block-id
+    while (currentElement && currentElement !== e.currentTarget) {
+      if (currentElement.hasAttribute('data-child-block-id')) {
+        childElement = currentElement
+        childId = currentElement.getAttribute('data-child-block-id')
+        break
       }
+      currentElement = currentElement.parentElement
     }
     
-    // Vérifier aussi si on clique dans le contenu d'un enfant (même si pas directement sur data-child-block-id)
-    // Cela peut arriver si on clique sur BlockRenderer à l'intérieur d'un enfant
-    const clickedInChildContent = (e.target as HTMLElement).closest('[data-child-block-id]')
-    if (clickedInChildContent && onSelectChild) {
+    // Si on a trouvé un enfant, ne pas afficher le menu du parent
+    if (childElement && childId && onSelectChild) {
       e.preventDefault()
       e.stopPropagation()
-      // Ne pas afficher le menu du parent
+      // Ne pas afficher le menu du parent - l'enfant gère son propre menu
+      // L'enfant va gérer son propre onContextMenu qui sélectionnera l'enfant et ouvrira son menu
       return
     }
     
@@ -2383,6 +2459,10 @@ const SortableBlock = React.memo(function SortableBlock({
         {...(listeners ? {
           ...listeners,
           onPointerDown: (e: React.PointerEvent) => {
+            // Sélectionner le bloc automatiquement quand on commence à le glisser
+            if (!isSelected) {
+              onSelect()
+            }
             // Capturer l'événement de clic initial pour calculer l'offset
             if (onDragStartCapture) {
               onDragStartCapture(e)
@@ -2396,9 +2476,22 @@ const SortableBlock = React.memo(function SortableBlock({
         onDoubleClick={handleDoubleClick}
         onContextMenu={(e) => {
           // Vérifier d'abord si on clique sur un enfant AVANT d'afficher le menu du parent
-          const childElement = (e.target as HTMLElement).closest('[data-child-block-id]')
+          // Chercher récursivement pour gérer les blocs profondément imbriqués
+          let currentElement: HTMLElement | null = e.target as HTMLElement
+          let childElement: HTMLElement | null = null
+          
+          // Chercher récursivement un élément avec data-child-block-id
+          while (currentElement && currentElement !== e.currentTarget) {
+            if (currentElement.hasAttribute('data-child-block-id')) {
+              childElement = currentElement
+              break
+            }
+            currentElement = currentElement.parentElement
+          }
+          
           if (childElement) {
             // Si c'est un enfant, ne pas afficher le menu du parent
+            // L'enfant gère son propre menu contextuel
             e.preventDefault()
             e.stopPropagation()
             return
@@ -2673,14 +2766,17 @@ const SortableBlock = React.memo(function SortableBlock({
           <button
             onClick={(e) => {
               e.stopPropagation()
-              // Fermer le menu et permettre le drag & drop direct
-              // L'utilisateur peut maintenant glisser le bloc vers n'importe quel conteneur
-              closeContextMenu()
-              // Sélectionner le bloc pour le rendre draggable
+              // Sélectionner le bloc d'abord pour afficher ses paramètres
               onSelect()
+              // Fermer le menu après un court délai pour permettre la sélection
+              setTimeout(() => {
+                closeContextMenu()
+              }, 100)
+              // Le bloc est maintenant sélectionné et draggable
+              // L'utilisateur peut maintenant glisser le bloc vers n'importe quel conteneur
             }}
             className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
-            title="Fermer le menu et glisser le bloc vers un autre conteneur"
+            title="Sélectionner le bloc et le rendre déplaçable (glisser pour déplacer)"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
@@ -2808,7 +2904,19 @@ function DraggableChildBlock({
           ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-300 dark:ring-blue-600 shadow-md cursor-move'
           : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer'
       }`}
-      {...(selectedBlockId === child.id ? { ...childAttributes, ...childListeners } : {})}
+      {...(selectedBlockId === child.id ? { ...childAttributes, ...childListeners } : {
+        ...childAttributes,
+        ...childListeners,
+        onPointerDown: (e: React.PointerEvent) => {
+          // Sélectionner l'enfant automatiquement quand on commence à le glisser
+          if (selectedBlockId !== child.id) {
+            onSelectChild(child.id)
+          }
+          if (childListeners.onPointerDown) {
+            childListeners.onPointerDown(e)
+          }
+        }
+      })}
       onClick={(e) => {
         e.stopPropagation()
         onSelectChild(child.id)
@@ -2947,13 +3055,20 @@ function DraggableChildBlock({
           ) : (
             <div 
               data-child-block-id={child.id}
+              onClick={(e) => {
+                e.stopPropagation()
+                onSelectChild(child.id)
+              }}
               onContextMenu={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
+                // Fermer tout menu précédent
                 if (showMenu) {
                   closeContextMenu()
                 }
+                // Sélectionner l'enfant et ouvrir ses paramètres
                 onSelectChild(child.id)
+                // Ouvrir le menu contextuel de l'enfant
                 setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
                 setShowMenu(true)
               }}
@@ -3206,15 +3321,18 @@ function ContainerChildrenRenderer({
             onClick={(e) => {
               e.stopPropagation()
               if (contextMenu.childId) {
-                // Fermer le menu et permettre le drag & drop direct
-                // L'utilisateur peut maintenant glisser le bloc enfant vers n'importe quel conteneur
-                closeContextMenu()
-                // Sélectionner l'enfant pour le rendre draggable
+                // Sélectionner l'enfant d'abord pour afficher ses paramètres
                 onSelectChild(contextMenu.childId)
+                // Fermer le menu après un court délai pour permettre la sélection
+                setTimeout(() => {
+                  closeContextMenu()
+                }, 100)
+                // L'enfant est maintenant sélectionné et draggable
+                // L'utilisateur peut maintenant glisser le bloc vers n'importe quel conteneur
               }
             }}
             className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
-            title="Fermer le menu et glisser le bloc vers un autre conteneur"
+            title="Sélectionner le bloc et le rendre déplaçable (glisser pour déplacer)"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
@@ -3361,15 +3479,17 @@ function ContainerDropZone({
       type: 'container',
       containerId,
     },
-    // Accepter à la fois les block-type (nouveaux blocs) et les block (blocs existants)
-    accepts: ['block-type', 'block'],
   })
+
+  // Vérifier si cette zone est survolée (via hoveredDropZone du parent)
+  const dropZoneId = `container-drop-${containerId}`
+  const isHovered = isOver
 
   return (
     <div
       ref={setNodeRef}
-      className={`${className} ${isOver ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 border-solid' : ''} transition-all relative`}
-      title={isOver ? 'Relâchez pour déposer le bloc ici' : 'Glissez un bloc ici pour l\'ajouter au conteneur'}
+      className={`${className} ${isHovered ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 border-solid ring-2 ring-blue-300 dark:ring-blue-600' : 'border-dashed'} transition-all duration-200 relative`}
+      title={isHovered ? 'Relâchez pour déposer le bloc ici' : 'Glissez un bloc ici pour l\'ajouter au conteneur'}
       onClick={(e) => {
         // Si on clique directement sur la zone de drop (pas sur un enfant), sélectionner le conteneur
         const target = e.target as HTMLElement
@@ -3384,9 +3504,12 @@ function ContainerDropZone({
       }}
     >
       {children}
-      {isOver && (
-        <div className="absolute inset-0 flex items-center justify-center bg-blue-500/10 dark:bg-blue-900/20 rounded-lg pointer-events-none">
-          <div className="bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium">
+      {isHovered && (
+        <div className="absolute inset-0 flex items-center justify-center bg-blue-500/20 dark:bg-blue-900/30 rounded-lg pointer-events-none z-10 animate-pulse">
+          <div className="bg-blue-500 dark:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-xl text-sm font-semibold flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
             Déposer ici
           </div>
         </div>

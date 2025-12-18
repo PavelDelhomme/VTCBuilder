@@ -15,7 +15,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('system')
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('dark') // Mode sombre par défaut
   const [mounted, setMounted] = useState(false)
 
   // Load theme from localStorage on mount
@@ -49,11 +49,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme])
 
-  // Apply theme to document
+  // Apply theme to document - appliquer le mode sombre immédiatement même avant le mount
   useEffect(() => {
-    if (!mounted) return
-
     const root = document.documentElement
+    // Si pas encore monté, forcer le mode sombre par défaut
+    if (!mounted) {
+      root.classList.remove('light')
+      root.classList.add('dark')
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', '#1f2937')
+      }
+      return
+    }
+
     root.classList.remove('light', 'dark')
     root.classList.add(resolvedTheme)
 
@@ -63,6 +72,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       metaThemeColor.setAttribute('content', resolvedTheme === 'dark' ? '#1f2937' : '#ffffff')
     }
   }, [resolvedTheme, mounted])
+  
+  // Appliquer le mode sombre immédiatement au chargement de la page
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.remove('light')
+    root.classList.add('dark')
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', '#1f2937')
+    }
+  }, [])
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme)

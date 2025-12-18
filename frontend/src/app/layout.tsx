@@ -30,9 +30,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="fr" className="dark" suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#1f2937" />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <Providers>

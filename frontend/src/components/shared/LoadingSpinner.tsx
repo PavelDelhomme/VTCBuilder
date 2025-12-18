@@ -24,7 +24,7 @@ export default function LoadingSpinner({
     <div className={`flex flex-col items-center justify-center ${className}`}>
       <div className={`animate-spin rounded-full border-b-2 border-blue-600 ${sizeClasses[size]} ${fullScreen ? 'mb-4' : ''}`}></div>
       {text && (
-        <p className={`mt-2 text-gray-600 dark:text-gray-400 ${size === 'xl' ? 'text-lg' : size === 'lg' ? 'text-base' : 'text-sm'}`}>
+        <p className={`mt-2 text-gray-400 ${size === 'xl' ? 'text-lg' : size === 'lg' ? 'text-base' : 'text-sm'}`}>
           {text}
         </p>
       )}
@@ -33,7 +33,7 @@ export default function LoadingSpinner({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm dark">
         {spinner}
       </div>
     )
