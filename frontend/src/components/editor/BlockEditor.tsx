@@ -2549,11 +2549,8 @@ function ContainerChildrenRenderer({
                           {childBlockType?.label || child.type}
                         </span>
                       </div>
-                      {/* Indicateur clic droit paramètres et bouton Supprimer - visible au survol */}
+                      {/* Bouton Supprimer - visible au survol (pas d'indicateur clic droit car double-clic suffit) */}
                       <div className="flex items-center gap-2 flex-shrink-0 z-10 relative opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="text-xs text-gray-400 dark:text-gray-500 px-2 py-1 rounded bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700" title="Clic droit pour ouvrir les paramètres du bloc">
-                          <span className="text-blue-600 dark:text-blue-400">⚙️</span> Clic droit paramètres
-                        </div>
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
