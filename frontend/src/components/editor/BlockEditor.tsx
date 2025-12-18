@@ -2630,7 +2630,22 @@ function ContainerChildrenRenderer({
                             }}
                           />
                         ) : (
-                          <div data-child-block-id={child.id}>
+                          <div 
+                            data-child-block-id={child.id}
+                            onContextMenu={(e) => {
+                              // Empêcher la propagation du clic droit vers le parent
+                              e.preventDefault()
+                              e.stopPropagation()
+                              // Fermer le menu précédent immédiatement
+                              if (showMenu) {
+                                closeContextMenu()
+                              }
+                              // Sélectionner l'enfant et ouvrir le menu immédiatement
+                              onSelectChild(child.id)
+                              setContextMenu({ x: e.clientX, y: e.clientY, childId: child.id })
+                              setShowMenu(true)
+                            }}
+                          >
                             <BlockRenderer 
                               block={{ ...child, data: child.data || {} }} 
                               blockType={childBlockType} 
