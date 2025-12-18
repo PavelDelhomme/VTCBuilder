@@ -2101,6 +2101,7 @@ const SortableBlock = React.memo(function SortableBlock({
               selectedBlockId={selectedBlockId}
               onMoveChild={(childId, targetContainerId) => {
                 // Trouver l'enfant à déplacer
+                const children = block.children || []
                 const childToMove = children.find(c => c.id === childId)
                 if (!childToMove) return
                 
@@ -2108,16 +2109,10 @@ const SortableBlock = React.memo(function SortableBlock({
                 const newChildren = children.filter(c => c.id !== childId)
                 onUpdate({ children: newChildren })
                 
-                if (targetContainerId === 'root') {
-                  // Ajouter à la racine
-                  const newBlocks = [...history.state, childToMove]
-                  history.set(newBlocks, true)
-                } else {
-                  // Ajouter dans le conteneur cible
-                  const newBlocks = addBlockToContainer(history.state, targetContainerId, childToMove)
-                  history.set(newBlocks, true)
+                // Utiliser onMove du parent pour gérer le déplacement
+                if (onMove) {
+                  onMove(childId, targetContainerId)
                 }
-                trackBlockAction(childToMove.type, 'move')
               }}
               findBlockInTree={findBlockInTree}
             />
