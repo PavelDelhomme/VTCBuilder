@@ -148,7 +148,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   // Synchroniser avec la sélection externe (optimisé pour éviter les conflits)
   useEffect(() => {
     if (externalSelectedBlockId !== undefined && externalSelectedBlockId !== selectedBlock) {
-      console.log('[BlockEditor] Synchronisation externe:', externalSelectedBlockId)
       setSelectedBlock(externalSelectedBlockId)
       if (externalSelectedBlockId) {
         setSidebarOpen(true)
@@ -218,7 +217,11 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   useEffect(() => {
     if (!isHistoryUpdate.current && !isInternalUpdate.current) {
       const blocksHash = quickHash(blocks)
-      if (blocksHash !== lastBlocksHashRef.current) {
+      const historyHash = quickHash(history.state)
+      
+      // Ne synchroniser que si les blocs ont vraiment changé ET sont différents de l'historique
+      // Cela évite la boucle infinie
+      if (blocksHash !== lastBlocksHashRef.current && blocksHash !== historyHash) {
         // Vérifier si on doit ajouter un conteneur par défaut
         let blocksToUse = blocks
         if (blocks.length === 0 || !hasContainer(blocks)) {
@@ -236,16 +239,18 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           // Mettre à jour via onChange pour que le parent soit notifié
           isInternalUpdate.current = true
           onChange(blocksToUse)
+          isHistoryUpdate.current = true
           history.reset(blocksToUse)
           lastBlocksHashRef.current = quickHash(blocksToUse)
         } else {
+          // Seulement reset si vraiment différent
+          isHistoryUpdate.current = true
           history.reset(blocks)
           lastBlocksHashRef.current = blocksHash
         }
       }
     }
-    isHistoryUpdate.current = false
-    isInternalUpdate.current = false
+    // Ne pas réinitialiser les flags ici car ils sont utilisés dans d'autres endroits
   }, [blocks, history, hasContainer, onChange])
 
   // Synchroniser onChange avec l'historique (avec debounce et protection contre les boucles, optimisé avec hash)
@@ -437,9 +442,23 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
 
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveDragId(event.active.id as string)
+    const blockId = event.active.id as string
+    setActiveDragId(blockId)
+    
+    // Sélectionner le bloc qui est en train d'être dragué
+    if (blockId) {
+      // Utiliser directement setSelectedBlock et setSidebarOpen pour éviter la dépendance circulaire
+      setSelectedBlock(blockId)
+      setSidebarOpen(true)
+    }
+    
     // Stocker la position visuelle exacte du bloc au moment du drag
-    const blockElement = document.querySelector(`[data-block-id="${event.active.id}"]`) as HTMLElement
+    // Chercher d'abord dans les enfants
+    let blockElement = document.querySelector(`[data-child-block-id="${event.active.id}"]`) as HTMLElement
+    if (!blockElement) {
+      // Sinon chercher dans les blocs racine
+      blockElement = document.querySelector(`[data-block-id="${event.active.id}"]`) as HTMLElement
+    }
     const mouseEvent = dragStartEventRef.current
     
     if (blockElement) {
@@ -478,12 +497,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     const { active, over } = event
     setActiveDragId(null) // Réinitialiser après le drag
 
-    // Debug: afficher les informations de drag
-    console.log('DragEnd:', { activeId: active.id, overId: over?.id, activeData: active.data.current, overData: over?.data.current })
-
     if (!over) {
       // Si on lâche sans cible, ne rien faire
-      console.log('DragEnd: Pas de cible (over)')
       return
     }
 
@@ -569,13 +584,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     // IMPORTANT: Utiliser uniquement la zone de drop (container-drop-*) pour éviter de remplacer le conteneur
     // OU accepter le drop directement sur un conteneur si containerId est défini
     if (active.data.current?.type === 'block' && (isContainerDropZone || containerId)) {
-      console.log('DragEnd: Tentative de déplacement dans conteneur', { 
-        blockId: active.id, 
-        containerId, 
-        isContainerDropZone,
-        overId,
-        overData: over.data.current 
-      })
       const blockId = active.id as string
       
       // Si containerId n'est pas défini mais qu'on est sur une zone de drop, l'extraire
@@ -583,13 +591,18 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         containerId = overId.replace('container-drop-', '')
       }
       
-      // Si toujours pas d'ID, essayer depuis les données
+      // Si toujours pas d'ID, essayer depuis les données de la zone de drop
       if (!containerId && over.data.current?.containerId) {
         containerId = String(over.data.current.containerId)
       }
       
+      // Si toujours pas d'ID et qu'on est sur une zone de drop, réessayer avec l'ID complet
+      if (!containerId && isContainerDropZone && overId.startsWith('container-drop-')) {
+        containerId = overId.replace('container-drop-', '')
+      }
+      
       // Si toujours pas d'ID, utiliser l'ID de over directement si c'est un conteneur
-      if (!containerId && over.id) {
+      if (!containerId && over.id && !isContainerDropZone) {
         const overBlockId = String(over.id)
         const findContainer = (blocks: Block[]): Block | null => {
           for (const block of blocks) {
@@ -611,20 +624,18 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       }
       
       if (!containerId) {
-        console.log('DragEnd: Impossible de trouver l\'ID du conteneur')
+        console.warn('Impossible de trouver le containerId pour le déplacement du bloc', { blockId, overId, isContainerDropZone, overData: over.data.current })
         return
       }
       
       // Ne pas permettre de déplacer un bloc dans lui-même
       if (blockId === containerId) {
-        console.log('DragEnd: Impossible de déplacer un bloc dans lui-même')
         return
       }
       
       // Trouver le bloc à déplacer
       const blockToMoveResult = findBlockInTree(history.state, blockId)
       if (!blockToMoveResult) {
-        console.log('DragEnd: Bloc à déplacer non trouvé')
         return
       }
       const blockToMove = blockToMoveResult.block
@@ -661,28 +672,29 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       if (blockToMove.children && blockToMove.children.length > 0) {
         if (isDescendant(blockToMove.children, containerId)) {
           // Ne pas permettre de déplacer un conteneur dans un de ses descendants directs
-          console.log('DragEnd: Impossible de déplacer un conteneur dans un de ses descendants', {
-            blockToMoveId: blockId,
-            containerId,
-            blockToMoveChildren: blockToMove.children.map(c => c.id)
-          })
           return
         }
       }
       
       // Vérifier que le bloc à déplacer n'est pas un descendant du conteneur cible
       // (éviter de déplacer un bloc dans un de ses ancêtres)
+      // MAIS permettre de déplacer un bloc dans son parent direct
       // On vérifie si le conteneur cible est dans la chaîne des parents du bloc à déplacer
-      let currentParent = findBlockParent(history.state, blockId)
-      while (currentParent) {
-        if (currentParent === containerId) {
-          console.log('DragEnd: Impossible de déplacer un bloc dans un de ses ancêtres', {
-            blockToMoveId: blockId,
-            containerId
-          })
-          return
+      const directParent = findBlockParent(history.state, blockId)
+      
+      // Si le conteneur cible est le parent direct, permettre le déplacement
+      if (directParent === containerId) {
+        // C'est le parent direct, on permet le déplacement (pour réorganiser dans le même conteneur)
+      } else {
+        // Vérifier si le conteneur cible est un ancêtre plus lointain (pas le parent direct)
+        let currentParent = directParent
+        while (currentParent) {
+          if (currentParent === containerId) {
+            // C'est un ancêtre plus lointain, empêcher le déplacement
+            return
+          }
+          currentParent = findBlockParent(history.state, currentParent)
         }
-        currentParent = findBlockParent(history.state, currentParent)
       }
       
       // Retirer le bloc de sa position actuelle
@@ -691,7 +703,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       // Ajouter le bloc dans le conteneur cible
       newBlocks = addBlockToContainer(newBlocks, containerId, blockToMove)
       
-      console.log('DragEnd: Déplacement réussi', { newBlocks, containerId })
       history.set(newBlocks, true)
       onChange(newBlocks)
       trackBlockAction(blockToMove.type, 'move')
@@ -700,20 +711,17 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     
     // Si on drop sur un conteneur directement (pas sa zone de drop), essayer quand même
     if (active.data.current?.type === 'block' && over.data.current?.type === 'container' && !isContainerDropZone) {
-      console.log('DragEnd: Drop sur conteneur directement (pas zone de drop), tentative de déplacement')
       const blockId = active.id as string
       const containerId = over.id as string
       
       // Ne pas permettre de déplacer un bloc dans lui-même
       if (blockId === containerId) {
-        console.log('DragEnd: Impossible de déplacer un bloc dans lui-même')
         return
       }
       
       // Trouver le bloc à déplacer
       const blockToMoveResult = findBlockInTree(history.state, blockId)
       if (!blockToMoveResult) {
-        console.log('DragEnd: Bloc à déplacer non trouvé')
         return
       }
       const blockToMove = blockToMoveResult.block
@@ -750,28 +758,29 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       if (blockToMove.children && blockToMove.children.length > 0) {
         if (isDescendant(blockToMove.children, containerId)) {
           // Ne pas permettre de déplacer un conteneur dans un de ses descendants directs
-          console.log('DragEnd: Impossible de déplacer un conteneur dans un de ses descendants', {
-            blockToMoveId: blockId,
-            containerId,
-            blockToMoveChildren: blockToMove.children.map(c => c.id)
-          })
           return
         }
       }
       
       // Vérifier que le bloc à déplacer n'est pas un descendant du conteneur cible
       // (éviter de déplacer un bloc dans un de ses ancêtres)
+      // MAIS permettre de déplacer un bloc dans son parent direct
       // On vérifie si le conteneur cible est dans la chaîne des parents du bloc à déplacer
-      let currentParent = findBlockParent(history.state, blockId)
-      while (currentParent) {
-        if (currentParent === containerId) {
-          console.log('DragEnd: Impossible de déplacer un bloc dans un de ses ancêtres', {
-            blockToMoveId: blockId,
-            containerId
-          })
-          return
+      const directParent = findBlockParent(history.state, blockId)
+      
+      // Si le conteneur cible est le parent direct, permettre le déplacement
+      if (directParent === containerId) {
+        // C'est le parent direct, on permet le déplacement (pour réorganiser dans le même conteneur)
+      } else {
+        // Vérifier si le conteneur cible est un ancêtre plus lointain (pas le parent direct)
+        let currentParent = directParent
+        while (currentParent) {
+          if (currentParent === containerId) {
+            // C'est un ancêtre plus lointain, empêcher le déplacement
+            return
+          }
+          currentParent = findBlockParent(history.state, currentParent)
         }
-        currentParent = findBlockParent(history.state, currentParent)
       }
       
       // Retirer le bloc de sa position actuelle
@@ -780,7 +789,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       // Ajouter le bloc dans le conteneur cible
       newBlocks = addBlockToContainer(newBlocks, containerId, blockToMove)
       
-      console.log('DragEnd: Déplacement réussi (drop direct sur conteneur)', { newBlocks })
       history.set(newBlocks, true)
       onChange(newBlocks)
       trackBlockAction(blockToMove.type, 'move')
@@ -858,7 +866,18 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     trackBlockAction(blockType.name, 'add')
   }, [history, trackBlockAction, hasContainer, isContainerType])
 
-  const removeBlock = useCallback((blockId: string) => {
+  const removeBlock = useCallback((blockId: string, skipConfirmation = false) => {
+    // Demander confirmation avant de supprimer
+    if (!skipConfirmation) {
+      const blockToDelete = findBlockInTree(history.state, blockId)?.block
+      const blockType = blockTypes.find(bt => bt.name === blockToDelete?.type)
+      const blockLabel = blockType?.label || blockToDelete?.type || 'ce bloc'
+      
+      if (!window.confirm(`Êtes-vous sûr de vouloir supprimer "${blockLabel}" ?\n\nCette action est irréversible et supprimera également tous les blocs enfants s'il s'agit d'un conteneur.`)) {
+        return
+      }
+    }
+    
     // Désélectionner immédiatement le bloc si c'était celui sélectionné (optimistic UI)
     if (selectedBlock === blockId) {
       setSelectedBlock(null)
@@ -954,18 +973,12 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
 
   // Gérer l'ouverture des paramètres - afficher dans la sidebar (OPTIMISÉ)
   const handleSelectBlock = useCallback((blockId: string) => {
-    // Log pour diagnostic
-    console.log('[BlockEditor] handleSelectBlock appelé pour:', blockId, 'à', Date.now())
-    
     // Mise à jour immédiate de l'état (synchrone pour la réactivité)
     setSelectedBlock(blockId)
     setSidebarOpen(true)
     
     // Les notifications au parent sont faites dans une transition (non bloquante)
     // via le useEffect ci-dessus
-    
-    // Log après mise à jour
-    console.log('[BlockEditor] État mis à jour:', blockId)
   }, [])
 
   // Gérer la fermeture des paramètres - revenir aux blocs disponibles
@@ -1040,7 +1053,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   <button
                     onClick={() => {
                       if (selectedBlock) {
-                        removeBlock(selectedBlock)
+                        removeBlock(selectedBlock, false) // false = demander confirmation
                         setSelectedBlock(null)
                         setSidebarOpen(true)
                       }
@@ -1225,7 +1238,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                         <button
                           onClick={() => {
                             if (selectedBlock) {
-                              removeBlock(selectedBlock)
+                              removeBlock(selectedBlock, false) // false = demander confirmation
                             }
                           }}
                           className="flex-1 px-3 py-2 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
@@ -1772,6 +1785,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                     blockTypes={blockTypes}
                     isSelected={selectedBlock === block.id}
                     onSelect={() => handleSelectBlock(block.id)}
+                    isChildBlock={false}
                     onDragStartCapture={(e: React.PointerEvent) => {
                       // Capturer l'événement de clic initial pour calculer l'offset
                       dragStartEventRef.current = e.nativeEvent as MouseEvent
@@ -1915,10 +1929,56 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   const offsetX = dragStartPositionRef.current?.offsetX ?? 0
                   const offsetY = dragStartPositionRef.current?.offsetY ?? 0
                   
-                  // Debug: vérifier que l'offset est bien calculé
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log('DragOverlay offset:', { offsetX, offsetY, position: dragStartPositionRef.current })
+                  // Décaler le DragOverlay vers la droite pour éviter qu'il soit caché par la sidebar
+                  // Calculer le décalage en fonction de la taille de l'écran
+                  // Sur mobile, la sidebar est en overlay donc pas besoin de décalage
+                  // Sur desktop, la sidebar fait environ 320-400px de large
+                  const getSidebarOffset = () => {
+                    if (!sidebarOpen) return 0
+                    // Vérifier si on est sur mobile (largeur < 1024px)
+                    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                      // Sur mobile, la sidebar est en overlay, pas besoin de décalage horizontal
+                      return 0
+                    }
+                    // Sur desktop, décaler selon la largeur de l'écran
+                    const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1920
+                    
+                    // Décalage adaptatif selon la taille de l'écran
+                    if (screenWidth < 1280) {
+                      // Petits écrans desktop (1024-1280px)
+                      return 350
+                    } else if (screenWidth < 1600) {
+                      // Écrans moyens (1280-1600px) comme 1440px
+                      return 450
+                    } else if (screenWidth < 1920) {
+                      // Grands écrans (1600-1920px)
+                      return 550
+                    } else {
+                      // Très grands écrans (1920px+)
+                      return 600
+                    }
                   }
+                  
+                  const sidebarOffset = getSidebarOffset()
+                  
+                  // Décaler aussi vers le bas pour une meilleure visibilité
+                  // Moins de décalage vertical sur mobile
+                  const getVerticalOffset = () => {
+                    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                      return 50 // Moins de décalage sur mobile
+                    }
+                  // Sur desktop, décalage adaptatif - moins de décalage vertical pour ne pas bloquer
+                  const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1920
+                  if (screenWidth < 1280) {
+                    return 80
+                  } else if (screenWidth < 1600) {
+                    return 100 // Pour les écrans de 1440px - moins de décalage
+                  } else {
+                    return 120
+                  }
+                  }
+                  
+                  const verticalOffset = getVerticalOffset()
                   
                   return (
                     <div 
@@ -1931,7 +1991,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                         // dnd-kit positionne le DragOverlay à la position de la souris (clientX, clientY)
                         // On utilise l'offset du clic pour compenser et faire apparaître le bloc
                         // exactement où il était visuellement au moment du clic
-                        transform: `translate(-${offsetX}px, -${offsetY}px)`,
+                        // On ajoute un décalage vers la droite pour éviter la sidebar et vers le bas
+                        transform: `translate(calc(-${offsetX}px + ${sidebarOffset}px), calc(-${offsetY}px + ${verticalOffset}px))`,
                         willChange: 'transform',
                       }}
                     >
@@ -2018,6 +2079,7 @@ const SortableBlock = React.memo(function SortableBlock({
   findBlockInTree,
   selectedBlockId,
   onDragStartCapture,
+  isChildBlock = false, // Nouveau prop pour indiquer si c'est un bloc enfant
 }: {
   block: Block
   blockTypes: BlockType[]
@@ -2034,6 +2096,7 @@ const SortableBlock = React.memo(function SortableBlock({
   findBlockInTree?: (blocks: Block[], blockId: string) => { block: Block; parent: Block[] | null; index: number } | null
   selectedBlockId?: string | null
   onDragStartCapture?: (e: React.PointerEvent) => void
+  isChildBlock?: boolean // Nouveau prop
 }) {
   // État pour le menu contextuel
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
@@ -2099,7 +2162,8 @@ const SortableBlock = React.memo(function SortableBlock({
       const clampedIndex = Math.max(0, Math.min(availableLayouts.length - 1, newLayoutIndex))
       const newLayout = availableLayouts[clampedIndex]
       
-      if (newLayout !== startLayout) {
+      // Ne mettre à jour que si la valeur a vraiment changé pour éviter les boucles
+      if (newLayout !== startLayout && newLayout !== block.layout) {
         onUpdate({ layout: newLayout })
       }
     }
@@ -2351,8 +2415,8 @@ const SortableBlock = React.memo(function SortableBlock({
           }
         }}
       >
-      {/* Resize Handles - Only visible when selected */}
-      {isSelected && (
+      {/* Resize Handles - Désactivé : le resize se fait via les paramètres pour éviter les conflits */}
+      {false && isSelected && !isChildBlock && (
         <>
           {/* Corner handles */}
           <div
@@ -2496,7 +2560,6 @@ const SortableBlock = React.memo(function SortableBlock({
               allBlocks={allBlocks || []} // Passer tous les blocs pour permettre de choisir un bloc existant
               onAddChild={(childBlock) => {
                 const newChildren = [...(block.children || []), childBlock]
-                console.log('Ajout enfant au conteneur:', block.id, childBlock, newChildren)
                 onUpdate({ children: newChildren })
               }}
               onUpdateChild={(childId, updates) => {
@@ -2506,14 +2569,24 @@ const SortableBlock = React.memo(function SortableBlock({
                 onUpdate({ children: newChildren })
               }}
               onDeleteChild={(childId) => {
-                const newChildren = (block.children || []).filter((child) => child.id !== childId)
-                onUpdate({ children: newChildren })
+                const childToDelete = (block.children || []).find(c => c.id === childId)
+                const childBlockType = blockTypes.find(bt => bt.name === childToDelete?.type)
+                const childLabel = childBlockType?.label || childToDelete?.type || 'ce bloc'
+                
+                if (window.confirm(`Êtes-vous sûr de vouloir supprimer "${childLabel}" ?\n\nCette action est irréversible et supprimera également tous les blocs enfants s'il s'agit d'un conteneur.`)) {
+                  const newChildren = (block.children || []).filter((child) => child.id !== childId)
+                  onUpdate({ children: newChildren })
+                }
               }}
               onSelectChild={(childId) => {
                 // Utiliser onSelectChild du parent pour gérer la sélection
                 if (onSelectChild) {
                   onSelectChild(childId)
                 }
+              }}
+              onSelectContainer={() => {
+                // Sélectionner le conteneur parent
+                onSelect()
               }}
               selectedBlockId={selectedBlockId}
               onMoveChild={(childId, targetContainerId) => {
@@ -2650,8 +2723,12 @@ const SortableBlock = React.memo(function SortableBlock({
           <button
             onClick={(e) => {
               e.stopPropagation()
-              onDelete()
-              closeContextMenu()
+              const blockType = blockTypes.find(bt => bt.name === block.type)
+              const blockLabel = blockType?.label || block.type || 'ce bloc'
+              if (window.confirm(`Êtes-vous sûr de vouloir supprimer "${blockLabel}" ?\n\nCette action est irréversible et supprimera également tous les blocs enfants s'il s'agit d'un conteneur.`)) {
+                onDelete()
+                closeContextMenu()
+              }
             }}
             className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
           >
@@ -2786,7 +2863,10 @@ function DraggableChildBlock({
           <button
             onClick={(e) => {
               e.stopPropagation()
-              onDeleteChild(child.id)
+              const childLabel = childBlockType?.label || child.type || 'ce bloc'
+              if (window.confirm(`Êtes-vous sûr de vouloir supprimer "${childLabel}" ?\n\nCette action est irréversible et supprimera également tous les blocs enfants s'il s'agit d'un conteneur.`)) {
+                onDeleteChild(child.id)
+              }
             }}
             className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded flex-shrink-0"
             title="Supprimer"
@@ -2850,6 +2930,10 @@ function DraggableChildBlock({
               onSelectChild={(grandChildId) => {
                 onSelectChild(grandChildId)
               }}
+              onSelectContainer={() => {
+                // Sélectionner le conteneur enfant (qui est lui-même un conteneur)
+                onSelectChild(child.id)
+              }}
               selectedBlockId={selectedBlockId}
               onMoveChild={(grandChildId, targetContainerId) => {
                 const newChildren = (child.children || []).filter((grandChild) => grandChild.id !== grandChildId)
@@ -2878,6 +2962,7 @@ function DraggableChildBlock({
                 block={{ ...child, data: child.data || {} }} 
                 blockType={childBlockType} 
                 blockTypes={blockTypes}
+                onUpdate={(updates) => onUpdateChild(child.id, updates)}
               />
             </div>
           )}
@@ -2894,6 +2979,7 @@ function ContainerChildrenRenderer({
   onUpdateChild,
   onDeleteChild,
   onSelectChild,
+  onSelectContainer, // Fonction pour sélectionner le conteneur parent
   allBlocks, // Tous les blocs de l'éditeur pour permettre de choisir un bloc existant
   selectedBlockId, // ID du bloc actuellement sélectionné
   onMoveChild, // Fonction pour déplacer un enfant vers un autre conteneur
@@ -2905,6 +2991,7 @@ function ContainerChildrenRenderer({
   onUpdateChild: (childId: string, updates: Partial<Block>) => void
   onDeleteChild: (childId: string) => void
   onSelectChild: (childId: string) => void
+  onSelectContainer?: () => void // Fonction pour sélectionner le conteneur parent
   allBlocks?: Block[] // Tous les blocs disponibles dans l'éditeur
   selectedBlockId?: string | null // ID du bloc actuellement sélectionné
   onMoveChild?: (childId: string, targetContainerId: string | 'root') => void // Fonction pour déplacer un enfant
@@ -3011,9 +3098,26 @@ function ContainerChildrenRenderer({
       <ContainerDropZone
         containerId={block.id}
         onDrop={handleAddBlock}
+        onSelectContainer={onSelectContainer}
         className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50 min-h-[120px]"
       >
-        <div style={containerStyle} className="w-full h-full">
+        <div 
+          style={containerStyle} 
+          className="w-full h-full"
+          onClick={(e) => {
+            // Si on clique directement sur la zone de conteneur (pas sur un enfant), sélectionner le conteneur
+            const target = e.target as HTMLElement
+            // Vérifier si le clic est sur un enfant (data-child-block-id) ou sur un élément interactif
+            const clickedOnChild = target.closest('[data-child-block-id]')
+            const clickedOnInteractive = target.closest('button, input, textarea, select, a, [role="button"]')
+            
+            // Si on n'a pas cliqué sur un enfant ou un élément interactif, sélectionner le conteneur
+            if (!clickedOnChild && !clickedOnInteractive && onSelectContainer) {
+              e.stopPropagation()
+              onSelectContainer()
+            }
+          }}
+        >
           {children.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <div className="text-2xl mb-2">📦</div>
@@ -3241,11 +3345,13 @@ function ContainerChildrenRenderer({
 function ContainerDropZone({
   containerId,
   onDrop,
+  onSelectContainer,
   children,
   className = '',
 }: {
   containerId: string
   onDrop: (blockType: BlockType) => void
+  onSelectContainer?: () => void
   children?: React.ReactNode
   className?: string
 }) {
@@ -3262,8 +3368,20 @@ function ContainerDropZone({
   return (
     <div
       ref={setNodeRef}
-      className={`${className} ${isOver ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 border-solid' : ''} transition-all`}
+      className={`${className} ${isOver ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 border-solid' : ''} transition-all relative`}
       title={isOver ? 'Relâchez pour déposer le bloc ici' : 'Glissez un bloc ici pour l\'ajouter au conteneur'}
+      onClick={(e) => {
+        // Si on clique directement sur la zone de drop (pas sur un enfant), sélectionner le conteneur
+        const target = e.target as HTMLElement
+        const clickedOnChild = target.closest('[data-child-block-id]')
+        const clickedOnInteractive = target.closest('button, input, textarea, select, a, [role="button"]')
+        
+        // Si on n'a pas cliqué sur un enfant ou un élément interactif, sélectionner le conteneur
+        if (!clickedOnChild && !clickedOnInteractive && onSelectContainer) {
+          e.stopPropagation()
+          onSelectContainer()
+        }
+      }}
     >
       {children}
       {isOver && (
