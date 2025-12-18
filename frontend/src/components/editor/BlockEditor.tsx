@@ -2558,7 +2558,8 @@ function ContainerChildrenRenderer({
                     {/* Contenu du bloc enfant */}
                     {!collapsedChildren.has(child.id) && childBlockType && (
                       <div 
-                        className="p-3" 
+                        className="p-3"
+                        data-child-block-id={child.id}
                         onClick={(e) => {
                           e.stopPropagation()
                           // Sélectionner l'enfant si on clique dans son contenu
