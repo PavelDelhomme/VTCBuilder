@@ -2659,6 +2659,7 @@ function ContainerChildrenRenderer({
                               // Sélectionner le petit-enfant récursivement
                               onSelectChild(grandChildId)
                             }}
+                            selectedBlockId={selectedBlockId}
                           />
                         ) : (
                           <div 
