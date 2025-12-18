@@ -457,25 +457,27 @@ export default function HomepageEditorPage() {
       
       // Charger les pages publiques disponibles
       const allPages: Array<{ slug: string; title: string }> = []
+      const existingSlugs = new Set<string>()
       
-      // Homepage
-      if (data.public_homepage_blocks !== undefined) {
-        allPages.push({
-          slug: 'home',
-          title: 'Page d\'accueil',
-        })
-      }
+      // Homepage - toujours ajouter en premier
+      allPages.push({
+        slug: 'home',
+        title: 'Page d\'accueil',
+      })
+      existingSlugs.add('home')
       
       // Autres pages publiques
       if (data.public_pages && Array.isArray(data.public_pages)) {
         data.public_pages.forEach((slug: string) => {
-          if (slug !== 'home') {
+          // Éviter les doublons (home et autres)
+          if (!existingSlugs.has(slug)) {
             // Extraire le titre depuis le slug
             const title = slug
               .split('/')
               .map(part => part.charAt(0).toUpperCase() + part.slice(1))
               .join(' / ')
             allPages.push({ slug, title })
+            existingSlugs.add(slug)
           }
         })
       }
