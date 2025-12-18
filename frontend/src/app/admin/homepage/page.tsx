@@ -373,6 +373,64 @@ export default function HomepageEditorPage() {
   const optionsButtonRef = useRef<HTMLButtonElement>(null)
   const optionsDropdownRef = useRef<HTMLDivElement>(null)
   
+  // État initial pour détecter les changements
+  const initialDataRef = useRef<{
+    blocks: Block[]
+    metaTitle: string
+    metaDescription: string
+    ogTitle: string
+    ogDescription: string
+    ogImage: string
+    twitterCardType: string
+    twitterImage: string
+    metaKeywords: string
+    canonicalUrl: string
+    robots: string
+    pageStatus: 'draft' | 'published'
+  } | null>(null)
+  
+  // Fonction pour comparer l'état actuel avec l'état initial
+  const hasChanges = useCallback(() => {
+    if (!initialDataRef.current) return false
+    
+    const current = {
+      blocks,
+      metaTitle,
+      metaDescription,
+      ogTitle,
+      ogDescription,
+      ogImage,
+      twitterCardType,
+      twitterImage,
+      metaKeywords,
+      canonicalUrl,
+      robots,
+      pageStatus,
+    }
+    
+    const initial = initialDataRef.current
+    
+    // Comparer les blocs (comparaison profonde)
+    if (JSON.stringify(current.blocks) !== JSON.stringify(initial.blocks)) {
+      return true
+    }
+    
+    // Comparer les autres champs
+    return (
+      current.metaTitle !== initial.metaTitle ||
+      current.metaDescription !== initial.metaDescription ||
+      current.ogTitle !== initial.ogTitle ||
+      current.ogDescription !== initial.ogDescription ||
+      current.ogImage !== initial.ogImage ||
+      current.twitterCardType !== initial.twitterCardType ||
+      current.twitterImage !== initial.twitterImage ||
+      current.metaKeywords !== initial.metaKeywords ||
+      current.canonicalUrl !== initial.canonicalUrl ||
+      current.robots !== initial.robots ||
+      current.pageStatus !== initial.pageStatus
+    )
+  }, [blocks, metaTitle, metaDescription, ogTitle, ogDescription, ogImage, twitterCardType, twitterImage, metaKeywords, canonicalUrl, robots, pageStatus])
+  
   // Mettre à jour la position du dropdown quand il s'ouvre
   useEffect(() => {
     if (showOptionsMenu && optionsButtonRef.current && optionsDropdownRef.current) {
@@ -422,6 +480,26 @@ export default function HomepageEditorPage() {
       setCanonicalUrl(data.public_homepage_canonical_url || '')
       setRobots(data.public_homepage_robots || 'index, follow')
       setPageStatus(data.public_homepage_status || 'draft')
+      
+      // Sauvegarder l'état initial après le chargement pour détecter les changements
+      const loadedBlocks = data.public_homepage_blocks && data.public_homepage_blocks.length > 0
+        ? data.public_homepage_blocks
+        : (!data.public_homepage_blocks_initialized ? createDefaultHomepageBlocks() : [])
+      
+      initialDataRef.current = {
+        blocks: JSON.parse(JSON.stringify(loadedBlocks)), // Deep copy
+        metaTitle: data.public_homepage_meta_title || 'VTCBuilder - Le WordPress des chauffeurs VTC',
+        metaDescription: data.public_homepage_meta_description || 'Plateforme complète pour créer et gérer votre site VTC professionnel',
+        ogTitle: data.public_homepage_og_title || '',
+        ogDescription: data.public_homepage_og_description || '',
+        ogImage: data.public_homepage_og_image || '',
+        twitterCardType: data.public_homepage_twitter_card_type || 'summary',
+        twitterImage: data.public_homepage_twitter_image || '',
+        metaKeywords: data.public_homepage_meta_keywords || '',
+        canonicalUrl: data.public_homepage_canonical_url || '',
+        robots: data.public_homepage_robots || 'index, follow',
+        pageStatus: data.public_homepage_status || 'draft',
+      }
       
       // PHASE DE VALIDATION : Ne garder que quelques blocs pour tester étape par étape
       // Étape 1 : Blocs de mise en page de base (1-3 blocs max)
@@ -589,6 +667,23 @@ export default function HomepageEditorPage() {
       })
       // Mettre à jour le timestamp de dernière sauvegarde
       updateLastSaved()
+      
+      // Mettre à jour l'état initial après sauvegarde pour réinitialiser la détection de changements
+      initialDataRef.current = {
+        blocks: JSON.parse(JSON.stringify(blocks)), // Deep copy
+        metaTitle,
+        metaDescription,
+        ogTitle,
+        ogDescription,
+        ogImage,
+        twitterCardType,
+        twitterImage,
+        metaKeywords,
+        canonicalUrl,
+        robots,
+        pageStatus,
+      }
+      
       toast.success(pageStatus === 'published' ? 'Page publiée avec succès !' : 'Brouillon sauvegardé avec succès !')
     } catch (error: any) {
       console.error('Error sauvegarde:', error)
@@ -610,9 +705,12 @@ export default function HomepageEditorPage() {
           return
         }
         
-        // Sauvegarder immédiatement, peu importe ce que l'utilisateur est en train d'éditer
-        // Cela fonctionne même si l'utilisateur est en train d'éditer un champ de formulaire ou un bloc
-        handleSave()
+        // Sauvegarder seulement s'il y a des changements
+        if (hasChanges()) {
+          handleSave()
+        } else {
+          toast.info('Aucune modification à sauvegarder')
+        }
       }
     }
 
@@ -623,7 +721,7 @@ export default function HomepageEditorPage() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [handleSave, saving, isAutoSaving])
+  }, [handleSave, saving, isAutoSaving, hasChanges])
 
   if (loading) {
     return (
@@ -887,9 +985,15 @@ export default function HomepageEditorPage() {
           {/* Save Button */}
           <button
             onClick={handleSave}
-            disabled={saving || isAutoSaving}
-            className="px-2 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex-shrink-0 flex items-center gap-1"
-            title={saving ? 'Sauvegarde en cours...' : (pageStatus === 'draft' ? 'Sauvegarder le brouillon' : 'Publier la page')}
+            disabled={saving || isAutoSaving || !hasChanges()}
+            className="px-2 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0 flex items-center gap-1"
+            title={
+              saving 
+                ? 'Sauvegarde en cours...' 
+                : !hasChanges() 
+                  ? 'Aucune modification à sauvegarder' 
+                  : (pageStatus === 'draft' ? 'Sauvegarder le brouillon' : 'Publier la page')
+            }
           >
             {saving ? (
               <>
