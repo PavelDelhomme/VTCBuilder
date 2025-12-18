@@ -9,6 +9,91 @@
 - ⏳ **Planifié** : Prévu mais pas encore commencé
 - ❌ **À corriger** : Problème identifié nécessitant une correction
 - 🎯 **Amélioration** : Amélioration suggérée
+- 🧪 **En validation** : En cours de validation étape par étape
+
+---
+
+## 🧪 Système de Validation Étape par Étape
+
+### Phase 1 : Blocs de Mise en Page de Base (EN COURS)
+**Objectif :** Valider les blocs fondamentaux de mise en page
+
+**Blocs activés :**
+- ✅ Heading (Titre)
+- ✅ Text (Texte)
+- ✅ Container (Conteneur)
+
+**Critères de validation :**
+- [ ] Le bloc s'affiche correctement dans l'éditeur
+- [ ] Le bloc s'affiche correctement dans la prévisualisation
+- [ ] Les propriétés de contenu sont éditables (texte, niveau, etc.)
+- [ ] Les propriétés de style s'appliquent correctement (couleur, alignement, etc.)
+- [ ] Le bloc est responsive (Desktop/Tablette/Mobile)
+- [ ] Aucune erreur dans la console
+- [ ] Le bloc fonctionne en mode sombre/clair
+- [ ] Le drag & drop fonctionne pour réorganiser les blocs
+- [ ] Le redimensionnement (layout) fonctionne
+- [ ] La sauvegarde fonctionne correctement
+
+**Statut :** 🧪 En validation
+
+---
+
+### Phase 2 : Blocs Conteneurs
+**Objectif :** Valider les blocs conteneurs pour organiser le contenu
+
+**Blocs à activer :**
+- ⏳ Columns (Colonnes)
+- ⏳ Section (Section)
+
+**Critères de validation :**
+- [ ] Les conteneurs acceptent des blocs enfants
+- [ ] Les blocs enfants s'affichent correctement
+- [ ] Le clic droit sur les enfants ouvre les paramètres
+- [ ] Le drag & drop fonctionne dans les conteneurs
+- [ ] Les propriétés de style s'appliquent aux conteneurs
+- [ ] Les conteneurs sont responsive
+
+**Statut :** ⏳ En attente de Phase 1
+
+---
+
+### Phase 3 : Blocs de Contenu Avancés
+**Objectif :** Valider les blocs de contenu plus complexes
+
+**Blocs à activer :**
+- ⏳ Paragraph (Paragraphe)
+- ⏳ Button (Bouton)
+- ⏳ Image (Image)
+- ⏳ Line (Ligne)
+
+**Statut :** ⏳ En attente de Phase 2
+
+---
+
+### Phase 4 : Blocs Interactifs
+**Objectif :** Valider les blocs avec interactions
+
+**Blocs à activer :**
+- ⏳ Form (Formulaire)
+- ⏳ Modal (Modal)
+- ⏳ Tabs (Onglets)
+- ⏳ Accordion (Accordéon)
+
+**Statut :** ⏳ En attente de Phase 3
+
+---
+
+### Phase 5 : Blocs Complexes
+**Objectif :** Valider les blocs les plus complexes
+
+**Blocs à activer :**
+- ⏳ Hero (Héro)
+- ⏳ CTA Section (Section CTA)
+- ⏳ Features Grid (Grille Fonctionnalités)
+- ⏳ Footer (Pied de page)
+
+**Statut :** ⏳ En attente de Phase 4
 
 ---
 
@@ -17,24 +102,24 @@
 ### Barre d'outils principale
 - ✅ Boutons agrandis pour meilleure utilisabilité sur ordinateur
 - ✅ Responsive : Icônes seulement sur petits écrans, texte + icônes sur grands écrans
-- 🔄 Amélioration de l'ordre et de la visibilité des boutons sur petits écrans
-- ⏳ Menu déroulant pour boutons secondaires sur très petits écrans
+- ✅ Tous les boutons tiennent sur une seule ligne
+- ✅ Pas d'espace entre le header et la barre d'outils
+- ✅ Contrôles de prévisualisation déplacés vers la barre d'outils principale
 
 ### Boutons de la barre d'outils
 - ✅ Retour aux projets
-- ✅ Mode Desktop/Tablette/Mobile
-- ✅ Mode sombre/Mode clair (prévisualisation)
-- ✅ Ouvrir dans un nouvel onglet
-- ✅ Indicateur de sauvegarde automatique
-- ✅ Menu Options (Pages, Statut)
+- ✅ Mode Desktop/Tablette/Mobile (déplacé dans la barre d'outils)
+- ✅ Mode sombre/Mode clair (déplacé dans la barre d'outils)
+- ✅ Menu Options (Pages, Statut) - Corrigé (affichage)
 - ✅ Toggle liens (Activer/Désactiver)
 - ✅ Annuler/Rétablir (Undo/Redo)
 - ✅ Toggle Palette de blocs
 - ✅ Bouton Sauvegarder/Publier
+- ✅ État de sauvegarde (heure dernière sauvegarde)
 
 ### Responsive Design
 - ✅ Boutons s'adaptent à la taille de l'écran
-- 🔄 Réorganisation intelligente des boutons sur petits écrans
+- ✅ Réorganisation intelligente des boutons sur petits écrans
 - ⏳ Menu hamburger pour boutons secondaires sur mobile
 
 ---
@@ -45,7 +130,7 @@
 - ✅ Sélection de blocs par clic
 - ✅ Sélection de blocs enfants dans les conteneurs
 - ✅ Hover pour identifier les blocs
-- ⏳ Clic droit pour menu contextuel
+- ✅ Clic droit pour menu contextuel (avec option "Déplacer")
 - ⏳ Mode déplacement manuel (drag & drop avec souris)
 - ⏳ Déplacer des blocs entre conteneurs
 - ⏳ Déplacer des blocs au-dessus/en dessous d'autres blocs
@@ -68,7 +153,7 @@
 - ✅ Layout par défaut : 3 colonnes (au lieu de 12)
 - ✅ Redimensionnement des blocs par drag des poignées
 - ✅ Sélecteur de layout dans le panneau de propriétés
-- ⏳ Aperçu responsive (Desktop/Tablette/Mobile) dans l'éditeur
+- ✅ Aperçu responsive (Desktop/Tablette/Mobile) dans l'éditeur
 
 ### Propriétés des Blocs
 
@@ -105,7 +190,7 @@
 ### Sauvegarde
 - ✅ Sauvegarde manuelle (Ctrl+S)
 - ✅ Sauvegarde automatique
-- ✅ Indicateur de statut de sauvegarde
+- ✅ Indicateur de statut de sauvegarde (heure dernière sauvegarde)
 - ✅ Gestion des brouillons et publications
 - ⏳ Sauvegarde locale (localStorage) en cas de perte de connexion
 
@@ -119,7 +204,7 @@
 - ⏳ Recherche dans le contenu des blocs
 
 ### Duplication et Copie
-- ⏳ Dupliquer un bloc
+- ✅ Dupliquer un bloc (menu contextuel)
 - ⏳ Copier/Coller des blocs
 - ⏳ Copier/Coller entre pages
 
@@ -143,11 +228,15 @@
 ## 🐛 Bugs et Corrections
 
 ### Problèmes Identifiés
-- ❌ Bouton "Rétablir" peut être caché sous "Mode sombre/Mode clair" sur petits écrans
-- 🔄 Amélioration de la détection des clics sur blocs enfants dans conteneurs
+- ✅ Bouton "Rétablir" peut être caché sous "Mode sombre/Mode clair" sur petits écrans (corrigé)
+- ✅ Amélioration de la détection des clics sur blocs enfants dans conteneurs (corrigé)
 - ✅ Texte des boutons se met à jour en temps réel (corrigé)
 - ✅ Layout par défaut des blocs (corrigé : 3 colonnes au lieu de 12)
 - ✅ Boutons de la barre d'outils agrandis (corrigé)
+- ✅ Dropdown Options n'affiche rien (corrigé)
+- ✅ Espace entre header et barre d'outils (corrigé)
+- ✅ Option "Déplacer" dans menu contextuel (ajouté)
+- ✅ État de sauvegarde affiché (ajouté)
 
 ### Problèmes Potentiels
 - ⏳ Performance avec beaucoup de blocs
@@ -204,19 +293,27 @@
 - ⏳ Tests d'intégration pour le drag & drop
 - ⏳ Tests E2E pour le flux complet d'édition
 
+### Système de Validation
+- Les blocs sont validés étape par étape selon les phases définies
+- Variable d'environnement `NEXT_PUBLIC_BLOCK_VALIDATION_PHASE` pour contrôler les phases
+- Chaque phase valide un groupe de blocs avant de passer à la suivante
+- Voir `CHECKLIST_BLOCKS_ROADMAP.md` pour la checklist détaillée de chaque bloc
+
 ---
 
 ## 📅 Priorités
 
 ### Priorité Haute 🔴
-1. Améliorer la responsivité des boutons de la barre d'outils
-2. Corriger le problème de visibilité du bouton "Rétablir"
-3. Améliorer la sélection des blocs enfants dans les conteneurs
+1. ✅ Améliorer la responsivité des boutons de la barre d'outils (fait)
+2. ✅ Corriger le problème de visibilité du bouton "Rétablir" (fait)
+3. ✅ Améliorer la sélection des blocs enfants dans les conteneurs (fait)
+4. 🧪 **Valider Phase 1 : Blocs de mise en page de base** (en cours)
 
 ### Priorité Moyenne 🟡
-1. Menu contextuel (clic droit)
-2. Mode déplacement manuel
-3. Recherche dans la palette de blocs
+1. 🧪 Valider Phase 2 : Blocs conteneurs
+2. Menu contextuel (clic droit) - Amélioration
+3. Mode déplacement manuel
+4. Recherche dans la palette de blocs
 
 ### Priorité Basse 🟢
 1. Templates et presets
@@ -225,6 +322,13 @@
 
 ---
 
+## 🔗 Liens vers les autres fichiers de roadmap
+
+- **BLOCKS_ROADMAP.md** : Liste exhaustive de tous les blocs potentiels
+- **CHECKLIST_BLOCKS_ROADMAP.md** : Checklist détaillée pour validation de chaque bloc
+
+---
+
 **Dernière mise à jour :** 2024-12-12
 **Maintenu par :** Équipe VTCBuilder
-
+**Phase de validation actuelle :** Phase 1 - Blocs de mise en page de base

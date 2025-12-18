@@ -1993,6 +1993,26 @@ const SortableBlock = React.memo(function SortableBlock({
             </svg>
             Paramètres
           </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              // Sélectionner le bloc pour activer le drag
+              onSelect()
+              // Afficher un message informatif (optionnel)
+              if (typeof window !== 'undefined') {
+                const message = 'Cliquez et maintenez sur l\'icône du bloc pour le déplacer'
+                // On pourrait utiliser un toast ici, mais pour l'instant on ferme juste le menu
+              }
+              closeContextMenu()
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+            title="Sélectionne le bloc pour le déplacer en cliquant sur son icône"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+            </svg>
+            Déplacer
+          </button>
           {onToggleCollapse && (
             <button
               onClick={(e) => {

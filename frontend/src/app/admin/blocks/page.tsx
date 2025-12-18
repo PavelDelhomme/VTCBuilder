@@ -784,6 +784,37 @@ export default function AdminBlocksPage() {
             minWidth: '120px',
           },
           {
+            key: 'validation_phase',
+            label: 'Phase validation',
+            render: (block) => {
+              // Déterminer la phase de validation selon le nom du bloc
+              let phase = '4+' // Par défaut, tous les blocs
+              if (['heading', 'text', 'container'].includes(block.name)) {
+                phase = '1'
+              } else if (['columns', 'section'].includes(block.name)) {
+                phase = '2'
+              } else if (['paragraph', 'button', 'image', 'line'].includes(block.name)) {
+                phase = '3'
+              }
+              
+              const phaseColors: Record<string, string> = {
+                '1': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+                '2': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+                '3': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+                '4+': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+              }
+              
+              return (
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${phaseColors[phase] || phaseColors['4+']}`}>
+                  Phase {phase}
+                </span>
+              )
+            },
+            sortable: true,
+            hidden: 'xl',
+            minWidth: '100px',
+          },
+          {
             key: 'is_active',
             label: 'Statut',
             render: (block) => (

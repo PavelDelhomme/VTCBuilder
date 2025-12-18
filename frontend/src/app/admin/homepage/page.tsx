@@ -411,7 +411,35 @@ export default function HomepageEditorPage() {
       setCanonicalUrl(data.public_homepage_canonical_url || '')
       setRobots(data.public_homepage_robots || 'index, follow')
       setPageStatus(data.public_homepage_status || 'draft')
-      setBlockTypes(blockTypesData)
+      
+      // PHASE DE VALIDATION : Ne garder que quelques blocs pour tester étape par étape
+      // Étape 1 : Blocs de mise en page de base (1-3 blocs max)
+      // Pour activer les phases, définir NEXT_PUBLIC_BLOCK_VALIDATION_PHASE dans .env.local
+      const validationPhase = process.env.NEXT_PUBLIC_BLOCK_VALIDATION_PHASE || '1'
+      let filteredBlockTypes = blockTypesData
+      
+      // Filtrer uniquement les blocs actifs
+      filteredBlockTypes = filteredBlockTypes.filter(bt => bt.is_active)
+      
+      if (validationPhase === '1') {
+        // Phase 1 : Seulement les blocs de mise en page de base
+        filteredBlockTypes = filteredBlockTypes.filter(bt => 
+          ['heading', 'text', 'container'].includes(bt.name)
+        )
+      } else if (validationPhase === '2') {
+        // Phase 2 : Ajouter un bloc conteneur
+        filteredBlockTypes = filteredBlockTypes.filter(bt => 
+          ['heading', 'text', 'container', 'columns'].includes(bt.name)
+        )
+      } else if (validationPhase === '3') {
+        // Phase 3 : Ajouter des blocs de contenu avancés
+        filteredBlockTypes = filteredBlockTypes.filter(bt => 
+          ['heading', 'text', 'container', 'columns', 'paragraph', 'button', 'image', 'line'].includes(bt.name)
+        )
+      }
+      // Phase 4+ : Tous les blocs actifs (pas de filtre supplémentaire)
+      
+      setBlockTypes(filteredBlockTypes)
       
       // Charger les pages publiques disponibles
       const allPages: Array<{ slug: string; title: string }> = []
@@ -607,8 +635,8 @@ export default function HomepageEditorPage() {
         </div>
       }
     >
-      {/* Barre d'outils sous le header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-2 relative">
+      {/* Barre d'outils sous le header - Pas d'espace avec le header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 sm:px-4 py-2 relative" style={{ marginTop: '-1rem' }}>
         <div className="flex gap-1 items-center flex-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* Menu déroulant pour options */}
           <div className="flex items-center gap-1 flex-shrink-0">
@@ -632,7 +660,7 @@ export default function HomepageEditorPage() {
                     className="fixed inset-0 z-[10000]" 
                     onClick={() => setShowOptionsMenu(false)}
                   />
-                  <div className="absolute left-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-[10001] w-48">
+                  <div className="absolute left-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-[10001] w-48" onClick={(e) => e.stopPropagation()}>
                     <div className="py-1">
                       <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Pages</div>
                       <div className="relative">
@@ -784,6 +812,57 @@ export default function HomepageEditorPage() {
             )}
             <span className="text-xs font-medium whitespace-nowrap hidden md:inline">Liens</span>
           </button>
+
+          {/* Sélecteur de mode de prévisualisation - Déplacé de la barre de prévisualisation */}
+          <select
+            value={previewMode}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPreviewMode(e.target.value as 'desktop' | 'tablet' | 'mobile')}
+            className="px-2 py-1.5 text-xs border rounded-lg hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 flex-shrink-0"
+            title="Mode de prévisualisation"
+          >
+            <option value="desktop">💻 Desktop</option>
+            <option value="tablet">📱 Tablette</option>
+            <option value="mobile">📱 Mobile</option>
+          </select>
+
+          {/* Toggle thème pour la prévisualisation - Déplacé de la barre de prévisualisation */}
+          <button
+            onClick={() => setPreviewTheme(previewTheme === 'light' ? 'dark' : 'light')}
+            className="px-2 py-1.5 rounded-lg border transition-colors cursor-pointer flex-shrink-0 flex items-center justify-center"
+            style={{
+              backgroundColor: previewTheme === 'dark' ? '#1f2937' : '#f3f4f6',
+              borderColor: previewTheme === 'dark' ? '#4b5563' : '#d1d5db'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = previewTheme === 'dark' ? '#374151' : '#e5e7eb'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = previewTheme === 'dark' ? '#1f2937' : '#f3f4f6'
+            }}
+            title={previewTheme === 'dark' ? 'Passer en mode clair (prévisualisation uniquement)' : 'Passer en mode sombre (prévisualisation uniquement)'}
+          >
+            {previewTheme === 'dark' ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: previewTheme === 'dark' ? '#d1d5db' : '#374151' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: previewTheme === 'dark' ? '#d1d5db' : '#374151' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            )}
+          </button>
+
+          {/* État de sauvegarde */}
+          {lastSaved && (
+            <div className="px-2 py-1.5 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="hidden lg:inline">
+                {new Date(lastSaved).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+          )}
 
           {/* Save Button */}
           <button
@@ -983,47 +1062,7 @@ export default function HomepageEditorPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    {/* Toggle thème pour la prévisualisation uniquement */}
-                    <button
-                      onClick={() => setPreviewTheme(previewTheme === 'light' ? 'dark' : 'light')}
-                      className="flex items-center justify-center px-3 py-2 rounded-lg border transition-colors cursor-pointer"
-                      style={{
-                        backgroundColor: previewTheme === 'dark' ? '#1f2937' : '#f3f4f6',
-                        borderColor: previewTheme === 'dark' ? '#4b5563' : '#d1d5db'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = previewTheme === 'dark' ? '#374151' : '#e5e7eb'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = previewTheme === 'dark' ? '#1f2937' : '#f3f4f6'
-                      }}
-                      title={previewTheme === 'dark' ? 'Passer en mode clair (prévisualisation uniquement)' : 'Passer en mode sombre (prévisualisation uniquement)'}
-                    >
-                      {previewTheme === 'dark' ? (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: previewTheme === 'dark' ? '#d1d5db' : '#374151' }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: previewTheme === 'dark' ? '#d1d5db' : '#374151' }}>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                      )}
-                    </button>
-                    <select
-                      value={previewMode}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPreviewMode(e.target.value as 'desktop' | 'tablet' | 'mobile')}
-                      className="text-xs px-2 sm:px-3 py-1.5 border rounded-lg hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      style={{
-                        backgroundColor: previewTheme === 'dark' ? '#1f2937' : '#ffffff',
-                        borderColor: previewTheme === 'dark' ? '#4b5563' : '#d1d5db',
-                        color: previewTheme === 'dark' ? '#d1d5db' : '#374151'
-                      }}
-                    >
-                      <option value="desktop">💻 Desktop</option>
-                      <option value="tablet">📱 Tablette</option>
-                      <option value="mobile">📱 Mobile</option>
-                    </select>
-
+                    {/* Les contrôles ont été déplacés vers la barre d'outils principale */}
                   </div>
                 </div>
                 <div 
