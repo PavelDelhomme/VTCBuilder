@@ -1879,7 +1879,18 @@ const SortableBlock = React.memo(function SortableBlock({
         className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] ${isResizing ? 'select-none' : ''} group cursor-pointer`}
         onClick={handleBlockClick}
         onDoubleClick={handleDoubleClick}
-        onContextMenu={handleContextMenu}
+        onContextMenu={(e) => {
+          // Vérifier d'abord si on clique sur un enfant AVANT d'afficher le menu du parent
+          const childElement = (e.target as HTMLElement).closest('[data-child-block-id]')
+          if (childElement) {
+            // Si c'est un enfant, ne pas afficher le menu du parent
+            e.preventDefault()
+            e.stopPropagation()
+            return
+          }
+          // Sinon, appeler le handler normal
+          handleContextMenu(e)
+        }}
         onMouseDown={(e) => {
           // Empêcher le menu contextuel de se rouvrir après un clic gauche
           if (e.button === 0 && showMenu) {
@@ -2605,11 +2616,13 @@ function ContainerChildrenRenderer({
                             }}
                           />
                         ) : (
-                          <BlockRenderer 
-                            block={{ ...child, data: child.data || {} }} 
-                            blockType={childBlockType} 
-                            onUpdate={(updates) => onUpdateChild(child.id, updates)} 
-                          />
+                          <div data-child-block-id={child.id}>
+                            <BlockRenderer 
+                              block={{ ...child, data: child.data || {} }} 
+                              blockType={childBlockType} 
+                              onUpdate={(updates) => onUpdateChild(child.id, updates)} 
+                            />
+                          </div>
                         )}
                       </div>
                     )}
