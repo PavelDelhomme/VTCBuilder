@@ -362,18 +362,56 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
 
   const loadBlockTypes = async () => {
     try {
-      // Si des blocs sont fournis via props, les utiliser directement
-      if (availableBlockTypes && availableBlockTypes.length > 0) {
-        setBlockTypes(availableBlockTypes)
+      console.log('🔄 loadBlockTypes appelé:', {
+        availableBlockTypes: availableBlockTypes,
+        isArray: Array.isArray(availableBlockTypes),
+        length: availableBlockTypes?.length || 0
+      })
+      
+      // Si des blocs sont fournis via props, les utiliser directement (même si vide au début)
+      if (availableBlockTypes !== undefined) {
+        // Si availableBlockTypes est un tableau (vide ou non), l'utiliser
+        if (Array.isArray(availableBlockTypes)) {
+          console.log('✅ Utilisation des blocs fournis via props:', availableBlockTypes.length)
+          setBlockTypes(availableBlockTypes)
+          // Si le tableau est vide, essayer de charger depuis l'API en arrière-plan
+          if (availableBlockTypes.length === 0) {
+            console.log('⚠️ Tableau vide, chargement depuis l\'API en arrière-plan...')
+            // Charger depuis l'API en arrière-plan sans bloquer
+            blocksService.getBlockTypes()
+              .then((apiTypes) => {
+                const validTypes = Array.isArray(apiTypes) ? apiTypes : (apiTypes?.results || [])
+                console.log('📦 Blocs chargés depuis l\'API:', validTypes.length)
+                if (validTypes.length > 0) {
+                  setBlockTypes(validTypes)
+                }
+              })
+              .catch((apiError: any) => {
+                // Ne pas logger les erreurs 401 (non authentifié) - c'est normal si l'utilisateur n'est pas connecté
+                const isExpectedError = apiError.response?.status === 401 ||
+                                       apiError.code === 'ERR_NETWORK' || 
+                                       apiError.code === 'ERR_BLOCKED_BY_CLIENT'
+                if (!isExpectedError) {
+                  console.error('❌ Error chargement blocs API:', apiError)
+                }
+              })
+          }
+        } else {
+          console.log('⚠️ availableBlockTypes n\'est pas un tableau:', typeof availableBlockTypes)
+          setBlockTypes([])
+        }
       } else {
-        // Sinon, charger depuis l'API (qui créera automatiquement les blocs par défaut si nécessaire)
+        // Si availableBlockTypes n'est pas fourni, charger depuis l'API
+        console.log('📡 Chargement depuis l\'API (availableBlockTypes non fourni)...')
         try {
           const apiTypes = await blocksService.getBlockTypes()
-          if (apiTypes && apiTypes.length > 0) {
-            setBlockTypes(apiTypes)
+          const validTypes = Array.isArray(apiTypes) ? apiTypes : (apiTypes?.results || [])
+          console.log('📦 Blocs chargés depuis l\'API:', validTypes.length)
+          if (validTypes && validTypes.length > 0) {
+            setBlockTypes(validTypes)
           } else {
             // Si l'API retourne vide (ne devrait pas arriver car l'API crée les blocs automatiquement)
-            console.warn('Aucun bloc disponible depuis l\'API')
+            console.warn('⚠️ Aucun bloc disponible depuis l\'API')
             setBlockTypes([])
           }
         } catch (apiError: any) {
@@ -392,6 +430,12 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       setBlockTypes([])
     }
   }
+  
+  // Recharger les blocs si availableBlockTypes change ou au montage
+  useEffect(() => {
+    loadBlockTypes()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableBlockTypes])
 
   // Fonction récursive pour trouver un bloc dans l'arbre
   const findBlockInTree = useCallback((blocks: Block[], blockId: string): { block: Block; parent: Block[] | null; index: number } | null => {
@@ -1845,17 +1889,32 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           </div>
         )}
 
-        {/* Message si aucun bloc disponible */}
-        {blockTypes.length === 0 && (
+        {/* Message si aucun bloc disponible - seulement si availableBlockTypes n'est pas fourni ou si on charge depuis l'API */}
+        {blockTypes.length === 0 && availableBlockTypes === undefined && (
+          <div className="p-6 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Chargement des blocs...</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Veuillez patienter pendant le chargement des blocs disponibles
+            </p>
+          </div>
+        )}
+        
+        {/* Message si aucun bloc disponible après chargement */}
+        {blockTypes.length === 0 && availableBlockTypes !== undefined && availableBlockTypes.length === 0 && (
           <div className="p-6 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Chargement des blocs...</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Aucun bloc disponible</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Veuillez patienter pendant le chargement des blocs disponibles
+              Les blocs seront disponibles une fois chargés depuis le serveur
             </p>
           </div>
         )}

@@ -338,7 +338,20 @@ export default function EditPublicPage() {
         api.get('/system-settings/')
       ])
       
-      setBlockTypes(blockTypesData)
+      console.log('📦 Blocs chargés:', {
+        count: blockTypesData?.length || 0,
+        blockTypes: blockTypesData,
+        isArray: Array.isArray(blockTypesData)
+      })
+      
+      // S'assurer que blockTypesData est un tableau
+      const validBlockTypes = Array.isArray(blockTypesData) ? blockTypesData : (blockTypesData?.results || [])
+      setBlockTypes(validBlockTypes)
+      
+      console.log('✅ Blocs définis dans le state:', {
+        count: validBlockTypes.length,
+        blockTypes: validBlockTypes
+      })
       const data = settingsResponse.data
       
       // Load available pages for navigation - Si projectId est présent, charger les pages du projet
@@ -1643,7 +1656,7 @@ export default function EditPublicPage() {
                   <BlockEditor 
                     blocks={blocks}
                     onChange={setBlocks}
-                    availableBlockTypes={blockTypes.length > 0 ? blockTypes : undefined}
+                    availableBlockTypes={blockTypes}
                     onBlockSelect={setSelectedBlockId}
                     selectedBlockId={selectedBlockId}
                     showBlocksPalette={true}
@@ -1765,7 +1778,7 @@ export default function EditPublicPage() {
               <BlockEditor 
                 blocks={blocks}
                 onChange={setBlocks}
-                availableBlockTypes={blockTypes.length > 0 ? blockTypes : undefined}
+                availableBlockTypes={blockTypes}
                 selectedBlockId={selectedBlockId}
                 onBlockSelect={setSelectedBlockId}
                 showBlocksPalette={false} // Désactiver la sidebar de blocs (popup externe)
