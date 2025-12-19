@@ -1926,54 +1926,74 @@ export function BlockRenderer({
               <span>Fonctionnalité Premium</span>
             </p>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Onglets ({tabs.length})
-            </label>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+          <CollapsibleSection title="Onglets" count={tabs.length} defaultCollapsed={false}>
+            <div className="space-y-3">
               {tabs.map((tab: any, index: number) => (
-                <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
-                  <input
-                    type="text"
-                    value={tab.title || ''}
-                    onChange={(e) => {
-                      const newTabs = [...tabs]
-                      newTabs[index] = { ...tab, title: e.target.value }
-                      onUpdate({ data: { ...block.data, tabs: newTabs } })
-                    }}
-                    className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    placeholder="Titre onglet"
-                  />
-                  <textarea
-                    value={tab.content || ''}
-                    onChange={(e) => {
-                      const newTabs = [...tabs]
-                      newTabs[index] = { ...tab, content: e.target.value }
-                      onUpdate({ data: { ...block.data, tabs: newTabs } })
-                    }}
-                    className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    placeholder="Contenu"
-                    rows={3}
-                  />
+                <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Onglet {index + 1}</span>
+                    <button
+                      onClick={() => {
+                        const newTabs = tabs.filter((_: any, i: number) => i !== index)
+                        onUpdate({ data: { ...safeBlock.data, tabs: newTabs } })
+                      }}
+                      className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                      title="Supprimer cet onglet"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Supprimer
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Titre de l'onglet
+                    </label>
+                    <input
+                      type="text"
+                      value={tab.title || ''}
+                      onChange={(e) => {
+                        const newTabs = [...tabs]
+                        newTabs[index] = { ...tab, title: e.target.value }
+                        onUpdate({ data: { ...safeBlock.data, tabs: newTabs } })
+                      }}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      placeholder="Titre onglet"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Contenu de l'onglet
+                    </label>
+                    <textarea
+                      value={tab.content || ''}
+                      onChange={(e) => {
+                        const newTabs = [...tabs]
+                        newTabs[index] = { ...tab, content: e.target.value }
+                        onUpdate({ data: { ...safeBlock.data, tabs: newTabs } })
+                      }}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      placeholder="Contenu de l'onglet"
+                      rows={4}
+                    />
+                  </div>
                 </div>
               ))}
-            </div>
-            <div className="flex gap-2 mt-2">
               <button
-                onClick={() => onUpdate({ data: { ...block.data, tabs: [...tabs, { title: `Onglet ${tabs.length + 1}`, content: '' }] } })}
-                className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                onClick={() => {
+                  const newTabs = [...tabs, { title: `Onglet ${tabs.length + 1}`, content: '' }]
+                  onUpdate({ data: { ...safeBlock.data, tabs: newTabs } })
+                }}
+                className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center gap-1"
               >
-                + Ajouter onglet
+                <span>+</span>
+                <span>Ajouter un onglet</span>
               </button>
-              {tabs.length > 1 && (
-                <button
-                  onClick={() => onUpdate({ data: { ...block.data, tabs: tabs.slice(0, -1) } })}
-                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  - Supprimer
-                </button>
-              )}
             </div>
+          </CollapsibleSection>
+        </div>
+      )
           </div>
         </div>
       )
