@@ -433,8 +433,21 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   
   // Recharger les blocs si availableBlockTypes change ou au montage
   useEffect(() => {
+    console.log('🔄 useEffect déclenché pour loadBlockTypes, availableBlockTypes:', {
+      length: availableBlockTypes?.length || 0,
+      isArray: Array.isArray(availableBlockTypes),
+      availableBlockTypes
+    })
     loadBlockTypes()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableBlockTypes])
+  
+  // Aussi mettre à jour blockTypes directement si availableBlockTypes change et n'est pas vide
+  useEffect(() => {
+    if (availableBlockTypes !== undefined && Array.isArray(availableBlockTypes) && availableBlockTypes.length > 0) {
+      console.log('✅ Mise à jour directe de blockTypes depuis availableBlockTypes:', availableBlockTypes.length)
+      setBlockTypes(availableBlockTypes)
+    }
   }, [availableBlockTypes])
 
   // Fonction récursive pour trouver un bloc dans l'arbre
@@ -1184,6 +1197,11 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     blockTypes.forEach((bt: BlockType) => {
       map.set(bt.name, bt)
     })
+    console.log('🗺️ blockTypesMap mis à jour:', {
+      total: blockTypes.length,
+      mapSize: map.size,
+      blockNames: Array.from(map.keys()).slice(0, 10)
+    })
     return map
   }, [blockTypes])
   
@@ -1904,8 +1922,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           </div>
         )}
         
-        {/* Message si aucun bloc disponible après chargement */}
-        {blockTypes.length === 0 && availableBlockTypes !== undefined && availableBlockTypes.length === 0 && (
+        {/* Message si aucun bloc disponible après chargement - seulement si availableBlockTypes est fourni ET vide */}
+        {blockTypes.length === 0 && availableBlockTypes !== undefined && Array.isArray(availableBlockTypes) && availableBlockTypes.length === 0 && (
           <div className="p-6 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1915,6 +1933,9 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Aucun bloc disponible</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Les blocs seront disponibles une fois chargés depuis le serveur
+            </p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+              Debug: availableBlockTypes={availableBlockTypes?.length || 0}, blockTypes={blockTypes.length}
             </p>
           </div>
         )}
