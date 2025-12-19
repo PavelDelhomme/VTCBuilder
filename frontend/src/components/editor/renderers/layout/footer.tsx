@@ -51,7 +51,7 @@ export const renderFooter = ({ block, wrapperStyles, theme }: RendererProps): Re
                 )}
                 {(column.links || []).length > 0 && (
                   <ul className={`space-y-2 text-sm sm:text-base ${footerIsDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {column.links.map((link: any, linkIndex: number) => (
+                    {(column.links || []).map((link: any, linkIndex: number) => (
                       <li key={linkIndex} className="break-words">
                         <a
                           href={link.url || '#'}
