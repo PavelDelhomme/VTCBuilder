@@ -65,6 +65,21 @@ export default function EditPublicPage() {
   const [canRedo, setCanRedo] = useState(false)
   const [showSeoExpanded, setShowSeoExpanded] = useState(false) // État pour afficher/masquer les paramètres SEO
   const [showMoreMenu, setShowMoreMenu] = useState(false) // État pour le menu "Plus d'options"
+  const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('palette-collapsed')
+      return saved === 'true'
+    }
+    return false
+  }) // État de la palette (réduite ou non)
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebar-width')
+      if (saved) return parseInt(saved, 10)
+    }
+    return 300 // Largeur par défaut de la sidebar
+  })
+  const [isResizingSidebar, setIsResizingSidebar] = useState(false)
   
   // État pour le redimensionnement des panneaux
   const [editorWidth, setEditorWidth] = useState<number>(() => {
@@ -909,8 +924,24 @@ export default function EditPublicPage() {
 
   return (
     <AdminLayout
-      title={`Éditer ${PAGE_TITLES[pageSlug] || pageSlug}`}
-      subtitle={`Créez et personnalisez la page ${pageSlug === 'home' ? 'd\'accueil' : pageSlug} avec l'éditeur de blocs complet`}
+      title={
+        <div className="flex items-center gap-3">
+          <span>Éditer {PAGE_TITLES[pageSlug] || pageSlug}</span>
+          <span className="px-2.5 py-1 text-xs font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full border border-purple-300 dark:border-purple-700">
+            {pageSlug === 'home' ? 'Mode Projet' : 'Page Publique'}
+          </span>
+        </div>
+      }
+      subtitle={
+        <div className="flex flex-col gap-1">
+          <span>Éditeur générique pour les pages publiques (public_pages[{pageSlug}])</span>
+          {pageSlug === 'home' && (
+            <span className="text-xs text-amber-600 dark:text-amber-400">
+              ⚠️ Attention : Cette page utilise public_pages['home'], différent de l'éditeur dédié /admin/homepage
+            </span>
+          )}
+        </div>
+      }
       hideHeader={!headerVisible}
       projectBackButton={
         projectId ? (
@@ -1139,11 +1170,11 @@ export default function EditPublicPage() {
               <>
                 {/* Overlay pour fermer le menu en cliquant ailleurs */}
                 <div 
-                  className="fixed inset-0 z-40" 
+                  className="fixed inset-0 z-[10000]" 
                   onClick={() => setShowMoreMenu(false)}
                 />
                 {/* Menu dropdown */}
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 py-2">
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[10001] py-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -1353,13 +1384,18 @@ export default function EditPublicPage() {
 
           {/* Blocs Disponibles Button - Icon only */}
           <button
-            onClick={() => setBlocksPaletteOpen(!blocksPaletteOpen)}
+            onClick={() => {
+              setIsPaletteCollapsed(!isPaletteCollapsed)
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('palette-collapsed', String(isPaletteCollapsed))
+              }
+            }}
             className={`p-2 rounded-lg transition-colors flex items-center justify-center ${
-              blocksPaletteOpen 
+              !isPaletteCollapsed 
                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
                 : 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
-            title="Blocs disponibles"
+            title={isPaletteCollapsed ? 'Afficher la palette de blocs' : 'Masquer la palette de blocs'}
           >
             <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
@@ -1411,6 +1447,28 @@ export default function EditPublicPage() {
         </div>
       }
     >
+      {/* Panneau d'information pour distinguer cet éditeur */}
+      {pageSlug === 'home' && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-3">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                ⚠️ Attention : Éditeur générique pour la page "home"
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                Cet éditeur modifie <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/40 rounded text-xs">public_pages['home']</code> dans les paramètres système. 
+                C'est différent de l'éditeur dédié disponible sur <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/40 rounded text-xs">/admin/homepage</code> qui modifie <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/40 rounded text-xs">public_homepage_blocks</code>.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Barre d'actions minimale quand la barre est masquée */}
       {!headerVisible && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 flex-wrap justify-end">
@@ -1443,13 +1501,18 @@ export default function EditPublicPage() {
           
           {/* Bouton Blocs Disponibles - Icon only */}
           <button
-            onClick={() => setBlocksPaletteOpen(!blocksPaletteOpen)}
+            onClick={() => {
+              setIsPaletteCollapsed(!isPaletteCollapsed)
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('palette-collapsed', String(isPaletteCollapsed))
+              }
+            }}
             className={`p-2 rounded-lg shadow-lg transition-colors flex items-center justify-center ${
-              blocksPaletteOpen 
+              !isPaletteCollapsed 
                 ? 'bg-blue-600 text-white hover:bg-blue-700' 
                 : 'bg-gray-700 dark:bg-gray-800 text-white hover:bg-gray-600 dark:hover:bg-gray-700'
             }`}
-            title="Blocs disponibles"
+            title={isPaletteCollapsed ? 'Afficher la palette de blocs' : 'Masquer la palette de blocs'}
           >
             <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
@@ -1551,6 +1614,91 @@ export default function EditPublicPage() {
 
         {/* Main Editor Area with Split View - Redimensionnable */}
         <div className="flex-1 flex overflow-hidden min-h-0 relative" style={{ height: 'calc(100vh - 120px)', minHeight: '700px' }}>
+          {/* Sidebar - Palette de blocs */}
+          {!isPaletteCollapsed ? (
+            <>
+              <div 
+                className="border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col flex-shrink-0 bg-white dark:bg-gray-800"
+                style={{ width: `${sidebarWidth}px`, minWidth: '200px', maxWidth: '400px' }}
+              >
+                <div className="flex-1 overflow-hidden flex flex-col">
+                  <BlockEditor 
+                    blocks={blocks}
+                    onChange={setBlocks}
+                    availableBlockTypes={blockTypes.length > 0 ? blockTypes : undefined}
+                    onBlockSelect={setSelectedBlockId}
+                    selectedBlockId={selectedBlockId}
+                    showBlocksPalette={true}
+                    showOnlyPalette={true} // Toujours afficher uniquement la palette
+                    onPaletteToggle={() => {
+                      setIsPaletteCollapsed(true)
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('palette-collapsed', 'true')
+                      }
+                    }}
+                    onUndoRedoChange={(canUndo, canRedo) => {
+                      setCanUndo(canUndo)
+                      setCanRedo(canRedo)
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {/* Resize Handle pour la sidebar */}
+              <div
+                onMouseDown={(e) => {
+                  setIsResizingSidebar(true)
+                  const startX = e.clientX
+                  const startWidth = sidebarWidth
+                  
+                  const handleMouseMove = (e: MouseEvent) => {
+                    const diff = e.clientX - startX
+                    const newWidth = Math.max(200, Math.min(400, startWidth + diff))
+                    setSidebarWidth(newWidth)
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem('sidebar-width', String(newWidth))
+                    }
+                  }
+                  
+                  const handleMouseUp = () => {
+                    setIsResizingSidebar(false)
+                    document.removeEventListener('mousemove', handleMouseMove)
+                    document.removeEventListener('mouseup', handleMouseUp)
+                  }
+                  
+                  document.addEventListener('mousemove', handleMouseMove)
+                  document.addEventListener('mouseup', handleMouseUp)
+                }}
+                className={`w-2 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-col-resize flex-shrink-0 transition-colors ${
+                  isResizingSidebar ? 'bg-blue-500 dark:bg-blue-600' : ''
+                }`}
+                style={{ userSelect: 'none' }}
+                title="Redimensionner la palette"
+              >
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-1 h-16 bg-gray-400 dark:bg-gray-500 rounded"></div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center py-4 gap-2 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0" style={{ width: '60px' }}>
+              <button
+                onClick={() => {
+                  setIsPaletteCollapsed(false)
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('palette-collapsed', 'false')
+                  }
+                }}
+                className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Afficher la palette de blocs"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+              </button>
+            </div>
+          )}
+          
           {/* Editor Section - Largeur dynamique */}
           <div 
             className="border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-0 transition-none"

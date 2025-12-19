@@ -7,8 +7,8 @@ import AdminSidebar from '@/components/admin/AdminSidebar'
 import { useTheme } from '@/contexts/ThemeContext'
 
 interface MobileHeaderProps {
-  title: string
-  subtitle?: string
+  title: string | React.ReactNode
+  subtitle?: string | React.ReactNode
   onMenuClick?: () => void
   saveStatus?: React.ReactNode
 }
@@ -31,7 +31,13 @@ export default function MobileHeader({ title, subtitle, onMenuClick, saveStatus 
         
         <div className="flex-1 text-center min-w-0">
           <h1 className="text-base font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
-          {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400 truncate hidden sm:block">{subtitle}</p>}
+          {subtitle && (
+            typeof subtitle === 'string' ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate hidden sm:block">{subtitle}</p>
+            ) : (
+              <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">{subtitle}</div>
+            )
+          )}
         </div>
         
         {/* Save Status - Visible sur mobile */}

@@ -9,8 +9,8 @@ import { useTheme } from '@/contexts/ThemeContext'
 
 interface AdminLayoutProps {
   children: React.ReactNode
-  title: string
-  subtitle?: string
+  title: string | React.ReactNode
+  subtitle?: string | React.ReactNode
   headerActions?: React.ReactNode
   saveStatus?: React.ReactNode
   hideHeader?: boolean
@@ -162,7 +162,13 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
                   <div className="min-w-0 flex-1 flex items-center gap-2 sm:gap-3">
                     <div className="min-w-0 flex-1">
                       <h1 className="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
-                      {subtitle && <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 truncate hidden sm:block">{subtitle}</p>}
+                      {subtitle && (
+                        typeof subtitle === 'string' ? (
+                          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 truncate hidden sm:block">{subtitle}</p>
+                        ) : (
+                          <div className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 hidden sm:block">{subtitle}</div>
+                        )
+                      )}
                     </div>
                     {saveStatus && (
                       <div className="flex-shrink-0 hidden sm:flex">
