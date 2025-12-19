@@ -76,9 +76,9 @@ export const renderCTASection = ({ block, blockType, blockTypes, theme, wrapperS
         ...(block.styles?.padding && !block.styles?.padding_top && !block.styles?.padding_bottom && !block.styles?.padding_left && !block.styles?.padding_right
           ? { padding: block.styles.padding }
           : {
-              paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '6rem',
+              paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '8rem',
               paddingRight: block.styles?.padding_right || block.styles?.padding_horizontal || '2rem',
-              paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '6rem',
+              paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '8rem',
               paddingLeft: block.styles?.padding_left || block.styles?.padding_horizontal || '2rem',
             }),
       }}

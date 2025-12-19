@@ -102,13 +102,144 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
             if not (hasattr(user, 'is_super_admin') and user.is_super_admin()):
                 from rest_framework.exceptions import PermissionDenied
                 raise PermissionDenied("Only super admin can update block types")
+            
+            # Get the old instance to track changes
+            old_instance = self.get_object()
+            old_name = old_instance.name
+            
             instance = serializer.save()
+            
             # Handle available_plans ManyToMany
             if 'available_plans' in serializer.validated_data:
                 instance.available_plans.set(serializer.validated_data['available_plans'])
+            
+            # Propagate changes to all pages and projects that use this block type
+            # This ensures that when a BlockType is updated, all blocks using it get the new schema/default_styles
+            self._propagate_block_type_changes(instance, old_name)
+            
         except Exception as e:
             logger.error(f"Error in BlockTypeViewSet.perform_update: {e}", exc_info=True)
             raise
+    
+    def _propagate_block_type_changes(self, block_type, old_name=None):
+        """
+        Propagate block type changes to all pages and projects that use this block type.
+        This updates the schema and default_styles for all existing blocks of this type.
+        """
+        try:
+            from settings_app.models import SystemSettings
+            from projects.models import Project
+            from pages.models import Page
+            import json
+            
+            block_type_name = block_type.name
+            
+            # Update system settings (public pages)
+            try:
+                system_settings = SystemSettings.objects.first()
+                if system_settings:
+                    updated = False
+                    
+                    # Update public_homepage_blocks
+                    if hasattr(system_settings, 'public_homepage_blocks') and system_settings.public_homepage_blocks:
+                        homepage_blocks = system_settings.public_homepage_blocks if isinstance(system_settings.public_homepage_blocks, list) else json.loads(system_settings.public_homepage_blocks) if isinstance(system_settings.public_homepage_blocks, str) else []
+                        updated_blocks = self._update_blocks_in_tree(homepage_blocks, block_type_name, block_type)
+                        if updated_blocks != homepage_blocks:
+                            system_settings.public_homepage_blocks = updated_blocks
+                            updated = True
+                    
+                    # Update public_pages (all public pages)
+                    if hasattr(system_settings, 'public_pages') and system_settings.public_pages:
+                        public_pages = system_settings.public_pages if isinstance(system_settings.public_pages, dict) else json.loads(system_settings.public_pages) if isinstance(system_settings.public_pages, str) else {}
+                        for page_slug, page_data in public_pages.items():
+                            if isinstance(page_data, dict) and 'blocks' in page_data:
+                                page_blocks = page_data['blocks'] if isinstance(page_data['blocks'], list) else []
+                                updated_blocks = self._update_blocks_in_tree(page_blocks, block_type_name, block_type)
+                                if updated_blocks != page_blocks:
+                                    page_data['blocks'] = updated_blocks
+                                    updated = True
+                        if updated:
+                            system_settings.public_pages = public_pages
+                    
+                    if updated:
+                        system_settings.save(update_fields=['public_homepage_blocks', 'public_pages'])
+                        logger.info(f"✅ Propagated block type '{block_type_name}' changes to system settings")
+            except Exception as e:
+                logger.error(f"Error propagating to system settings: {e}", exc_info=True)
+            
+            # Update all tenant pages
+            try:
+                pages = Page.objects.all()
+                for page in pages:
+                    if page.blocks:
+                        page_blocks = page.blocks if isinstance(page.blocks, list) else json.loads(page.blocks) if isinstance(page.blocks, str) else []
+                        updated_blocks = self._update_blocks_in_tree(page_blocks, block_type_name, block_type)
+                        if updated_blocks != page_blocks:
+                            page.blocks = updated_blocks
+                            page.save(update_fields=['blocks'])
+                            logger.info(f"✅ Updated page '{page.slug}' (tenant {page.tenant_id}) with new block type '{block_type_name}'")
+            except Exception as e:
+                logger.error(f"Error propagating to tenant pages: {e}", exc_info=True)
+            
+            # Update project pages (stored in system settings or project-specific storage)
+            # Note: Project pages might be stored differently, adjust based on your implementation
+            try:
+                projects = Project.objects.all()
+                for project in projects:
+                    # If projects store blocks directly, update them here
+                    # This depends on your project model structure
+                    pass
+            except Exception as e:
+                logger.error(f"Error propagating to projects: {e}", exc_info=True)
+                
+        except Exception as e:
+            logger.error(f"Error in _propagate_block_type_changes: {e}", exc_info=True)
+    
+    def _update_blocks_in_tree(self, blocks, block_type_name, block_type):
+        """
+        Recursively update all blocks of a given type in a tree structure.
+        Updates default_styles and ensures schema compatibility.
+        """
+        if not isinstance(blocks, list):
+            return blocks
+        
+        updated_blocks = []
+        for block in blocks:
+            if isinstance(block, dict):
+                updated_block = block.copy()
+                
+                # If this block matches the updated block type
+                if block.get('type') == block_type_name:
+                    # Merge default_styles (keep existing custom styles, add new defaults)
+                    if 'styles' not in updated_block:
+                        updated_block['styles'] = {}
+                    
+                    # Update with new default styles (only if not already customized)
+                    if block_type.default_styles:
+                        for key, value in block_type.default_styles.items():
+                            if key not in updated_block['styles']:
+                                updated_block['styles'][key] = value
+                    
+                    # Ensure data structure matches new schema
+                    if 'data' not in updated_block:
+                        updated_block['data'] = {}
+                    
+                    # Add default values from schema if missing
+                    if block_type.schema:
+                        for key, schema_def in block_type.schema.items():
+                            if isinstance(schema_def, dict) and 'default' in schema_def:
+                                if key not in updated_block['data']:
+                                    updated_block['data'][key] = schema_def['default']
+                
+                # Recursively update children
+                if 'children' in updated_block and isinstance(updated_block['children'], list):
+                    updated_block['children'] = self._update_blocks_in_tree(updated_block['children'], block_type_name, block_type)
+                
+                updated_blocks.append(updated_block)
+            else:
+                updated_blocks.append(block)
+        
+        return updated_blocks
 
     def perform_destroy(self, instance):
         """Only super admin can delete block types"""

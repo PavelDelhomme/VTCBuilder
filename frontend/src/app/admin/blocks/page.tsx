@@ -13,9 +13,13 @@ import PageLoader from '@/components/shared/PageLoader'
 export default function AdminBlocksPage() {
   const router = useRouter()
   const [blocks, setBlocks] = useState<BlockType[]>([])
+  const [filteredBlocks, setFilteredBlocks] = useState<BlockType[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingBlock, setEditingBlock] = useState<BlockType | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [formData, setFormData] = useState({
     name: '',
     label: '',
@@ -59,15 +63,47 @@ export default function AdminBlocksPage() {
     try {
       setLoading(true)
       const data = await blocksService.getBlockTypes()
-      setBlocks(Array.isArray(data) ? data : [])
+      const blocksArray = Array.isArray(data) ? data : []
+      setBlocks(blocksArray)
+      setFilteredBlocks(blocksArray)
     } catch (error: any) {
       console.error('Error chargement blocs:', error)
       toast.error('Error lors du chargement des blocs')
       setBlocks([])
+      setFilteredBlocks([])
     } finally {
       setLoading(false)
     }
   }
+
+  // Filter blocks based on search, category, and status
+  useEffect(() => {
+    let filtered = [...blocks]
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(block =>
+        block.name.toLowerCase().includes(query) ||
+        block.label.toLowerCase().includes(query) ||
+        (block.description && block.description.toLowerCase().includes(query))
+      )
+    }
+
+    // Category filter
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(block => block.category === categoryFilter)
+    }
+
+    // Status filter
+    if (statusFilter === 'active') {
+      filtered = filtered.filter(block => block.is_active)
+    } else if (statusFilter === 'inactive') {
+      filtered = filtered.filter(block => !block.is_active)
+    }
+
+    setFilteredBlocks(filtered)
+  }, [blocks, searchQuery, categoryFilter, statusFilter])
 
   const validateJSON = (jsonString: string): { valid: boolean; data?: any; error?: string } => {
     try {
@@ -293,7 +329,7 @@ export default function AdminBlocksPage() {
         </button>
       }
     >
-      <div className="w-full h-full min-h-0 flex flex-col overflow-hidden">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col">
       {/* Form */}
       {showForm && (
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 mb-6">
@@ -700,217 +736,204 @@ export default function AdminBlocksPage() {
         </div>
       )}
 
-      {/* Blocks List with DataTable */}
-      <DataTable
-        data={blocks}
-        columns={[
-          {
-            key: 'name',
-            label: 'Nom',
-            render: (block) => (
-              <code className="text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded break-words" title={block.name}>
-                {block.name}
-              </code>
-            ),
-            sortable: true,
-            minWidth: '180px',
-          },
-          {
-            key: 'label',
-            label: 'Label',
-            render: (block) => (
-              <div className="flex items-center gap-2 min-w-[200px]">
-                <span className="text-lg flex-shrink-0">{block.icon}</span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate" title={block.label}>
-                    {block.label}
-                  </div>
-                  {block.description && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-1 hidden sm:block" title={block.description}>
-                      {block.description}
+      {/* Blocks Grid - Modern Card Design */}
+      <div className="space-y-6 pb-6">
+        {/* Filters and Search */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex-1 w-full sm:max-w-md">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Rechercher un bloc..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <select 
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Toutes les catégories</option>
+              <option value="content">Contenu</option>
+              <option value="layout">Mise en page</option>
+              <option value="media">Médias</option>
+              <option value="custom">Personnalisé</option>
+            </select>
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Tous les statuts</option>
+              <option value="active">Actifs</option>
+              <option value="inactive">Inactifs</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{blocks.length}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{blocks.filter(b => b.is_active).length}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Actifs</div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{blocks.filter(b => !b.is_active).length}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Inactifs</div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{filteredBlocks.length}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Filtrés</div>
+          </div>
+        </div>
+
+        {/* Blocks Grid */}
+        {filteredBlocks.length === 0 ? (
+          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="text-4xl mb-4">📦</div>
+            <p className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+              Aucun bloc pour le moment
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Créez votre premier bloc pour commencer
+            </p>
+            <button
+              onClick={() => {
+                resetForm()
+                setEditingBlock(null)
+                setShowForm(true)
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Créer un bloc
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredBlocks.map((block) => (
+              <div
+                key={block.id}
+                className="bg-white dark:bg-gray-800 rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-600 shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden group cursor-pointer"
+                onClick={() => handleEdit(block)}
+              >
+                {/* Card Header */}
+                <div className={`p-4 border-b border-gray-200 dark:border-gray-700 ${
+                  block.is_active 
+                    ? 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20' 
+                    : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900'
+                }`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-white dark:bg-gray-800 flex items-center justify-center text-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+                        {block.icon}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate" title={block.label}>
+                          {block.label}
+                        </h3>
+                        <code className="text-xs text-gray-500 dark:text-gray-400 truncate block" title={block.name}>
+                          {block.name}
+                        </code>
+                      </div>
                     </div>
-                  )}
+                    <div className="flex-shrink-0 flex flex-col gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleActive(block)
+                        }}
+                        className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap transition-colors ${
+                          block.is_active
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            : 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200'
+                        }`}
+                        title={block.is_active ? 'Désactiver' : 'Activer'}
+                      >
+                        {block.is_active ? '✓' : '○'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ),
-            sortable: true,
-            minWidth: '200px',
-          },
-          {
-            key: 'category',
-            label: 'Catégorie',
-            render: (block) => (
-              <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getCategoryBadge(block.category)}`}>
-                {getCategoryLabel(block.category)}
-              </span>
-            ),
-            sortable: true,
-            hidden: 'md',
-            minWidth: '100px',
-          },
-          {
-            key: 'icon',
-            label: 'Icône',
-            render: (block) => <span className="text-2xl">{block.icon}</span>,
-            sortable: false,
-            hidden: 'lg',
-            minWidth: '60px',
-          },
-          {
-            key: 'plans',
-            label: 'Plans requis',
-            render: (block) => (
-              block.plan_names && block.plan_names.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {block.plan_names.slice(0, 2).map((planName, idx) => (
-                    <span key={idx} className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 whitespace-nowrap">
-                      {planName}
-                    </span>
-                  ))}
-                  {block.plan_names.length > 2 && (
-                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                      +{block.plan_names.length - 2}
-                    </span>
+
+                {/* Card Body */}
+                <div className="p-4 space-y-3">
+                  {block.description && (
+                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2" title={block.description}>
+                      {block.description}
+                    </p>
                   )}
+                  
+                  <div className="flex flex-wrap gap-2">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getCategoryBadge(block.category)}`}>
+                      {getCategoryLabel(block.category)}
+                    </span>
+                    {block.plan_names && block.plan_names.length > 0 ? (
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        {block.plan_names.length} plan{block.plan_names.length > 1 ? 's' : ''}
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        Gratuit
+                      </span>
+                    )}
+                    {(block as any).is_admin_only && (
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                        Admin
+                      </span>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 whitespace-nowrap">
-                  Gratuit
-                </span>
-              )
-            ),
-            sortable: false,
-            hidden: 'lg',
-            minWidth: '120px',
-          },
-          {
-            key: 'validation_phase',
-            label: 'Phase validation',
-            render: (block) => {
-              // Déterminer la phase de validation selon le nom du bloc
-              let phase = '4+' // Par défaut, tous les blocs
-              if (['heading', 'text', 'container'].includes(block.name)) {
-                phase = '1'
-              } else if (['columns', 'section'].includes(block.name)) {
-                phase = '2'
-              } else if (['paragraph', 'button', 'image', 'line'].includes(block.name)) {
-                phase = '3'
-              }
-              
-              const phaseColors: Record<string, string> = {
-                '1': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-                '2': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-                '3': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-                '4+': 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-              }
-              
-              return (
-                <span className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${phaseColors[phase] || phaseColors['4+']}`}>
-                  Phase {phase}
-                </span>
-              )
-            },
-            sortable: true,
-            hidden: 'xl',
-            minWidth: '100px',
-          },
-          {
-            key: 'is_active',
-            label: 'Statut',
-            render: (block) => (
-              <div className="flex flex-col gap-1">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleToggleActive(block)
-                  }}
-                  className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
-                    block.is_active
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                      : 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200'
-                  }`}
-                >
-                  {block.is_active ? 'Actif' : 'Inactif'}
-                </button>
-                {(block as any).is_admin_only && (
-                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 whitespace-nowrap">
-                    Admin
+
+                {/* Card Footer */}
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    Ordre: {block.order}
                   </span>
-                )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleEdit(block)
+                      }}
+                      className="p-1.5 text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                      title="Modifier"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDelete(block.id, block.label)
+                      }}
+                      className="p-1.5 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      title="Supprimer"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
-            ),
-            sortable: true,
-            minWidth: '90px',
-          },
-          {
-            key: 'order',
-            label: 'Ordre',
-            render: (block) => (
-              <span className="text-sm text-gray-900 dark:text-gray-100">{block.order}</span>
-            ),
-            sortable: true,
-            hidden: 'md',
-            minWidth: '80px',
-          },
-        ]}
-        filters={[
-          {
-            key: 'is_active',
-            label: 'Statut',
-            type: 'select',
-            options: [
-              { value: 'all', label: 'Tous' },
-              { value: 'true', label: 'Actifs' },
-              { value: 'false', label: 'Inactifs' },
-            ],
-          },
-          {
-            key: 'category',
-            label: 'Catégorie',
-            type: 'select',
-            options: [
-              { value: 'all', label: 'Toutes' },
-              { value: 'content', label: 'Contenu' },
-              { value: 'layout', label: 'Mise en page' },
-              { value: 'media', label: 'Médias' },
-              { value: 'custom', label: 'Personnalisé' },
-            ],
-          },
-        ]}
-        searchable={true}
-        searchPlaceholder="Rechercher un bloc par nom, label ou description..."
-        sortable={true}
-        emptyMessage={blocks.length === 0 ? "Aucun bloc pour le moment. Créez-en un nouveau !" : "Aucun bloc ne correspond aux filtres sélectionnés."}
-        actions={(block) => (
-          <>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleEdit(block)
-              }}
-              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 p-1.5 sm:p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-              title="Modifier"
-            >
-              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                handleDelete(block.id, block.label)
-              }}
-              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1.5 sm:p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-              title="Supprimer"
-            >
-              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </>
+            ))}
+          </div>
         )}
-        actionsSticky={false}
-      />
+      </div>
       </div>
     </AdminLayout>
   )

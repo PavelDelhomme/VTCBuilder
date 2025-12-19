@@ -19,7 +19,7 @@ import { useReconnect } from '@/contexts/ReconnectContext'
 import { restoreEditorStateAfterReconnect } from '@/hooks/useEditorStatePersistence'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useTheme } from '@/contexts/ThemeContext'
-import SubscriptionInfo from '@/components/editor/SubscriptionInfo'
+import SubscriptionInfo from '@/components/editor/ui/SubscriptionInfo'
 import { findBlockInTree, duplicateBlockInTree, removeBlockFromTree } from '@/lib/block-utils'
 import billingService from '@/services/billing.service'
 import projectService from '@/services/project.service'
@@ -338,15 +338,22 @@ export default function EditPublicPage() {
         api.get('/system-settings/')
       ])
       
+      // Filtrer uniquement les blocs actifs (sauf pour les super admins qui voient tout)
+      const isSuperAdmin = authService.isSuperAdmin()
+      const validBlockTypes = Array.isArray(blockTypesData) ? blockTypesData : []
+      const filteredBlockTypes = isSuperAdmin 
+        ? validBlockTypes 
+        : validBlockTypes.filter((bt: BlockType) => bt.is_active !== false)
+      
       console.log('📦 Blocs chargés:', {
-        count: blockTypesData?.length || 0,
-        blockTypes: blockTypesData,
+        count: filteredBlockTypes.length,
+        total: validBlockTypes.length,
+        filtered: !isSuperAdmin,
+        blockTypes: filteredBlockTypes,
         isArray: Array.isArray(blockTypesData)
       })
       
-      // S'assurer que blockTypesData est un tableau
-      const validBlockTypes = Array.isArray(blockTypesData) ? blockTypesData : (blockTypesData?.results || [])
-      setBlockTypes(validBlockTypes)
+      setBlockTypes(filteredBlockTypes)
       
       console.log('✅ Blocs définis dans le state:', {
         count: validBlockTypes.length,
@@ -1100,22 +1107,7 @@ export default function EditPublicPage() {
         </div>
       }
       hideHeader={!headerVisible}
-      projectBackButton={
-        projectId ? (
-          <button
-            onClick={() => {
-              // projectId peut être un slug ou un ID numérique
-              router.push(`/admin/projects/${projectId}`)
-            }}
-            className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center"
-            title="Retourner à la page de détail du projet"
-          >
-            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
-        ) : undefined
-      }
+      projectBackButton={undefined}
       saveStatus={
         <div className="flex items-center gap-2">
           {isAutoSaving ? (

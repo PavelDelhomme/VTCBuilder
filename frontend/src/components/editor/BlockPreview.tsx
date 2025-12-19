@@ -16,6 +16,7 @@ import { renderAccordion, renderTabs, renderCountdown, renderProgressBar } from 
 import { renderHeader, renderFooter, renderContainer } from './renderers/layout'
 import { renderCarousel, renderLogoGrid, renderImageSlider, renderLightbox } from './renderers/media'
 import { renderBadges } from './renderers/data'
+import authService from '@/services/auth.service'
 
 interface BlockPreviewProps {
   blocks: Block[]
@@ -201,6 +202,65 @@ function BlockPreview({
       }
     }
   }, [onNavigate, inspectorMode, isInteractive])
+
+  // Highlight selected block even when nested in containers
+  useEffect(() => {
+    if (!selectedBlockId) {
+      // Nettoyer tous les highlights si aucun bloc n'est sélectionné
+      const allHighlighted = document.querySelectorAll('[data-block-id].block-selected-highlight, [data-child-block-id].block-selected-highlight')
+      allHighlighted.forEach((el) => {
+        el.classList.remove('block-selected-highlight')
+        ;(el as HTMLElement).style.outline = ''
+        ;(el as HTMLElement).style.outlineOffset = ''
+      })
+      return
+    }
+
+    // Trouver le bloc sélectionné dans le DOM (peut être dans un conteneur imbriqué)
+    const findAndHighlightBlock = () => {
+      // Chercher par data-block-id
+      let blockElement = document.querySelector(`[data-block-id="${selectedBlockId}"]`) as HTMLElement
+      
+      // Si pas trouvé, chercher par data-child-block-id
+      if (!blockElement) {
+        blockElement = document.querySelector(`[data-child-block-id="${selectedBlockId}"]`) as HTMLElement
+      }
+
+      if (blockElement) {
+        // Nettoyer tous les highlights précédents
+        const allHighlighted = document.querySelectorAll('.block-selected-highlight')
+        allHighlighted.forEach((el) => {
+          el.classList.remove('block-selected-highlight')
+          ;(el as HTMLElement).style.outline = ''
+          ;(el as HTMLElement).style.outlineOffset = ''
+        })
+
+        // Appliquer le highlight au bloc sélectionné
+        blockElement.classList.add('block-selected-highlight')
+        blockElement.style.outline = '3px solid #3b82f6'
+        blockElement.style.outlineOffset = '4px'
+        blockElement.style.zIndex = '9999'
+        blockElement.style.position = 'relative'
+        
+        // Scroll vers le bloc si nécessaire
+        blockElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+
+    // Attendre un peu pour que le DOM soit mis à jour
+    const timeoutId = setTimeout(findAndHighlightBlock, 100)
+    
+    return () => {
+      clearTimeout(timeoutId)
+      // Nettoyer au démontage
+      const allHighlighted = document.querySelectorAll('.block-selected-highlight')
+      allHighlighted.forEach((el) => {
+        el.classList.remove('block-selected-highlight')
+        ;(el as HTMLElement).style.outline = ''
+        ;(el as HTMLElement).style.outlineOffset = ''
+      })
+    }
+  }, [selectedBlockId])
 
   // Inspector mode: detect hovered elements
   useEffect(() => {
@@ -2088,6 +2148,27 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
         const [loading, setLoading] = useState(false)
         
         useEffect(() => {
+          // Vérifier si le chargement API est autorisé
+          // Uniquement pour les super admins dans le projet public
+          if (block.data.source === 'dynamic' || block.data.source === 'api') {
+            try {
+              const isSuperAdmin = authService.isSuperAdmin()
+              const isPublicProject = typeof window !== 'undefined' && window.location.pathname.includes('/admin/pages-public/edit/')
+              
+              // Si l'utilisateur n'est pas super admin OU pas dans le projet public, ne pas charger depuis l'API
+              if (!isSuperAdmin || !isPublicProject) {
+                console.warn('Chargement API pricing désactivé: nécessite super admin dans le projet public')
+                setPlans(block.data.plans || [])
+                return
+              }
+            } catch (e) {
+              // Si erreur lors de la vérification, ne pas charger depuis l'API
+              console.warn('Erreur lors de la vérification des permissions pour pricing API:', e)
+              setPlans(block.data.plans || [])
+              return
+            }
+          }
+          
           if (block.data.source === 'dynamic' || block.data.source === 'api') {
             setLoading(true)
             const apiUrl = block.data.api_endpoint || '/api/pricing-plans/'
@@ -2957,6 +3038,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       )
     }
 
+    case 'cta':
     case 'cta-section':
     case 'cta_section': { // Alias pour compatibilité
       return renderCTASection({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })

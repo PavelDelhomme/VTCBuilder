@@ -10,12 +10,29 @@ export const renderFooter = ({ block, wrapperStyles, theme }: RendererProps): Re
   const currentYear = new Date().getFullYear()
   const defaultCopyright = block.data.copyright || `© ${currentYear} VTCBuilder. Tous droits réservés.`
   const defaultAdditionalText = block.data.additional_text || 'vtcbuilder.com - Développé avec ❤️ en France'
+  const footerTitle = block.data.title || 'VTCBuilder'
+  const footerDescription = block.data.description || 'La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.'
   const supportDarkMode = block.styles?.support_dark_mode !== false
   const footerIsDark = theme === 'dark' && supportDarkMode
   
   return (
     <footer style={wrapperStyles} className={`mb-0 ${footerIsDark ? 'bg-gray-800' : 'bg-gray-100'} ${footerIsDark ? 'text-gray-100' : 'text-gray-900'} py-8 sm:py-12 w-full min-w-0 overflow-hidden`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full min-w-0">
+        {/* Titre et description du footer si définis */}
+        {(footerTitle || footerDescription) && (
+          <div className="mb-8 text-center sm:text-left">
+            {footerTitle && (
+              <h2 className={`text-2xl sm:text-3xl font-bold mb-3 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                {footerTitle}
+              </h2>
+            )}
+            {footerDescription && (
+              <p className={`text-base sm:text-lg ${footerIsDark ? 'text-gray-300' : 'text-gray-600'} max-w-2xl ${footerTitle ? '' : 'mx-auto'}`}>
+                {footerDescription}
+              </p>
+            )}
+          </div>
+        )}
         {footerColumns.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 w-full min-w-0 mb-8">
             {footerColumns.map((column: any, colIndex: number) => (
@@ -49,9 +66,9 @@ export const renderFooter = ({ block, wrapperStyles, theme }: RendererProps): Re
           // Footer par défaut si aucune colonne n'est configurée
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
-              <h3 className={`text-xl font-bold mb-4 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'}`}>VTCBuilder</h3>
+              <h3 className={`text-xl font-bold mb-4 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'}`}>{footerTitle}</h3>
               <p className={footerIsDark ? 'text-gray-300' : 'text-gray-600'}>
-                La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.
+                {footerDescription}
               </p>
             </div>
             <div>

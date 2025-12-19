@@ -108,11 +108,11 @@ export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): Reac
           : ''
       }`}
       style={{
-        ...Object.fromEntries(
+        ...(wrapperStyles ? Object.fromEntries(
           Object.entries(wrapperStyles).filter(([key]) => 
             !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'color'].includes(key)
           )
-        ),
+        ) : {}),
         ...(block.data.background_type || block.data.background_image || block.data.background_color || block.data.background_gradient ? {
           background: finalBg,
           backgroundSize: 'cover',
@@ -184,7 +184,7 @@ export const renderFeaturesGrid = ({ block, wrapperStyles, theme }: RendererProp
   return (
     <div 
       style={{
-        ...wrapperStyles,
+        ...(wrapperStyles || {}),
         backgroundColor: isDark ? '#111827' : (block.styles?.background_color || 'transparent'),
         // En mode clair, utiliser un fond transparent pour laisser voir le dégradé des cartes
         color: isDark ? '#f9fafb' : '#111827'

@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react'
 import { Block } from './types'
 import blocksService, { BlockType } from '@/services/blocks.service'
+import authService from '@/services/auth.service'
 
 interface BlocksPalettePopupProps {
   isOpen: boolean
@@ -46,11 +47,16 @@ export default function BlocksPalettePopup({
 
   if (!isOpen) return null
 
-  // Filtrer les blocs selon la recherche et la catégorie
+  // Filtrer les blocs selon la recherche, la catégorie et le statut actif
   // Exclure le header de la liste des blocs disponibles dans l'éditeur
   const filteredBlockTypes = blockTypes.filter((bt: BlockType) => {
     // Exclure le header de la liste des blocs disponibles
     if (bt.name === 'header') {
+      return false
+    }
+    // Filtrer les blocs inactifs (sauf pour les super admins qui voient tout)
+    const isSuperAdmin = authService.isSuperAdmin()
+    if (!isSuperAdmin && bt.is_active === false) {
       return false
     }
     const matchesCategory = categoryFilter === 'all' || bt.category === categoryFilter

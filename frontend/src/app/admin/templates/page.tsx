@@ -321,7 +321,7 @@ export default function AdminTemplatesPage() {
         </button>
       }
     >
-      <div className="w-full">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Form */}
       {showForm && (
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 sm:p-6 mb-6">
@@ -826,7 +826,7 @@ export default function AdminTemplatesPage() {
       )}
 
       {/* Templates List - Scrollable */}
-      <div className="flex-1 min-h-0 overflow-y-auto pb-6">
+      <div className="pb-6">
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden w-full max-w-full">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">

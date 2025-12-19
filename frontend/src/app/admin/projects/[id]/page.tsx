@@ -161,10 +161,11 @@ export default function ProjectDetailPage() {
               }
             } catch (error: any) {
               // Si l'endpoint n'existe pas encore ou erreur, retourner la page sans projets
-              // Ne logger que les erreurs non-404 (404 est normal si la page n'est dans aucun projet)
+              // Ne logger que les erreurs non-404/403 (404/403 sont normaux si la page n'est dans aucun projet ou si pas de permissions)
               if (error.response?.status !== 404 && error.response?.status !== 403) {
                 console.warn(`Error chargement projets pour page ${page.slug}:`, error.response?.status || error.message)
               }
+              // Pour les erreurs 403, on retourne quand même la page sans projets (silencieusement)
               return {
                 ...page,
                 otherProjects: [],
