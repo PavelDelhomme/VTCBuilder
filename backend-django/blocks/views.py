@@ -45,10 +45,26 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
                 logger.error("BlockType model is not available")
                 return BlockType.objects.none() if BlockType else []
             
+            # Vérifier le super admin depuis le token JWT même si DRF n'a pas authentifié
+            from api.utils import is_super_admin_from_token, get_authenticated_user_from_token
             user = self.request.user
             
+            # Si DRF n'a pas authentifié, essayer le token JWT directement
+            if not user or not user.is_authenticated:
+                user_from_token, _ = get_authenticated_user_from_token(self.request)
+                if user_from_token:
+                    user = user_from_token
+            
+            # Vérifier le super admin depuis le token JWT
+            is_super_admin = is_super_admin_from_token(self.request)
+            if not is_super_admin and user and hasattr(user, 'is_super_admin'):
+                try:
+                    is_super_admin = user.is_super_admin()
+                except Exception:
+                    pass
+            
             # Super admin sees all block types (including inactive)
-            if hasattr(user, 'is_super_admin') and user.is_super_admin():
+            if is_super_admin:
                 queryset = BlockType.objects.all()
             else:
                 # Others see only active block types
