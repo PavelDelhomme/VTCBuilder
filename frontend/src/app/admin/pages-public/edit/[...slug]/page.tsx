@@ -18,8 +18,11 @@ import { useAutoSave } from '@/hooks/useAutoSave'
 import { useReconnect } from '@/contexts/ReconnectContext'
 import { restoreEditorStateAfterReconnect } from '@/hooks/useEditorStatePersistence'
 import { useConfirm } from '@/hooks/useConfirm'
+import { useTheme } from '@/contexts/ThemeContext'
 import SubscriptionInfo from '@/components/editor/SubscriptionInfo'
 import { findBlockInTree, duplicateBlockInTree, removeBlockFromTree } from '@/lib/block-utils'
+import billingService from '@/services/billing.service'
+import projectService from '@/services/project.service'
 
 const PAGE_TITLES: Record<string, string> = {
   home: 'Page d\'accueil',
@@ -50,7 +53,8 @@ export default function EditPublicPage() {
   const [status, setStatus] = useState<'draft' | 'published'>('draft')
   const [showPreview, setShowPreview] = useState(true)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
-  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light') // Thème de la prévisualisation uniquement
+  const { resolvedTheme } = useTheme()
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>(resolvedTheme || 'light') // Thème de la prévisualisation, synchronisé avec le thème global
   const [availablePages, setAvailablePages] = useState<Array<{ slug: string; title: string; isSubPage?: boolean; parentSlug?: string }>>([])
   const [currentPageSubPages, setCurrentPageSubPages] = useState<Array<{ slug: string; title: string }>>([])
   const [headerVisible, setHeaderVisible] = useState(true)
@@ -65,6 +69,8 @@ export default function EditPublicPage() {
   const [canRedo, setCanRedo] = useState(false)
   const [showSeoExpanded, setShowSeoExpanded] = useState(false) // État pour afficher/masquer les paramètres SEO
   const [showMoreMenu, setShowMoreMenu] = useState(false) // État pour le menu "Plus d'options"
+  const [subscription, setSubscription] = useState<any>(null)
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true)
   const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('palette-collapsed')
@@ -152,6 +158,23 @@ export default function EditPublicPage() {
       setSaving(false)
     }
   }, [blocks, metaTitle, metaDescription, status, handleSave, updateLastSaved])
+
+  // Raccourci clavier Ctrl+S pour sauvegarder
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        if (!saving) {
+          handleManualSave()
+        }
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [handleManualSave, saving])
 
   // Points d'ancrage (snap points) pour le redimensionnement
   // Inclut: 1/4, 1/3, 2/5, 1/2, 3/5, 2/3, 3/4
@@ -318,33 +341,82 @@ export default function EditPublicPage() {
       setBlockTypes(blockTypesData)
       const data = settingsResponse.data
       
-      // Load available pages for navigation - Organiser hiérarchiquement
+      // Load available pages for navigation - Si projectId est présent, charger les pages du projet
       const pagesList: Array<{ slug: string; title: string; isSubPage?: boolean; parentSlug?: string }> = []
       const subPagesMap = new Map<string, Array<{ slug: string; title: string }>>()
       
-      // Page d'accueil
-      if (data.public_homepage_blocks !== undefined) {
-        pagesList.push({ slug: 'home', title: 'Page d\'accueil' })
+      if (projectId) {
+        // Charger les pages du projet depuis l'API
+        try {
+          const project = await projectService.getById(projectId)
+          if (project && project.pages) {
+            // Organiser les pages par hiérarchie
+            const projectPages = project.pages.filter((p: any) => p.page_type === 'public')
+            
+            // Trier par slug pour avoir un ordre cohérent
+            projectPages.sort((a: any, b: any) => a.page_slug.localeCompare(b.page_slug))
+            
+            // Séparer les pages principales et sous-pages
+            const mainPages = projectPages.filter((p: any) => !p.page_slug.includes('/'))
+            const subPages = projectPages.filter((p: any) => p.page_slug.includes('/'))
+            
+            // Ajouter les pages principales
+            mainPages.forEach((page: any) => {
+              const pageData = data.public_pages?.[page.page_slug] || {}
+              const title = pageData.title || PAGE_TITLES[page.page_slug] || page.page_slug.charAt(0).toUpperCase() + page.page_slug.slice(1)
+              pagesList.push({ slug: page.page_slug, title })
+            })
+            
+            // Ajouter les sous-pages
+            subPages.forEach((page: any) => {
+              const pageData = data.public_pages?.[page.page_slug] || {}
+              const title = pageData.title || page.page_slug.split('/').pop() || page.page_slug
+              const parentSlug = page.page_slug.split('/')[0]
+              
+              if (!subPagesMap.has(parentSlug)) {
+                subPagesMap.set(parentSlug, [])
+              }
+              subPagesMap.get(parentSlug)!.push({ slug: page.page_slug, title })
+            })
+          }
+        } catch (error) {
+          console.warn('Error loading project pages:', error)
+          // Fallback vers le chargement depuis system-settings
+        }
       }
       
-      // Autres pages
-      const otherPages = data.public_pages || {}
-      Object.entries(otherPages).forEach(([slug, pageData]: [string, any]) => {
-        const slugParts = slug.split('/')
-        const title = pageData.title || PAGE_TITLES[slug] || slug.charAt(0).toUpperCase() + slug.slice(1)
-        
-        if (slugParts.length === 1) {
-          // Page principale
-          pagesList.push({ slug, title })
-        } else {
-          // Sous-page
-          const parentSlug = slugParts[0]
-          if (!subPagesMap.has(parentSlug)) {
-            subPagesMap.set(parentSlug, [])
-          }
-          subPagesMap.get(parentSlug)!.push({ slug, title })
+      // Si aucune page n'a été chargée depuis le projet, charger depuis system-settings
+      if (pagesList.length === 0) {
+        // Page d'accueil
+        if (data.public_homepage_blocks !== undefined) {
+          pagesList.push({ slug: 'home', title: 'Page d\'accueil' })
         }
-      })
+        
+        // Autres pages
+        const otherPages = data.public_pages || {}
+        Object.entries(otherPages).forEach(([slug, pageData]: [string, any]) => {
+          const slugParts = slug.split('/')
+          const title = pageData.title || PAGE_TITLES[slug] || slug.charAt(0).toUpperCase() + slug.slice(1)
+          
+          if (slugParts.length === 1) {
+            // Page principale
+            pagesList.push({ slug, title })
+          } else {
+            // Sous-page
+            const parentSlug = slugParts[0]
+            if (!subPagesMap.has(parentSlug)) {
+              subPagesMap.set(parentSlug, [])
+            }
+            subPagesMap.get(parentSlug)!.push({ slug, title })
+          }
+        })
+      } else {
+        // Si on a chargé depuis le projet, s'assurer que la page d'accueil est incluse si elle existe
+        const hasHome = pagesList.some(p => p.slug === 'home')
+        if (!hasHome && data.public_homepage_blocks !== undefined) {
+          pagesList.unshift({ slug: 'home', title: 'Page d\'accueil' })
+        }
+      }
       
       // Trier les pages principales par ordre
       pagesList.sort((a, b) => {
@@ -435,246 +507,160 @@ export default function EditPublicPage() {
         // pour reproduire la page actuelle affichée sur localhost:9494/
         let homepageBlocks = data.public_homepage_blocks || []
         
-        // Si aucun bloc n'existe, créer des blocs par défaut correspondant à la page actuelle
-        // Structure complète avec conteneurs : Container > Grid > Header, Hero, Features, Pricing, CTA, Footer
-        if (homepageBlocks.length === 0) {
-          const now = Date.now()
-          
-          // Créer les blocs de contenu
-          const headerBlock = {
-            id: `header-${now}`,
-            type: 'header',
-            data: {
-              logo_text: 'VTCBuilder',
-              badge: 'Beta',
-              logo_url: '/',
-              show_theme_toggle: true,
-              sticky: true,
-              links: [
-                { label: 'Tarifs', url: '/#pricing' },
-                { label: 'Fonctionnalités', url: '/features' },
-                { label: 'Templates', url: '/templates' }
-              ],
-              cta_button: {
-                text: 'Créer un compte',
-                url: '/register',
-                style: 'primary'
-              }
-            },
-            styles: {
-              position: 'sticky',
-              top: '0',
-              z_index: '50',
-              backgroundColor: 'bg-white/95 dark:bg-gray-900/90',
-              backdrop_blur: true
+        console.log('Chargement page d\'accueil:', {
+          hasBlocks: homepageBlocks.length > 0,
+          blocksCount: homepageBlocks.length,
+          blocks: homepageBlocks,
+          public_homepage_blocks: data.public_homepage_blocks
+        })
+        
+        // FORCER la création d'une structure minimale propre : Container > Header uniquement
+        // On nettoie TOUJOURS pour avoir une base propre, même si des blocs existent
+        console.log('🔧 Nettoyage et création d\'une structure minimale (Container + Header)')
+        const now = Date.now()
+        
+        // Créer uniquement le header avec navigation
+        const headerBlock = {
+          id: `header-${now}`,
+          type: 'header',
+          layout: 12,
+          data: {
+            logo_text: 'VTCBuilder',
+            badge: 'Beta',
+            logo_url: '/',
+            show_theme_toggle: true,
+            sticky: true,
+            links: [
+              { label: 'Tarifs', url: '/#pricing' },
+              { label: 'Fonctionnalités', url: '/features' },
+              { label: 'Templates', url: '/templates' },
+              { label: 'Documentation', url: '/docs' },
+              { label: 'Contact', url: '/contact' }
+            ],
+            cta_button: {
+              text: 'Créer un compte',
+              url: '/register',
+              style: 'primary'
             }
+          },
+          styles: {
+            position: 'sticky',
+            top: '0',
+            z_index: '50',
+            backgroundColor: 'bg-white/95 dark:bg-gray-900/90',
+            backdrop_blur: true
           }
-          
-          const heroBlock = {
-            id: `hero-${now}`,
-            type: 'hero',
-            data: {
-              title: 'Le WordPress des Chauffeurs VTC',
-              subtitle: 'Créez votre site VTC professionnel en quelques minutes. Gestion complète, réservations, paiements, tout inclus.',
-              buttons: [
-                { text: '🚀 Démarrer gratuitement', url: '/register', style: 'primary' },
-                { text: 'Voir les tarifs', url: '#pricing', style: 'secondary' }
-              ],
-              background_image: '',
-              background_gradient: 'from-blue-500 via-purple-600 to-pink-500'
-            },
-            styles: {
-              padding: 'py-20 lg:py-32',
-              textAlign: 'center',
-              color: '#ffffff'
-            }
-          }
-          
-          const featuresBlock = {
-            id: `features-${now}`,
-            type: 'features-grid',
-            data: {
-              title: 'Tout ce dont vous avez besoin',
-              subtitle: '',
-              columns: 3,
-              features: [
-                {
-                  icon: '🎨',
-                  title: 'Site Professionnel',
-                  description: 'Designs modernes et responsive. Personnalisez votre site sans coder.'
-                },
-                {
-                  icon: '📅',
-                  title: 'Réservations en Ligne',
-                  description: 'Système de réservation complet avec calendrier et notifications.'
-                },
-                {
-                  icon: '💳',
-                  title: 'Paiements Intégrés',
-                  description: 'Acceptez les paiements en ligne. Cartes bancaires, virement, tout est possible.'
-                },
-                {
-                  icon: '📱',
-                  title: 'Mobile First',
-                  description: 'Votre site s\'adapte automatiquement aux smartphones et tablettes.'
-                },
-                {
-                  icon: '📊',
-                  title: 'Analytics Inclus',
-                  description: 'Suivez vos performances, réservations, revenus en temps réel.'
-                },
-                {
-                  icon: '🔒',
-                  title: 'Sécurisé & Rapide',
-                  description: 'Hébergement sécurisé, sauvegardes automatiques, SSL inclus.'
-                }
-              ]
-            },
-            styles: {
-              padding: 'py-20',
-              backgroundColor: 'bg-white dark:bg-gray-800'
-            }
-          }
-          
-          const pricingBlock = {
-            id: `pricing-${now}`,
-            type: 'pricing',
-            data: {
-              title: 'Tarifs Transparents',
-              subtitle: 'Choisissez le plan adapté à vos besoins. Pas d\'engagement, changez de plan à tout moment.',
-              source: 'api',
-              api_endpoint: '/api/pricing-plans/',
-              columns: 3
-            },
-            styles: {
-              padding: 'py-20',
-              backgroundColor: 'bg-gray-50 dark:bg-gray-900'
-            }
-          }
-          
-          const ctaBlock = {
-            id: `cta-${now}`,
-            type: 'cta-section',
-            data: {
-              title: 'Prêt à démarrer ?',
-              subtitle: 'Créez votre site VTC professionnel dès aujourd\'hui. Essai gratuit de 14 jours.',
-              button_text: '🚀 Créer mon compte gratuitement',
-              button_url: '/register',
-              background_gradient: 'from-blue-600 to-purple-600'
-            },
-            styles: {
-              padding: 'py-20',
-              textAlign: 'center'
-            }
-          }
-          
-          const footerBlock = {
-            id: `footer-${now}`,
-            type: 'footer',
-            data: {
-              columns: [
-                {
-                  title: 'VTCBuilder',
-                  links: [],
-                  description: 'La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.'
-                },
-                {
-                  title: 'Produit',
-                  links: [
-                    { label: 'Tarifs', url: '/#pricing' },
-                    { label: 'Fonctionnalités', url: '/features' },
-                    { label: 'Templates', url: '/templates' }
-                  ]
-                },
-                {
-                  title: 'Support',
-                  links: [
-                    { label: 'Documentation', url: '/docs' },
-                    { label: 'Contact', url: '/contact' },
-                    { label: 'FAQ', url: '/faq' }
-                  ]
-                },
-                {
-                  title: 'Légal',
-                  links: [
-                    { label: 'CGV', url: '/legal/terms' },
-                    { label: 'Confidentialité', url: '/legal/privacy' }
-                  ]
-                }
-              ],
-              copyright: `© ${new Date().getFullYear()} VTCBuilder. Tous droits réservés.`,
-              additional_text: 'vtcbuilder.com - Développé avec ❤️ en France'
-            },
-            styles: {
-              backgroundColor: 'bg-gray-900',
-              color: 'text-white',
-              padding: 'py-12'
-            }
-          }
-          
-          // Créer la structure avec conteneurs
-          // Container principal > Grid Container > Blocs de contenu
-          const gridContainer = {
-            id: `grid-container-${now}`,
-            type: 'grid-container',
-            data: {
-              columns: 1,  // 1 colonne pour empiler verticalement les blocs
-              gap: 'gap-6',  // Espacement entre les blocs
-              template_columns: '1fr',  // Template CSS Grid
-              auto_rows: 'auto'  // Hauteur automatique pour les lignes
-            },
-            styles: {
-              display: 'grid',
-              gridTemplateColumns: '1fr',
-              gap: '1.5rem'
-            },
-            children: [headerBlock, heroBlock, featuresBlock, pricingBlock, ctaBlock, footerBlock]
-          }
-          
-          const mainContainer = {
-            id: `container-${now}`,
-            type: 'container',
-            data: {
-              max_width: 'max-w-7xl',
-              padding: 'px-4 sm:px-6 lg:px-8',
-              margin: 'mx-auto'
-            },
-            styles: {
-              maxWidth: '80rem',  // max-w-7xl
-              margin: '0 auto',
-              padding: '0 1rem'
-            },
-            children: [gridContainer]
-          }
-          
-          homepageBlocks = [mainContainer]
-        } else {
-          // Si des blocs existent, s'assurer qu'ils ont la structure correcte (data au lieu de properties)
-          homepageBlocks = homepageBlocks.map((block: any) => {
-            // Convertir l'ancienne structure (properties) vers la nouvelle (data)
-            if (block.properties && !block.data) {
-              return {
-                ...block,
-                data: block.properties,
-                styles: block.styles || {}
-              }
-            }
-            // S'assurer que le bloc hero a la couleur blanche si elle n'est pas définie
-            if (block.type === 'hero' && (!block.styles || !block.styles.color)) {
-              return {
-                ...block,
-                styles: {
-                  ...block.styles,
-                  color: '#ffffff'
-                }
-              }
-            }
-            return block
-          })
         }
         
-        console.log('Blocs chargés pour la page d\'accueil:', homepageBlocks.length, homepageBlocks)
+        // Créer le bloc hero avec le contenu exact de localhost:9494
+        const heroBlock = {
+          id: `hero-${now}`,
+          type: 'hero',
+          layout: 12,
+          data: {
+            title: 'Le WordPress des Chauffeurs VTC',
+            subtitle: 'Créez votre site VTC professionnel en quelques minutes. Gestion complète, réservations, paiements, tout inclus.',
+            primary_button_text: '🚀 Démarrer gratuitement',
+            primary_button_link: '/register',
+            secondary_button_text: 'Voir les tarifs',
+            secondary_button_link: '#pricing'
+          },
+          styles: {}
+        }
+        
+        // Créer la section Features avec le contenu exact de localhost:9494
+        const featuresBlock = {
+          id: `features-${now}`,
+          type: 'features-grid',
+          layout: 12,
+          data: {
+            title: 'Tout ce dont vous avez besoin',
+            columns: 3,
+            features: [
+              {
+                icon: '🎨',
+                title: 'Site Professionnel',
+                description: 'Designs modernes et responsive. Personnalisez votre site sans coder.'
+              },
+              {
+                icon: '📅',
+                title: 'Réservations en Ligne',
+                description: 'Système de réservation complet avec calendrier et notifications.'
+              },
+              {
+                icon: '💳',
+                title: 'Paiements Intégrés',
+                description: 'Acceptez les paiements en ligne. Cartes bancaires, virement, tout est possible.'
+              },
+              {
+                icon: '📱',
+                title: 'Mobile First',
+                description: 'Votre site s\'adapte automatiquement aux smartphones et tablettes.'
+              },
+              {
+                icon: '📊',
+                title: 'Analytics Inclus',
+                description: 'Suivez vos performances, réservations, revenus en temps réel.'
+              },
+              {
+                icon: '🔒',
+                title: 'Sécurisé & Rapide',
+                description: 'Hébergement sécurisé, sauvegardes automatiques, SSL inclus.'
+              }
+            ]
+          },
+          styles: {
+            background_color: 'transparent'
+          }
+        }
+        
+        // Créer un conteneur avec le header uniquement
+        const mainContainer = {
+          id: `container-${now}`,
+          type: 'container',
+          layout: 12,
+          data: {
+            max_width: 'max-w-7xl',
+            padding: 'px-4 sm:px-6 lg:px-8',
+            margin: 'mx-auto'
+          },
+          styles: {
+            maxWidth: '80rem',
+            margin: '0 auto',
+            padding: '0 1rem'
+          },
+          children: [headerBlock]
+        }
+        
+        // Hero et Features en dehors du container pour avoir le fond gradient complet
+        homepageBlocks = [mainContainer, heroBlock, featuresBlock]
+        
+        // Sauvegarder immédiatement les blocs par défaut
+        try {
+          const saveResponse = await api.patch('/system-settings/', {
+            public_homepage_blocks: homepageBlocks
+          })
+          console.log('✅ Blocs par défaut sauvegardés avec succès:', {
+            blocks: homepageBlocks,
+            response: saveResponse.data
+          })
+          toast.success('Structure minimale créée avec succès!')
+        } catch (error: any) {
+          console.error('❌ Erreur lors de la sauvegarde des blocs par défaut:', error)
+          toast.error(`Erreur lors de la sauvegarde: ${error.response?.data?.error || error.message}`)
+        }
+        
+        console.log('📦 Blocs chargés pour la page d\'accueil:', {
+          count: homepageBlocks.length,
+          blocks: homepageBlocks,
+          firstBlock: homepageBlocks[0],
+          hasChildren: homepageBlocks[0]?.children?.length > 0,
+          firstBlockType: homepageBlocks[0]?.type,
+          firstBlockChildren: homepageBlocks[0]?.children
+        })
+        
         setBlocks(homepageBlocks)
+        console.log('✅ Blocs définis dans l\'état:', homepageBlocks.length, 'bloc(s)')
         // Toujours charger en mode 'draft' pour ne pas modifier la page publiée
         // L'utilisateur devra explicitement publier pour que les changements soient visibles
         setStatus('draft')
@@ -834,6 +820,13 @@ export default function EditPublicPage() {
     }
   }, [blocks, metaTitle, metaDescription, status, pathname, saveEditorState])
 
+  // Synchroniser le thème de prévisualisation avec le thème global
+  useEffect(() => {
+    if (resolvedTheme) {
+      setPreviewTheme(resolvedTheme)
+    }
+  }, [resolvedTheme])
+
   // Restaurer l'état après reconnexion
   useEffect(() => {
     const handleReconnectSuccess = () => {
@@ -863,6 +856,26 @@ export default function EditPublicPage() {
       return
     }
     loadData()
+    
+    // Charger l'abonnement pour afficher le badge
+    const loadSubscription = async () => {
+      try {
+        if (authService.isSuperAdmin()) {
+          setSubscription({ plan: { name: 'Super Admin' }, status: 'active' })
+          setSubscriptionLoading(false)
+          return
+        }
+        const sub = await billingService.getCurrentSubscription()
+        setSubscription(sub)
+      } catch (error) {
+        // Pas d'abonnement ou erreur
+        setSubscription(null)
+      } finally {
+        setSubscriptionLoading(false)
+      }
+    }
+    
+    loadSubscription()
   }, [router, pageSlug, loadData])
 
   // Fonction pour ajouter un bloc depuis la popup
@@ -925,21 +938,29 @@ export default function EditPublicPage() {
   return (
     <AdminLayout
       title={
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <span>Éditer {PAGE_TITLES[pageSlug] || pageSlug}</span>
           <span className="px-2.5 py-1 text-xs font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full border border-purple-300 dark:border-purple-700">
             {pageSlug === 'home' ? 'Mode Projet' : 'Page Publique'}
           </span>
+          {!subscriptionLoading && subscription && (
+            <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${
+              authService.isSuperAdmin()
+                ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700'
+                : subscription.status === 'active'
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700'
+                : subscription.status === 'trial'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'
+                : 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700'
+            }`}>
+              {authService.isSuperAdmin() ? '👑 Super Admin' : subscription.plan?.name || 'Aucun plan'}
+            </span>
+          )}
         </div>
       }
       subtitle={
         <div className="flex flex-col gap-1">
-          <span>Éditeur générique pour les pages publiques (public_pages[{pageSlug}])</span>
-          {pageSlug === 'home' && (
-            <span className="text-xs text-amber-600 dark:text-amber-400">
-              ⚠️ Attention : Cette page utilise public_pages['home'], différent de l'éditeur dédié /admin/homepage
-            </span>
-          )}
+          <span>Éditeur pour les pages publiques (public_pages[{pageSlug}])</span>
         </div>
       }
       hideHeader={!headerVisible}
@@ -947,6 +968,7 @@ export default function EditPublicPage() {
         projectId ? (
           <button
             onClick={() => {
+              // projectId peut être un slug ou un ID numérique
               router.push(`/admin/projects/${projectId}`)
             }}
             className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center"
@@ -998,9 +1020,10 @@ export default function EditPublicPage() {
               <select
                 value={pageSlug || ''}
                 onChange={(e) => {
+                  const slug = e.target.value
                   const url = projectId 
-                    ? `/admin/pages-public/${e.target.value}/edit?projectId=${projectId}`
-                    : `/admin/pages-public/${e.target.value}/edit`
+                    ? `/admin/pages-public/edit/${slug}?projectId=${projectId}`
+                    : `/admin/pages-public/edit/${slug}`
                   router.push(url)
                 }}
                 className="px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-xs sm:text-sm font-medium min-w-[120px] sm:min-w-[150px]"
@@ -1029,8 +1052,8 @@ export default function EditPublicPage() {
                   key={subPage.slug}
                   onClick={() => {
                     const url = projectId 
-                      ? `/admin/pages-public/${subPage.slug}/edit?projectId=${projectId}`
-                      : `/admin/pages-public/${subPage.slug}/edit`
+                      ? `/admin/pages-public/edit/${subPage.slug}?projectId=${projectId}`
+                      : `/admin/pages-public/edit/${subPage.slug}`
                     router.push(url)
                   }}
                   className="px-2 py-1 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
@@ -1222,8 +1245,8 @@ export default function EditPublicPage() {
                           onClick={(e) => {
                             e.stopPropagation()
                             const url = projectId 
-                              ? `/admin/pages-public/${page.slug}/edit?projectId=${projectId}`
-                              : `/admin/pages-public/${page.slug}/edit`
+                              ? `/admin/pages-public/edit/${page.slug}?projectId=${projectId}`
+                              : `/admin/pages-public/edit/${page.slug}`
                             router.push(url)
                             setShowMoreMenu(false)
                           }}
@@ -1246,8 +1269,8 @@ export default function EditPublicPage() {
                           onClick={(e) => {
                             e.stopPropagation()
                             const url = projectId 
-                              ? `/admin/pages-public/${subPage.slug}/edit?projectId=${projectId}`
-                              : `/admin/pages-public/${subPage.slug}/edit`
+                              ? `/admin/pages-public/edit/${subPage.slug}?projectId=${projectId}`
+                              : `/admin/pages-public/edit/${subPage.slug}`
                             router.push(url)
                             setShowMoreMenu(false)
                           }}
@@ -1315,8 +1338,8 @@ export default function EditPublicPage() {
                 
                 // Naviguer vers l'éditeur de la nouvelle page avec projectId si présent
                 const url = projectId 
-                  ? `/admin/pages-public/${newSlug}/edit?projectId=${projectId}`
-                  : `/admin/pages-public/${newSlug}/edit`
+                  ? `/admin/pages-public/edit/${newSlug}?projectId=${projectId}`
+                  : `/admin/pages-public/edit/${newSlug}`
                 
                 // Naviguer vers la nouvelle page
                 router.push(url)
@@ -1436,9 +1459,26 @@ export default function EditPublicPage() {
 
           {/* Close Button */}
           <button
-            onClick={() => router.push('/admin/projects/1')}
+            onClick={async () => {
+              if (projectId) {
+                // Si projectId est fourni, l'utiliser directement (peut être un slug ou un ID)
+                router.push(`/admin/projects/${projectId}`)
+              } else {
+                // Sinon, charger le projet système
+                try {
+                  const systemProject = await projectService.getSystemProject()
+                  if (systemProject) {
+                    router.push(`/admin/projects/${systemProject.slug}`)
+                  } else {
+                    router.push('/admin/projects')
+                  }
+                } catch (error) {
+                  router.push('/admin/projects')
+                }
+              }
+            }}
             className="p-2 sm:p-2.5 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
-            title="Quitter l'éditeur"
+            title="Retourner au projet"
           >
             <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1447,28 +1487,6 @@ export default function EditPublicPage() {
         </div>
       }
     >
-      {/* Panneau d'information pour distinguer cet éditeur */}
-      {pageSlug === 'home' && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-3">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 mt-0.5">
-              <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-                ⚠️ Attention : Éditeur générique pour la page "home"
-              </p>
-              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                Cet éditeur modifie <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/40 rounded text-xs">public_pages['home']</code> dans les paramètres système. 
-                C'est différent de l'éditeur dédié disponible sur <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/40 rounded text-xs">/admin/homepage</code> qui modifie <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900/40 rounded text-xs">public_homepage_blocks</code>.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-      
       {/* Barre d'actions minimale quand la barre est masquée */}
       {!headerVisible && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 flex-wrap justify-end">

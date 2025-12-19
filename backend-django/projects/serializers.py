@@ -45,12 +45,12 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
-            'id', 'name', 'slug', 'description', 'tenant', 'tenant_id', 'tenant_domain',
+            'id', 'name', 'slug', 'uuid', 'description', 'tenant', 'tenant_id', 'tenant_domain',
             'is_system_project', 'status', 'domain', 'metadata',
             'is_deleted', 'deleted_at',
             'pages_count', 'available_pages_count', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'slug', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'slug', 'uuid', 'created_at', 'updated_at']
     
     def get_pages_count(self, obj):
         """Get count of pages linked to this project"""

@@ -7,6 +7,7 @@ export interface Project {
   id: number
   name: string
   slug: string
+  uuid?: string
   description?: string
   tenant?: {
     id: number
@@ -51,11 +52,48 @@ const projectService = {
   },
 
   /**
-   * Get a project by ID
+   * Get a project by ID, slug, or UUID
+   * This uses the detail endpoint which returns pages
    */
-  async getById(id: number): Promise<Project> {
+  async getById(id: number | string): Promise<Project> {
     const response = await api.get(`/projects/${id}/`)
     return response.data
+  },
+  
+  /**
+   * Get a project by slug
+   * Uses the detail endpoint to get pages
+   */
+  async getBySlug(slug: string): Promise<Project | null> {
+    try {
+      // Use the detail endpoint which supports slug and returns pages
+      const response = await api.get(`/projects/${slug}/`)
+      return response.data
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null
+      }
+      console.error('Error récupération projet par slug:', error)
+      return null
+    }
+  },
+  
+  /**
+   * Get a project by UUID
+   * Uses the detail endpoint to get pages
+   */
+  async getByUuid(uuid: string): Promise<Project | null> {
+    try {
+      // Use the detail endpoint which supports UUID and returns pages
+      const response = await api.get(`/projects/${uuid}/`)
+      return response.data
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null
+      }
+      console.error('Error récupération projet par UUID:', error)
+      return null
+    }
   },
 
   /**
@@ -84,13 +122,19 @@ const projectService = {
   /**
    * Add a page to a project
    */
-  async addPage(projectId: number, pageSlug: string, pageType: 'public' | 'tenant' = 'public', order: number = 0): Promise<ProjectPage> {
-    const response = await api.post(`/projects/${projectId}/add_page/`, {
-      page_slug: pageSlug,
-      page_type: pageType,
-      order,
-    })
-    return response.data
+  async addPage(projectId: number | string, pageSlug: string, pageType: 'public' | 'tenant' = 'public', order: number = 0): Promise<ProjectPage> {
+    try {
+      const response = await api.post(`/projects/${projectId}/add_page/`, {
+        page_slug: pageSlug,
+        page_type: pageType,
+        order,
+      })
+      return response.data
+    } catch (error: any) {
+      console.error(`Error adding page ${pageSlug} to project ${projectId}:`, error)
+      // Re-throw to let caller handle it
+      throw error
+    }
   },
 
   /**

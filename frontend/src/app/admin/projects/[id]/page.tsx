@@ -12,11 +12,18 @@ import BlockPreview from '@/components/editor/BlockPreview'
 import blocksService from '@/services/blocks.service'
 import { useNavigationLoading } from '@/hooks/useNavigationLoading'
 import ToggleSwitch from '@/components/shared/ToggleSwitch'
+import { ALL_PUBLIC_PAGES, createPageInSystem } from '@/scripts/create-public-pages'
 
 export default function ProjectDetailPage() {
   const router = useRouter()
   const params = useParams()
-  const projectId = parseInt(params?.id as string)
+  // Support ID (number), slug (string), or UUID for project identification
+  const projectIdentifier = params?.id as string
+  // UUID pattern: 8-4-4-4-12 hexadecimal characters
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectIdentifier)
+  const projectId = /^\d+$/.test(projectIdentifier) ? parseInt(projectIdentifier) : null
+  const projectSlug = (projectId === null && !isUuid) ? projectIdentifier : null
+  const projectUuid = isUuid ? projectIdentifier : null
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const { isNavigating, navigate } = useNavigationLoading()
@@ -37,11 +44,11 @@ export default function ProjectDetailPage() {
       router.push('/dashboard')
       return
     }
-    if (projectId) {
+    if (projectId || projectSlug || projectUuid) {
       loadProject()
       loadBlockTypes()
     }
-  }, [projectId]) // Retirer 'router' des dépendances pour éviter les re-renders
+  }, [projectId, projectSlug, projectUuid]) // Retirer 'router' des dépendances pour éviter les re-renders
 
   // Load available pages when project is loaded
   useEffect(() => {
@@ -77,7 +84,27 @@ export default function ProjectDetailPage() {
   const loadProject = async () => {
     try {
       setLoading(true)
-      const data = await projectService.getById(projectId)
+      let data: Project
+      if (projectId) {
+        // Load by ID (legacy support)
+        data = await projectService.getById(projectId)
+      } else if (projectUuid) {
+        // Load by UUID
+        const found = await projectService.getByUuid(projectUuid)
+        if (!found) {
+          throw new Error('Projet introuvable')
+        }
+        data = found
+      } else if (projectSlug) {
+        // Load by slug
+        const found = await projectService.getBySlug(projectSlug)
+        if (!found) {
+          throw new Error('Projet introuvable')
+        }
+        data = found
+      } else {
+        throw new Error('Identifiant de projet invalide')
+      }
       setProject(data)
     } catch (error: any) {
       console.error('Error chargement projet:', error)
@@ -109,11 +136,13 @@ export default function ProjectDetailPage() {
         // Other public pages
         const publicPagesData = settings.public_pages || {}
         Object.entries(publicPagesData).forEach(([slug, pageData]: [string, any]) => {
+          // Ensure slug is properly formatted (handle nested pages like "docs/configuration")
+          const normalizedSlug = slug.trim()
           allPages.push({
-            slug,
-            title: pageData.title || slug,
+            slug: normalizedSlug,
+            title: pageData?.title || normalizedSlug.split('/').pop() || normalizedSlug, // Use last part of slug as fallback title
             type: 'public',
-            is_active: pageData.is_active !== false, // Default to true if not specified
+            is_active: pageData?.is_active !== false, // Default to true if not specified
           })
         })
         
@@ -124,7 +153,7 @@ export default function ProjectDetailPage() {
               // Use query parameter instead of URL path to handle slashes (e.g., "legal/terms")
               const response = await api.get(`/projects/page-projects/?page_slug=${encodeURIComponent(page.slug)}&page_type=public`)
               const otherProjects = response.data.projects.filter(
-                (p: any) => p.id !== projectId
+                (p: any) => p.id !== project?.id
               )
               return {
                 ...page,
@@ -179,7 +208,7 @@ export default function ProjectDetailPage() {
 
   const handleAddPage = async (pageSlug: string, pageType: 'public' | 'tenant') => {
     try {
-      await projectService.addPage(projectId, pageSlug, pageType)
+      await projectService.addPage(project.id, pageSlug, pageType)
       toast.success('Page ajoutée au projet !')
       loadProject()
       loadAvailablePages() // Recharger les pages disponibles
@@ -216,7 +245,7 @@ export default function ProjectDetailPage() {
 
       if (isSubPage) {
         // C'est une sous-page : retirer uniquement cette sous-page
-        await projectService.removePage(projectId, pageId)
+        await projectService.removePage(project.id, pageId)
         toast.success('Sous-page retirée du projet !')
       } else {
         // C'est une page principale : retirer la page principale ET toutes ses sous-pages
@@ -231,14 +260,14 @@ export default function ProjectDetailPage() {
         // Retirer toutes les sous-pages d'abord
         for (const subPage of subPages) {
           try {
-            await projectService.removePage(projectId, subPage.id)
+            await projectService.removePage(project.id, subPage.id)
           } catch (error: any) {
             console.warn(`Error retrait sous-page ${subPage.page_slug}:`, error)
           }
         }
 
         // Puis retirer la page principale
-        await projectService.removePage(projectId, pageId)
+        await projectService.removePage(project.id, pageId)
 
         const totalRemoved = 1 + subPages.length
         if (subPages.length > 0) {
@@ -298,6 +327,7 @@ export default function ProjectDetailPage() {
     // Organiser les pages publiques (avec hiérarchie)
     const sortedPublicPages = [...publicPagesList].sort((a, b) => a.page_slug.localeCompare(b.page_slug))
     
+    // D'abord, traiter toutes les pages principales (sans slash)
     sortedPublicPages.forEach((page) => {
       if (processed.has(page.id)) return
       
@@ -307,11 +337,11 @@ export default function ProjectDetailPage() {
       if (slugParts.length === 1) {
         // Trouver toutes les sous-pages de cette page
         const children = sortedPublicPages.filter((p) => {
+          if (processed.has(p.id)) return false
           const childSlugParts = p.page_slug.split('/')
           return (
             childSlugParts.length > 1 &&
-            childSlugParts[0] === slugParts[0] &&
-            !processed.has(p.id)
+            childSlugParts[0] === slugParts[0]
           )
         })
         
@@ -320,12 +350,49 @@ export default function ProjectDetailPage() {
         
         organized.push({
           parent: page,
-          children: children,
+          children: children.sort((a, b) => a.page_slug.localeCompare(b.page_slug)),
         })
-      } else {
-        // C'est une sous-page orpheline (pas de parent dans le projet)
-        // On la traite comme une page principale
-        if (!processed.has(page.id)) {
+      }
+    })
+    
+    // Ensuite, traiter les sous-pages orphelines (sous-pages dont le parent n'existe pas dans le projet)
+    sortedPublicPages.forEach((page) => {
+      if (processed.has(page.id)) return
+      
+      const slugParts = page.page_slug.split('/')
+      
+      // C'est une sous-page orpheline (pas de parent dans le projet)
+      // On la traite comme une page principale avec ses propres sous-pages potentielles
+      if (slugParts.length > 1) {
+        // Chercher si d'autres sous-pages partagent le même préfixe parent
+        const parentPrefix = slugParts[0]
+        const orphanSiblings = sortedPublicPages.filter((p) => {
+          if (processed.has(p.id)) return false
+          const pSlugParts = p.page_slug.split('/')
+          return (
+            pSlugParts.length > 1 &&
+            pSlugParts[0] === parentPrefix
+          )
+        })
+        
+        // Si on trouve des sœurs, créer un groupe virtuel avec la première comme parent
+        if (orphanSiblings.length > 0) {
+          // Trier par slug pour avoir un ordre cohérent
+          orphanSiblings.sort((a, b) => a.page_slug.localeCompare(b.page_slug))
+          
+          // La première devient le parent virtuel, les autres sont ses enfants
+          const virtualParent = orphanSiblings[0]
+          const virtualChildren = orphanSiblings.slice(1)
+          
+          virtualChildren.forEach((child) => processed.add(child.id))
+          processed.add(virtualParent.id)
+          
+          organized.push({
+            parent: virtualParent,
+            children: virtualChildren,
+          })
+        } else {
+          // Pas de sœurs, traiter comme page principale isolée
           processed.add(page.id)
           organized.push({
             parent: page,
@@ -459,7 +526,7 @@ export default function ProjectDetailPage() {
 
   const handleToggleActive = async (page: ProjectPage) => {
     try {
-      await projectService.updatePage(projectId, page.id, { is_active: !page.is_active })
+      await projectService.updatePage(project.id, page.id, { is_active: !page.is_active })
       toast.success(`Page ${!page.is_active ? 'affichée' : 'masquée'} dans le projet`)
       loadProject()
     } catch (error: any) {
@@ -598,7 +665,7 @@ export default function ProjectDetailPage() {
     const firstActivePage = project.pages.find((p: ProjectPage) => p.is_active) || project.pages[0]
     
     if (firstActivePage.page_type === 'public') {
-      navigate(`/admin/pages-public/edit/${firstActivePage.page_slug}?projectId=${projectId}`)
+      navigate(`/admin/pages-public/edit/${firstActivePage.page_slug}?projectId=${project.uuid || project.slug}`)
     } else {
       toast('L\'édition des pages tenant n\'est pas encore disponible', { icon: 'ℹ️' })
     }
@@ -701,17 +768,94 @@ export default function ProjectDetailPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   Pages liées au projet
-                  {project.pages && project.pages.length > 0 && (
-                    <span className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
-                      {project.pages.length}
-                    </span>
-                  )}
+                  {project.pages && project.pages.length > 0 && (() => {
+                    const organizedPages = organizePagesByHierarchy(project.pages)
+                    const mainPagesCount = organizedPages.length
+                    const totalPagesCount = project.pages.length
+                    return (
+                      <span className="ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
+                        {mainPagesCount} page{mainPagesCount > 1 ? 's' : ''} principale{mainPagesCount > 1 ? 's' : ''}
+                        {totalPagesCount > mainPagesCount && (
+                          <span className="ml-1 text-xs">({totalPagesCount} au total avec sous-pages)</span>
+                        )}
+                      </span>
+                    )
+                  })()}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Pages actuellement liées à ce projet et affichées sur le site
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                {/* Bouton d'initialisation des pages (uniquement pour les projets système) */}
+                {project.is_system_project && (
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Voulez-vous initialiser toutes les pages publiques avec leurs blocs par défaut ?\n\nCela créera/remplacera les pages suivantes :\n${ALL_PUBLIC_PAGES.map(p => `- ${p.slug} (${p.title})`).join('\n')}\n\n⚠️ Attention : Les pages existantes seront remplacées.`)) {
+                        return
+                      }
+                      
+                      try {
+                        toast.loading('Initialisation des pages...', { id: 'init-pages' })
+                        
+                        const results = []
+                        for (let i = 0; i < ALL_PUBLIC_PAGES.length; i++) {
+                          const page = ALL_PUBLIC_PAGES[i]
+                          // Créer la page dans system-settings
+                          const result = await createPageInSystem(page, api)
+                          results.push(result)
+                          
+                          // Si la création a réussi, lier la page au projet
+                          if (result.success && project && project.id) {
+                            try {
+                              console.log(`Liaison de la page ${page.slug} au projet ${project.id}...`)
+                              await projectService.addPage(project.id, page.slug, 'public', i + 1)
+                              console.log(`✅ Page ${page.slug} liée au projet avec succès`)
+                            } catch (linkError: any) {
+                              // Si la page est déjà liée, c'est OK (l'API retourne 200 dans ce cas)
+                              if (linkError.response?.status === 200) {
+                                console.log(`ℹ️ Page ${page.slug} déjà liée au projet`)
+                              } else if (linkError.response?.status === 400 && linkError.response?.data?.error?.includes('already')) {
+                                console.log(`ℹ️ Page ${page.slug} déjà liée au projet (400 avec message 'already')`)
+                              } else {
+                                console.error(`❌ Erreur lors de la liaison de la page ${page.slug} au projet:`, linkError)
+                                // Ne pas échouer complètement, juste logger l'erreur
+                              }
+                            }
+                          } else {
+                            console.warn(`⚠️ Impossible de lier la page ${page.slug}: project=${project ? 'exists' : 'null'}, project.id=${project?.id || 'undefined'}`)
+                          }
+                        }
+                        
+                        const successCount = results.filter(r => r.success).length
+                        const failCount = results.filter(r => !r.success).length
+                        
+                        toast.dismiss('init-pages')
+                        
+                        if (failCount === 0) {
+                          toast.success(`${successCount} page${successCount > 1 ? 's' : ''} initialisée${successCount > 1 ? 's' : ''} avec succès !`)
+                        } else {
+                          toast.success(`${successCount} page${successCount > 1 ? 's' : ''} créée${successCount > 1 ? 's' : ''}, ${failCount} erreur${failCount > 1 ? 's' : ''}`)
+                        }
+                        
+                        // Recharger les pages disponibles ET le projet pour voir les nouvelles pages
+                        await loadAvailablePages()
+                        await loadProject()
+                      } catch (error: any) {
+                        toast.dismiss('init-pages')
+                        console.error('Error initialisation pages:', error)
+                        toast.error('Error lors de l\'initialisation des pages')
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                    title="Initialiser toutes les pages publiques avec leurs blocs par défaut"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Initialiser les pages
+                  </button>
+                )}
                 {project.pages && project.pages.length > 2 && (
                   <button
                     onClick={async () => {
@@ -722,7 +866,7 @@ export default function ProjectDetailPage() {
                           )
                           
                           for (const page of pagesToRemove) {
-                            await projectService.removePage(projectId, page.id)
+                            await projectService.removePage(project.id, page.id)
                           }
                           
                           toast.success(`${pagesToRemove.length} page(s) retirée(s) avec succès !`)
@@ -777,7 +921,7 @@ export default function ProjectDetailPage() {
                       loadAvailablePages()
                       
                       // Naviguer vers l'éditeur de la nouvelle page
-                      navigate(`/admin/pages-public/edit/${newSlug}?projectId=${projectId}`)
+                      navigate(`/admin/pages-public/edit/${newSlug}?projectId=${project.uuid || project.slug}`)
                     } catch (error: any) {
                       console.error('Error création nouvelle page:', error)
                       toast.error(error.response?.data?.error || 'Error lors de la création de la nouvelle page')
@@ -800,7 +944,12 @@ export default function ProjectDetailPage() {
                   // Find page data based on page_type
                   let parentPage: any = null
                   if (parent.page_type === 'public') {
+                    // Try exact match first
                     parentPage = publicPages.find((p: any) => p.slug === parent.page_slug)
+                    // If not found, try with trimmed slug (in case of whitespace issues)
+                    if (!parentPage) {
+                      parentPage = publicPages.find((p: any) => p.slug?.trim() === parent.page_slug?.trim())
+                    }
                   } else if (parent.page_type === 'tenant') {
                     // For tenant pages, page_slug can be:
                     // - Old format: just page ID (e.g., "1")
@@ -818,25 +967,14 @@ export default function ProjectDetailPage() {
                   }
                   
                   if (!parentPage) {
-                    // Page not found in available pages - might be deleted or not loaded
-                    return (
-                      <div key={parent.id} className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-500 dark:text-gray-400">Page introuvable</span>
-                            <span className="text-xs text-gray-400 dark:text-gray-500">
-                              ({parent.page_type}: {parent.page_slug})
-                            </span>
-                          </div>
-                          <button
-                            onClick={() => handleRemovePage(parent.id)}
-                            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-                          >
-                            Retirer
-                          </button>
-                        </div>
-                      </div>
-                    )
+                    // Page not found in available pages - use page_slug as fallback
+                    // This can happen if the page was just created and loadAvailablePages hasn't refreshed yet
+                    parentPage = {
+                      slug: parent.page_slug,
+                      title: parent.page_slug.split('/').pop() || parent.page_slug, // Use last part of slug as title
+                      is_active: true, // Default to active
+                      type: parent.page_type,
+                    }
                   }
                   
                   const isPublished = parentPage.is_active !== false
@@ -846,9 +984,9 @@ export default function ProjectDetailPage() {
                   const handlePageClick = () => {
                     if (parent.page_type === 'public') {
                       if (parentPage.slug === 'home') {
-                        navigate(`/admin/homepage?projectId=${projectId}`)
+                        navigate(`/admin/pages-public/edit/home?projectId=${project.uuid || project.slug}`)
                       } else {
-                        navigate(`/admin/pages-public/edit/${parentPage.slug}?projectId=${projectId}`)
+                        navigate(`/admin/pages-public/edit/${parentPage.slug}?projectId=${project.uuid || project.slug}`)
                       }
                     } else if (parent.page_type === 'tenant') {
                       // Navigate to tenant page editor
@@ -1165,7 +1303,7 @@ export default function ProjectDetailPage() {
                           
                           const handleChildPageClick = () => {
                             if (childPage.page_type === 'public') {
-                              navigate(`/admin/pages-public/edit/${childPageData.slug}?projectId=${projectId}`)
+                              navigate(`/admin/pages-public/edit/${childPageData.slug}?projectId=${project.uuid || project.slug}`)
                             } else if (childPage.page_type === 'tenant') {
                               navigate(`/dashboard/pages/${childPageData.id}/edit`)
                             }
@@ -1439,9 +1577,9 @@ export default function ProjectDetailPage() {
                     // Fonction pour naviguer vers l'édition de la page
                     const handlePageClick = () => {
                       if (page.slug === 'home') {
-                        navigate(`/admin/homepage?projectId=${projectId}`)
+                        navigate(`/admin/pages-public/edit/home?projectId=${project.uuid || project.slug}`)
                       } else {
-                        navigate(`/admin/pages-public/edit/${page.slug}?projectId=${projectId}`)
+                        navigate(`/admin/pages-public/edit/${page.slug}?projectId=${project.uuid || project.slug}`)
                       }
                     }
                     
@@ -1707,7 +1845,7 @@ export default function ProjectDetailPage() {
                   if (previewPage) {
                     const page = project?.pages?.find((p: ProjectPage) => p.page_slug === previewPage.slug)
                     if (page && page.page_type === 'public') {
-                      navigate(`/admin/pages-public/edit/${previewPage.slug}?projectId=${projectId}`)
+                      navigate(`/admin/pages-public/edit/${previewPage.slug}?projectId=${project.uuid || project.slug}`)
                     }
                   }
                 }}

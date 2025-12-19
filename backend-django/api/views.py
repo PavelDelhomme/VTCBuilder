@@ -314,12 +314,13 @@ class DetailedStatsView(APIView):
                 from collections import Counter
                 from django_tenants.utils import tenant_context
                 from django_tenants.utils import get_public_schema_name
+                from django.db import connection as db_connection
                 import json
                 
                 block_counter = Counter()
                 
                 # Vérifier qu'on n'est pas dans le schéma public (où les tables n'existent pas)
-                current_schema = connection.schema_name if hasattr(connection, 'schema_name') else None
+                current_schema = db_connection.schema_name if hasattr(db_connection, 'schema_name') else None
                 public_schema = get_public_schema_name()
                 
                 # Iterate through all active tenants and aggregate block usage

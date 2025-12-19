@@ -326,11 +326,19 @@ class ProjectViewSet(CORSMixin, viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Filter projects based on user"""
-        user = self.request.user
+        # Vérifier l'authentification depuis le token JWT
+        from api.utils import get_authenticated_user_from_token, is_super_admin_from_token
+        import logging
+        logger = logging.getLogger(__name__)
         
-        # Vérifier que l'utilisateur est authentifié
+        # Essayer d'abord request.user (DRF peut avoir déjà authentifié)
+        user = self.request.user
         if not user or not user.is_authenticated:
-            return Project.objects.none()
+            # Si DRF n'a pas authentifié, essayer le token JWT directement
+            user, auth_error = get_authenticated_user_from_token(self.request)
+            if not user or auth_error:
+                logger.warning(f"ProjectViewSet.get_queryset: No authenticated user for {self.request.method} {self.request.path}")
+                return Project.objects.none()
         
         # Filtrer les projets non supprimés par défaut
         # (sauf si on demande explicitement les projets supprimés via query param)
@@ -343,13 +351,20 @@ class ProjectViewSet(CORSMixin, viewsets.ModelViewSet):
         
         # Super admin sees all projects
         # Vérification sécurisée depuis le token JWT uniquement
-        if is_super_admin_from_token(self.request):
+        is_super_admin = is_super_admin_from_token(self.request)
+        logger.info(f"ProjectViewSet.get_queryset: user={user.email if hasattr(user, 'email') else 'unknown'}, is_super_admin={is_super_admin}, method={self.request.method}, path={self.request.path}")
+        
+        if is_super_admin:
+            logger.info(f"ProjectViewSet.get_queryset: Returning all projects for super admin (count: {base_queryset.count()})")
             return base_queryset
         
         # Tenant admin sees only their tenant's projects
         if hasattr(user, 'tenant') and user.tenant:
-            return base_queryset.filter(tenant=user.tenant)
+            filtered = base_queryset.filter(tenant=user.tenant)
+            logger.info(f"ProjectViewSet.get_queryset: Returning tenant projects for {user.email} (count: {filtered.count()})")
+            return filtered
         
+        logger.warning(f"ProjectViewSet.get_queryset: User {user.email if hasattr(user, 'email') else 'unknown'} has no access to projects")
         return Project.objects.none()
     
     def get_serializer_class(self):
@@ -357,6 +372,59 @@ class ProjectViewSet(CORSMixin, viewsets.ModelViewSet):
         if self.action == 'retrieve':
             return ProjectDetailSerializer
         return ProjectSerializer
+    
+    def get_object(self):
+        """
+        Override get_object to support UUID, slug, and ID lookup
+        This is called by DRF before retrieve() and other detail actions
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Récupérer l'identifiant depuis kwargs (peut être 'pk' ou 'id')
+        identifier = self.kwargs.get('pk') or self.kwargs.get('id')
+        
+        if not identifier:
+            from rest_framework.exceptions import NotFound
+            raise NotFound('Identifiant de projet manquant')
+        
+        logger.info(f"ProjectViewSet.get_object: Looking for project with identifier: {identifier}")
+        
+        # Utiliser get_queryset() pour respecter les permissions
+        queryset = self.get_queryset()
+        queryset = queryset.prefetch_related('pages')
+        
+        # Essayer de récupérer par UUID d'abord (si c'est un UUID valide)
+        try:
+            import uuid as uuid_lib
+            project_uuid = uuid_lib.UUID(str(identifier))
+            instance = queryset.get(uuid=project_uuid)
+            self.check_object_permissions(self.request, instance)
+            logger.info(f"ProjectViewSet.get_object: Found project by UUID: {instance.id} ({instance.name})")
+            return instance
+        except (ValueError, Project.DoesNotExist):
+            pass
+        
+        # Si ce n'est pas un UUID valide ou pas trouvé, essayer par ID numérique
+        try:
+            project_id = int(identifier)
+            instance = queryset.get(pk=project_id)
+            self.check_object_permissions(self.request, instance)
+            logger.info(f"ProjectViewSet.get_object: Found project by ID: {instance.id} ({instance.name})")
+            return instance
+        except (ValueError, Project.DoesNotExist):
+            pass
+        
+        # Essayer par slug
+        try:
+            instance = queryset.get(slug=identifier)
+            self.check_object_permissions(self.request, instance)
+            logger.info(f"ProjectViewSet.get_object: Found project by slug: {instance.id} ({instance.name})")
+            return instance
+        except Project.DoesNotExist:
+            logger.warning(f"ProjectViewSet.get_object: Project not found with identifier: {identifier}")
+            from rest_framework.exceptions import NotFound
+            raise NotFound('Projet introuvable')
     
     def create(self, request, *args, **kwargs):
         """Create project with CORS"""
@@ -381,17 +449,49 @@ class ProjectViewSet(CORSMixin, viewsets.ModelViewSet):
         logger = logging.getLogger(__name__)
         
         # Vérifier l'authentification avant de continuer
-        if not request.user or not request.user.is_authenticated:
-            response = Response(
-                {'error': 'Authentication required'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-            add_cors_headers(response, request)
-            # Ne pas logger comme une erreur, c'est normal pour les requêtes non authentifiées
-            return response
+        from api.utils import get_authenticated_user_from_token, is_super_admin_from_token
+        user = request.user
+        
+        if not user or not user.is_authenticated:
+            # Essayer aussi le token JWT directement
+            user, auth_error = get_authenticated_user_from_token(request)
+            if not user or auth_error:
+                logger.warning(f"ProjectViewSet.list: No authenticated user for {request.path}")
+                response = Response(
+                    {'error': 'Authentication required'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+                add_cors_headers(response, request)
+                return response
+        
+        # Vérifier le statut super admin
+        is_super_admin = is_super_admin_from_token(request) or (hasattr(user, 'is_superuser') and user.is_superuser)
+        logger.info(f"ProjectViewSet.list: user={user.email if hasattr(user, 'email') else 'unknown'}, is_super_admin={is_super_admin}, is_superuser={getattr(user, 'is_superuser', False)}")
         
         try:
-            response = super().list(request, *args, **kwargs)
+            # Utiliser get_queryset() pour respecter les permissions
+            queryset = self.get_queryset()
+            queryset_count = queryset.count()
+            logger.info(f"ProjectViewSet.list: Queryset count: {queryset_count}")
+            
+            # Si le queryset est vide mais que l'utilisateur est super admin, forcer le chargement
+            if queryset_count == 0 and is_super_admin:
+                logger.warning(f"ProjectViewSet.list: Queryset vide pour super admin, forcer le chargement de tous les projets")
+                include_deleted = request.query_params.get('include_deleted', 'false').lower() == 'true'
+                base_queryset = Project.objects.filter(is_deleted=False) if not include_deleted else Project.objects.all()
+                base_queryset = base_queryset.prefetch_related('pages')
+                queryset = base_queryset
+                logger.info(f"ProjectViewSet.list: Nouveau queryset count: {queryset.count()}")
+            
+            # Paginer si nécessaire
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                response = self.get_paginated_response(serializer.data)
+            else:
+                serializer = self.get_serializer(queryset, many=True)
+                response = Response(serializer.data)
+            
             add_cors_headers(response, request)
             return response
         except Exception as e:
@@ -406,10 +506,7 @@ class ProjectViewSet(CORSMixin, viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """Retrieve project with CORS"""
         try:
-            # Précharger les pages pour éviter les requêtes N+1
             instance = self.get_object()
-            instance = Project.objects.prefetch_related('pages').get(pk=instance.pk)
-            
             serializer = self.get_serializer(instance)
             response = Response(serializer.data)
             add_cors_headers(response, request)
@@ -467,11 +564,16 @@ class ProjectViewSet(CORSMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def add_page(self, request, pk=None):
         """Add a page to the project"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         try:
             project = self.get_object()
             page_slug = request.data.get('page_slug')
             page_type = request.data.get('page_type', 'public')
             order = request.data.get('order', 0)
+            
+            logger.info(f"ProjectViewSet.add_page: Adding page '{page_slug}' (type: {page_type}, order: {order}) to project {project.id} ({project.name})")
             
             if not page_slug:
                 response = Response(
@@ -493,6 +595,9 @@ class ProjectViewSet(CORSMixin, viewsets.ModelViewSet):
                 if existing_page_in_project.order != order:
                     existing_page_in_project.order = order
                     existing_page_in_project.save()
+                    logger.info(f"ProjectViewSet.add_page: Updated order for existing page '{page_slug}' to {order}")
+                else:
+                    logger.info(f"ProjectViewSet.add_page: Page '{page_slug}' already in project (order: {existing_page_in_project.order})")
                 
                 serializer = ProjectPageSerializer(existing_page_in_project)
                 response = Response(serializer.data, status=status.HTTP_200_OK)
@@ -507,11 +612,14 @@ class ProjectViewSet(CORSMixin, viewsets.ModelViewSet):
                 order=order
             )
             
+            logger.info(f"ProjectViewSet.add_page: Successfully created ProjectPage for '{page_slug}' in project {project.id}")
+            
             serializer = ProjectPageSerializer(page)
             response = Response(serializer.data, status=status.HTTP_201_CREATED)
             add_cors_headers(response, request)
             return response
         except Exception as e:
+            logger.error(f"ProjectViewSet.add_page: Error adding page: {str(e)}", exc_info=True)
             response = Response(
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST

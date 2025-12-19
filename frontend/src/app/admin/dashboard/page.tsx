@@ -7,6 +7,8 @@ import api from '@/lib/api'
 import AdminLayout from '@/components/admin/AdminLayout'
 import PageLoader from '@/components/shared/PageLoader'
 import { useNavigationLoading } from '@/hooks/useNavigationLoading'
+import projectService from '@/services/project.service'
+import toast from 'react-hot-toast'
 
 interface DashboardStats {
   total_tenants: number
@@ -65,6 +67,22 @@ export default function AdminDashboard() {
   const [detailedStats, setDetailedStats] = useState<DetailedStatsSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const { isNavigating, navigate } = useNavigationLoading()
+  const [systemProjectUuid, setSystemProjectUuid] = useState<string | null>(null)
+  
+  useEffect(() => {
+    const loadSystemProject = async () => {
+      try {
+        const systemProject = await projectService.getSystemProject()
+        if (systemProject) {
+          // Utiliser l'UUID si disponible, sinon le slug
+          setSystemProjectUuid(systemProject.uuid || systemProject.slug)
+        }
+      } catch (error) {
+        console.error('Error chargement projet système:', error)
+      }
+    }
+    loadSystemProject()
+  }, [])
 
   useEffect(() => {
     if (!authService.isSuperAdmin()) {
@@ -438,7 +456,22 @@ export default function AdminDashboard() {
             </button>
 
             <button
-              onClick={() => navigate('/admin/homepage')}
+              onClick={() => {
+                if (systemProjectUuid) {
+                  navigate(`/admin/projects/${systemProjectUuid}`)
+                } else {
+                  // Fallback: essayer de charger le projet système
+                  projectService.getSystemProject().then(project => {
+                    if (project) {
+                      // Utiliser l'UUID si disponible, sinon le slug
+                      const identifier = project.uuid || project.slug
+                      navigate(`/admin/projects/${identifier}`)
+                    } else {
+                      toast.error('Projet système introuvable')
+                    }
+                  })
+                }
+              }}
               className="card hover:shadow-lg transition-shadow duration-200 cursor-pointer"
             >
               <div className="flex items-center">

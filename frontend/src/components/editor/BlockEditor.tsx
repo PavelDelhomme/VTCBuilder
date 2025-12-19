@@ -1147,7 +1147,24 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     if (!selectedBlock) return null
     const block = blocksMap.get(selectedBlock)
     if (!block) return null
-    const blockType = blockTypesMap.get(block.type)
+    let blockType = blockTypesMap.get(block.type)
+    // Fallback si le type de bloc n'est pas trouvé - créer un BlockType minimal
+    if (!blockType) {
+      blockType = {
+        id: 0,
+        name: block.type,
+        label: block.type.charAt(0).toUpperCase() + block.type.slice(1).replace(/-/g, ' '),
+        icon: '📦',
+        category: 'custom',
+        description: '',
+        schema: {},
+        default_styles: {},
+        is_active: true,
+        order: 0,
+        created_at: '',
+        updated_at: ''
+      } as BlockType
+    }
     return { block, blockType }
   }, [selectedBlock, blocksMap, blockTypesMap])
 
@@ -1249,7 +1266,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
               </div>
 
               {/* Properties Content */}
-              <div className="flex-1 overflow-y-auto p-2 sm:p-3 min-h-0 pb-4" style={{ maxHeight: '100%', WebkitOverflowScrolling: 'touch', overflowX: 'hidden' }}>
+              <div className="flex-1 overflow-y-auto p-2 sm:p-3 min-h-0 pb-4" style={{ maxHeight: '100%', WebkitOverflowScrolling: 'touch', overflowX: 'hidden', scrollbarWidth: 'thin' }}>
                 <div className="min-h-full pb-4">
                 {propertiesTab === 'layout' ? (
                   selectedBlockData ? (
@@ -10879,6 +10896,7 @@ export function BlockPropertiesPanel({
     'pricing_cards',
     'pricing-cards',
     'hero',
+    'header',
     'cta-section',
     'cta_section',
     'container',

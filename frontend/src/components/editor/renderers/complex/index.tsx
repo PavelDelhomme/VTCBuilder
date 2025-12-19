@@ -3,9 +3,13 @@
  */
 
 import React from 'react'
+import Link from 'next/link'
 import { RendererProps } from './types'
+import { useTheme } from '@/contexts/ThemeContext'
 
 export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
+  const { resolvedTheme } = useTheme()
+  const currentTheme = resolvedTheme || theme || 'light'
   // Convertir le gradient Tailwind en CSS gradient
   const getGradientFromTailwind = (gradient: string) => {
     if (!gradient) return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
@@ -83,67 +87,85 @@ export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): Reac
     }
   }
   
+  // Déterminer le fond selon le thème si aucun fond personnalisé n'est défini
+  let finalBg = heroBg
+  if (!block.data.background_type && !block.data.background_image && !block.data.background_color && !block.data.background_gradient) {
+    // Utiliser le gradient par défaut selon le thème (comme sur localhost:9494)
+    if (currentTheme === 'dark') {
+      finalBg = 'linear-gradient(135deg, #111827 0%, #1f2937 50%, #111827 100%)'
+    } else {
+      finalBg = 'linear-gradient(135deg, #3b82f6 0%, #9333ea 50%, #ec4899 100%)'
+    }
+  }
+  
   return (
-    <div 
+    <section 
+      className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 text-center transition-colors duration-300 ${
+        !block.data.background_type && !block.data.background_image && !block.data.background_color && !block.data.background_gradient
+          ? currentTheme === 'dark'
+            ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
+            : 'bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500'
+          : ''
+      }`}
       style={{
-        // Copier wrapperStyles sans les propriétés de padding et color pour éviter les conflits
-        // (la couleur doit être appliquée uniquement au contenu, pas au conteneur)
         ...Object.fromEntries(
           Object.entries(wrapperStyles).filter(([key]) => 
             !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'color'].includes(key)
           )
         ),
-        background: heroBg,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        // Utiliser les propriétés individuelles au lieu de padding shorthand
-        paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '5rem',
-        paddingRight: block.styles?.padding_right || block.styles?.padding_horizontal || '2rem',
-        paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '8rem',
-        paddingLeft: block.styles?.padding_left || block.styles?.padding_horizontal || '2rem',
+        ...(block.data.background_type || block.data.background_image || block.data.background_color || block.data.background_gradient ? {
+          background: finalBg,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        } : {}),
         textAlign: block.styles?.text_align || 'center',
-        minHeight: '400px',
       }}
-      className="mb-6 relative rounded-lg overflow-hidden"
     >
-      {block.data.overlay && (
-        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+      <h1 className={`text-4xl md:text-6xl font-extrabold mb-6 ${
+        currentTheme === 'dark' ? 'text-white' : 'text-white'
+      }`}>
+        {block.data.title || 'Hero Title'}
+      </h1>
+      {block.data.subtitle && (
+        <p className={`text-xl md:text-2xl mb-8 max-w-3xl mx-auto ${
+          currentTheme === 'dark' ? 'text-white/90' : 'text-white/90'
+        }`}>
+          {block.data.subtitle}
+        </p>
       )}
-      <div className="relative z-10" style={{ color: block.styles?.color || '#ffffff' }}>
-        <h1 className="text-4xl md:text-6xl font-extrabold mb-6">{block.data.title || 'Hero Title'}</h1>
-        {block.data.subtitle && (
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90">{block.data.subtitle}</p>
-        )}
-        {heroButtons.length > 0 && (
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {heroButtons.map((btn: any, index: number) => (
-              <a
-                key={index}
-                href={btn.url || '#'}
-                onClick={(e) => {
-                  // Si c'est un lien d'ancrage (#pricing), faire défiler vers l'élément
-                  if (btn.url && btn.url.startsWith('#')) {
-                    e.preventDefault()
-                    const targetId = btn.url.substring(1)
-                    const targetElement = document.getElementById(targetId)
-                    if (targetElement) {
-                      targetElement.scrollIntoView({ behavior: 'smooth' })
-                    }
+      {heroButtons.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {heroButtons.map((btn: any, index: number) => (
+            <Link
+              key={index}
+              href={btn.url || '#'}
+              onClick={(e) => {
+                // Si c'est un lien d'ancrage (#pricing), faire défiler vers l'élément
+                if (btn.url && btn.url.startsWith('#')) {
+                  e.preventDefault()
+                  const targetId = btn.url.substring(1)
+                  const targetElement = document.getElementById(targetId)
+                  if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' })
                   }
-                }}
-                className={`px-8 py-4 rounded-lg font-bold text-lg transition-colors shadow-xl ${
-                  btn.style === 'primary'
-                    ? 'bg-white text-blue-600 hover:bg-blue-50'
+                }
+              }}
+              className={`px-8 py-4 rounded-lg font-bold text-lg transition-colors ${
+                btn.style === 'primary'
+                  ? currentTheme === 'dark'
+                    ? 'bg-white text-gray-900 hover:bg-gray-100 shadow-xl'
+                    : 'bg-white text-blue-600 hover:bg-blue-50 shadow-xl'
+                  : currentTheme === 'dark'
+                    ? 'bg-gray-800/80 backdrop-blur-md text-white hover:bg-gray-800 border border-gray-700'
                     : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30 border border-white/30'
-                }`}
-              >
-                {btn.text}
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+              }`}
+            >
+              {btn.text}
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 

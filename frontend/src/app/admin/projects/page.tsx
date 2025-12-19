@@ -223,7 +223,7 @@ export default function ProjectsManagement() {
         status: 'active',
       })
       toast.success('Projet créé avec succès !')
-      navigate(`/admin/projects/${project.id}`)
+      navigate(`/admin/projects/${project.uuid || project.slug}`)
     } catch (error: any) {
       // Gérer les erreurs d'authentification
       if (error.response?.status === 401) {
@@ -427,7 +427,7 @@ export default function ProjectsManagement() {
                     project={project}
                     onToggleStatus={handleToggleStatus}
                     onDelete={handleDelete}
-                    onOpen={() => navigate(`/admin/projects/${project.id}`)}
+                    onOpen={() => navigate(`/admin/projects/${project.uuid || project.slug}`)}
                     isNavigating={isNavigating}
                   />
                 ))}
@@ -464,7 +464,7 @@ export default function ProjectsManagement() {
                           project={project}
                           onToggleStatus={handleToggleStatus}
                           onDelete={handleDelete}
-                          onOpen={() => navigate(`/admin/projects/${project.id}`)}
+                          onOpen={() => navigate(`/admin/projects/${project.uuid || project.slug}`)}
                           isNavigating={isNavigating}
                         />
                       ))}
@@ -494,7 +494,7 @@ export default function ProjectsManagement() {
                     project={project}
                     onToggleStatus={handleToggleStatus}
                     onDelete={handleDelete}
-                    onOpen={() => navigate(`/admin/projects/${project.id}`)}
+                    onOpen={() => navigate(`/admin/projects/${project.uuid || project.slug}`)}
                     isNavigating={isNavigating}
                   />
                 ))}

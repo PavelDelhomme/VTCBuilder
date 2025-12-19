@@ -4,6 +4,7 @@ Project models for VTCBuilder - Group pages and tenants into projects/sites
 from django.db import models
 from django.utils.text import slugify
 from tenants.models import Tenant
+import uuid
 
 
 class Project(models.Model):
@@ -20,6 +21,7 @@ class Project(models.Model):
     # Basic Info
     name = models.CharField(max_length=255, help_text="Nom du projet/site")
     slug = models.SlugField(unique=True, help_text="Slug unique pour le projet")
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, help_text="UUID unique pour le projet (utilisé dans les URLs)")
     description = models.TextField(blank=True, help_text="Description du projet")
     
     # Owner (tenant or system)
