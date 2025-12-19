@@ -1124,9 +1124,10 @@ export default function EditPublicPage() {
           )}
 
           {/* Afficher les sous-pages de la page actuelle - Compact version */}
-          {currentPageSubPages.length > 0 && (
-            <div className="hidden md:flex items-center gap-1 pr-2 border-r border-gray-300 dark:border-gray-600">
-              {currentPageSubPages.map((subPage) => (
+          {/* Masquer pour la page docs car il y a trop de sous-pages de documentation */}
+          {currentPageSubPages.length > 0 && pageSlug !== 'docs' && (
+            <div className="hidden md:flex items-center gap-1 pr-2 border-r border-gray-300 dark:border-gray-600 max-w-xs overflow-x-auto">
+              {currentPageSubPages.slice(0, 3).map((subPage) => (
                 <button
                   key={subPage.slug}
                   onClick={() => {
@@ -1135,12 +1136,17 @@ export default function EditPublicPage() {
                       : `/admin/pages-public/edit/${subPage.slug}`
                     router.push(url)
                   }}
-                  className="px-2 py-1 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                  className="px-2 py-1 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors whitespace-nowrap"
                   title={`Éditer ${subPage.title}`}
                 >
                   {subPage.title}
                 </button>
               ))}
+              {currentPageSubPages.length > 3 && (
+                <span className="px-2 py-1 text-xs text-gray-500 dark:text-gray-400">
+                  +{currentPageSubPages.length - 3}
+                </span>
+              )}
             </div>
           )}
 
@@ -1340,24 +1346,26 @@ export default function EditPublicPage() {
                     <>
                       <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                       <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                        Sous-pages
+                        {pageSlug === 'docs' ? 'Pages de documentation' : 'Sous-pages'}
                       </div>
-                      {currentPageSubPages.map((subPage) => (
-                        <button
-                          key={subPage.slug}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            const url = projectId 
-                              ? `/admin/pages-public/edit/${subPage.slug}?projectId=${projectId}`
-                              : `/admin/pages-public/edit/${subPage.slug}`
-                            router.push(url)
-                            setShowMoreMenu(false)
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          {subPage.title}
-                        </button>
-                      ))}
+                      <div className="max-h-64 overflow-y-auto">
+                        {currentPageSubPages.map((subPage) => (
+                          <button
+                            key={subPage.slug}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const url = projectId 
+                                ? `/admin/pages-public/edit/${subPage.slug}?projectId=${projectId}`
+                                : `/admin/pages-public/edit/${subPage.slug}`
+                              router.push(url)
+                              setShowMoreMenu(false)
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            {subPage.title}
+                          </button>
+                        ))}
+                      </div>
                     </>
                   )}
                   {/* Option pour gérer les pages */}
