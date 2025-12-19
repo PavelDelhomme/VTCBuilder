@@ -39,8 +39,10 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
         position: block.data.sticky ? 'sticky' : 'static',
         top: block.data.sticky ? '0' : undefined,
         zIndex: block.data.sticky ? 50 : undefined,
+        marginLeft: 0,
+        marginRight: 0,
       }}
-      className={`mb-6 transition-colors duration-300 ${block.data.sticky ? 'sticky top-0 z-50' : ''} ${
+      className={`transition-colors duration-300 ${block.data.sticky ? 'sticky top-0 z-50' : ''} ${
         block.styles?.background_color || block.styles?.backgroundColor
           ? ''
           : currentTheme === 'dark'
@@ -49,25 +51,25 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between">
-          <Link href={logoUrl} className="flex items-center space-x-2">
+        <div className="flex items-center justify-between gap-4">
+          <Link href={logoUrl} className="flex items-center space-x-2 flex-shrink-0">
             {block.data.logo_image && (
               <img src={block.data.logo_image} alt={logoText} className="h-6 sm:h-8 w-auto flex-shrink-0" />
             )}
-            <h1 className={`text-2xl font-bold ${
+            <h1 className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${
               currentTheme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
               {logoText}
             </h1>
             {block.data.badge && (
-              <span className={`text-xs ${
+              <span className={`text-xs whitespace-nowrap ${
                 currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
               }`}>
                 {block.data.badge}
               </span>
             )}
           </Link>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
             {showThemeToggle && (
               <button
                 onClick={toggleTheme}
@@ -92,12 +94,12 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
             )}
             {/* Navigation links si définis */}
             {headerLinks.length > 0 && (
-              <nav className="hidden md:flex items-center space-x-6">
+              <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6">
                 {headerLinks.map((link: any, index: number) => (
                   <Link
                     key={index}
                     href={link.url || '#'}
-                    className={`${
+                    className={`text-sm xl:text-base whitespace-nowrap ${
                       currentTheme === 'dark' 
                         ? 'text-gray-300 hover:text-white' 
                         : 'text-gray-700 hover:text-gray-900'
@@ -109,12 +111,12 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
               </nav>
             )}
             
-            {/* Boutons d'authentification - Exactement comme PublicHeader */}
+            {/* Boutons d'authentification - Responsive */}
             {!isMounted ? (
               <>
                 <Link
                   href="/login"
-                  className={`${
+                  className={`text-sm sm:text-base whitespace-nowrap ${
                     currentTheme === 'dark' 
                       ? 'text-gray-300 hover:text-white' 
                       : 'text-gray-700 hover:text-gray-900'
@@ -129,24 +131,26 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
                 {isSuperAdmin ? (
                   <Link
                     href="/admin/dashboard"
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    className={`px-2 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
                       currentTheme === 'dark'
                         ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
                         : 'bg-white text-blue-600 hover:bg-blue-50'
                     }`}
                   >
-                    Administration
+                    <span className="hidden sm:inline">Administration</span>
+                    <span className="sm:hidden">Admin</span>
                   </Link>
                 ) : (
                   <Link
                     href="/dashboard"
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    className={`px-2 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
                       currentTheme === 'dark'
                         ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
                         : 'bg-white text-blue-600 hover:bg-blue-50'
                     }`}
                   >
-                    Mon Dashboard
+                    <span className="hidden sm:inline">Mon Dashboard</span>
+                    <span className="sm:hidden">Dashboard</span>
                   </Link>
                 )}
               </>
@@ -154,7 +158,7 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
               <>
                 <Link
                   href="/login"
-                  className={`${
+                  className={`text-sm sm:text-base whitespace-nowrap ${
                     currentTheme === 'dark' 
                       ? 'text-gray-300 hover:text-white' 
                       : 'text-gray-700 hover:text-gray-900'
@@ -164,13 +168,14 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
                 </Link>
                 <Link
                   href="/register"
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-2 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
                     currentTheme === 'dark'
                       ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
                       : 'bg-white text-blue-600 hover:bg-blue-50'
                   }`}
                 >
-                  Créer un compte
+                  <span className="hidden sm:inline">Créer un compte</span>
+                  <span className="sm:hidden">S'inscrire</span>
                 </Link>
               </>
             )}

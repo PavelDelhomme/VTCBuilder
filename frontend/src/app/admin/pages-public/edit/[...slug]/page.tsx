@@ -645,8 +645,74 @@ export default function EditPublicPage() {
           children: [headerBlock]
         }
         
-        // Hero et Features en dehors du container pour avoir le fond gradient complet
-        homepageBlocks = [mainContainer, heroBlock, featuresBlock]
+        // Créer le bloc pricing (tarifs transparents)
+        const pricingBlock = {
+          id: `pricing-${now}`,
+          type: 'pricing',
+          layout: 12,
+          data: {
+            title: 'Tarifs Transparents',
+            subtitle: 'Choisissez le plan adapté à vos besoins. Pas d\'engagement, changez de plan à tout moment.',
+            source: 'api',
+            api_endpoint: '/api/billing/pricing-plans/',
+            show_title: true,
+            columns: 3
+          },
+          styles: {
+            background_color: 'bg-gray-50 dark:bg-gray-900',
+            padding: 'py-20'
+          }
+        }
+        
+        // Créer le bloc CTA "Prêt à démarrer"
+        const ctaBlock = {
+          id: `cta-${now}`,
+          type: 'cta',
+          layout: 12,
+          data: {
+            title: 'Prêt à démarrer ?',
+            subtitle: 'Créez votre site VTC professionnel dès aujourd\'hui. Essai gratuit de 14 jours.',
+            button_text: '🚀 Créer mon compte gratuitement',
+            button_link: '/register',
+            button_style: 'primary',
+            background_type: 'gradient',
+            background_gradient: 'from-blue-600 to-purple-600'
+          },
+          styles: {
+            padding: 'py-20',
+            text_align: 'center'
+          }
+        }
+        
+        // Créer le bloc footer
+        const footerBlock = {
+          id: `footer-${now}`,
+          type: 'footer',
+          layout: 12,
+          data: {
+            copyright_text: `© ${new Date().getFullYear()} VTCBuilder. Tous droits réservés.`,
+            links: [
+              { label: 'Tarifs', url: '/#pricing' },
+              { label: 'Fonctionnalités', url: '/features' },
+              { label: 'Templates', url: '/templates' },
+              { label: 'Documentation', url: '/docs' },
+              { label: 'Contact', url: '/contact' },
+              { label: 'FAQ', url: '/faq' }
+            ],
+            legal_links: [
+              { label: 'CGV', url: '/legal/terms' },
+              { label: 'Confidentialité', url: '/legal/privacy' }
+            ],
+            show_social_links: false
+          },
+          styles: {
+            background_color: 'bg-gray-100 dark:bg-gray-900',
+            padding: 'py-12'
+          }
+        }
+        
+        // Hero, Features, Pricing, CTA et Footer en dehors du container pour avoir le fond gradient complet
+        homepageBlocks = [mainContainer, heroBlock, featuresBlock, pricingBlock, ctaBlock, footerBlock]
         
         // Sauvegarder immédiatement les blocs par défaut
         try {

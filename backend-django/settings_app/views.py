@@ -684,9 +684,18 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         """Partially update system settings"""
         # Log dès l'entrée dans la méthode
+        from api.utils import get_authenticated_user_from_token
         user_email = 'unknown'
-        if request.user and hasattr(request.user, 'email'):
-            user_email = request.user.email
+        user = request.user
+        
+        # Si DRF n'a pas authentifié, essayer le token JWT directement
+        if not user or not user.is_authenticated:
+            user_from_token, _ = get_authenticated_user_from_token(request)
+            if user_from_token:
+                user = user_from_token
+                user_email = user.email if hasattr(user, 'email') else 'unknown'
+        else:
+            user_email = user.email if hasattr(user, 'email') else 'unknown'
         
         has_auth_header = 'HTTP_AUTHORIZATION' in request.META or 'Authorization' in request.headers
         auth_header_preview = ''
@@ -704,6 +713,16 @@ class SystemSettingsViewSet(viewsets.ModelViewSet):
         
         # Vérification sécurisée depuis le token JWT uniquement
         is_super_admin = is_super_admin_from_token(request)
+        
+        # Fallback: vérifier depuis user si disponible
+        if not is_super_admin and user:
+            try:
+                if hasattr(user, 'is_super_admin') and callable(user.is_super_admin):
+                    is_super_admin = user.is_super_admin()
+                elif hasattr(user, 'is_superuser'):
+                    is_super_admin = user.is_superuser
+            except Exception as e:
+                logger.warning(f"Error checking super admin from user: {e}")
         
         logger.info(
             f"SystemSettingsViewSet.partial_update: user={user_email}, "
