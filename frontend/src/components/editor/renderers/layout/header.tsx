@@ -10,10 +10,11 @@ import { useTheme } from '@/contexts/ThemeContext'
 import authService from '@/services/auth.service'
 
 export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
-  const headerLinks = block.data.links || []
-  const logoText = block.data.logo_text || 'VTCBuilder'
-  const logoUrl = block.data.logo_url || '/'
-  const showThemeToggle = block.data.show_theme_toggle !== false
+  const safeBlock = { ...block, data: block.data || {} }
+  const headerLinks = safeBlock.data.links || []
+  const logoText = safeBlock.data.logo_text || 'VTCBuilder'
+  const logoUrl = safeBlock.data.logo_url || '/'
+  const showThemeToggle = safeBlock.data.show_theme_toggle !== false
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
@@ -36,13 +37,13 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
     <header 
       style={{
         ...(wrapperStyles || {}),
-        position: block.data.sticky ? 'sticky' : 'static',
-        top: block.data.sticky ? '0' : undefined,
-        zIndex: block.data.sticky ? 50 : undefined,
+        position: safeBlock.data.sticky ? 'sticky' : 'static',
+        top: safeBlock.data.sticky ? '0' : undefined,
+        zIndex: safeBlock.data.sticky ? 50 : undefined,
         marginLeft: 0,
         marginRight: 0,
       }}
-      className={`transition-colors duration-300 ${block.data.sticky ? 'sticky top-0 z-50' : ''} ${
+      className={`transition-colors duration-300 ${safeBlock.data.sticky ? 'sticky top-0 z-50' : ''} ${
         block.styles?.background_color || block.styles?.backgroundColor
           ? ''
           : currentTheme === 'dark'
@@ -53,19 +54,19 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between gap-4">
           <Link href={logoUrl} className="flex items-center space-x-2 flex-shrink-0">
-            {block.data.logo_image && (
-              <img src={block.data.logo_image} alt={logoText} className="h-6 sm:h-8 w-auto flex-shrink-0" />
+            {safeBlock.data.logo_image && (
+              <img src={safeBlock.data.logo_image} alt={logoText} className="h-6 sm:h-8 w-auto flex-shrink-0" />
             )}
             <h1 className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${
               currentTheme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
               {logoText}
             </h1>
-            {block.data.badge && (
+            {safeBlock.data.badge && (
               <span className={`text-xs whitespace-nowrap ${
                 currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
               }`}>
-                {block.data.badge}
+                {safeBlock.data.badge}
               </span>
             )}
           </Link>

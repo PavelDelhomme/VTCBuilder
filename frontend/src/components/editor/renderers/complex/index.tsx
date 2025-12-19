@@ -8,6 +8,7 @@ import { RendererProps } from './types'
 import { useTheme } from '@/contexts/ThemeContext'
 
 export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
+  const safeBlock = { ...block, data: block.data || {} }
   const { resolvedTheme } = useTheme()
   const currentTheme = resolvedTheme || theme || 'light'
   // Convertir le gradient Tailwind en CSS gradient
@@ -35,47 +36,47 @@ export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): Reac
   
   // Déterminer le fond selon le type
   let heroBg = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' // Par défaut
-  const heroPreviewBackgroundType = block.data.background_type || (block.data.background_image ? 'image' : 'gradient')
+  const heroPreviewBackgroundType = safeBlock.data.background_type || (safeBlock.data.background_image ? 'image' : 'gradient')
   
-  if (heroPreviewBackgroundType === 'image' && block.data.background_image) {
-    heroBg = `url(${block.data.background_image})`
-  } else if (heroPreviewBackgroundType === 'color' && block.data.background_color) {
-    heroBg = block.data.background_color
-  } else if (heroPreviewBackgroundType === 'gradient' && block.data.background_gradient) {
-    heroBg = getGradientFromTailwind(block.data.background_gradient)
-  } else if (block.data.background_gradient) {
+  if (heroPreviewBackgroundType === 'image' && safeBlock.data.background_image) {
+    heroBg = `url(${safeBlock.data.background_image})`
+  } else if (heroPreviewBackgroundType === 'color' && safeBlock.data.background_color) {
+    heroBg = safeBlock.data.background_color
+  } else if (heroPreviewBackgroundType === 'gradient' && safeBlock.data.background_gradient) {
+    heroBg = getGradientFromTailwind(safeBlock.data.background_gradient)
+  } else if (safeBlock.data.background_gradient) {
     // Fallback pour l'ancien format
-    heroBg = getGradientFromTailwind(block.data.background_gradient)
-  } else if (block.data.background_image) {
+    heroBg = getGradientFromTailwind(safeBlock.data.background_gradient)
+  } else if (safeBlock.data.background_image) {
     // Fallback pour l'ancien format
-    heroBg = `url(${block.data.background_image})`
+    heroBg = `url(${safeBlock.data.background_image})`
   }
   
   // Construire les boutons depuis primary_button_text/link et secondary_button_text/link
   const heroButtons: Array<{ text: string; url: string; style: 'primary' | 'secondary' }> = []
-  if (block.data.primary_button_text && block.data.primary_button_link) {
+  if (safeBlock.data.primary_button_text && safeBlock.data.primary_button_link) {
     heroButtons.push({
-      text: block.data.primary_button_text,
-      url: block.data.primary_button_link,
+      text: safeBlock.data.primary_button_text,
+      url: safeBlock.data.primary_button_link,
       style: 'primary'
     })
   }
-  if (block.data.secondary_button_text && block.data.secondary_button_link) {
+  if (safeBlock.data.secondary_button_text && safeBlock.data.secondary_button_link) {
     heroButtons.push({
-      text: block.data.secondary_button_text,
-      url: block.data.secondary_button_link,
+      text: safeBlock.data.secondary_button_text,
+      url: safeBlock.data.secondary_button_link,
       style: 'secondary'
     })
   }
   
   // Fallback vers l'ancien format si les nouveaux champs ne sont pas définis
   if (heroButtons.length === 0) {
-    if (block.data.buttons && Array.isArray(block.data.buttons) && block.data.buttons.length > 0) {
-      heroButtons.push(...block.data.buttons)
-    } else if (block.data.button_text) {
+    if (safeBlock.data.buttons && Array.isArray(safeBlock.data.buttons) && safeBlock.data.buttons.length > 0) {
+      heroButtons.push(...safeBlock.data.buttons)
+    } else if (safeBlock.data.button_text) {
       heroButtons.push({
-        text: block.data.button_text,
-        url: block.data.button_url || '#',
+        text: safeBlock.data.button_text,
+        url: safeBlock.data.button_url || '#',
         style: 'primary'
       })
     } else {
@@ -89,7 +90,7 @@ export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): Reac
   
   // Déterminer le fond selon le thème si aucun fond personnalisé n'est défini
   let finalBg = heroBg
-  if (!block.data.background_type && !block.data.background_image && !block.data.background_color && !block.data.background_gradient) {
+  if (!safeBlock.data.background_type && !safeBlock.data.background_image && !safeBlock.data.background_color && !safeBlock.data.background_gradient) {
     // Utiliser le gradient par défaut selon le thème (comme sur localhost:9494)
     if (currentTheme === 'dark') {
       finalBg = 'linear-gradient(135deg, #111827 0%, #1f2937 50%, #111827 100%)'
@@ -101,7 +102,7 @@ export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): Reac
   return (
     <section 
       className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 text-center transition-colors duration-300 ${
-        !block.data.background_type && !block.data.background_image && !block.data.background_color && !block.data.background_gradient
+        !safeBlock.data.background_type && !safeBlock.data.background_image && !safeBlock.data.background_color && !safeBlock.data.background_gradient
           ? currentTheme === 'dark'
             ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
             : 'bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500'
@@ -113,7 +114,7 @@ export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): Reac
             !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'color'].includes(key)
           )
         ) : {}),
-        ...(block.data.background_type || block.data.background_image || block.data.background_color || block.data.background_gradient ? {
+        ...(safeBlock.data.background_type || safeBlock.data.background_image || safeBlock.data.background_color || safeBlock.data.background_gradient ? {
           background: finalBg,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -124,13 +125,13 @@ export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): Reac
       <h1 className={`text-4xl md:text-6xl font-extrabold mb-6 ${
         currentTheme === 'dark' ? 'text-white' : 'text-white'
       }`}>
-        {block.data.title || 'Hero Title'}
+        {safeBlock.data.title || 'Hero Title'}
       </h1>
-      {block.data.subtitle && (
+      {safeBlock.data.subtitle && (
         <p className={`text-xl md:text-2xl mb-8 max-w-3xl mx-auto ${
           currentTheme === 'dark' ? 'text-white/90' : 'text-white/90'
         }`}>
-          {block.data.subtitle}
+          {safeBlock.data.subtitle}
         </p>
       )}
       {heroButtons.length > 0 && (
@@ -170,8 +171,8 @@ export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): Reac
 }
 
 export const renderFeaturesGrid = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
-  const features = block.data.features || []
-  const columns = block.data.columns || 3
+  const features = safeBlock.data.features || []
+  const columns = safeBlock.data.columns || 3
   const isDark = theme === 'dark'
   // Déterminer les classes de grille en fonction du nombre de colonnes avec responsive amélioré
   const gridClasses = {
@@ -191,12 +192,12 @@ export const renderFeaturesGrid = ({ block, wrapperStyles, theme }: RendererProp
       }} 
       className="mb-6 w-full min-w-0 overflow-hidden"
     >
-      {block.data.title && (
+      {safeBlock.data.title && (
         <h2 
           className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12 px-4"
           style={{ color: isDark ? '#f9fafb' : '#111827' }}
         >
-          {block.data.title}
+          {safeBlock.data.title}
         </h2>
       )}
       <div className={`grid ${gridClasses} gap-4 sm:gap-6 lg:gap-8 w-full min-w-0`}>

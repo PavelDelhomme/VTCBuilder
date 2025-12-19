@@ -6,12 +6,13 @@ import React from 'react'
 import { RendererProps } from '../types'
 
 export const renderFooter = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
-  const footerColumns = block.data.columns || []
+  const safeBlock = { ...block, data: block.data || {} }
+  const footerColumns = safeBlock.data.columns || []
   const currentYear = new Date().getFullYear()
-  const defaultCopyright = block.data.copyright || `© ${currentYear} VTCBuilder. Tous droits réservés.`
-  const defaultAdditionalText = block.data.additional_text || 'vtcbuilder.com - Développé avec ❤️ en France'
-  const footerTitle = block.data.title || 'VTCBuilder'
-  const footerDescription = block.data.description || 'La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.'
+  const defaultCopyright = safeBlock.data.copyright || `© ${currentYear} VTCBuilder. Tous droits réservés.`
+  const defaultAdditionalText = safeBlock.data.additional_text || 'vtcbuilder.com - Développé avec ❤️ en France'
+  const footerTitle = safeBlock.data.title || 'VTCBuilder'
+  const footerDescription = safeBlock.data.description || 'La plateforme SaaS complète pour créer et gérer votre site VTC professionnel.'
   const supportDarkMode = block.styles?.support_dark_mode !== false
   const footerIsDark = theme === 'dark' && supportDarkMode
   
