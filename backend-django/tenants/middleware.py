@@ -22,22 +22,26 @@ class UserStatusMiddleware:
 
         # Skip authentication check for public endpoints
         public_paths = [
-            '/api/auth/login/',
-            '/api/auth/register/',
-            '/api/auth/register-with-plan/',
-            '/api/auth/logout/',  # Allow logout even if suspended
-            '/api/auth/reset-password/request/',
-            '/api/auth/reset-password/reset/',
-            '/api/auth/reset-password/verify/',
-            '/api/auth/invitation/verify/',
-            '/api/auth/invitation/complete/',
-            '/api/analytics/block-usage/',  # Allow analytics tracking without auth
-            '/api/users/impersonation-status/',  # Allow checking impersonation status without auth
-            '/api/blocks/types/',  # Allow viewing block types without auth
-            '/api/system-settings/',  # Allow viewing system settings without auth (GET only)
+            '/api/auth/login',
+            '/api/auth/register',
+            '/api/auth/register-with-plan',
+            '/api/auth/logout',  # Allow logout even if suspended
+            '/api/auth/reset-password/request',
+            '/api/auth/reset-password/reset',
+            '/api/auth/reset-password/verify',
+            '/api/auth/invitation/verify',
+            '/api/auth/invitation/complete',
+            '/api/analytics/block-usage',  # Allow analytics tracking without auth
+            '/api/users/impersonation-status',  # Allow checking impersonation status without auth
+            '/api/blocks/types',  # Allow viewing block types without auth
+            '/api/system-settings',  # Allow viewing system settings without auth (GET only)
         ]
 
-        if any(request.path.startswith(path) for path in public_paths):
+        # Check if path matches any public path (with or without trailing slash, with or without query params)
+        path_without_query = request.path.split('?')[0]  # Remove query params
+        path_normalized = path_without_query.rstrip('/')  # Remove trailing slash
+        
+        if any(path_normalized.startswith(path.rstrip('/')) for path in public_paths):
             return self.get_response(request)
 
         # Check user status for authenticated requests
@@ -66,7 +70,7 @@ class UserStatusMiddleware:
                             f"is_super_admin={is_super_admin}, status={user.status if hasattr(user, 'status') else 'unknown'}"
                         )
                         
-                        # Super admin can always access
+                        # Super admin can always access - IMPORTANT: Allow super admin before checking status
                         if is_super_admin:
                             logger.info(f"UserStatusMiddleware: Allowing access for super admin to {request.path}")
                             return self.get_response(request)

@@ -18,9 +18,11 @@ class IsAuthenticatedOrOptions(BasePermission):
     """
     Permission class that allows OPTIONS requests without authentication
     but requires authentication for all other methods.
+    Also allows super admins even if DRF authentication is not complete.
     """
     def has_permission(self, request, view):
         import logging
+        from api.utils import get_authenticated_user_from_token, is_super_admin_from_token
         logger = logging.getLogger(__name__)
         
         # Log pour debug - AVANT toute vérification
@@ -39,6 +41,20 @@ class IsAuthenticatedOrOptions(BasePermission):
         # For all other methods, require authentication
         user = request.user
         is_authenticated = user and user.is_authenticated
+        
+        # Si DRF n'a pas authentifié, essayer le token JWT directement
+        if not is_authenticated:
+            user_from_token, auth_error = get_authenticated_user_from_token(request)
+            if user_from_token and not auth_error:
+                # Vérifier si c'est un super admin
+                is_super_admin = is_super_admin_from_token(request)
+                if is_super_admin:
+                    logger.info(
+                        f"IsAuthenticatedOrOptions: Permission granted for super admin (from token) for {request.method} {request.path}. "
+                        f"User: {user_from_token.email if hasattr(user_from_token, 'email') else 'unknown'}, "
+                        f"action={action_name}"
+                    )
+                    return True
         
         # Log détaillé pour debug
         if not is_authenticated:

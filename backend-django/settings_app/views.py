@@ -37,7 +37,7 @@ class IsSuperAdminOrReadOnly(BasePermission):
     """
     def has_permission(self, request, view):
         import logging
-        from api.utils import is_super_admin_from_token
+        from api.utils import is_super_admin_from_token, get_authenticated_user_from_token
         logger = logging.getLogger(__name__)
         
         # Allow OPTIONS requests without authentication (for CORS preflight)
@@ -51,20 +51,35 @@ class IsSuperAdminOrReadOnly(BasePermission):
             return True
         
         # For all other methods (POST, PATCH, PUT, DELETE), require super admin
-        is_super_admin = is_super_admin_from_token(request)
+        # Vérifier d'abord depuis request.user (DRF peut avoir authentifié)
+        is_super_admin = False
+        user_email = 'unknown'
+        
+        # Si DRF a authentifié, vérifier depuis request.user
+        if request.user and request.user.is_authenticated:
+            try:
+                if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
+                    is_super_admin = request.user.is_super_admin()
+                elif hasattr(request.user, 'is_superuser'):
+                    is_super_admin = request.user.is_superuser
+                user_email = request.user.email if hasattr(request.user, 'email') else 'unknown'
+            except Exception as e:
+                logger.warning(f"Error checking super admin from request.user: {e}")
+        
+        # Si pas encore vérifié, essayer depuis le token JWT directement
+        if not is_super_admin:
+            is_super_admin = is_super_admin_from_token(request)
+            if is_super_admin:
+                user_from_token, _ = get_authenticated_user_from_token(request)
+                if user_from_token:
+                    user_email = user_from_token.email if hasattr(user_from_token, 'email') else 'unknown'
         
         if not is_super_admin:
-            user_email = 'unknown'
-            if request.user and hasattr(request.user, 'email'):
-                user_email = request.user.email
             logger.warning(
                 f"IsSuperAdminOrReadOnly: Permission denied for {request.method} {request.path}. "
                 f"User: {user_email} is not super admin (verified from JWT token)."
             )
         else:
-            user_email = 'unknown'
-            if request.user and hasattr(request.user, 'email'):
-                user_email = request.user.email
             logger.info(
                 f"IsSuperAdminOrReadOnly: Permission granted for {request.method} {request.path}. "
                 f"User: {user_email} is super admin (verified from JWT token)."
