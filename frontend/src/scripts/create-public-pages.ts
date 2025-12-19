@@ -269,6 +269,7 @@ function createTemplatesPage(): PageDefinition {
 
 /**
  * Crée les blocs pour la page Contact
+ * Structure: Hero > Container (2 colonnes: Formulaire + Infos contact)
  */
 function createContactPage(): PageDefinition {
   const now = Date.now()
@@ -294,8 +295,8 @@ function createContactPage(): PageDefinition {
           background_color: '#1f2937',
           color: '#ffffff',
           text_align: 'center',
-          padding_top: '4rem',
-          padding_bottom: '4rem',
+          padding_top: '5rem',
+          padding_bottom: '5rem',
         },
         layout: 12,
         children: []
@@ -303,22 +304,32 @@ function createContactPage(): PageDefinition {
       {
         id: `block-${now}-2`,
         type: 'container',
-        data: {},
+        data: {
+          max_width: 'max-w-7xl',
+          padding: 'px-4 sm:px-6 lg:px-8',
+          margin: 'mx-auto'
+        },
         styles: {
-          background_color: '#ffffff',
-          padding_top: '4rem',
-          padding_bottom: '4rem',
+          maxWidth: '80rem',
+          margin: '0 auto',
+          padding: '5rem 1rem',
+          background_color: 'transparent'
         },
         layout: 12,
         children: [
           {
             id: `block-${now}-3`,
             type: 'container',
-            data: {},
+            data: {
+              max_width: '',
+              padding: 'p-8',
+              margin: ''
+            },
             styles: {
               background_color: '#ffffff',
-              padding_top: '0',
-              padding_bottom: '0',
+              borderRadius: '0.75rem',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+              padding: '2rem'
             },
             layout: 6,
             children: [
@@ -333,6 +344,8 @@ function createContactPage(): PageDefinition {
                   text_align: 'left',
                   color: '#111827',
                   margin_bottom: '1.5rem',
+                  fontSize: '1.5rem',
+                  fontWeight: 'bold'
                 },
                 layout: 12,
                 children: []
@@ -341,16 +354,20 @@ function createContactPage(): PageDefinition {
                 id: `block-${now}-5`,
                 type: 'contact-form',
                 data: {
+                  title: '',
+                  description: '',
                   form_fields: [
-                    { name: 'name', label: 'Nom complet', type: 'text', required: true },
-                    { name: 'email', label: 'Email', type: 'email', required: true },
-                    { name: 'subject', label: 'Sujet', type: 'select', required: true, options: ['Support technique', 'Question commerciale', 'Question de facturation', 'Suggestion de fonctionnalité', 'Autre'] },
-                    { name: 'message', label: 'Message', type: 'textarea', required: true },
+                    { name: 'name', label: 'Nom complet *', type: 'text', required: true, placeholder: 'Votre nom complet' },
+                    { name: 'email', label: 'Email *', type: 'email', required: true, placeholder: 'votre@email.com' },
+                    { name: 'subject', label: 'Sujet *', type: 'select', required: true, placeholder: 'Sélectionnez un sujet', options: ['Support technique', 'Question commerciale', 'Question de facturation', 'Suggestion de fonctionnalité', 'Autre'] },
+                    { name: 'message', label: 'Message *', type: 'textarea', required: true, placeholder: 'Votre message...', rows: 6 },
                   ],
                   submit_text: 'Envoyer le message',
+                  submit_button_style: 'primary'
                 },
                 styles: {
-                  background_color: '#ffffff',
+                  background_color: 'transparent',
+                  padding: '0'
                 },
                 layout: 12,
                 children: []
@@ -360,70 +377,146 @@ function createContactPage(): PageDefinition {
           {
             id: `block-${now}-6`,
             type: 'container',
-            data: {},
+            data: {
+              max_width: '',
+              padding: 'p-8',
+              margin: ''
+            },
             styles: {
-              background_color: '#ffffff',
-              padding_top: '0',
-              padding_bottom: '0',
+              background_color: 'transparent',
+              padding: '0'
             },
             layout: 6,
             children: [
               {
                 id: `block-${now}-7`,
-                type: 'heading',
+                type: 'container',
                 data: {
-                  text: 'Nos coordonnées',
-                  level: 2,
+                  max_width: '',
+                  padding: 'p-8',
+                  margin: ''
                 },
                 styles: {
-                  text_align: 'left',
-                  color: '#111827',
-                  margin_bottom: '1.5rem',
+                  background_color: '#ffffff',
+                  borderRadius: '0.75rem',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                  padding: '2rem',
+                  margin_bottom: '2rem'
                 },
                 layout: 12,
-                children: []
-              },
-              {
-                id: `block-${now}-8`,
-                type: 'text',
-                data: {
-                  content: '📧 **Email**\nsupport@vtcbuilder.com\n\n📞 **Téléphone**\n+33 1 23 45 67 89\n\n📍 **Adresse**\n123 Avenue des Exemples\n75000 PARIS\nFrance',
-                },
-                styles: {
-                  text_align: 'left',
-                  color: '#374151',
-                  margin_bottom: '2rem',
-                },
-                layout: 12,
-                children: []
-              },
-              {
-                id: `block-${now}-9`,
-                type: 'heading',
-                data: {
-                  text: 'Horaires de support',
-                  level: 3,
-                },
-                styles: {
-                  text_align: 'left',
-                  color: '#111827',
-                  margin_bottom: '1rem',
-                },
-                layout: 12,
-                children: []
+                children: [
+                  {
+                    id: `block-${now}-8`,
+                    type: 'heading',
+                    data: {
+                      text: 'Nos coordonnées',
+                      level: 2,
+                    },
+                    styles: {
+                      text_align: 'left',
+                      color: '#111827',
+                      margin_bottom: '1.5rem',
+                      fontSize: '1.5rem',
+                      fontWeight: 'bold'
+                    },
+                    layout: 12,
+                    children: []
+                  },
+                  {
+                    id: `block-${now}-9`,
+                    type: 'text',
+                    data: {
+                      content: '📧 **Email**\n[support@vtcbuilder.com](mailto:support@vtcbuilder.com)\n\n📞 **Téléphone**\n[+33 1 23 45 67 89](tel:+33123456789)\n\n📍 **Adresse**\n123 Avenue des Exemples\n75000 PARIS\nFrance',
+                    },
+                    styles: {
+                      text_align: 'left',
+                      color: '#374151',
+                      margin_bottom: '0'
+                    },
+                    layout: 12,
+                    children: []
+                  }
+                ]
               },
               {
                 id: `block-${now}-10`,
-                type: 'text',
+                type: 'container',
                 data: {
-                  content: 'Lundi - Vendredi: 9h - 18h\nSamedi: 10h - 16h\nDimanche: Fermé',
+                  max_width: '',
+                  padding: 'p-8',
+                  margin: ''
                 },
                 styles: {
-                  text_align: 'left',
-                  color: '#374151',
+                  background_color: '#ffffff',
+                  borderRadius: '0.75rem',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                  padding: '2rem',
+                  margin_bottom: '2rem'
                 },
                 layout: 12,
-                children: []
+                children: [
+                  {
+                    id: `block-${now}-11`,
+                    type: 'heading',
+                    data: {
+                      text: 'Horaires de support',
+                      level: 3,
+                    },
+                    styles: {
+                      text_align: 'left',
+                      color: '#111827',
+                      margin_bottom: '1rem',
+                      fontSize: '1.25rem',
+                      fontWeight: 'bold'
+                    },
+                    layout: 12,
+                    children: []
+                  },
+                  {
+                    id: `block-${now}-12`,
+                    type: 'text',
+                    data: {
+                      content: '**Lundi - Vendredi**\n9h - 18h\n\n**Samedi**\n10h - 16h\n\n**Dimanche**\nFermé',
+                    },
+                    styles: {
+                      text_align: 'left',
+                      color: '#374151',
+                    },
+                    layout: 12,
+                    children: []
+                  }
+                ]
+              },
+              {
+                id: `block-${now}-13`,
+                type: 'container',
+                data: {
+                  max_width: '',
+                  padding: 'p-6',
+                  margin: ''
+                },
+                styles: {
+                  background_color: '#dbeafe',
+                  borderRadius: '0.75rem',
+                  padding: '1.5rem'
+                },
+                layout: 12,
+                children: [
+                  {
+                    id: `block-${now}-14`,
+                    type: 'text',
+                    data: {
+                      content: '💡 **Conseil**\n\nPour une réponse plus rapide, consultez d\'abord notre [FAQ](/faq) ou notre [documentation](/docs).',
+                    },
+                    styles: {
+                      text_align: 'left',
+                      color: '#1e40af',
+                      fontSize: '0.875rem'
+                    },
+                    layout: 12,
+                    children: []
+                  }
+                ]
               }
             ]
           }
