@@ -755,43 +755,100 @@ export default function EditPublicPage() {
           const now = Date.now()
           
           if (pageSlug === 'docs') {
-            // Page de documentation avec structure par défaut
-            pageData = {
-              ...pageData,
-              blocks: [
+            // Page de documentation avec structure par défaut (comme sur localhost:9494/docs)
+            // Hero + Grid de catégories de documentation
+            const docsHero = {
+              id: `docs-hero-${now}`,
+              type: 'hero',
+              layout: 12,
+              data: {
+                title: 'Documentation',
+                subtitle: 'Tout ce dont vous avez besoin pour créer et gérer votre site VTC professionnel',
+                buttons: [],
+                background_type: 'solid',
+                background_color: '#1f2937'
+              },
+              styles: {
+                background_color: '#1f2937',
+                color: '#ffffff',
+                text_align: 'center',
+                padding: 'py-20'
+              }
+            }
+            
+            // Container principal pour la grille de documentation
+            const docsContainer = {
+              id: `docs-container-${now}`,
+              type: 'container',
+              layout: 12,
+              data: {
+                max_width: 'max-w-7xl',
+                padding: 'px-4 sm:px-6 lg:px-8',
+                margin: 'mx-auto'
+              },
+              styles: {
+                maxWidth: '80rem',
+                margin: '0 auto',
+                padding: '5rem 1rem',
+                background_color: 'transparent'
+              },
+              children: [
                 {
-                  id: `docs-hero-${now}`,
-                  type: 'heading',
+                  id: `docs-grid-${now}`,
+                  type: 'features-grid',
+                  layout: 12,
                   data: {
-                    text: 'Documentation VTCBuilder',
-                    level: 1
+                    title: '',
+                    columns: 3,
+                    features: [
+                      {
+                        icon: '🚀',
+                        title: 'Premiers pas',
+                        description: 'Créez votre compte, configurez votre site et acceptez votre première réservation'
+                      },
+                      {
+                        icon: '🎨',
+                        title: 'Gestion du site',
+                        description: 'Créez des pages, personnalisez le design et gérez votre contenu'
+                      },
+                      {
+                        icon: '📅',
+                        title: 'Réservations',
+                        description: 'Configurez votre calendrier, gérez les réservations et les notifications'
+                      },
+                      {
+                        icon: '🚗',
+                        title: 'Services VTC',
+                        description: 'Créez vos services, gérez votre flotte et planifiez vos courses'
+                      },
+                      {
+                        icon: '💳',
+                        title: 'Facturation',
+                        description: 'Configurez les paiements, gérez les abonnements et les factures'
+                      },
+                      {
+                        icon: '👥',
+                        title: 'Équipe',
+                        description: 'Ajoutez des utilisateurs, gérez les rôles et communiquez avec votre équipe'
+                      },
+                      {
+                        icon: '⚙️',
+                        title: 'Avancé',
+                        description: 'Nom de domaine personnalisé, API, intégrations et personnalisation avancée'
+                      }
+                    ]
                   },
                   styles: {
-                    padding: 'py-8',
-                    textAlign: 'center'
-                  }
-                },
-                {
-                  id: `docs-intro-${now}`,
-                  type: 'text',
-                  data: {
-                    content: 'Bienvenue dans la documentation de VTCBuilder. Découvrez comment utiliser toutes les fonctionnalités de la plateforme pour créer et gérer votre site VTC professionnel.'
-                  },
-                  styles: {
-                    padding: 'pb-6'
-                  }
-                },
-                {
-                  id: `docs-content-${now}`,
-                  type: 'rich-text',
-                  data: {
-                    content: '<h2>Guide de démarrage</h2><p>Commencez par créer votre compte et configurer votre premier site.</p><h2>Fonctionnalités</h2><p>Explorez toutes les fonctionnalités disponibles pour votre site VTC.</p>'
-                  },
-                  styles: {
-                    padding: 'py-6'
+                    background_color: 'transparent',
+                    padding: 'py-8'
                   }
                 }
               ]
+            }
+            
+            pageData = {
+              ...pageData,
+              blocks: [docsHero, docsContainer]
             }
           } else if (pageSlug === 'contact') {
             // Page de contact avec formulaire
