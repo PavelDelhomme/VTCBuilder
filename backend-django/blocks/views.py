@@ -142,8 +142,28 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
                 add_cors_headers(error_response, request)
                 return error_response
             
-            # Auto-create default blocks if none exist (only for authenticated users)
-            if request.user and request.user.is_authenticated and not BlockType.objects.exists():
+            # Vérifier l'authentification et le super admin depuis le token JWT
+            from api.utils import get_authenticated_user_from_token, is_super_admin_from_token
+            user = request.user
+            is_authenticated = user and user.is_authenticated
+            
+            # Si DRF n'a pas authentifié, essayer le token JWT directement
+            if not is_authenticated:
+                user_from_token, _ = get_authenticated_user_from_token(request)
+                if user_from_token:
+                    user = user_from_token
+                    is_authenticated = True
+            
+            # Vérifier si c'est un super admin
+            is_super_admin = is_super_admin_from_token(request)
+            if not is_super_admin and user and hasattr(user, 'is_super_admin'):
+                try:
+                    is_super_admin = user.is_super_admin()
+                except Exception:
+                    pass
+            
+            # Auto-create default blocks if none exist (for authenticated users or super admins)
+            if (is_authenticated or is_super_admin) and not BlockType.objects.exists():
                 logger.info("No block types found, creating default blocks...")
                 try:
                     from django.core.management import call_command
@@ -153,16 +173,8 @@ class BlockTypeViewSet(CORSMixin, viewsets.ModelViewSet):
                     logger.error(f"Error creating default block types: {e}", exc_info=True)
                     # Continue anyway - will return empty list
             
-            # Get queryset - if not authenticated, return only active block types
-            if not request.user or not request.user.is_authenticated:
-                queryset = BlockType.objects.filter(is_active=True)
-                # Filter by category if provided
-                category = request.query_params.get('category')
-                if category:
-                    queryset = queryset.filter(category=category)
-                queryset = queryset.order_by('category', 'order', 'label')
-            else:
-                queryset = self.get_queryset()
+            # Get queryset - utiliser get_queryset qui gère maintenant le super admin
+            queryset = self.get_queryset()
             
             # Pagination
             page = self.paginate_queryset(queryset)
