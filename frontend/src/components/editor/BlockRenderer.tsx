@@ -105,7 +105,7 @@ import {
   renderAccordion,
   renderStats,
   renderSocialLinks,
-} from './renderers/complex'
+} from './renderers/complex/ComplexRenderers'
 
 export function BlockRenderer({
   block,
