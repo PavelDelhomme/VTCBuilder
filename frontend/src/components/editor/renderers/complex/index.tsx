@@ -5,6 +5,7 @@
 
 // Réexporter depuis ComplexRenderers.tsx (pour l'éditeur)
 export * from './ComplexRenderers'
+export { renderFAQ } from './ComplexRenderers'
 
 // Réexporter les fonctions de preview depuis preview.tsx (pour BlockPreview)
 export { renderHero, renderFeaturesGrid } from './preview'

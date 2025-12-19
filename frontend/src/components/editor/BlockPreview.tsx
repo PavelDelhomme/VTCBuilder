@@ -3155,11 +3155,12 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       return renderContactForm({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
     }
 
+    case 'faq':
     case 'faq-section': {
-      const faqItems = block.data.items || []
+      const faqItems = block.data?.items || []
       return (
         <FAQSectionPreview 
-          title={block.data.title}
+          title={block.data?.title}
           items={faqItems}
           wrapperStyles={wrapperStyles}
           theme={theme}

@@ -105,6 +105,7 @@ import {
   renderAccordion,
   renderStats,
   renderSocialLinks,
+  renderFAQ,
 } from './renderers/complex/ComplexRenderers'
 
 export function BlockRenderer({
@@ -702,6 +703,9 @@ export function BlockRenderer({
       return renderTimeline({ block, onUpdate })
     case 'accordion':
       return renderAccordion({ block, onUpdate })
+    case 'faq':
+    case 'faq-section':
+      return renderFAQ({ block, onUpdate })
     case 'stats':
       return renderStats({ block, onUpdate })
     case 'social-links':
