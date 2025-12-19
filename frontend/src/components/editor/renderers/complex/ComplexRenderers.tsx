@@ -1109,77 +1109,103 @@ export function renderTestimonials({ block, onUpdate }: ComplexRendererProps) {
           placeholder="Témoignages de nos clients"
         />
       </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Témoignages ({testimonials.length})
-        </label>
-        <div className="space-y-2 max-h-64 overflow-y-auto">
+      <CollapsibleSection title="Témoignages" count={testimonials.length} defaultCollapsed={false}>
+        <div className="space-y-3">
           {testimonials.map((testimonial: any, index: number) => (
-            <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
-              <input
-                type="text"
-                value={testimonial.name || ''}
-                onChange={(e) => {
-                  const newTestimonials = [...testimonials]
-                  newTestimonials[index] = { ...testimonial, name: e.target.value }
-                  onUpdate({ data: { ...block.data, testimonials: newTestimonials } })
-                }}
-                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="Nom"
-              />
-              <input
-                type="text"
-                value={testimonial.role || ''}
-                onChange={(e) => {
-                  const newTestimonials = [...testimonials]
-                  newTestimonials[index] = { ...testimonial, role: e.target.value }
-                  onUpdate({ data: { ...block.data, testimonials: newTestimonials } })
-                }}
-                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="Rôle/Poste"
-              />
-              <textarea
-                value={testimonial.content || ''}
-                onChange={(e) => {
-                  const newTestimonials = [...testimonials]
-                  newTestimonials[index] = { ...testimonial, content: e.target.value }
-                  onUpdate({ data: { ...block.data, testimonials: newTestimonials } })
-                }}
-                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="Témoignage"
-                rows={2}
-              />
-              <input
-                type="url"
-                value={testimonial.avatar || ''}
-                onChange={(e) => {
-                  const newTestimonials = [...testimonials]
-                  newTestimonials[index] = { ...testimonial, avatar: e.target.value }
-                  onUpdate({ data: { ...block.data, testimonials: newTestimonials } })
-                }}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="URL avatar (optionnel)"
-              />
+            <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Témoignage {index + 1}</span>
+                <button
+                  onClick={() => {
+                    const newTestimonials = testimonials.filter((_: any, i: number) => i !== index)
+                    onUpdate({ data: { ...safeBlock.data, testimonials: newTestimonials } })
+                  }}
+                  className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                  title="Supprimer ce témoignage"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Supprimer
+                </button>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Nom
+                </label>
+                <input
+                  type="text"
+                  value={testimonial.name || ''}
+                  onChange={(e) => {
+                    const newTestimonials = [...testimonials]
+                    newTestimonials[index] = { ...testimonial, name: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, testimonials: newTestimonials } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Nom du client"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Rôle/Poste
+                </label>
+                <input
+                  type="text"
+                  value={testimonial.role || ''}
+                  onChange={(e) => {
+                    const newTestimonials = [...testimonials]
+                    newTestimonials[index] = { ...testimonial, role: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, testimonials: newTestimonials } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Rôle/Poste"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Témoignage
+                </label>
+                <textarea
+                  value={testimonial.content || ''}
+                  onChange={(e) => {
+                    const newTestimonials = [...testimonials]
+                    newTestimonials[index] = { ...testimonial, content: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, testimonials: newTestimonials } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Contenu du témoignage"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  URL Avatar (optionnel)
+                </label>
+                <ImageSelector
+                  value={testimonial.avatar || ''}
+                  onChange={(url) => {
+                    const newTestimonials = [...testimonials]
+                    newTestimonials[index] = { ...testimonial, avatar: url }
+                    onUpdate({ data: { ...safeBlock.data, testimonials: newTestimonials } })
+                  }}
+                  className="text-sm"
+                  projectId={1}
+                />
+              </div>
             </div>
           ))}
-        </div>
-        <div className="flex gap-2 mt-2">
           <button
-            onClick={() => onUpdate({ data: { ...block.data, testimonials: [...testimonials, { name: '', role: '', content: '', avatar: '' }] } })}
-            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => {
+              const newTestimonials = [...testimonials, { name: '', role: '', content: '', avatar: '' }]
+              onUpdate({ data: { ...safeBlock.data, testimonials: newTestimonials } })
+            }}
+            className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center gap-1"
           >
-            + Ajouter
+            <span>+</span>
+            <span>Ajouter un témoignage</span>
           </button>
-          {testimonials.length > 1 && (
-            <button
-              onClick={() => onUpdate({ data: { ...block.data, testimonials: testimonials.slice(0, -1) } })}
-              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              - Supprimer
-            </button>
-          )}
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   )
 }
@@ -1201,66 +1227,88 @@ export function renderTimeline({ block, onUpdate }: ComplexRendererProps) {
           placeholder="Notre histoire"
         />
       </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Événements ({events.length})
-        </label>
-        <div className="space-y-2 max-h-64 overflow-y-auto">
+      <CollapsibleSection title="Événements" count={events.length} defaultCollapsed={false}>
+        <div className="space-y-3">
           {events.map((event: any, index: number) => (
-            <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
-              <input
-                type="text"
-                value={event.date || ''}
-                onChange={(e) => {
-                  const newEvents = [...events]
-                  newEvents[index] = { ...event, date: e.target.value }
-                  onUpdate({ data: { ...block.data, events: newEvents } })
-                }}
-                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="Date (ex: 2024)"
-              />
-              <input
-                type="text"
-                value={event.title || ''}
-                onChange={(e) => {
-                  const newEvents = [...events]
-                  newEvents[index] = { ...event, title: e.target.value }
-                  onUpdate({ data: { ...block.data, events: newEvents } })
-                }}
-                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="Titre"
-              />
-              <textarea
-                value={event.description || ''}
-                onChange={(e) => {
-                  const newEvents = [...events]
-                  newEvents[index] = { ...event, description: e.target.value }
-                  onUpdate({ data: { ...block.data, events: newEvents } })
-                }}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="Description"
-                rows={2}
-              />
+            <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Événement {index + 1}</span>
+                <button
+                  onClick={() => {
+                    const newEvents = events.filter((_: any, i: number) => i !== index)
+                    onUpdate({ data: { ...safeBlock.data, events: newEvents } })
+                  }}
+                  className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                  title="Supprimer cet événement"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Supprimer
+                </button>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Date
+                </label>
+                <input
+                  type="text"
+                  value={event.date || ''}
+                  onChange={(e) => {
+                    const newEvents = [...events]
+                    newEvents[index] = { ...event, date: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, events: newEvents } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Date (ex: 2024)"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Titre
+                </label>
+                <input
+                  type="text"
+                  value={event.title || ''}
+                  onChange={(e) => {
+                    const newEvents = [...events]
+                    newEvents[index] = { ...event, title: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, events: newEvents } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Titre de l'événement"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={event.description || ''}
+                  onChange={(e) => {
+                    const newEvents = [...events]
+                    newEvents[index] = { ...event, description: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, events: newEvents } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Description de l'événement"
+                  rows={3}
+                />
+              </div>
             </div>
           ))}
-        </div>
-        <div className="flex gap-2 mt-2">
           <button
-            onClick={() => onUpdate({ data: { ...block.data, events: [...events, { date: '', title: '', description: '' }] } })}
-            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => {
+              const newEvents = [...events, { date: '', title: '', description: '' }]
+              onUpdate({ data: { ...safeBlock.data, events: newEvents } })
+            }}
+            className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center gap-1"
           >
-            + Ajouter
+            <span>+</span>
+            <span>Ajouter un événement</span>
           </button>
-          {events.length > 1 && (
-            <button
-              onClick={() => onUpdate({ data: { ...block.data, events: events.slice(0, -1) } })}
-              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              - Supprimer
-            </button>
-          )}
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   )
 }
@@ -1369,66 +1417,88 @@ export function renderStats({ block, onUpdate }: ComplexRendererProps) {
           placeholder="Nos statistiques"
         />
       </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Statistiques ({stats.length})
-        </label>
-        <div className="space-y-2 max-h-64 overflow-y-auto">
+      <CollapsibleSection title="Statistiques" count={stats.length} defaultCollapsed={false}>
+        <div className="space-y-3">
           {stats.map((stat: any, index: number) => (
-            <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
-              <input
-                type="text"
-                value={stat.value || ''}
-                onChange={(e) => {
-                  const newStats = [...stats]
-                  newStats[index] = { ...stat, value: e.target.value }
-                  onUpdate({ data: { ...block.data, stats: newStats } })
-                }}
-                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="Valeur (ex: 1000+)"
-              />
-              <input
-                type="text"
-                value={stat.label || ''}
-                onChange={(e) => {
-                  const newStats = [...stats]
-                  newStats[index] = { ...stat, label: e.target.value }
-                  onUpdate({ data: { ...block.data, stats: newStats } })
-                }}
-                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="Label (ex: Clients satisfaits)"
-              />
-              <input
-                type="text"
-                value={stat.icon || ''}
-                onChange={(e) => {
-                  const newStats = [...stats]
-                  newStats[index] = { ...stat, icon: e.target.value }
-                  onUpdate({ data: { ...block.data, stats: newStats } })
-                }}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="Icône emoji (ex: 👥)"
-              />
+            <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Statistique {index + 1}</span>
+                <button
+                  onClick={() => {
+                    const newStats = stats.filter((_: any, i: number) => i !== index)
+                    onUpdate({ data: { ...safeBlock.data, stats: newStats } })
+                  }}
+                  className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                  title="Supprimer cette statistique"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Supprimer
+                </button>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Valeur
+                </label>
+                <input
+                  type="text"
+                  value={stat.value || ''}
+                  onChange={(e) => {
+                    const newStats = [...stats]
+                    newStats[index] = { ...stat, value: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, stats: newStats } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Valeur (ex: 1000+)"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Label
+                </label>
+                <input
+                  type="text"
+                  value={stat.label || ''}
+                  onChange={(e) => {
+                    const newStats = [...stats]
+                    newStats[index] = { ...stat, label: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, stats: newStats } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Label (ex: Clients satisfaits)"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Icône (emoji)
+                </label>
+                <input
+                  type="text"
+                  value={stat.icon || ''}
+                  onChange={(e) => {
+                    const newStats = [...stats]
+                    newStats[index] = { ...stat, icon: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, stats: newStats } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Icône emoji (ex: 👥)"
+                />
+              </div>
             </div>
           ))}
-        </div>
-        <div className="flex gap-2 mt-2">
           <button
-            onClick={() => onUpdate({ data: { ...block.data, stats: [...stats, { label: '', value: '', icon: '' }] } })}
-            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => {
+              const newStats = [...stats, { label: '', value: '', icon: '' }]
+              onUpdate({ data: { ...safeBlock.data, stats: newStats } })
+            }}
+            className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center gap-1"
           >
-            + Ajouter
+            <span>+</span>
+            <span>Ajouter une statistique</span>
           </button>
-          {stats.length > 1 && (
-            <button
-              onClick={() => onUpdate({ data: { ...block.data, stats: stats.slice(0, -1) } })}
-              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              - Supprimer
-            </button>
-          )}
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   )
 }
@@ -1450,65 +1520,87 @@ export function renderSocialLinks({ block, onUpdate }: ComplexRendererProps) {
           placeholder="Suivez-nous"
         />
       </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Liens sociaux ({links.length})
-        </label>
-        <div className="space-y-2 max-h-64 overflow-y-auto">
+      <CollapsibleSection title="Liens sociaux" count={links.length} defaultCollapsed={false}>
+        <div className="space-y-3">
           {links.map((link: any, index: number) => (
-            <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
-              <input
-                type="text"
-                value={link.platform || ''}
-                onChange={(e) => {
-                  const newLinks = [...links]
-                  newLinks[index] = { ...link, platform: e.target.value }
-                  onUpdate({ data: { ...block.data, links: newLinks } })
-                }}
-                className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="Plateforme (ex: Facebook)"
-              />
-              <UrlInputWithSuggestions
-                value={link.url || ''}
-                onChange={(url) => {
-                  const newLinks = [...links]
-                  newLinks[index] = { ...link, url }
-                  onUpdate({ data: { ...block.data, links: newLinks } })
-                }}
-                placeholder="URL"
-                className="text-xs"
-              />
-              <input
-                type="text"
-                value={link.icon || ''}
-                onChange={(e) => {
-                  const newLinks = [...links]
-                  newLinks[index] = { ...link, icon: e.target.value }
-                  onUpdate({ data: { ...block.data, links: newLinks } })
-                }}
-                className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="Icône emoji (ex: 📘)"
-              />
+            <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Lien {index + 1}</span>
+                <button
+                  onClick={() => {
+                    const newLinks = links.filter((_: any, i: number) => i !== index)
+                    onUpdate({ data: { ...safeBlock.data, links: newLinks } })
+                  }}
+                  className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                  title="Supprimer ce lien"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Supprimer
+                </button>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Plateforme
+                </label>
+                <input
+                  type="text"
+                  value={link.platform || ''}
+                  onChange={(e) => {
+                    const newLinks = [...links]
+                    newLinks[index] = { ...link, platform: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, links: newLinks } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Plateforme (ex: Facebook)"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  URL
+                </label>
+                <UrlInputWithSuggestions
+                  value={link.url || ''}
+                  onChange={(url) => {
+                    const newLinks = [...links]
+                    newLinks[index] = { ...link, url }
+                    onUpdate({ data: { ...safeBlock.data, links: newLinks } })
+                  }}
+                  placeholder="URL du profil"
+                  className="text-xs"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Icône (emoji)
+                </label>
+                <input
+                  type="text"
+                  value={link.icon || ''}
+                  onChange={(e) => {
+                    const newLinks = [...links]
+                    newLinks[index] = { ...link, icon: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, links: newLinks } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Icône emoji (ex: 📘)"
+                />
+              </div>
             </div>
           ))}
-        </div>
-        <div className="flex gap-2 mt-2">
           <button
-            onClick={() => onUpdate({ data: { ...block.data, links: [...links, { platform: '', url: '', icon: '' }] } })}
-            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => {
+              const newLinks = [...links, { platform: '', url: '', icon: '' }]
+              onUpdate({ data: { ...safeBlock.data, links: newLinks } })
+            }}
+            className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center gap-1"
           >
-            + Ajouter
+            <span>+</span>
+            <span>Ajouter un lien social</span>
           </button>
-          {links.length > 1 && (
-            <button
-              onClick={() => onUpdate({ data: { ...block.data, links: links.slice(0, -1) } })}
-              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              - Supprimer
-            </button>
-          )}
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   )
 }
@@ -1608,6 +1700,158 @@ export function renderFAQ({ block, onUpdate }: ComplexRendererProps) {
           >
             <span>+</span>
             <span>Ajouter une question</span>
+          </button>
+        </div>
+      </CollapsibleSection>
+    </div>
+  )
+}
+
+export function renderContactForm({ block, onUpdate }: ComplexRendererProps) {
+  const safeBlock = { ...block, data: block.data || {} }
+  const formFields = safeBlock.data.fields || []
+  
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre du formulaire
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          placeholder="Contactez-nous"
+        />
+      </div>
+      
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Description (optionnel)
+        </label>
+        <textarea
+          value={safeBlock.data.description || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, description: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          rows={2}
+          placeholder="Description du formulaire"
+        />
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Texte du bouton d'envoi
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.submit_text || 'Envoyer'}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, submit_text: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+          placeholder="Envoyer"
+        />
+      </div>
+
+      <CollapsibleSection title="Champs du formulaire" count={formFields.length} defaultCollapsed={false}>
+        <div className="space-y-3">
+          {formFields.map((field: any, index: number) => (
+            <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Champ {index + 1}</span>
+                <button
+                  onClick={() => {
+                    const newFields = formFields.filter((_: any, i: number) => i !== index)
+                    onUpdate({ data: { ...safeBlock.data, fields: newFields } })
+                  }}
+                  className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                  title="Supprimer ce champ"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Supprimer
+                </button>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Label du champ
+                </label>
+                <input
+                  type="text"
+                  value={field.label || ''}
+                  onChange={(e) => {
+                    const newFields = [...formFields]
+                    newFields[index] = { ...field, label: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, fields: newFields } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Nom du champ"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Type de champ
+                </label>
+                <select
+                  value={field.type || 'text'}
+                  onChange={(e) => {
+                    const newFields = [...formFields]
+                    newFields[index] = { ...field, type: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, fields: newFields } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="text">Texte</option>
+                  <option value="email">Email</option>
+                  <option value="tel">Téléphone</option>
+                  <option value="textarea">Zone de texte</option>
+                  <option value="select">Liste déroulante</option>
+                  <option value="checkbox">Case à cocher</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Placeholder
+                </label>
+                <input
+                  type="text"
+                  value={field.placeholder || ''}
+                  onChange={(e) => {
+                    const newFields = [...formFields]
+                    newFields[index] = { ...field, placeholder: e.target.value }
+                    onUpdate({ data: { ...safeBlock.data, fields: newFields } })
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="Texte d'exemple"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id={`field-required-${index}`}
+                  checked={field.required || false}
+                  onChange={(e) => {
+                    const newFields = [...formFields]
+                    newFields[index] = { ...field, required: e.target.checked }
+                    onUpdate({ data: { ...safeBlock.data, fields: newFields } })
+                  }}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor={`field-required-${index}`} className="text-xs text-gray-700 dark:text-gray-300">
+                  Champ requis
+                </label>
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={() => {
+              const newFields = [...formFields, { label: '', type: 'text', placeholder: '', required: false }]
+              onUpdate({ data: { ...safeBlock.data, fields: newFields } })
+            }}
+            className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center gap-1"
+          >
+            <span>+</span>
+            <span>Ajouter un champ</span>
           </button>
         </div>
       </CollapsibleSection>

@@ -106,6 +106,7 @@ import {
   renderStats,
   renderSocialLinks,
   renderFAQ,
+  renderContactForm,
 } from './renderers/complex/ComplexRenderers'
 
 export function BlockRenderer({
@@ -1482,6 +1483,9 @@ export function BlockRenderer({
     case 'cta-section':
     case 'cta_section':
       return renderCTASection({ block, onUpdate })
+    case 'contact-form':
+    case 'contact_form':
+      return renderContactForm({ block, onUpdate })
     case 'header':
       return renderHeader({ block, onUpdate })
     
