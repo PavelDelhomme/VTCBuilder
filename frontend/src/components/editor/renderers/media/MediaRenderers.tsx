@@ -2,6 +2,8 @@
 
 import React from 'react'
 import { Block } from '../../types'
+import { CollapsibleSection } from '../../CollapsibleSection'
+import ImageSelector from '../../ui/ImageSelector'
 
 interface MediaRendererProps {
   block: Block
@@ -171,44 +173,50 @@ export function renderGallery({ block, onUpdate }: MediaRendererProps) {
           max={6}
         />
       </div>
-      <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Images ({galleryImages.length})
-        </label>
-        <div className="space-y-2 max-h-64 overflow-y-auto">
+      <CollapsibleSection title="Images" count={galleryImages.length} defaultCollapsed={false}>
+        <div className="space-y-3">
           {galleryImages.map((img: string, index: number) => (
-            <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
-              <input
-                type="url"
+            <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Image {index + 1}</span>
+                <button
+                  onClick={() => {
+                    const newImages = galleryImages.filter((_: string, i: number) => i !== index)
+                    onUpdate({ data: { ...safeBlock.data, images: newImages } })
+                  }}
+                  className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                  title="Supprimer cette image"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Supprimer
+                </button>
+              </div>
+              <ImageSelector
                 value={img}
-                onChange={(e) => {
+                onChange={(url) => {
                   const newImages = [...galleryImages]
-                  newImages[index] = e.target.value
-                  onUpdate({ data: { ...block.data, images: newImages } })
+                  newImages[index] = url
+                  onUpdate({ data: { ...safeBlock.data, images: newImages } })
                 }}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                placeholder="URL de l'image"
+                className="text-sm"
+                projectId={1}
               />
             </div>
           ))}
-        </div>
-        <div className="flex gap-2 mt-2">
           <button
-            onClick={() => onUpdate({ data: { ...block.data, images: [...galleryImages, ''] } })}
-            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => {
+              const newImages = [...galleryImages, '']
+              onUpdate({ data: { ...safeBlock.data, images: newImages } })
+            }}
+            className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center gap-1"
           >
-            + Ajouter
+            <span>+</span>
+            <span>Ajouter une image</span>
           </button>
-          {galleryImages.length > 0 && (
-            <button
-              onClick={() => onUpdate({ data: { ...block.data, images: galleryImages.slice(0, -1) } })}
-              className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              - Supprimer
-            </button>
-          )}
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   )
 }
@@ -243,14 +251,13 @@ export function renderBanner({ block, onUpdate }: MediaRendererProps) {
       </div>
       <div>
         <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Image de fond (URL)
+          Image de fond
         </label>
-        <input
-          type="url"
+        <ImageSelector
           value={safeBlock.data.background_image || ''}
-          onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_image: e.target.value } })}
-          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-          placeholder="https://example.com/image.jpg"
+          onChange={(url) => onUpdate({ data: { ...safeBlock.data, background_image: url } })}
+          className="text-sm"
+          projectId={1}
         />
       </div>
       <div className="grid grid-cols-2 gap-2">
