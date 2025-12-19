@@ -6,6 +6,9 @@ import React from 'react'
 import { RendererProps } from '../types'
 
 export const renderFooter = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
+  if (!block) {
+    return <div className="p-4 text-red-600">Erreur : Bloc non défini</div>
+  }
   const safeBlock = { ...block, data: block.data || {} }
   const footerColumns = safeBlock.data.columns || []
   const currentYear = new Date().getFullYear()

@@ -116,8 +116,21 @@ export function BlockRenderer({
   blockType?: BlockType
   onUpdate: (updates: Partial<Block>) => void
 }) {
-  // S'assurer que block.data existe pour éviter les erreurs
-  const safeBlock = { ...block, data: block.data || {} }
+  // Protection complète : s'assurer que block et block.data existent
+  if (!block) {
+    return (
+      <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200">
+        <p className="text-sm font-semibold">Erreur : Bloc non défini</p>
+      </div>
+    )
+  }
+  
+  const safeBlock = { 
+    ...block, 
+    data: block.data || {},
+    styles: block.styles || {},
+    type: block.type || 'text'
+  }
   
   // Render based on block type
   switch (safeBlock.type) {

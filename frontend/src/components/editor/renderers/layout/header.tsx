@@ -10,6 +10,9 @@ import { useTheme } from '@/contexts/ThemeContext'
 import authService from '@/services/auth.service'
 
 export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
+  if (!block) {
+    return <div className="p-4 text-red-600">Erreur : Bloc non défini</div>
+  }
   const safeBlock = { ...block, data: block.data || {} }
   const headerLinks = safeBlock.data.links || []
   const logoText = safeBlock.data.logo_text || 'VTCBuilder'
