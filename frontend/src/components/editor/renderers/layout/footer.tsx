@@ -16,7 +16,7 @@ export const renderFooter = ({ block, wrapperStyles, theme }: RendererProps): Re
   const footerIsDark = theme === 'dark' && supportDarkMode
   
   return (
-    <footer style={wrapperStyles} className={`mb-0 ${footerIsDark ? 'bg-gray-800' : 'bg-gray-100'} ${footerIsDark ? 'text-gray-100' : 'text-gray-900'} py-8 sm:py-12 w-full min-w-0 overflow-hidden`}>
+    <footer style={wrapperStyles || {}} className={`mb-0 ${footerIsDark ? 'bg-gray-800' : 'bg-gray-100'} ${footerIsDark ? 'text-gray-100' : 'text-gray-900'} py-8 sm:py-12 w-full min-w-0 overflow-hidden`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full min-w-0">
         {/* Titre et description du footer si définis */}
         {(footerTitle || footerDescription) && (
