@@ -35,7 +35,7 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
   return (
     <header 
       style={{
-        ...wrapperStyles,
+        ...(wrapperStyles || {}),
         position: block.data.sticky ? 'sticky' : 'static',
         top: block.data.sticky ? '0' : undefined,
         zIndex: block.data.sticky ? 50 : undefined,

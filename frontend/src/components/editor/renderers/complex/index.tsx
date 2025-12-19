@@ -284,15 +284,4 @@ export const renderFeaturesGrid = ({ block, wrapperStyles, theme }: RendererProp
 // Réexporter les renderers depuis les fichiers individuels
 export { renderCTASection } from './cta-section'
 export { renderContactForm } from './contact-form'
-// Réexporter tous les autres renderers depuis ComplexRenderers.tsx
-export {
-  renderHeader,
-  renderFooter,
-  renderPricing,
-  renderTestimonials,
-  renderTimeline,
-  renderAccordion,
-  renderStats,
-  renderSocialLinks,
-} from './ComplexRenderers'
 
