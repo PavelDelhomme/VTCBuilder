@@ -1715,7 +1715,7 @@ export default function EditPublicPage() {
         </div>
       )}
 
-      <div className="flex flex-col h-full min-h-0 overflow-hidden">
+      <div className="flex flex-col h-full min-h-0 overflow-hidden" style={{ marginTop: '-1.5rem' }}>
         {/* SEO Settings Bar - Affichage conditionnel */}
         {showSeoExpanded && (
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4 flex gap-3 sm:gap-4 items-center flex-wrap flex-shrink-0">

@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Block } from './types'
 import blocksService, { BlockType } from '@/services/blocks.service'
-import { BlockPropertiesPanel, BlockLayoutPanel, BlockStylePanel } from './BlockEditor'
+import { BlockPropertiesPanel } from './panels/BlockPropertiesPanel'
+import { BlockLayoutPanel } from './panels/BlockLayoutPanel'
+import { BlockStylePanel } from './panels/BlockStylePanel'
 import { useConfirm } from '@/hooks/useConfirm'
 
 interface BlockPropertiesModalProps {
