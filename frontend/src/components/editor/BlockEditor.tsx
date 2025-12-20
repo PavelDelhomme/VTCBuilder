@@ -548,17 +548,9 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       const offsetX = mouseEvent.clientX - rect.left
       const offsetY = mouseEvent.clientY - rect.top
       
-      // Debug: afficher les valeurs pour vérifier le calcul
-      console.log('Drag overlay offset calculation:', {
-        mouseX: mouseEvent.clientX,
-        mouseY: mouseEvent.clientY,
-        blockLeft: rect.left,
-        blockTop: rect.top,
-        offsetX,
-        offsetY,
-        blockWidth: rect.width,
-        blockHeight: rect.height
-      })
+      // Note: Les coordonnées sont calculées correctement
+      // Le problème pourrait venir du fait que dnd-kit positionne le DragOverlay
+      // avec un léger décalage ou que le transform n'est pas appliqué correctement
       
       // Prendre en compte le scroll de la page pour un calcul précis
       const scrollX = window.scrollX || window.pageXOffset || 0
