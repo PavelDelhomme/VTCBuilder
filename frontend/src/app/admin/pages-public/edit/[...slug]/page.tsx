@@ -1698,7 +1698,7 @@ export default function EditPublicPage() {
         </div>
       )}
 
-      <div className="flex flex-col h-full min-h-0 overflow-hidden" style={{ marginTop: '-1.5rem' }}>
+      <div className="flex flex-col h-full min-h-0 overflow-hidden">
         {/* SEO Settings Bar - Affichage conditionnel */}
         {showSeoExpanded && (
           <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-4 flex gap-3 sm:gap-4 items-center flex-wrap flex-shrink-0">
@@ -1750,8 +1750,8 @@ export default function EditPublicPage() {
         )}
 
         {/* Main Editor Area with Split View - Redimensionnable */}
-        {/* Utiliser flex-1 pour prendre toute la hauteur disponible au lieu d'une hauteur fixe */}
-        <div className="flex-1 flex overflow-hidden min-h-0 relative">
+        {/* Utiliser flex-1 pour prendre toute la hauteur disponible restante après la barre SEO */}
+        <div className="flex-1 flex overflow-hidden min-h-0 relative" style={{ height: '100%' }}>
           {/* Sidebar - Palette de blocs */}
           {!isPaletteCollapsed ? (
             <>
@@ -1759,7 +1759,7 @@ export default function EditPublicPage() {
                 className="border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col flex-shrink-0 bg-white dark:bg-gray-800"
                 style={{ width: `${sidebarWidth}px`, minWidth: '200px', maxWidth: '400px' }}
               >
-                <div className="flex-1 overflow-hidden flex flex-col">
+                <div className="flex-1 overflow-hidden flex flex-col min-h-0">
                   <BlockEditor 
                     blocks={blocks}
                     onChange={setBlocks}
@@ -1839,15 +1839,14 @@ export default function EditPublicPage() {
           
           {/* Editor Section - Largeur dynamique */}
           <div 
-            className="border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-0 transition-none"
+            className="border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col flex-1 min-h-0 transition-none"
             style={{ 
               width: showPreview ? `${editorWidth}%` : '100%',
               minWidth: showPreview ? '200px' : '0',
               maxWidth: showPreview ? '80%' : '100%'
             }}
           >
-            <div className="flex-1 overflow-hidden min-h-0 h-full">
-            <div className="relative h-full">
+            <div className="flex-1 overflow-hidden min-h-0 relative">
               {/* Indicateur de raccourcis clavier */}
               <div className="absolute top-2 right-2 z-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 text-xs opacity-0 hover:opacity-100 transition-opacity group">
                 <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
@@ -1894,7 +1893,6 @@ export default function EditPublicPage() {
                   setCanRedo(canRedo)
                 }}
               />
-            </div>
             </div>
           </div>
 
@@ -1956,13 +1954,13 @@ export default function EditPublicPage() {
           {/* Preview Section - Largeur dynamique */}
           {showPreview && (
             <div 
-              className="border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col min-h-0 transition-none"
+              className="border-l border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col flex-1 min-h-0 transition-none"
               style={{ 
                 width: `${100 - editorWidth}%`,
                 minWidth: '200px'
               }}
             >
-              <div className="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between">
+              <div className="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between flex-shrink-0">
                 <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   Prévisualisation en direct
                 </span>
@@ -1970,7 +1968,7 @@ export default function EditPublicPage() {
                   {previewMode === 'desktop' ? '💻 Desktop' : previewMode === 'tablet' ? '📱 Tablette' : '📱 Mobile'}
                 </span>
               </div>
-              <div className="flex-1 overflow-hidden relative">
+              <div className="flex-1 overflow-hidden relative min-h-0">
                 <div className={`absolute inset-0 overflow-auto ${
                   previewMode === 'tablet' ? 'px-4' : previewMode === 'mobile' ? 'px-2' : ''
                 }`}>
