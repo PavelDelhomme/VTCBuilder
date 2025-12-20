@@ -336,18 +336,11 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           handleRedo()
         }
       }
-
-      // Suppr ou Backspace pour supprimer le bloc sélectionné
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlock) {
-        e.preventDefault()
-        removeBlock(selectedBlock, false) // false = demander confirmation
-        setSelectedBlock(null)
-      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [history, handleUndo, handleRedo, selectedBlock, removeBlock])
+  }, [history, handleUndo, handleRedo])
 
   // Notifier le parent des changements undo/redo
   useEffect(() => {
@@ -1120,6 +1113,27 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       }
     }
   }, [history, selectedBlock, trackBlockAction])
+
+  // Raccourci clavier pour supprimer le bloc sélectionné avec Suppr/Backspace
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ne pas intercepter si on est dans un input/textarea
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+
+      // Suppr ou Backspace pour supprimer le bloc sélectionné
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlock) {
+        e.preventDefault()
+        removeBlock(selectedBlock, false) // false = demander confirmation
+        setSelectedBlock(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedBlock, removeBlock])
 
   // Debounce pour les mises à jour de style (éviter trop d'entrées dans l'historique)
   const updateBlockTimeoutRef = useRef<{ [key: string]: ReturnType<typeof setTimeout> }>({})
@@ -2602,7 +2616,6 @@ const SortableBlock = React.memo(function SortableBlock({
           }
         }}
         data-block-id={block.id}
-        style={style}
         className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] min-w-[200px] ${isResizing ? 'select-none' : ''} group cursor-move`}
         style={{
           ...style,

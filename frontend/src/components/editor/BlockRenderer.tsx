@@ -1882,14 +1882,13 @@ export function BlockRenderer({
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              URL de l'avatar
+              Avatar
             </label>
-            <input
-              type="text"
+            <ImageSelector
               value={safeBlock.data.avatar || ''}
-              onChange={(e) => onUpdate({ data: { ...safeBlock.data, avatar: e.target.value } })}
-              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              placeholder="https://..."
+              onChange={(url) => onUpdate({ data: { ...safeBlock.data, avatar: url } })}
+              className="text-sm"
+              projectId={1}
             />
           </div>
           <div>
@@ -1904,55 +1903,71 @@ export function BlockRenderer({
               rows={3}
             />
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Liens sociaux ({socialLinks.length})
-            </label>
-            <div className="space-y-2 max-h-32 overflow-y-auto">
+          <CollapsibleSection title="Liens sociaux" count={socialLinks.length} defaultCollapsed={false}>
+            <div className="space-y-3">
               {socialLinks.map((link: any, index: number) => (
-                <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
-                  <input
-                    type="text"
-                    value={link.url || ''}
-                    onChange={(e) => {
-                      const newLinks = [...socialLinks]
-                      newLinks[index] = { ...link, url: e.target.value }
-                      onUpdate({ data: { ...block.data, social_links: newLinks } })
-                    }}
-                    className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    placeholder="URL"
-                  />
-                  <input
-                    type="text"
-                    value={link.icon || ''}
-                    onChange={(e) => {
-                      const newLinks = [...socialLinks]
-                      newLinks[index] = { ...link, icon: e.target.value }
-                      onUpdate({ data: { ...block.data, social_links: newLinks } })
-                    }}
-                    className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    placeholder="Icône emoji"
-                  />
+                <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Lien {index + 1}</span>
+                    <button
+                      onClick={() => {
+                        const newLinks = socialLinks.filter((_: any, i: number) => i !== index)
+                        onUpdate({ data: { ...safeBlock.data, social_links: newLinks } })
+                      }}
+                      className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                      title="Supprimer ce lien"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Supprimer
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      URL
+                    </label>
+                    <UrlInputWithSuggestions
+                      value={link.url || ''}
+                      onChange={(url) => {
+                        const newLinks = [...socialLinks]
+                        newLinks[index] = { ...link, url }
+                        onUpdate({ data: { ...safeBlock.data, social_links: newLinks } })
+                      }}
+                      placeholder="URL du profil"
+                      className="text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Icône (emoji)
+                    </label>
+                    <input
+                      type="text"
+                      value={link.icon || ''}
+                      onChange={(e) => {
+                        const newLinks = [...socialLinks]
+                        newLinks[index] = { ...link, icon: e.target.value }
+                        onUpdate({ data: { ...safeBlock.data, social_links: newLinks } })
+                      }}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      placeholder="Icône emoji"
+                    />
+                  </div>
                 </div>
               ))}
-            </div>
-            <div className="flex gap-2 mt-2">
               <button
-                onClick={() => onUpdate({ data: { ...block.data, social_links: [...socialLinks, { url: '', icon: '' }] } })}
-                className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                onClick={() => {
+                  const newLinks = [...socialLinks, { url: '', icon: '' }]
+                  onUpdate({ data: { ...safeBlock.data, social_links: newLinks } })
+                }}
+                className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center gap-1"
               >
-                + Ajouter
+                <span>+</span>
+                <span>Ajouter un lien social</span>
               </button>
-              {socialLinks.length > 1 && (
-                <button
-                  onClick={() => onUpdate({ data: { ...block.data, social_links: socialLinks.slice(0, -1) } })}
-                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  - Supprimer
-                </button>
-              )}
             </div>
-          </div>
+          </CollapsibleSection>
         </div>
       )
 
@@ -1978,90 +1993,118 @@ export function BlockRenderer({
               <option value={4}>4 colonnes</option>
             </select>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Cartes ({cards.length})
-            </label>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+          <CollapsibleSection title="Cartes" count={cards.length} defaultCollapsed={false}>
+            <div className="space-y-3">
               {cards.map((card: any, index: number) => (
-                <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
-                  <input
-                    type="text"
-                    value={card.title || ''}
-                    onChange={(e) => {
-                      const newCards = [...cards]
-                      newCards[index] = { ...card, title: e.target.value }
-                      onUpdate({ data: { ...block.data, cards: newCards } })
-                    }}
-                    className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    placeholder="Titre"
-                  />
-                  <textarea
-                    value={card.description || ''}
-                    onChange={(e) => {
-                      const newCards = [...cards]
-                      newCards[index] = { ...card, description: e.target.value }
-                      onUpdate({ data: { ...block.data, cards: newCards } })
-                    }}
-                    className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    placeholder="Description"
-                    rows={2}
-                  />
-                  <input
-                    type="url"
-                    value={card.image || ''}
-                    onChange={(e) => {
-                      const newCards = [...cards]
-                      newCards[index] = { ...card, image: e.target.value }
-                      onUpdate({ data: { ...block.data, cards: newCards } })
-                    }}
-                    className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    placeholder="URL image"
-                  />
-                  <div className="grid grid-cols-2 gap-1">
+                <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Carte {index + 1}</span>
+                    <button
+                      onClick={() => {
+                        const newCards = cards.filter((_: any, i: number) => i !== index)
+                        onUpdate({ data: { ...safeBlock.data, cards: newCards } })
+                      }}
+                      className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                      title="Supprimer cette carte"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Supprimer
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Titre
+                    </label>
+                    <input
+                      type="text"
+                      value={card.title || ''}
+                      onChange={(e) => {
+                        const newCards = [...cards]
+                        newCards[index] = { ...card, title: e.target.value }
+                        onUpdate({ data: { ...safeBlock.data, cards: newCards } })
+                      }}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      placeholder="Titre de la carte"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      value={card.description || ''}
+                      onChange={(e) => {
+                        const newCards = [...cards]
+                        newCards[index] = { ...card, description: e.target.value }
+                        onUpdate({ data: { ...safeBlock.data, cards: newCards } })
+                      }}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      placeholder="Description de la carte"
+                      rows={2}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Image
+                    </label>
+                    <ImageSelector
+                      value={card.image || ''}
+                      onChange={(url) => {
+                        const newCards = [...cards]
+                        newCards[index] = { ...card, image: url }
+                        onUpdate({ data: { ...safeBlock.data, cards: newCards } })
+                      }}
+                      className="text-sm"
+                      projectId={1}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Texte du bouton
+                    </label>
                     <input
                       type="text"
                       value={card.button_text || ''}
                       onChange={(e) => {
                         const newCards = [...cards]
                         newCards[index] = { ...card, button_text: e.target.value }
-                        onUpdate({ data: { ...block.data, cards: newCards } })
+                        onUpdate({ data: { ...safeBlock.data, cards: newCards } })
                       }}
-                      className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                      placeholder="Texte bouton"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      placeholder="Texte du bouton"
                     />
-                    <input
-                      type="url"
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      URL du bouton
+                    </label>
+                    <UrlInputWithSuggestions
                       value={card.button_url || ''}
-                      onChange={(e) => {
+                      onChange={(url) => {
                         const newCards = [...cards]
-                        newCards[index] = { ...card, button_url: e.target.value }
-                        onUpdate({ data: { ...block.data, cards: newCards } })
+                        newCards[index] = { ...card, button_url: url }
+                        onUpdate({ data: { ...safeBlock.data, cards: newCards } })
                       }}
-                      className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                      placeholder="URL bouton"
+                      placeholder="URL du bouton"
+                      className="text-xs"
                     />
                   </div>
                 </div>
               ))}
-            </div>
-            <div className="flex gap-2 mt-2">
               <button
-                onClick={() => onUpdate({ data: { ...block.data, cards: [...cards, { title: '', description: '', image: '', button_text: '', button_url: '' }] } })}
-                className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                onClick={() => {
+                  const newCards = [...cards, { title: '', description: '', image: '', button_text: '', button_url: '' }]
+                  onUpdate({ data: { ...safeBlock.data, cards: newCards } })
+                }}
+                className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center gap-1"
               >
-                + Ajouter carte
+                <span>+</span>
+                <span>Ajouter une carte</span>
               </button>
-              {cards.length > 1 && (
-                <button
-                  onClick={() => onUpdate({ data: { ...block.data, cards: cards.slice(0, -1) } })}
-                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  - Supprimer
-                </button>
-              )}
             </div>
-          </div>
+          </CollapsibleSection>
         </div>
       )
 
@@ -2201,54 +2244,71 @@ export function BlockRenderer({
       const breadcrumbItems = safeBlock.data.items || [{ label: 'Accueil', url: '/' }]
       return (
         <div className="space-y-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Éléments ({breadcrumbItems.length})
-            </label>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
+          <CollapsibleSection title="Éléments du fil d'Ariane" count={breadcrumbItems.length} defaultCollapsed={false}>
+            <div className="space-y-3">
               {breadcrumbItems.map((item: any, index: number) => (
-                <div key={index} className="p-2 border border-gray-200 dark:border-gray-700 rounded">
-                  <input
-                    type="text"
-                    value={item.label || ''}
-                    onChange={(e) => {
-                      const newItems = [...breadcrumbItems]
-                      newItems[index] = { ...item, label: e.target.value }
-                      onUpdate({ data: { ...block.data, items: newItems } })
-                    }}
-                    className="w-full mb-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
-                    placeholder="Label"
-                  />
-                  <UrlInputWithSuggestions
-                    value={item.url || ''}
-                    onChange={(url) => {
-                      const newItems = [...breadcrumbItems]
-                      newItems[index] = { ...item, url }
-                      onUpdate({ data: { ...block.data, items: newItems } })
-                    }}
-                    placeholder="URL"
-                    className="text-xs"
-                  />
+                <div key={index} className="border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Élément {index + 1}</span>
+                    <button
+                      onClick={() => {
+                        const newItems = breadcrumbItems.filter((_: any, i: number) => i !== index)
+                        onUpdate({ data: { ...safeBlock.data, items: newItems } })
+                      }}
+                      className="px-2.5 py-1 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                      title="Supprimer cet élément"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Supprimer
+                    </button>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Label
+                    </label>
+                    <input
+                      type="text"
+                      value={item.label || ''}
+                      onChange={(e) => {
+                        const newItems = [...breadcrumbItems]
+                        newItems[index] = { ...item, label: e.target.value }
+                        onUpdate({ data: { ...safeBlock.data, items: newItems } })
+                      }}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      placeholder="Label"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      URL
+                    </label>
+                    <UrlInputWithSuggestions
+                      value={item.url || ''}
+                      onChange={(url) => {
+                        const newItems = [...breadcrumbItems]
+                        newItems[index] = { ...item, url }
+                        onUpdate({ data: { ...safeBlock.data, items: newItems } })
+                      }}
+                      placeholder="URL"
+                      className="text-xs"
+                    />
+                  </div>
                 </div>
               ))}
-            </div>
-            <div className="flex gap-2 mt-2">
               <button
-                onClick={() => onUpdate({ data: { ...block.data, items: [...breadcrumbItems, { label: '', url: '' }] } })}
-                className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                onClick={() => {
+                  const newItems = [...breadcrumbItems, { label: '', url: '' }]
+                  onUpdate({ data: { ...safeBlock.data, items: newItems } })
+                }}
+                className="w-full px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center justify-center gap-1"
               >
-                + Ajouter
+                <span>+</span>
+                <span>Ajouter un élément</span>
               </button>
-              {breadcrumbItems.length > 1 && (
-                <button
-                  onClick={() => onUpdate({ data: { ...block.data, items: breadcrumbItems.slice(0, -1) } })}
-                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  - Supprimer
-                </button>
-              )}
             </div>
-          </div>
+          </CollapsibleSection>
         </div>
       )
 
