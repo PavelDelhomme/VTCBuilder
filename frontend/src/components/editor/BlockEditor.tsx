@@ -1272,10 +1272,16 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
               {/* Header */}
               <div className="flex items-center justify-between p-2 sm:p-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Paramètres du bloc</h3>
-                  {selectedBlockData?.blockType && (
+                  {selectedBlockData?.blockType ? (
+                    <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
+                      Configuration du bloc {selectedBlockData.blockType.label || selectedBlockData.blockType.name}
+                    </h3>
+                  ) : (
+                    <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Configuration du bloc</h3>
+                  )}
+                  {selectedBlockData?.blockType?.description && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-                      {selectedBlockData.blockType.label || selectedBlockData.blockType.name}
+                      {selectedBlockData.blockType.description}
                     </p>
                   )}
                 </div>
