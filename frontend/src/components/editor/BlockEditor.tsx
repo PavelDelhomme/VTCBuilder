@@ -207,7 +207,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
   const { trackBlockAction } = useBlockTracking()
 
   // Référence pour capturer l'événement de clic initial
-  const dragStartEventRef = useRef<MouseEvent | null>(null)
+  const dragStartEventRef = useRef<{ clientX: number; clientY: number } | null>(null)
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -543,8 +543,22 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       // Cet offset sera utilisé pour positionner le DragOverlay de manière à ce que
       // le point de clic reste exactement sous le curseur
       // Utiliser les coordonnées du viewport directement (getBoundingClientRect retourne déjà les coordonnées du viewport)
+      // IMPORTANT: mouseEvent.clientX et mouseEvent.clientY sont les coordonnées du curseur dans le viewport
+      // rect.left et rect.top sont les coordonnées du coin supérieur gauche du bloc dans le viewport
       const offsetX = mouseEvent.clientX - rect.left
       const offsetY = mouseEvent.clientY - rect.top
+      
+      // Debug: afficher les valeurs pour vérifier le calcul
+      console.log('Drag overlay offset calculation:', {
+        mouseX: mouseEvent.clientX,
+        mouseY: mouseEvent.clientY,
+        blockLeft: rect.left,
+        blockTop: rect.top,
+        offsetX,
+        offsetY,
+        blockWidth: rect.width,
+        blockHeight: rect.height
+      })
       
       // Prendre en compte le scroll de la page pour un calcul précis
       const scrollX = window.scrollX || window.pageXOffset || 0
@@ -556,8 +570,9 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         clickX: mouseEvent.clientX,  // Position X du clic (viewport)
         clickY: mouseEvent.clientY,  // Position Y du clic (viewport)
         // L'offset est calculé par rapport au coin supérieur gauche du bloc
-        // dnd-kit positionne le DragOverlay à la position de la souris (coin supérieur gauche)
-        // On soustrait cet offset dans le transform pour que le point de clic reste sous le curseur
+        // dnd-kit positionne le DragOverlay à la position de la souris (mouseEvent.clientX, mouseEvent.clientY)
+        // Le DragOverlay est en position fixed, donc ses coordonnées sont relatives au viewport
+        // On doit déplacer le DragOverlay de -offsetX et -offsetY pour que le point de clic reste sous le curseur
         offsetX: offsetX,  // Offset du clic par rapport au bloc (viewport) - utilisé pour le transform
         offsetY: offsetY,  // Offset du clic par rapport au bloc (viewport) - utilisé pour le transform
         blockWidth: rect.width,  // Largeur du bloc original pour référence
@@ -2077,8 +2092,12 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                     onSelect={() => handleSelectBlock(block.id)}
                     isChildBlock={false}
                     onDragStartCapture={(e: React.PointerEvent) => {
-                      // Capturer l'événement de clic initial pour calculer l'offset
-                      dragStartEventRef.current = e.nativeEvent as MouseEvent
+                      // Capturer les coordonnées du clic initial pour calculer l'offset
+                      // Utiliser directement les coordonnées de l'événement React pour plus de précision
+                      dragStartEventRef.current = {
+                        clientX: e.clientX,
+                        clientY: e.clientY
+                      }
                     }}
                     onMove={(blockId, targetContainerId) => {
                       // Déplacer le bloc vers un conteneur ou à la racine
@@ -2222,17 +2241,13 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   if (!blockType) return null
                   
                   // Calculer l'offset du clic par rapport au coin supérieur gauche du bloc
-                  // dnd-kit positionne le DragOverlay à la position de la souris
-                  // Le DragOverlay est positionné de manière à ce que son coin supérieur gauche
-                  // soit à la position de la souris. Pour que le point de clic reste exactement
-                  // sous le curseur, on doit soustraire l'offset du clic
+                  // dnd-kit positionne le DragOverlay à la position de la souris (mouseEvent.clientX, mouseEvent.clientY)
+                  // Le DragOverlay est en position fixed, donc ses coordonnées sont relatives au viewport
+                  // Pour que le point de clic reste exactement sous le curseur, on doit déplacer le DragOverlay
+                  // de -offsetX et -offsetY (pour que le point de clic qui était à offsetX, offsetY du coin supérieur gauche
+                  // soit maintenant à la position du curseur)
                   const offsetX = dragStartPositionRef.current?.offsetX ?? 0
                   const offsetY = dragStartPositionRef.current?.offsetY ?? 0
-                  const originalBlockWidth = dragStartPositionRef.current?.blockWidth ?? 280
-                  
-                  // Le DragOverlay a une largeur fixe de 280px, mais le bloc original peut avoir une largeur différente
-                  // Si le bloc original est plus large, on doit ajuster l'offset pour compenser
-                  // Cependant, pour l'instant, on utilise l'offset brut car dnd-kit positionne déjà à la souris
                   
                   return (
                     <div 
@@ -2244,17 +2259,14 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                         width: '280px', // Largeur fixe pour éviter les variations
                         opacity: 1,
                         // Positionner le bloc pour que le point de clic reste exactement sous le curseur
-                        // dnd-kit positionne le DragOverlay à la position de la souris (coin supérieur gauche)
-                        // On soustrait l'offset pour que le point de clic reste aligné avec le curseur
+                        // dnd-kit positionne le DragOverlay à la position de la souris (coin supérieur gauche du DragOverlay = position souris)
+                        // On déplace le DragOverlay de -offsetX et -offsetY pour que le point de clic reste sous le curseur
                         // Utiliser Math.round pour éviter les problèmes de rendu avec les décimales
-                        // Le transform translate déplace le bloc de -offsetX et -offsetY pour que
-                        // le point de clic (qui était à offsetX, offsetY du coin supérieur gauche)
-                        // soit maintenant à la position du curseur
                         transform: `translate(-${Math.round(offsetX)}px, -${Math.round(offsetY)}px)`,
                         willChange: 'transform',
                         // Le DragOverlay de dnd-kit est déjà en position fixed
                         // On utilise juste le transform pour ajuster la position relative au curseur
-                        // S'assurer que le transform est appliqué depuis le coin supérieur gauche
+                        // transformOrigin: '0 0' signifie que le transform est appliqué depuis le coin supérieur gauche
                         transformOrigin: '0 0',
                       }}
                     >
