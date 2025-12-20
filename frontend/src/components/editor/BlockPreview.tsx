@@ -1004,6 +1004,19 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
 
   // Function to render block content (replacing IIFE for better compiler compatibility)
   const getBlockContent = (): React.ReactElement => {
+    // Essayer d'utiliser les cases extraits d'abord
+    try {
+      const { getBlockPreviewCase } = require('./preview-cases')
+      const caseRenderer = getBlockPreviewCase(block.type)
+      if (caseRenderer) {
+        const result = caseRenderer({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+        if (result) return result
+      }
+    } catch (e) {
+      // Si les cases extraits ne sont pas disponibles, continuer avec le switch
+    }
+    
+    // Fallback vers le switch case original
     switch (block.type) {
     case 'heading': {
       const headingLevel = block.data.level || 'h2'

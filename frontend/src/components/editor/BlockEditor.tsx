@@ -2126,18 +2126,17 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                       </div>
                     </div>
                 ) : (
-                  <div ref={blockListRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-12 gap-4 lg:gap-6 auto-rows-min">
+                  <div ref={blockListRef} className="flex flex-col gap-4 lg:gap-6">
                       {history.state
                         .filter((b: Block) => !b.position || b.position.type === 'static')
                         .map((block: Block) => {
-                          // Calculer le span de colonnes basé sur le layout (système 12 colonnes)
-                          const layoutCols = block.layout || 12
-                          const colSpan = layoutCols === 12 ? 'col-span-full' : `col-span-${layoutCols}`
+                          // La largeur est maintenant gérée directement dans SortableBlock via layoutWidthClass
+                          // Chaque bloc prend sa propre ligne et sa largeur est définie par layout
                         
                         return (
                           <div 
                             key={block.id} 
-                            className={colSpan}
+                            className="w-full"
                             ref={(el) => {
                               if (el) {
                                 blockRefs.current.set(block.id, el)
@@ -2488,6 +2487,25 @@ const SortableBlock = React.memo(function SortableBlock({
   const isSmall = layoutCols <= 4 // 1-4 colonnes = petit
   const isMedium = layoutCols > 4 && layoutCols <= 8 // 5-8 colonnes = moyen
   const isLarge = layoutCols > 8 // 9-12 colonnes = grand
+  
+  // Calculer la largeur basée sur les colonnes (système 12 colonnes)
+  const getLayoutWidth = () => {
+    if (layoutCols === 12) return 'w-full'
+    if (layoutCols === 11) return 'w-[91.666667%]'
+    if (layoutCols === 10) return 'w-[83.333333%]'
+    if (layoutCols === 9) return 'w-3/4'
+    if (layoutCols === 8) return 'w-2/3'
+    if (layoutCols === 7) return 'w-[58.333333%]'
+    if (layoutCols === 6) return 'w-1/2'
+    if (layoutCols === 5) return 'w-[41.666667%]'
+    if (layoutCols === 4) return 'w-1/3'
+    if (layoutCols === 3) return 'w-1/4'
+    if (layoutCols === 2) return 'w-1/6'
+    if (layoutCols === 1) return 'w-[8.333333%]'
+    return 'w-full'
+  }
+  
+  const layoutWidthClass = getLayoutWidth()
 
   // Gestion du redimensionnement
   const [isResizing, setIsResizing] = useState(false)
@@ -2769,11 +2787,13 @@ const SortableBlock = React.memo(function SortableBlock({
           }
         }}
         data-block-id={block.id}
-        className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] min-w-[200px] ${isResizing ? 'select-none' : ''} group cursor-move`}
+        className={`relative ${layoutWidthClass} mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] min-w-[200px] ${isResizing ? 'select-none' : ''} group cursor-move`}
         style={{
           ...style,
           minWidth: '200px',
           minHeight: '80px',
+          // Centrer le bloc si layout < 12
+          ...(layoutCols < 12 ? { marginLeft: 'auto', marginRight: 'auto' } : {}),
         }}
         {...attributes}
         {...(listeners ? {
