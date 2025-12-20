@@ -1766,8 +1766,8 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                             const canUse = canUseBlockType(blockType.name, isPremium)
                             const canAdd = canUse && (isContainer || hasContainerInBlocks)
                             
-                            // Composant draggable pour les blocs de la palette
-                            const DraggableBlockTypeItem = () => {
+                            // Composant draggable pour les blocs de la palette (version recherche)
+                            const DraggableBlockTypeItem = ({ blockType, canAdd, isContainer, hasContainerInBlocks, isPremium }: { blockType: BlockType; canAdd: boolean; isContainer: boolean; hasContainerInBlocks: boolean; isPremium: boolean }) => {
                               const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
                                 id: `block-type-${blockType.name}`,
                                 data: {
@@ -1885,7 +1885,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                 const canAdd = canUse && (isContainer || hasContainerInBlocks)
                                 
                                 // Composant draggable pour les blocs de la palette (version catégories)
-                                const DraggableBlockTypeItemCategory = () => {
+                                const DraggableBlockTypeItemCategory = ({ blockType, canAdd, isContainer, hasContainerInBlocks, canUse, isPremium }: { blockType: BlockType; canAdd: boolean; isContainer: boolean; hasContainerInBlocks: boolean; canUse: boolean; isPremium: boolean }) => {
                                   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
                                     id: `block-type-${blockType.name}`,
                                     data: {
@@ -1899,7 +1899,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                       ref={setNodeRef}
                                       {...listeners}
                                       {...attributes}
-                                      key={`${blockType.name}-${blockType.id}`}
                                       onClick={() => {
                                         if (canAdd) {
                                           addBlock(blockType)
@@ -1994,7 +1993,17 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                 )
                               }
                               
-                              return <DraggableBlockTypeItemCategory key={`${blockType.name}-${blockType.id}`} />
+                              return (
+                                <DraggableBlockTypeItemCategory 
+                                  key={`${blockType.name}-${blockType.id}`}
+                                  blockType={blockType}
+                                  canAdd={canAdd}
+                                  isContainer={isContainer}
+                                  hasContainerInBlocks={hasContainerInBlocks}
+                                  canUse={canUse}
+                                  isPremium={isPremium}
+                                />
+                              )
                             })}
                             </div>
                           </div>
