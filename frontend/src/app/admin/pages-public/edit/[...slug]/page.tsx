@@ -858,34 +858,17 @@ export default function EditPublicPage() {
               blocks: [docsHero, docsContainer]
             }
           } else if (pageSlug === 'contact') {
-            // Page de contact avec formulaire
+            // Page de contact avec structure complète (comme sur localhost:9494/contact)
+            // Utiliser la structure de createContactPage() du script
+            const { createContactPage } = await import('@/scripts/create-public-pages')
+            const contactPage = createContactPage()
             pageData = {
               ...pageData,
-              blocks: [
-                {
-                  id: `contact-hero-${now}`,
-                  type: 'heading',
-                  data: {
-                    text: 'Contactez-nous',
-                    level: 1
-                  },
-                  styles: {
-                    padding: 'py-8',
-                    textAlign: 'center'
-                  }
-                },
-                {
-                  id: `contact-form-${now}`,
-                  type: 'contact-form',
-                  data: {
-                    title: 'Envoyez-nous un message',
-                    fields: ['name', 'email', 'message']
-                  },
-                  styles: {
-                    padding: 'py-6'
-                  }
-                }
-              ]
+              blocks: contactPage.blocks,
+              title: contactPage.title,
+              description: contactPage.description,
+              meta_title: contactPage.metaTitle,
+              meta_description: contactPage.metaDescription
             }
           } else {
             // Pages génériques avec structure de base
