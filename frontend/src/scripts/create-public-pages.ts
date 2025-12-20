@@ -527,6 +527,126 @@ function createContactPage(): PageDefinition {
 }
 
 /**
+ * Crée les blocs pour la page Register (inscription)
+ */
+function createRegisterPage(): PageDefinition {
+  const now = Date.now()
+  
+  return {
+    slug: 'register',
+    title: 'Inscription',
+    description: 'Créez votre compte VTCBuilder et commencez votre essai gratuit',
+    metaTitle: 'Inscription - VTCBuilder',
+    metaDescription: 'Créez votre compte VTCBuilder et commencez votre essai gratuit de 14 jours. Aucune carte bancaire requise.',
+    blocks: [
+      {
+        id: `block-${now}-1`,
+        type: 'container',
+        data: {
+          max_width: 'max-w-4xl',
+          padding: 'px-4 sm:px-6 lg:px-8',
+          margin: 'mx-auto'
+        },
+        styles: {
+          maxWidth: '56rem',
+          margin: '0 auto',
+          padding: '5rem 1rem',
+          background_color: 'transparent'
+        },
+        layout: 12,
+        children: [
+          {
+            id: `block-${now}-2`,
+            type: 'container',
+            data: {
+              max_width: '',
+              padding: 'p-8',
+              margin: ''
+            },
+            styles: {
+              background_color: '#ffffff',
+              borderRadius: '0.75rem',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+              padding: '2rem'
+            },
+            layout: 12,
+            children: [
+              {
+                id: `block-${now}-3`,
+                type: 'heading',
+                data: {
+                  text: 'Créer votre compte VTCBuilder',
+                  level: 1,
+                },
+                styles: {
+                  text_align: 'center',
+                  color: '#111827',
+                  margin_bottom: '0.5rem',
+                  fontSize: '1.875rem',
+                  fontWeight: 'bold'
+                },
+                layout: 12,
+                children: []
+              },
+              {
+                id: `block-${now}-4`,
+                type: 'paragraph',
+                data: {
+                  content: 'Commencez votre essai gratuit de 14 jours. Aucune carte bancaire requise.',
+                },
+                styles: {
+                  text_align: 'center',
+                  color: '#6b7280',
+                  margin_bottom: '2rem'
+                },
+                layout: 12,
+                children: []
+              },
+              {
+                id: `block-${now}-5`,
+                type: 'form',
+                data: {
+                  title: '',
+                  fields: [
+                    { type: 'text', label: 'Nom complet', placeholder: 'Votre nom', required: true },
+                    { type: 'email', label: 'Email', placeholder: 'votre@email.com', required: true },
+                    { type: 'password', label: 'Mot de passe', placeholder: 'Minimum 8 caractères', required: true },
+                    { type: 'password', label: 'Confirmer le mot de passe', placeholder: 'Répétez votre mot de passe', required: true },
+                  ],
+                  submit_text: 'Créer mon compte',
+                  enable_captcha: true,
+                },
+                styles: {
+                  background_color: 'transparent',
+                  padding: '0'
+                },
+                layout: 12,
+                children: []
+              },
+              {
+                id: `block-${now}-6`,
+                type: 'paragraph',
+                data: {
+                  content: 'En créant un compte, vous acceptez nos [Conditions Générales de Vente](/legal/terms) et notre [Politique de Confidentialité](/legal/privacy).',
+                },
+                styles: {
+                  text_align: 'center',
+                  color: '#6b7280',
+                  fontSize: '0.875rem',
+                  margin_top: '1.5rem'
+                },
+                layout: 12,
+                children: []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+
+/**
  * Crée les blocs pour la page FAQ
  */
 function createFAQPage(): PageDefinition {
@@ -1635,6 +1755,7 @@ export const ALL_PUBLIC_PAGES: PageDefinition[] = [
   createFeaturesPage(),
   createTarificationPage(),
   createTemplatesPage(),
+  createRegisterPage(),
   createContactPage(),
   createFAQPage(),
   createCGVPage(),

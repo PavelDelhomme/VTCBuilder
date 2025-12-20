@@ -336,11 +336,18 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
           handleRedo()
         }
       }
+
+      // Suppr ou Backspace pour supprimer le bloc sélectionné
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlock) {
+        e.preventDefault()
+        removeBlock(selectedBlock, false) // false = demander confirmation
+        setSelectedBlock(null)
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [history, handleUndo, handleRedo])
+  }, [history, handleUndo, handleRedo, selectedBlock, removeBlock])
 
   // Notifier le parent des changements undo/redo
   useEffect(() => {
@@ -2368,8 +2375,16 @@ const SortableBlock = React.memo(function SortableBlock({
       // Calculer le nombre de colonnes basé sur le delta
       const deltaCols = Math.round(deltaX / currentColWidth)
       const newLayoutIndex = availableLayouts.indexOf(startLayout) + (direction.includes('right') ? deltaCols : -deltaCols)
-      const clampedIndex = Math.max(0, Math.min(availableLayouts.length - 1, newLayoutIndex))
+      // Limiter à minimum 2 colonnes (pour une largeur minimale d'environ 200px sur un conteneur de 1200px)
+      const minCols = 2
+      const clampedIndex = Math.max(availableLayouts.indexOf(minCols as any), Math.min(availableLayouts.length - 1, newLayoutIndex))
       const newLayout = availableLayouts[clampedIndex]
+      
+      // Vérifier aussi que la largeur calculée ne soit pas inférieure à 200px
+      const calculatedWidth = (newLayout / 12) * currentContainerWidth
+      if (calculatedWidth < 200 && newLayout < minCols) {
+        return // Ne pas permettre la réduction en dessous de 200px
+      }
       
       // Ne mettre à jour que si la valeur a vraiment changé pour éviter les boucles
       if (newLayout !== startLayout && newLayout !== block.layout) {
@@ -2588,7 +2603,12 @@ const SortableBlock = React.memo(function SortableBlock({
         }}
         data-block-id={block.id}
         style={style}
-        className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] ${isResizing ? 'select-none' : ''} group cursor-move`}
+        className={`relative w-full mb-4 bg-white dark:bg-gray-800 rounded-xl border-2 ${isSelected ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800' : 'border-gray-200 dark:border-gray-700'} shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden min-h-[80px] min-w-[200px] ${isResizing ? 'select-none' : ''} group cursor-move`}
+        style={{
+          ...style,
+          minWidth: '200px',
+          minHeight: '80px',
+        }}
         {...attributes}
         {...(listeners ? {
           ...listeners,
