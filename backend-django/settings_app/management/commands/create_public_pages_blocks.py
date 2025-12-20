@@ -516,26 +516,187 @@ class Command(BaseCommand):
         # Page Contact (reproduction exacte de contact/page.tsx)
         contact_blocks_raw = [
             {
-                'type': 'contact_form',
+                'type': 'container',
                 'data': {
-                    'title': 'Envoyez-nous un message',
-                    'fields': ['name', 'email', 'subject', 'message'],
-                    'submit_text': 'Envoyer le message',
-                }
-            },
-            {
-                'type': 'contact_info',
-                'data': {
-                    'title': 'Nos coordonnées',
-                    'email': 'support@vtcbuilder.com',
-                    'phone': '+33 1 23 45 67 89',
-                    'address': '123 Avenue des Exemples\n75000 PARIS\nFrance',
-                    'show_hours': True,
-                }
+                    'max_width': '7xl',
+                    'padding': 'py-20',
+                },
+                'children': [
+                    {
+                        'type': 'grid-container',
+                        'data': {
+                            'columns': 2,
+                            'gap': 'gap-12',
+                        },
+                        'children': [
+                            {
+                                'type': 'section',
+                                'data': {
+                                    'background': 'bg-white dark:bg-gray-800',
+                                    'padding': 'p-8',
+                                    'rounded': 'rounded-xl',
+                                    'shadow': 'shadow-lg',
+                                },
+                                'children': [
+                                    {
+                                        'type': 'heading',
+                                        'data': {
+                                            'text': 'Envoyez-nous un message',
+                                            'level': 2,
+                                            'size': 'text-2xl',
+                                            'weight': 'font-bold',
+                                            'margin': 'mb-6',
+                                        }
+                                    },
+                                    {
+                                        'type': 'contact-form',
+                                        'data': {
+                                            'title': '',
+                                            'description': '',
+                                            'fields': [
+                                                {'type': 'text', 'label': 'Nom complet', 'placeholder': 'Votre nom', 'required': True, 'name': 'name'},
+                                                {'type': 'email', 'label': 'Email', 'placeholder': 'votre@email.com', 'required': True, 'name': 'email'},
+                                                {'type': 'select', 'label': 'Sujet', 'placeholder': 'Sélectionnez un sujet', 'required': True, 'name': 'subject', 'options': [
+                                                    {'value': 'support', 'label': 'Support technique'},
+                                                    {'value': 'sales', 'label': 'Question commerciale'},
+                                                    {'value': 'billing', 'label': 'Question de facturation'},
+                                                    {'value': 'feature', 'label': 'Suggestion de fonctionnalité'},
+                                                    {'value': 'other', 'label': 'Autre'},
+                                                ]},
+                                                {'type': 'textarea', 'label': 'Message', 'placeholder': 'Votre message', 'required': True, 'name': 'message', 'rows': 6},
+                                            ],
+                                            'submit_text': 'Envoyer le message',
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                'type': 'section',
+                                'data': {
+                                    'background': 'bg-transparent',
+                                    'padding': 'space-y-8',
+                                },
+                                'children': [
+                                    {
+                                        'type': 'section',
+                                        'data': {
+                                            'background': 'bg-white dark:bg-gray-800',
+                                            'padding': 'p-8',
+                                            'rounded': 'rounded-xl',
+                                            'shadow': 'shadow-lg',
+                                        },
+                                        'children': [
+                                            {
+                                                'type': 'heading',
+                                                'data': {
+                                                    'text': 'Nos coordonnées',
+                                                    'level': 2,
+                                                    'size': 'text-2xl',
+                                                    'weight': 'font-bold',
+                                                    'margin': 'mb-6',
+                                                }
+                                            },
+                                            {
+                                                'type': 'text',
+                                                'data': {
+                                                    'content': '📧 Email\nsupport@vtcbuilder.com\n\n📞 Téléphone\n+33 1 23 45 67 89\n\n📍 Adresse\n123 Avenue des Exemples\n75000 PARIS\nFrance',
+                                                }
+                                            },
+                                            {
+                                                'type': 'heading',
+                                                'data': {
+                                                    'text': 'Horaires de support',
+                                                    'level': 2,
+                                                    'size': 'text-xl',
+                                                    'weight': 'font-bold',
+                                                    'margin': 'mt-8 mb-4',
+                                                }
+                                            },
+                                            {
+                                                'type': 'text',
+                                                'data': {
+                                                    'content': 'Lundi - Vendredi: 9h - 18h\nSamedi: 10h - 16h\nDimanche: Fermé',
+                                                }
+                                            },
+                                        ]
+                                    },
+                                ]
+                            },
+                        ]
+                    }
+                ]
             },
         ]
         
         contact_blocks = self._format_blocks(contact_blocks_raw)
+        
+        # Page Register (formulaire d'inscription)
+        register_blocks_raw = [
+            {
+                'type': 'container',
+                'data': {
+                    'max_width': '4xl',
+                    'padding': 'py-20',
+                },
+                'children': [
+                    {
+                        'type': 'section',
+                        'data': {
+                            'background': 'bg-white dark:bg-gray-800',
+                            'padding': 'p-8',
+                            'rounded': 'rounded-xl',
+                            'shadow': 'shadow-lg',
+                        },
+                        'children': [
+                            {
+                                'type': 'heading',
+                                'data': {
+                                    'text': 'Créer votre compte VTCBuilder',
+                                    'level': 1,
+                                    'size': 'text-3xl',
+                                    'weight': 'font-bold',
+                                    'align': 'text-center',
+                                    'margin': 'mb-2',
+                                }
+                            },
+                            {
+                                'type': 'paragraph',
+                                'data': {
+                                    'content': 'Commencez votre essai gratuit de 14 jours. Aucune carte bancaire requise.',
+                                    'align': 'text-center',
+                                    'margin': 'mb-8',
+                                }
+                            },
+                            {
+                                'type': 'form',
+                                'data': {
+                                    'title': '',
+                                    'fields': [
+                                        {'type': 'text', 'label': 'Nom complet', 'placeholder': 'Votre nom', 'required': True},
+                                        {'type': 'email', 'label': 'Email', 'placeholder': 'votre@email.com', 'required': True},
+                                        {'type': 'password', 'label': 'Mot de passe', 'placeholder': 'Minimum 8 caractères', 'required': True},
+                                        {'type': 'password', 'label': 'Confirmer le mot de passe', 'placeholder': 'Répétez votre mot de passe', 'required': True},
+                                    ],
+                                    'submit_text': 'Créer mon compte',
+                                    'enable_captcha': True,
+                                }
+                            },
+                            {
+                                'type': 'paragraph',
+                                'data': {
+                                    'content': 'En créant un compte, vous acceptez nos Conditions Générales de Vente et notre Politique de Confidentialité.',
+                                    'align': 'text-center',
+                                    'size': 'text-sm',
+                                    'margin': 'mt-6',
+                                }
+                            },
+                        ]
+                    }
+                ]
+            },
+        ]
+        
+        register_blocks = self._format_blocks(register_blocks_raw)
         
         # Page FAQ (reproduction exacte de faq/page.tsx)
         faq_blocks_raw = [
@@ -850,6 +1011,16 @@ class Command(BaseCommand):
                 'is_active': True,
                 'order': 3,
             },
+            'register': {
+                'title': 'Inscription',
+                'description': 'Page d\'inscription pour créer un compte VTCBuilder',
+                'slug': 'register',
+                'blocks': register_blocks,
+                'meta_title': 'Inscription - VTCBuilder',
+                'meta_description': 'Créez votre compte VTCBuilder et commencez votre essai gratuit de 14 jours',
+                'is_active': True,
+                'order': 4,
+            },
             'contact': {
                 'title': 'Contact',
                 'description': 'Page de contact avec formulaire',
@@ -858,7 +1029,7 @@ class Command(BaseCommand):
                 'meta_title': 'Contact - VTCBuilder',
                 'meta_description': 'Contactez l\'équipe VTCBuilder',
                 'is_active': True,
-                'order': 4,
+                'order': 5,
             },
             'faq': {
                 'title': 'FAQ',
