@@ -2491,7 +2491,23 @@ const SortableBlock = React.memo(function SortableBlock({
 
   // Gestion du redimensionnement
   const [isResizing, setIsResizing] = useState(false)
+  const [resizeIndicator, setResizeIndicator] = useState<{ cols: number; percent: number; pixels: number } | null>(null)
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null)
   const blockRef = useRef<HTMLDivElement>(null)
+
+  // Mettre à jour la position de la souris pour l'indicateur
+  useEffect(() => {
+    if (!isResizing) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+    }
+  }, [isResizing])
 
   const handleResizeStart = (e: React.MouseEvent<HTMLDivElement>, direction: string) => {
     e.stopPropagation()
@@ -2501,7 +2517,6 @@ const SortableBlock = React.memo(function SortableBlock({
     const startX = e.clientX
     const startLayout = block.layout || 12
     const containerWidth = blockRef.current?.parentElement?.offsetWidth || 1200
-    const colWidth = containerWidth / 12 // Largeur d'une colonne
 
     // Paliers de colonnes disponibles (1-12)
     const availableLayouts: (1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12)[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
@@ -2516,15 +2531,25 @@ const SortableBlock = React.memo(function SortableBlock({
       // Calculer le nombre de colonnes basé sur le delta
       const deltaCols = Math.round(deltaX / currentColWidth)
       const newLayoutIndex = availableLayouts.indexOf(startLayout) + (direction.includes('right') ? deltaCols : -deltaCols)
-      // Limiter à minimum 2 colonnes (pour une largeur minimale d'environ 200px sur un conteneur de 1200px)
-      const minCols = 2
-      const clampedIndex = Math.max(availableLayouts.indexOf(minCols as any), Math.min(availableLayouts.length - 1, newLayoutIndex))
+      // Limiter à minimum 1 colonne (au lieu de 2 pour plus de flexibilité)
+      const minCols = 1
+      const clampedIndex = Math.max(0, Math.min(availableLayouts.length - 1, newLayoutIndex))
       const newLayout = availableLayouts[clampedIndex]
       
-      // Vérifier aussi que la largeur calculée ne soit pas inférieure à 200px
+      // Calculer les dimensions pour l'indicateur
       const calculatedWidth = (newLayout / 12) * currentContainerWidth
-      if (calculatedWidth < 200 && newLayout < minCols) {
-        return // Ne pas permettre la réduction en dessous de 200px
+      const percentWidth = (newLayout / 12) * 100
+      
+      // Afficher l'indicateur de redimensionnement
+      setResizeIndicator({
+        cols: newLayout,
+        percent: Math.round(percentWidth * 10) / 10,
+        pixels: Math.round(calculatedWidth),
+      })
+      
+      // Vérifier aussi que la largeur calculée ne soit pas inférieure à 150px
+      if (calculatedWidth < 150 && newLayout < minCols) {
+        return // Ne pas permettre la réduction en dessous de 150px
       }
       
       // Ne mettre à jour que si la valeur a vraiment changé pour éviter les boucles
@@ -2535,6 +2560,7 @@ const SortableBlock = React.memo(function SortableBlock({
 
     const handleMouseUp = () => {
       setIsResizing(false)
+      setResizeIndicator(null)
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
@@ -2805,28 +2831,48 @@ const SortableBlock = React.memo(function SortableBlock({
       {/* Resize Handles - Permet le redimensionnement direct des blocs */}
       {isSelected && !isChildBlock && (
         <>
-          {/* Corner handles */}
+          {/* Handles latéraux pour redimensionner horizontalement */}
           <div
-            className="absolute top-0 left-0 w-4 h-4 cursor-nwse-resize bg-blue-500 border-2 border-white dark:border-gray-800 rounded-br-lg z-20 hover:bg-blue-600"
+            className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-12 cursor-ew-resize bg-blue-500 border-2 border-white dark:border-gray-800 rounded-r-lg z-20 hover:bg-blue-600 hover:w-4 transition-all group"
             onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleResizeStart(e, 'left')}
-            title="Redimensionner"
-          />
+            title="Redimensionner la largeur (système de colonnes)"
+          >
+            <div className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+              <div className="bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg">
+                ← Rétrécir
+              </div>
+            </div>
+          </div>
           <div
-            className="absolute top-0 right-0 w-4 h-4 cursor-nesw-resize bg-blue-500 border-2 border-white dark:border-gray-800 rounded-bl-lg z-20 hover:bg-blue-600"
+            className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-12 cursor-ew-resize bg-blue-500 border-2 border-white dark:border-gray-800 rounded-l-lg z-20 hover:bg-blue-600 hover:w-4 transition-all group"
             onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleResizeStart(e, 'right')}
-            title="Redimensionner"
-          />
-          {/* Edge handles */}
-          <div
-            className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-8 cursor-ew-resize bg-blue-500 border-2 border-white dark:border-gray-800 rounded-r-lg z-20 hover:bg-blue-600"
-            onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleResizeStart(e, 'left')}
-            title="Redimensionner"
-          />
-          <div
-            className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-8 cursor-ew-resize bg-blue-500 border-2 border-white dark:border-gray-800 rounded-l-lg z-20 hover:bg-blue-600"
-            onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleResizeStart(e, 'right')}
-            title="Redimensionner"
-          />
+            title="Redimensionner la largeur (système de colonnes)"
+          >
+            <div className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+              <div className="bg-gray-900 text-white text-xs px-2 py-1 rounded shadow-lg">
+                Agrandir →
+              </div>
+            </div>
+          </div>
+          
+          {/* Indicateur de redimensionnement */}
+          {isResizing && resizeIndicator && mousePosition && (
+            <div
+              className="fixed z-[100001] bg-blue-600 text-white px-3 py-2 rounded-lg shadow-xl pointer-events-none"
+              style={{
+                top: `${mousePosition.y - 60}px`,
+                left: `${mousePosition.x}px`,
+                transform: 'translateX(-50%)',
+              }}
+            >
+              <div className="text-sm font-bold">
+                {resizeIndicator.cols}/12 colonnes
+              </div>
+              <div className="text-xs opacity-90">
+                {resizeIndicator.percent}% • {resizeIndicator.pixels}px
+              </div>
+            </div>
+          )}
         </>
       )}
       {/* Block Header - Modern Design */}

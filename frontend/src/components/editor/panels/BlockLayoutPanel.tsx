@@ -172,9 +172,24 @@ export function BlockLayoutPanel({
         </h4>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Largeur (colonnes sur 12)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                Largeur (système de colonnes)
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  // Ouvrir une info-bulle ou modal explicatif
+                  alert('Système de colonnes (comme Bootstrap) :\n\n• 12 colonnes = pleine largeur (100%)\n• 6 colonnes = moitié (50%)\n• 4 colonnes = tiers (33.33%)\n• 3 colonnes = quart (25%)\n\nVous pouvez aussi redimensionner directement en glissant les poignées bleues sur les bords du bloc.')
+                }}
+                className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
+                title="Aide sur le système de colonnes"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            </div>
             <select
               value={block?.layout || 12}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -182,19 +197,22 @@ export function BlockLayoutPanel({
               }}
               className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value={12}>12/12 (Pleine largeur)</option>
-              <option value={11}>11/12</option>
-              <option value={10}>10/12</option>
-              <option value={9}>9/12 (3/4)</option>
-              <option value={8}>8/12 (2/3)</option>
-              <option value={7}>7/12</option>
-              <option value={6}>6/12 (1/2)</option>
-              <option value={5}>5/12</option>
-              <option value={4}>4/12 (1/3)</option>
-              <option value={3}>3/12 (1/4)</option>
-              <option value={2}>2/12 (1/6)</option>
-              <option value={1}>1/12</option>
+              <option value={12}>12/12 (Pleine largeur - 100%)</option>
+              <option value={11}>11/12 (91.67%)</option>
+              <option value={10}>10/12 (83.33%)</option>
+              <option value={9}>9/12 (3/4 - 75%)</option>
+              <option value={8}>8/12 (2/3 - 66.67%)</option>
+              <option value={7}>7/12 (58.33%)</option>
+              <option value={6}>6/12 (1/2 - 50%)</option>
+              <option value={5}>5/12 (41.67%)</option>
+              <option value={4}>4/12 (1/3 - 33.33%)</option>
+              <option value={3}>3/12 (1/4 - 25%)</option>
+              <option value={2}>2/12 (1/6 - 16.67%)</option>
+              <option value={1}>1/12 (8.33%)</option>
             </select>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              💡 Astuce : Glissez les poignées bleues sur les bords du bloc pour redimensionner visuellement
+            </p>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
