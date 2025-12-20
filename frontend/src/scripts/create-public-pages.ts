@@ -271,7 +271,7 @@ function createTemplatesPage(): PageDefinition {
  * Crée les blocs pour la page Contact
  * Structure: Hero > Container (2 colonnes: Formulaire + Infos contact)
  */
-function createContactPage(): PageDefinition {
+export function createContactPage(): PageDefinition {
   const now = Date.now()
   
   return {
