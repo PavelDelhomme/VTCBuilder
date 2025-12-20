@@ -2216,15 +2216,11 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   
                   // Calculer l'offset du clic par rapport au coin supérieur gauche du bloc
                   // dnd-kit positionne le DragOverlay à la position de la souris
-                  // Pour que le point de clic reste exactement sous le curseur, on doit
-                  // soustraire l'offset du clic du transform
+                  // Le DragOverlay est positionné de manière à ce que son coin supérieur gauche
+                  // soit à la position de la souris. Pour que le point de clic reste exactement
+                  // sous le curseur, on doit soustraire l'offset du clic
                   const offsetX = dragStartPositionRef.current?.offsetX ?? 0
                   const offsetY = dragStartPositionRef.current?.offsetY ?? 0
-                  
-                  // Limiter l'offset pour éviter que le DragOverlay sorte de l'écran
-                  // et s'assurer qu'il reste visible
-                  const clampedOffsetX = Math.max(0, Math.min(offsetX, 200))
-                  const clampedOffsetY = Math.max(0, Math.min(offsetY, 200))
                   
                   return (
                     <div 
@@ -2237,10 +2233,11 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                         // Positionner le bloc pour que le point de clic reste exactement sous le curseur
                         // dnd-kit positionne le DragOverlay à la position de la souris (coin supérieur gauche)
                         // On soustrait l'offset pour que le point de clic reste aligné avec le curseur
-                        transform: `translate(-${Math.round(clampedOffsetX)}px, -${Math.round(clampedOffsetY)}px)`,
+                        // Utiliser Math.round pour éviter les problèmes de rendu avec les décimales
+                        transform: `translate(-${Math.round(offsetX)}px, -${Math.round(offsetY)}px)`,
                         willChange: 'transform',
                         // Le DragOverlay de dnd-kit est déjà en position fixed
-                        // On utilise juste le transform pour ajuster la position
+                        // On utilise juste le transform pour ajuster la position relative au curseur
                       }}
                     >
                       {/* Header du bloc */}
