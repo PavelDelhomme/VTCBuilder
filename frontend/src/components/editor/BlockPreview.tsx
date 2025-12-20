@@ -1563,6 +1563,8 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     case 'container': {
       const isDark = theme === 'dark'
       // Container should render its children, not just show placeholder text
+      // Le container doit respecter la largeur définie par layout (colonnes)
+      // Note: Le layoutWidth sera appliqué par le wrapper final, donc ici on ne l'applique pas
       return (
         <div 
           data-block-id={block.id}
@@ -1572,12 +1574,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             minHeight: block.minHeight || 'auto',
             height: block.height || 'auto',
             maxHeight: block.maxHeight || 'none',
-            width: '100%',
-            maxWidth: '100%',
             backgroundColor: isDark ? (block.styles?.background_color || '#1f2937') : (block.styles?.background_color || 'transparent'),
             color: isDark ? '#f9fafb' : '#111827',
-          }} 
-          className="w-full max-w-full"
+          }}
         >
           {block.children && block.children.length > 0 ? (
             // Render children blocks recursively
@@ -5078,14 +5077,28 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
   }
 
   // Wrap content with layout and container
+  // IMPORTANT: Le layoutWidth (colonnes) doit être appliqué au container, pas à l'intérieur
+  // Le container respecte la largeur définie par les colonnes
+  const finalContainerClass = block.container === 'container-fluid' 
+    ? 'w-full' 
+    : block.container === 'none' 
+      ? '' 
+      : layoutCols === 12 
+        ? 'max-w-7xl mx-auto' 
+        : '' // Si pas pleine largeur, on applique le layoutWidth directement
+  
   return (
     <div 
-      className={`${containerClass} mb-6 ${getHoverAnimationClass()} ${getAlignmentClasses()}`} 
-      style={wrapperStyles}
+      className={`${finalContainerClass} ${layoutWidth !== 'w-full' ? layoutWidth : ''} mb-6 ${getHoverAnimationClass()} ${getAlignmentClasses()}`} 
+      style={{
+        ...wrapperStyles,
+        // Si container est 'container' et layout < 12, centrer le contenu
+        ...(block.container === 'container' && layoutCols < 12 ? { marginLeft: 'auto', marginRight: 'auto' } : {}),
+        // Appliquer la largeur max si container est défini et layout < 12
+        ...(block.container === 'container' && layoutCols < 12 ? { maxWidth: '1280px' } : {}),
+      }}
     >
-      <div className={layoutWidth}>
-        {content}
-      </div>
+      {content}
     </div>
   )
 }
