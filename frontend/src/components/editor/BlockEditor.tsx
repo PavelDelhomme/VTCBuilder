@@ -1750,23 +1750,35 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                             const canUse = canUseBlockType(blockType.name, isPremium)
                             const canAdd = canUse && (isContainer || hasContainerInBlocks)
                             
-                            return (
-                              <button
-                                key={blockType.id}
-                                onClick={() => {
-                                  if (canAdd) {
-                                    addBlock(blockType)
-                                    setSidebarOpen(false)
-                                  }
-                                }}
-                                disabled={!canAdd}
-                                className={`w-full p-3 rounded-lg border transition-all text-left group ${
-                                  canAdd
-                                    ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-md hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-[0.98]'
-                                    : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed'
-                                }`}
-                                title={!canAdd && !isContainer && !hasContainerInBlocks ? '⚠️ Ajoutez d\'abord un conteneur (Container, Grid, Flex, etc.)' : ''}
-                              >
+                            // Composant draggable pour les blocs de la palette
+                            const DraggableBlockTypeItem = () => {
+                              const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+                                id: `block-type-${blockType.name}`,
+                                data: {
+                                  type: 'block-type',
+                                  blockType: blockType,
+                                },
+                              })
+                              
+                              return (
+                                <button
+                                  ref={setNodeRef}
+                                  {...listeners}
+                                  {...attributes}
+                                  onClick={() => {
+                                    if (canAdd) {
+                                      addBlock(blockType)
+                                      setSidebarOpen(false)
+                                    }
+                                  }}
+                                  disabled={!canAdd}
+                                  className={`w-full p-3 rounded-lg border transition-all text-left group ${
+                                    canAdd
+                                      ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-md hover:bg-blue-50 dark:hover:bg-blue-900/20 active:scale-[0.98] cursor-grab active:cursor-grabbing'
+                                      : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed'
+                                  } ${isDragging ? 'opacity-50' : ''}`}
+                                  title={!canAdd && !isContainer && !hasContainerInBlocks ? '⚠️ Ajoutez d\'abord un conteneur (Container, Grid, Flex, etc.)' : 'Glissez-déposez ou cliquez pour ajouter'}
+                                >
                                 <div className="flex items-center gap-3">
                                   <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center text-xl shadow-sm">
                                     {blockType.icon}
@@ -1819,7 +1831,10 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                 </div>
                               </button>
                             )
-                          })}
+                          }
+                          
+                          return <DraggableBlockTypeItem key={blockType.id} />
+                        })}
                         </div>
                       )
                     }
@@ -1853,29 +1868,42 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                 const canUse = canUseBlockType(blockType.name, isPremium)
                                 const canAdd = canUse && (isContainer || hasContainerInBlocks)
                                 
-                                return (
-                                  <button
-                                    key={`${blockType.name}-${blockType.id}`}
-                                    onClick={() => {
-                                      if (canAdd) {
-                                        addBlock(blockType)
-                                        setSidebarOpen(false)
+                                // Composant draggable pour les blocs de la palette (version catégories)
+                                const DraggableBlockTypeItemCategory = () => {
+                                  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+                                    id: `block-type-${blockType.name}`,
+                                    data: {
+                                      type: 'block-type',
+                                      blockType: blockType,
+                                    },
+                                  })
+                                  
+                                  return (
+                                    <button
+                                      ref={setNodeRef}
+                                      {...listeners}
+                                      {...attributes}
+                                      key={`${blockType.name}-${blockType.id}`}
+                                      onClick={() => {
+                                        if (canAdd) {
+                                          addBlock(blockType)
+                                          setSidebarOpen(false)
+                                        }
+                                      }}
+                                      disabled={!canAdd}
+                                      className={`w-full px-3 sm:px-4 py-3 text-left bg-white dark:bg-gray-800 border-2 rounded-xl transition-all duration-200 flex items-center gap-3 ${
+                                        canAdd
+                                          ? 'border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-md cursor-grab active:cursor-grabbing group'
+                                          : 'border-gray-100 dark:border-gray-800 opacity-60 cursor-not-allowed'
+                                      } ${isDragging ? 'opacity-50' : ''}`}
+                                      title={
+                                        !canAdd && !isContainer && !hasContainerInBlocks 
+                                          ? '⚠️ Ajoutez d\'abord un conteneur (Container, Grid, Flex, etc.) dans la catégorie "Mise en page"' 
+                                          : !canUse && isPremium 
+                                            ? 'Bloc premium - Nécessite un abonnement supérieur' 
+                                            : 'Glissez-déposez ou cliquez pour ajouter'
                                       }
-                                    }}
-                                    disabled={!canAdd}
-                                    className={`w-full px-3 sm:px-4 py-3 text-left bg-white dark:bg-gray-800 border-2 rounded-xl transition-all duration-200 flex items-center gap-3 ${
-                                      canAdd
-                                        ? 'border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:shadow-md cursor-pointer group'
-                                        : 'border-gray-100 dark:border-gray-800 opacity-60 cursor-not-allowed'
-                                    }`}
-                                    title={
-                                      !canAdd && !isContainer && !hasContainerInBlocks 
-                                        ? '⚠️ Ajoutez d\'abord un conteneur (Container, Grid, Flex, etc.) dans la catégorie "Mise en page"' 
-                                        : !canUse && isPremium 
-                                          ? 'Bloc premium - Nécessite un abonnement supérieur' 
-                                          : ''
-                                    }
-                                  >
+                                    >
                                     <div className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br flex items-center justify-center border transition-all ${
                                       canUse
                                         ? 'from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 border-gray-200 dark:border-gray-600 group-hover:from-blue-100 group-hover:to-blue-200 dark:group-hover:from-blue-900/30 dark:group-hover:to-blue-800/30'
@@ -1948,7 +1976,10 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                                     )}
                                   </button>
                                 )
-                              })}
+                              }
+                              
+                              return <DraggableBlockTypeItemCategory key={`${blockType.name}-${blockType.id}`} />
+                            })}
                             </div>
                           </div>
                         )

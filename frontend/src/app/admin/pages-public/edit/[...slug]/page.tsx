@@ -1981,13 +1981,14 @@ export default function EditPublicPage() {
                 <div className={`absolute inset-0 overflow-auto ${
                   previewMode === 'tablet' ? 'px-4' : previewMode === 'mobile' ? 'px-2' : ''
                 }`}>
-                  <div className={`h-full ${
+                  <div className={`${
                     previewMode === 'tablet' ? 'max-w-[768px] mx-auto' : 
                     previewMode === 'mobile' ? 'max-w-[375px] mx-auto' : 
                     'w-full'
                   }`}>
                     {/* Utiliser uniquement les blocs - pas de composants statiques */}
-                    <div className="min-h-screen bg-white dark:bg-gray-900">
+                    {/* Supprimer min-h-screen et h-full pour que la hauteur s'adapte au contenu réel */}
+                    <div className="bg-white dark:bg-gray-900">
                       <BlockPreview 
                         blocks={blocks} 
                         blockTypes={blockTypes}

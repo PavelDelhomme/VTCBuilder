@@ -513,7 +513,7 @@ function BlockPreview({
         onDragEnd={handleDragEnd}
       >
         <div className="flex-1 overflow-y-auto w-full">
-          <div className="p-4 sm:p-6 lg:p-8 w-full max-w-full">
+          <div className="p-4 sm:p-6 lg:p-8 w-full max-w-full min-h-0">
             {blocks.length === 0 ? (
               <div className="text-center py-20 lg:py-32">
                 <div className="max-w-md mx-auto">
