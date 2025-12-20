@@ -1994,15 +1994,16 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                               }
                               
                               return (
-                                <DraggableBlockTypeItemCategory 
-                                  key={`${blockType.name}-${blockType.id}`}
-                                  blockType={blockType}
-                                  canAdd={canAdd}
-                                  isContainer={isContainer}
-                                  hasContainerInBlocks={hasContainerInBlocks}
-                                  canUse={canUse}
-                                  isPremium={isPremium}
-                                />
+                                <div key={`${blockType.name}-${blockType.id}`}>
+                                  <DraggableBlockTypeItemCategory 
+                                    blockType={blockType}
+                                    canAdd={canAdd}
+                                    isContainer={isContainer}
+                                    hasContainerInBlocks={hasContainerInBlocks}
+                                    canUse={canUse}
+                                    isPremium={isPremium}
+                                  />
+                                </div>
                               )
                             })}
                             </div>
