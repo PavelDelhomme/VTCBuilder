@@ -1750,7 +1750,8 @@ export default function EditPublicPage() {
         )}
 
         {/* Main Editor Area with Split View - Redimensionnable */}
-        <div className="flex-1 flex overflow-hidden min-h-0 relative" style={{ height: 'calc(100vh - 120px)', minHeight: '700px' }}>
+        {/* Utiliser flex-1 pour prendre toute la hauteur disponible au lieu d'une hauteur fixe */}
+        <div className="flex-1 flex overflow-hidden min-h-0 relative">
           {/* Sidebar - Palette de blocs */}
           {!isPaletteCollapsed ? (
             <>

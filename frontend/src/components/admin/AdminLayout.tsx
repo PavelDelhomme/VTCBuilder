@@ -232,7 +232,7 @@ export default function AdminLayout({ children, title, subtitle, headerActions, 
 
           {/* Content - Utilise tout l'espace disponible avec scroll */}
           <main className="flex-1 w-full min-w-0 overflow-hidden overflow-x-hidden flex flex-col">
-            <div className="w-full min-w-0 flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-4 sm:py-6">
+            <div className="w-full min-w-0 flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-0">
               {children}
             </div>
           </main>
