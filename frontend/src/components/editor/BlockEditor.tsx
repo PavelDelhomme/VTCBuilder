@@ -2802,8 +2802,8 @@ const SortableBlock = React.memo(function SortableBlock({
           }
         }}
       >
-      {/* Resize Handles - Désactivé : le resize se fait via les paramètres pour éviter les conflits */}
-      {false && isSelected && !isChildBlock && (
+      {/* Resize Handles - Permet le redimensionnement direct des blocs */}
+      {isSelected && !isChildBlock && (
         <>
           {/* Corner handles */}
           <div
