@@ -107,6 +107,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     offsetX?: number;
     offsetY?: number;
     blockWidth?: number; // Largeur du bloc original pour ajuster le DragOverlay
+    blockHeight?: number; // Hauteur du bloc original pour référence
   } | null>(null)
   
   const [sidebarOpen, setSidebarOpen] = useState(true) // Ouvrir par défaut sur desktop
@@ -548,10 +549,6 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       const offsetX = mouseEvent.clientX - rect.left
       const offsetY = mouseEvent.clientY - rect.top
       
-      // Note: Les coordonnées sont calculées correctement
-      // Le problème pourrait venir du fait que dnd-kit positionne le DragOverlay
-      // avec un léger décalage ou que le transform n'est pas appliqué correctement
-      
       // Prendre en compte le scroll de la page pour un calcul précis
       const scrollX = window.scrollX || window.pageXOffset || 0
       const scrollY = window.scrollY || window.pageYOffset || 0
@@ -565,9 +562,12 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         // dnd-kit positionne le DragOverlay à la position de la souris (mouseEvent.clientX, mouseEvent.clientY)
         // Le DragOverlay est en position fixed, donc ses coordonnées sont relatives au viewport
         // On doit déplacer le DragOverlay de -offsetX et -offsetY pour que le point de clic reste sous le curseur
+        // IMPORTANT: L'offset doit être calculé exactement comme la distance entre le coin supérieur gauche du bloc
+        // et le point de clic, car dnd-kit positionne le DragOverlay avec son coin supérieur gauche à la position de la souris
         offsetX: offsetX,  // Offset du clic par rapport au bloc (viewport) - utilisé pour le transform
         offsetY: offsetY,  // Offset du clic par rapport au bloc (viewport) - utilisé pour le transform
         blockWidth: rect.width,  // Largeur du bloc original pour référence
+        blockHeight: rect.height,  // Hauteur du bloc original pour référence
       }
     } else {
       // Fallback si pas d'événement de souris - centrer le bloc
@@ -577,6 +577,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         offsetX: 0,
         offsetY: 0,
         blockWidth: 0,
+        blockHeight: 0,
       }
     }
     

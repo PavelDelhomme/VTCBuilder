@@ -1293,7 +1293,7 @@ export default function EditPublicPage() {
           </button>
 
           {/* More Options Menu - 3 points verticaux */}
-          <div className="relative more-options-menu">
+          <div className="relative more-options-menu" style={{ zIndex: 100000 }}>
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -1314,7 +1314,7 @@ export default function EditPublicPage() {
                   onClick={() => setShowMoreMenu(false)}
                 />
                 {/* Menu dropdown */}
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[10001] py-2">
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-2" style={{ zIndex: 100001 }}>
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -1846,6 +1846,15 @@ export default function EditPublicPage() {
               maxWidth: showPreview ? '80%' : '100%'
             }}
           >
+            {/* Header pour la zone d'édition */}
+            <div className="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center justify-between flex-shrink-0">
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                Emplacement de blocs
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-500">
+                📝 Éditeur
+              </span>
+            </div>
             <div className="flex-1 overflow-hidden min-h-0 relative">
               {/* Indicateur de raccourcis clavier */}
               <div className="absolute top-2 right-2 z-10 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 text-xs opacity-0 hover:opacity-100 transition-opacity group">
