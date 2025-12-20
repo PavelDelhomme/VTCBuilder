@@ -760,43 +760,59 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       return
     }
 
-    // Gérer le drop d'un type de bloc dans un conteneur (nouveau bloc depuis la palette)
-    // Utiliser uniquement la zone de drop pour éviter les conflits
-    if (active.data.current?.type === 'block-type' && isContainerDropZone) {
+    // Gérer le drop d'un type de bloc (nouveau bloc depuis la palette)
+    if (active.data.current?.type === 'block-type') {
       const blockType = active.data.current.blockType as BlockType
       
-      const newChild: Block = {
+      const newBlock: Block = {
         id: `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: blockType.name,
         data: {},
-        layout: 3, // Par défaut, 3 colonnes sur 12 (1/4 de la largeur)
+        layout: 12, // Par défaut, pleine largeur à la racine
         children: isContainerType(blockType.name) ? [] : undefined,
       }
       
-      // Trouver le conteneur pour déterminer le layout
-      const findContainer = (blocks: Block[]): Block | null => {
-        for (const block of blocks) {
-          if (block.id === containerId) {
-            return block
+      // Si on drop sur la racine
+      if (overId === 'root-drop-zone' || over.data.current?.type === 'root') {
+        // Ajouter le bloc à la racine
+        const newBlocks = [...history.state, newBlock]
+        history.set(newBlocks, true)
+        onChange(newBlocks)
+        trackBlockAction(blockType.name, 'add')
+        setActiveDragId(null)
+        return
+      }
+      
+      // Si on drop dans un conteneur
+      if (isContainerDropZone) {
+        // Trouver le conteneur pour déterminer le layout
+        const findContainer = (blocks: Block[]): Block | null => {
+          for (const block of blocks) {
+            if (block.id === containerId) {
+              return block
+            }
+            if (block.children) {
+              const found = findContainer(block.children)
+              if (found) return found
+            }
           }
-          if (block.children) {
-            const found = findContainer(block.children)
-            if (found) return found
-          }
+          return null
         }
-        return null
+        
+        const container = findContainer(history.state)
+        if (container && container.type === 'grid-container') {
+          newBlock.layout = undefined
+        } else {
+          newBlock.layout = 3 // Par défaut, 3 colonnes sur 12 (1/4 de la largeur) dans un conteneur
+        }
+        
+        const newBlocks = addBlockToContainer(history.state, containerId, newBlock)
+        history.set(newBlocks, true)
+        onChange(newBlocks)
+        trackBlockAction(blockType.name, 'add')
+        setActiveDragId(null)
+        return
       }
-      
-      const container = findContainer(history.state)
-      if (container && container.type === 'grid-container') {
-        newChild.layout = undefined
-      }
-      
-      const newBlocks = addBlockToContainer(history.state, containerId, newChild)
-      history.set(newBlocks, true)
-      onChange(newBlocks)
-      trackBlockAction(blockType.name, 'add')
-      return
     }
 
     // Gérer le déplacement d'un bloc existant dans un conteneur
@@ -2059,20 +2075,22 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={history.state.map((b: Block) => b.id)} strategy={verticalListSortingStrategy}>
-              <div 
-                className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 max-w-full min-h-0"
-                onClick={(e) => {
-                  // Désélectionner le bloc si on clique en dehors d'un bloc
-                  // Vérifier que le clic n'est pas sur un bloc ou un élément enfant d'un bloc
-                  const target = e.target as HTMLElement
-                  const clickedBlock = target.closest('[data-block-id], [data-block-list-id], [data-child-block-id]')
-                  
-                  // Si on n'a pas cliqué sur un bloc, désélectionner
-                  if (!clickedBlock && selectedBlock) {
-                    setSelectedBlock(null)
-                  }
-                }}
-              >
+              {/* Zone de drop à la racine pour permettre le drop depuis la palette */}
+              <RootDropZone>
+                <div 
+                  className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 overflow-y-auto bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 max-w-full min-h-0"
+                  onClick={(e) => {
+                    // Désélectionner le bloc si on clique en dehors d'un bloc
+                    // Vérifier que le clic n'est pas sur un bloc ou un élément enfant d'un bloc
+                    const target = e.target as HTMLElement
+                    const clickedBlock = target.closest('[data-block-id], [data-block-list-id], [data-child-block-id]')
+                    
+                    // Si on n'a pas cliqué sur un bloc, désélectionner
+                    if (!clickedBlock && selectedBlock) {
+                      setSelectedBlock(null)
+                    }
+                  }}
+                >
                 {history.state.length === 0 ? (
                   <div className="text-center py-12 lg:py-20">
                       <div className="max-w-md mx-auto">
@@ -2235,6 +2253,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   </div>
                 )}
               </div>
+                </RootDropZone>
             </SortableContext>
             <DragOverlay 
               adjustScale={false} 
@@ -2361,6 +2380,26 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
 }
 
 // Sortable Block Component - Optimisé avec React.memo pour éviter les re-renders inutiles
+// Composant pour la zone de drop à la racine
+function RootDropZone({ children }: { children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: 'root-drop-zone',
+    data: {
+      type: 'root',
+      containerId: 'root',
+    },
+  })
+  
+  return (
+    <div
+      ref={setNodeRef}
+      className={`w-full h-full ${isOver ? 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500 border-dashed' : ''}`}
+    >
+      {children}
+    </div>
+  )
+}
+
 const SortableBlock = React.memo(function SortableBlock({
   block,
   blockTypes,
