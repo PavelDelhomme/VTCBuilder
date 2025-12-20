@@ -134,8 +134,11 @@ export function BlockRenderer({
     type: block.type || 'text'
   }
   
+  // Normaliser le type de bloc (minuscules, remplacer underscores par tirets)
+  const normalizedType = (safeBlock.type || '').toLowerCase().replace(/_/g, '-')
+  
   // Render based on block type
-  switch (safeBlock.type) {
+  switch (normalizedType) {
     case 'container':
       return renderContainer({ block, onUpdate })
     
@@ -1621,6 +1624,7 @@ export function BlockRenderer({
       return renderGallery({ block, onUpdate })
     case 'banner':
       return renderBanner({ block, onUpdate })
+    case 'cta':
     case 'cta-section':
     case 'cta_section':
       return renderCTASection({ block, onUpdate })
