@@ -106,6 +106,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
     clickY?: number;
     offsetX?: number;
     offsetY?: number;
+    blockWidth?: number; // Largeur du bloc original pour ajuster le DragOverlay
   } | null>(null)
   
   const [sidebarOpen, setSidebarOpen] = useState(true) // Ouvrir par défaut sur desktop
@@ -549,20 +550,17 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
       const scrollX = window.scrollX || window.pageXOffset || 0
       const scrollY = window.scrollY || window.pageYOffset || 0
       
-      // Vérifier si le bloc a des marges ou des paddings qui pourraient affecter le calcul
-      const computedStyle = window.getComputedStyle(blockElement)
-      const borderLeft = parseFloat(computedStyle.borderLeftWidth) || 0
-      const borderTop = parseFloat(computedStyle.borderTopWidth) || 0
-      
       dragStartPositionRef.current = { 
         blockX: rect.left + scrollX,  // Position X du bloc dans le document
         blockY: rect.top + scrollY,  // Position Y du bloc dans le document
         clickX: mouseEvent.clientX,  // Position X du clic (viewport)
         clickY: mouseEvent.clientY,  // Position Y du clic (viewport)
-        // L'offset doit être calculé par rapport au contenu du bloc (sans les bordures)
-        // mais dnd-kit positionne le DragOverlay à la position de la souris, donc on utilise l'offset brut
+        // L'offset est calculé par rapport au coin supérieur gauche du bloc
+        // dnd-kit positionne le DragOverlay à la position de la souris (coin supérieur gauche)
+        // On soustrait cet offset dans le transform pour que le point de clic reste sous le curseur
         offsetX: offsetX,  // Offset du clic par rapport au bloc (viewport) - utilisé pour le transform
         offsetY: offsetY,  // Offset du clic par rapport au bloc (viewport) - utilisé pour le transform
+        blockWidth: rect.width,  // Largeur du bloc original pour référence
       }
     } else {
       // Fallback si pas d'événement de souris - centrer le bloc
@@ -571,6 +569,7 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
         blockY: 0,
         offsetX: 0,
         offsetY: 0,
+        blockWidth: 0,
       }
     }
     
@@ -2229,6 +2228,11 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                   // sous le curseur, on doit soustraire l'offset du clic
                   const offsetX = dragStartPositionRef.current?.offsetX ?? 0
                   const offsetY = dragStartPositionRef.current?.offsetY ?? 0
+                  const originalBlockWidth = dragStartPositionRef.current?.blockWidth ?? 280
+                  
+                  // Le DragOverlay a une largeur fixe de 280px, mais le bloc original peut avoir une largeur différente
+                  // Si le bloc original est plus large, on doit ajuster l'offset pour compenser
+                  // Cependant, pour l'instant, on utilise l'offset brut car dnd-kit positionne déjà à la souris
                   
                   return (
                     <div 
