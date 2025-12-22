@@ -108,6 +108,7 @@ import {
   renderFAQ,
   renderContactForm,
 } from './renderers/complex/ComplexRenderers'
+import { getBlockRendererCase } from './renderer-cases'
 
 export function BlockRenderer({
   block,
@@ -137,7 +138,13 @@ export function BlockRenderer({
   // Normaliser le type de bloc (minuscules, remplacer underscores par tirets)
   const normalizedType = (safeBlock.type || '').toLowerCase().replace(/_/g, '-')
   
-  // Render based on block type
+  // Essayer d'obtenir le renderer depuis les cases extraits
+  const rendererCase = getBlockRendererCase(normalizedType)
+  if (rendererCase) {
+    return rendererCase({ block: safeBlock, blockType, onUpdate })
+  }
+  
+  // Fallback vers le switch statement pour les cases non extraits
   switch (normalizedType) {
     case 'container':
       return renderContainer({ block, onUpdate })

@@ -53,7 +53,11 @@ import {
 } from '../renderers/complex/ComplexRenderers'
 
 // Import des cases inline extraits
-import { renderFormNewsletter, renderFormSearch, renderFormInscription } from './forms'
+import { renderFormNewsletter, renderFormSearch, renderFormInscription, renderForm } from './forms'
+import { renderPricingCards } from './complex'
+import { renderBookingForm, renderPricingTable, renderServiceZones, renderVehicleGallery, renderContactButtons, renderMap } from './vtc'
+import { renderBadges } from './data'
+import { renderCountdown, renderProgressBar } from './interactive'
 
 // Import des configs
 import {
@@ -169,6 +173,26 @@ const rendererCases: Record<string, RendererCaseFunction> = {
   'form-newsletter': renderFormNewsletter,
   'form-search': renderFormSearch,
   'form-inscription': renderFormInscription,
+  'form': renderForm,
+  
+  // Complex inline cases
+  'pricing_cards': renderPricingCards,
+  'pricing-cards': renderPricingCards,
+  
+  // VTC inline cases
+  'booking-form': renderBookingForm,
+  'pricing-table': renderPricingTable,
+  'service-zones': renderServiceZones,
+  'vehicle-gallery': renderVehicleGallery,
+  'contact-buttons': renderContactButtons,
+  'map': renderMap,
+  
+  // Data inline cases
+  'badges': renderBadges,
+  
+  // Interactive inline cases
+  'countdown': renderCountdown,
+  'progress-bar': renderProgressBar,
   
   // Configs VTC
   'driver-profile': ({ block, onUpdate }) => <DriverProfileConfig block={block} onUpdate={onUpdate} />,
