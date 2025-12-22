@@ -18,7 +18,6 @@ import {
   renderParagraph,
   renderLine,
   renderButton,
-  renderLink,
   renderList,
   renderAlert,
   renderCode,
@@ -55,10 +54,14 @@ import {
 // Import des cases inline extraits
 import { renderFormNewsletter, renderFormSearch, renderFormInscription, renderForm } from './forms'
 import { renderPricingCards } from './complex'
-import { renderBookingForm, renderPricingTable, renderServiceZones, renderVehicleGallery, renderContactButtons, renderMap } from './vtc'
+import { renderBookingForm } from './vtc-forms'
+import { renderPricingTable, renderServiceZones, renderVehicleGallery, renderContactButtons, renderMap } from './vtc-display'
 import { renderBadges } from './data'
 import { renderCountdown, renderProgressBar, renderTabs, renderProgressCircle, renderModal } from './interactive'
-import { renderIconBox, renderFeatureCard, renderVideoEmbed, renderTeamMember, renderCard, renderRating, renderBreadcrumb, renderTags, renderSearchBar, renderPagination, renderLink } from './content'
+import { renderIconBox, renderFeatureCard, renderTeamMember, renderCard } from './content-cards'
+import { renderVideoEmbed } from './content-media'
+import { renderRating } from './content-display'
+import { renderBreadcrumb, renderTags, renderSearchBar, renderPagination, renderLink } from './content-navigation'
 import { renderChart, renderCalendar } from './data'
 
 // Import des configs
@@ -133,7 +136,6 @@ const rendererCases: Record<string, RendererCaseFunction> = {
   'paragraph': ({ block, onUpdate }) => renderParagraph({ block, onUpdate }),
   'line': ({ block, onUpdate }) => renderLine({ block, onUpdate }),
   'button': ({ block, onUpdate }) => renderButton({ block, onUpdate }),
-  'link': ({ block, onUpdate }) => renderLink({ block, onUpdate }),
   'list': ({ block, onUpdate }) => renderList({ block, onUpdate }),
   'alert': ({ block, onUpdate }) => renderAlert({ block, onUpdate }),
   'code': ({ block, onUpdate }) => renderCode({ block, onUpdate }),
@@ -219,60 +221,60 @@ const rendererCases: Record<string, RendererCaseFunction> = {
   'calendar': renderCalendar,
   
   // Configs VTC
-  'driver-profile': ({ block, onUpdate }) => <DriverProfileConfig block={block} onUpdate={onUpdate} />,
-  'email-button': ({ block, onUpdate }) => <EmailButtonConfig block={block} onUpdate={onUpdate} />,
-  'sms-button': ({ block, onUpdate }) => <SMSButtonConfig block={block} onUpdate={onUpdate} />,
-  'vehicle-comparison': ({ block, onUpdate }) => <VehicleComparisonConfig block={block} onUpdate={onUpdate} />,
-  'service-packages': ({ block, onUpdate }) => <ServicePackagesConfig block={block} onUpdate={onUpdate} />,
+  'driver-profile': ({ block, onUpdate }) => React.createElement(DriverProfileConfig, { block, onUpdate }),
+  'email-button': ({ block, onUpdate }) => React.createElement(EmailButtonConfig, { block, onUpdate }),
+  'sms-button': ({ block, onUpdate }) => React.createElement(SMSButtonConfig, { block, onUpdate }),
+  'vehicle-comparison': ({ block, onUpdate }) => React.createElement(VehicleComparisonConfig, { block, onUpdate }),
+  'service-packages': ({ block, onUpdate }) => React.createElement(ServicePackagesConfig, { block, onUpdate }),
   
   // Configs E-commerce
-  'product-gallery': ({ block, onUpdate }) => <ProductGalleryConfig block={block} onUpdate={onUpdate} />,
-  'product-details': ({ block, onUpdate }) => <ProductDetailsConfig block={block} onUpdate={onUpdate} />,
-  'add-to-cart': ({ block, onUpdate }) => <AddToCartConfig block={block} onUpdate={onUpdate} />,
-  'buy-now': ({ block, onUpdate }) => <BuyNowConfig block={block} onUpdate={onUpdate} />,
-  'trust-badges': ({ block, onUpdate }) => <TrustBadgesConfig block={block} onUpdate={onUpdate} />,
-  'payment-methods': ({ block, onUpdate }) => <PaymentMethodsConfig block={block} onUpdate={onUpdate} />,
+  'product-gallery': ({ block, onUpdate }) => React.createElement(ProductGalleryConfig, { block, onUpdate }),
+  'product-details': ({ block, onUpdate }) => React.createElement(ProductDetailsConfig, { block, onUpdate }),
+  'add-to-cart': ({ block, onUpdate }) => React.createElement(AddToCartConfig, { block, onUpdate }),
+  'buy-now': ({ block, onUpdate }) => React.createElement(BuyNowConfig, { block, onUpdate }),
+  'trust-badges': ({ block, onUpdate }) => React.createElement(TrustBadgesConfig, { block, onUpdate }),
+  'payment-methods': ({ block, onUpdate }) => React.createElement(PaymentMethodsConfig, { block, onUpdate }),
   
   // Configs autres
-  'rich-text': ({ block, onUpdate }) => <RichTextEditorConfig block={block} onUpdate={onUpdate} />,
-  'markdown': ({ block, onUpdate }) => <MarkdownEditorConfig block={block} onUpdate={onUpdate} />,
-  'html-raw': ({ block, onUpdate }) => <HtmlRawConfig block={block} onUpdate={onUpdate} />,
-  'icon': ({ block, onUpdate }) => <IconConfig block={block} onUpdate={onUpdate} />,
-  'label': ({ block, onUpdate }) => <LabelConfig block={block} onUpdate={onUpdate} />,
-  'tooltip': ({ block, onUpdate }) => <TooltipConfig block={block} onUpdate={onUpdate} />,
-  'popover': ({ block, onUpdate }) => <PopoverConfig block={block} onUpdate={onUpdate} />,
-  'dropdown': ({ block, onUpdate }) => <DropdownConfig block={block} onUpdate={onUpdate} />,
-  'categories': ({ block, onUpdate }) => <CategoriesConfig block={block} onUpdate={onUpdate} />,
-  'author-box': ({ block, onUpdate }) => <AuthorBoxConfig block={block} onUpdate={onUpdate} />,
-  'related-posts': ({ block, onUpdate }) => <RelatedPostsConfig block={block} onUpdate={onUpdate} />,
-  'table-of-contents': ({ block, onUpdate }) => <TableOfContentsConfig block={block} onUpdate={onUpdate} />,
-  'reading-time': ({ block, onUpdate }) => <ReadingTimeConfig block={block} onUpdate={onUpdate} />,
-  'share-buttons': ({ block, onUpdate }) => <ShareButtonsConfig block={block} onUpdate={onUpdate} />,
-  'flexbox': ({ block, onUpdate }) => <FlexboxConfig block={block} onUpdate={onUpdate} />,
-  'grid': ({ block, onUpdate }) => <GridConfig block={block} onUpdate={onUpdate} />,
-  'stack': ({ block, onUpdate }) => <StackConfig block={block} onUpdate={onUpdate} />,
-  'inline': ({ block, onUpdate }) => <InlineConfig block={block} onUpdate={onUpdate} />,
-  'group': ({ block, onUpdate }) => <GroupConfig block={block} onUpdate={onUpdate} />,
-  'wrapper': ({ block, onUpdate }) => <WrapperConfig block={block} onUpdate={onUpdate} />,
-  'image-slider': ({ block, onUpdate }) => <ImageSliderConfig block={block} onUpdate={onUpdate} />,
-  'lightbox': ({ block, onUpdate }) => <LightboxConfig block={block} onUpdate={onUpdate} />,
-  'vimeo-embed': ({ block, onUpdate }) => <VimeoEmbedConfig block={block} onUpdate={onUpdate} />,
-  'counter': ({ block, onUpdate }) => <CounterConfig block={block} onUpdate={onUpdate} />,
-  'card-grid': ({ block, onUpdate }) => <CardGridConfig block={block} onUpdate={onUpdate} />,
-  'logo-carousel': ({ block, onUpdate }) => <LogoCarouselConfig block={block} onUpdate={onUpdate} />,
-  'route-calculator': ({ block, onUpdate }) => <RouteCalculatorConfig block={block} onUpdate={onUpdate} />,
-  'fare-calculator': ({ block, onUpdate }) => <FareCalculatorConfig block={block} onUpdate={onUpdate} />,
-  'availability-calendar': ({ block, onUpdate }) => <AvailabilityCalendarConfig block={block} onUpdate={onUpdate} />,
-  'captcha': ({ block, onUpdate }) => <CaptchaConfig block={block} onUpdate={onUpdate} />,
-  'form-multi-step': ({ block, onUpdate }) => <FormMultiStepConfig block={block} onUpdate={onUpdate} />,
-  'form-conditional': ({ block, onUpdate }) => <FormConditionalConfig block={block} onUpdate={onUpdate} />,
-  'form-calculator': ({ block, onUpdate }) => <FormCalculatorConfig block={block} onUpdate={onUpdate} />,
-  'form-file-upload': ({ block, onUpdate }) => <FormFileUploadConfig block={block} onUpdate={onUpdate} />,
-  'form-payment': ({ block, onUpdate }) => <FormPaymentConfig block={block} onUpdate={onUpdate} />,
-  'form-quiz': ({ block, onUpdate }) => <FormQuizConfig block={block} onUpdate={onUpdate} />,
-  'form-survey': ({ block, onUpdate }) => <FormSurveyConfig block={block} onUpdate={onUpdate} />,
-  'form-poll': ({ block, onUpdate }) => <FormPollConfig block={block} onUpdate={onUpdate} />,
-  'form-rsvp': ({ block, onUpdate }) => <FormRSVPConfig block={block} onUpdate={onUpdate} />,
+  'rich-text': ({ block, onUpdate }) => React.createElement(RichTextEditorConfig, { block, onUpdate }),
+  'markdown': ({ block, onUpdate }) => React.createElement(MarkdownEditorConfig, { block, onUpdate }),
+  'html-raw': ({ block, onUpdate }) => React.createElement(HtmlRawConfig, { block, onUpdate }),
+  'icon': ({ block, onUpdate }) => React.createElement(IconConfig, { block, onUpdate }),
+  'label': ({ block, onUpdate }) => React.createElement(LabelConfig, { block, onUpdate }),
+  'tooltip': ({ block, onUpdate }) => React.createElement(TooltipConfig, { block, onUpdate }),
+  'popover': ({ block, onUpdate }) => React.createElement(PopoverConfig, { block, onUpdate }),
+  'dropdown': ({ block, onUpdate }) => React.createElement(DropdownConfig, { block, onUpdate }),
+  'categories': ({ block, onUpdate }) => React.createElement(CategoriesConfig, { block, onUpdate }),
+  'author-box': ({ block, onUpdate }) => React.createElement(AuthorBoxConfig, { block, onUpdate }),
+  'related-posts': ({ block, onUpdate }) => React.createElement(RelatedPostsConfig, { block, onUpdate }),
+  'table-of-contents': ({ block, onUpdate }) => React.createElement(TableOfContentsConfig, { block, onUpdate }),
+  'reading-time': ({ block, onUpdate }) => React.createElement(ReadingTimeConfig, { block, onUpdate }),
+  'share-buttons': ({ block, onUpdate }) => React.createElement(ShareButtonsConfig, { block, onUpdate }),
+  'flexbox': ({ block, onUpdate }) => React.createElement(FlexboxConfig, { block, onUpdate }),
+  'grid': ({ block, onUpdate }) => React.createElement(GridConfig, { block, onUpdate }),
+  'stack': ({ block, onUpdate }) => React.createElement(StackConfig, { block, onUpdate }),
+  'inline': ({ block, onUpdate }) => React.createElement(InlineConfig, { block, onUpdate }),
+  'group': ({ block, onUpdate }) => React.createElement(GroupConfig, { block, onUpdate }),
+  'wrapper': ({ block, onUpdate }) => React.createElement(WrapperConfig, { block, onUpdate }),
+  'image-slider': ({ block, onUpdate }) => React.createElement(ImageSliderConfig, { block, onUpdate }),
+  'lightbox': ({ block, onUpdate }) => React.createElement(LightboxConfig, { block, onUpdate }),
+  'vimeo-embed': ({ block, onUpdate }) => React.createElement(VimeoEmbedConfig, { block, onUpdate }),
+  'counter': ({ block, onUpdate }) => React.createElement(CounterConfig, { block, onUpdate }),
+  'card-grid': ({ block, onUpdate }) => React.createElement(CardGridConfig, { block, onUpdate }),
+  'logo-carousel': ({ block, onUpdate }) => React.createElement(LogoCarouselConfig, { block, onUpdate }),
+  'route-calculator': ({ block, onUpdate }) => React.createElement(RouteCalculatorConfig, { block, onUpdate }),
+  'fare-calculator': ({ block, onUpdate }) => React.createElement(FareCalculatorConfig, { block, onUpdate }),
+  'availability-calendar': ({ block, onUpdate }) => React.createElement(AvailabilityCalendarConfig, { block, onUpdate }),
+  'captcha': ({ block, onUpdate }) => React.createElement(CaptchaConfig, { block, onUpdate }),
+  'form-multi-step': ({ block, onUpdate }) => React.createElement(FormMultiStepConfig, { block, onUpdate }),
+  'form-conditional': ({ block, onUpdate }) => React.createElement(FormConditionalConfig, { block, onUpdate }),
+  'form-calculator': ({ block, onUpdate }) => React.createElement(FormCalculatorConfig, { block, onUpdate }),
+  'form-file-upload': ({ block, onUpdate }) => React.createElement(FormFileUploadConfig, { block, onUpdate }),
+  'form-payment': ({ block, onUpdate }) => React.createElement(FormPaymentConfig, { block, onUpdate }),
+  'form-quiz': ({ block, onUpdate }) => React.createElement(FormQuizConfig, { block, onUpdate }),
+  'form-survey': ({ block, onUpdate }) => React.createElement(FormSurveyConfig, { block, onUpdate }),
+  'form-poll': ({ block, onUpdate }) => React.createElement(FormPollConfig, { block, onUpdate }),
+  'form-rsvp': ({ block, onUpdate }) => React.createElement(FormRSVPConfig, { block, onUpdate }),
 }
 
 export function getBlockRendererCase(blockType: string): RendererCaseFunction | null {

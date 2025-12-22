@@ -55,6 +55,7 @@ export function useBlockTracking() {
 
     try {
       // Utiliser axios directement pour éviter l'intercepteur qui pourrait ajouter le token
+      // Import dynamique désactivé - utiliser l'import statique
       const axios = require('axios')
       const API_URL = typeof window !== 'undefined' && window.location.hostname.includes('192.168.1.134')
         ? 'http://192.168.1.134:9495'

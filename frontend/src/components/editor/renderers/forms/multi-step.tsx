@@ -5,12 +5,11 @@
 import React, { useState } from 'react'
 import { RendererProps } from '../types'
 
-export const renderFormMultiStep = ({ block, wrapperStyles }: RendererProps): React.ReactElement => {
+function FormMultiStepPreviewComponent({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement {
   const steps = block.data.steps || []
   const [currentStep, setCurrentStep] = useState(0)
   
-  const FormMultiStepPreview = () => {
-    return (
+  return (
       <div style={wrapperStyles} className="mb-6">
         {block.data.title && (
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
@@ -74,7 +73,9 @@ export const renderFormMultiStep = ({ block, wrapperStyles }: RendererProps): Re
         )}
       </div>
     )
-  }
-  return <FormMultiStepPreview />
+}
+
+export const renderFormMultiStep = ({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement => {
+  return <FormMultiStepPreviewComponent block={block} wrapperStyles={wrapperStyles} contentStyles={contentStyles} theme={theme} />
 }
 

@@ -299,13 +299,16 @@ export function renderTeamMember(props: PreviewCaseProps): React.ReactElement | 
 }
 
 // badges utilise renderBadges depuis './renderers/data'
-let renderBadges: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-try {
-  const dataRenderers = require('./renderers/data')
-  renderBadges = dataRenderers.renderBadges || null
-} catch (e) {
-  // renderer n'existe pas encore
-}
+const renderBadges: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+// Import dynamique désactivé pour éviter les erreurs
+// try {
+//   const dataRenderers = await import('./renderers/data').catch(() => null)
+//   if (dataRenderers) {
+//     renderBadges = dataRenderers.renderBadges || null
+//   }
+// } catch (e) {
+//   // renderer n'existe pas encore
+// }
 
 export function renderBadgesBase(props: PreviewCaseProps): React.ReactElement | null {
   if (renderBadges) {

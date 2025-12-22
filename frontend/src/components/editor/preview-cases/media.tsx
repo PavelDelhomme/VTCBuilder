@@ -4,20 +4,23 @@ import { PreviewCaseProps } from './types'
 // Blocs média : carousel, logo-grid, logo-carousel, image-slider, lightbox, vimeo-embed, gallery, audio-player, video-embed
 
 // Les cases suivants utilisent des fonctions depuis './renderers/media'
-let renderCarousel: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderLogoGrid: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderImageSlider: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderLightbox: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderCarousel: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderLogoGrid: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderImageSlider: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderLightbox: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
 
-try {
-  const mediaRenderers = require('./renderers/media')
-  renderCarousel = mediaRenderers.renderCarousel || null
-  renderLogoGrid = mediaRenderers.renderLogoGrid || null
-  renderImageSlider = mediaRenderers.renderImageSlider || null
-  renderLightbox = mediaRenderers.renderLightbox || null
-} catch (e) {
-  // Les renderers n'existent pas encore
-}
+// Import dynamique désactivé pour éviter les erreurs
+// try {
+//   const mediaRenderers = await import('./renderers/media').catch(() => null)
+//   if (mediaRenderers) {
+//     renderCarousel = mediaRenderers.renderCarousel || null
+//     renderLogoGrid = mediaRenderers.renderLogoGrid || null
+//     renderImageSlider = mediaRenderers.renderImageSlider || null
+//     renderLightbox = mediaRenderers.renderLightbox || null
+//   }
+// } catch (e) {
+//   // Les renderers n'existent pas encore
+// }
 
 export function renderCarouselBase(props: PreviewCaseProps): React.ReactElement | null {
   if (renderCarousel) {

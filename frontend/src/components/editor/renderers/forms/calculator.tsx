@@ -5,13 +5,12 @@
 import React, { useState } from 'react'
 import { RendererProps } from '../types'
 
-export const renderFormCalculator = ({ block, wrapperStyles }: RendererProps): React.ReactElement => {
+function FormCalculatorPreviewComponent({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement {
   const fields = block.data.fields || []
   const [values, setValues] = useState<Record<string, number>>({})
   const [result, setResult] = useState<number | null>(null)
   
-  const FormCalculatorPreview = () => {
-    return (
+  return (
       <div style={wrapperStyles} className="mb-6">
         {block.data.title && (
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
@@ -56,7 +55,9 @@ export const renderFormCalculator = ({ block, wrapperStyles }: RendererProps): R
         </div>
       </div>
     )
-  }
-  return <FormCalculatorPreview />
+}
+
+export const renderFormCalculator = ({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement => {
+  return <FormCalculatorPreviewComponent block={block} wrapperStyles={wrapperStyles} contentStyles={contentStyles} theme={theme} />
 }
 

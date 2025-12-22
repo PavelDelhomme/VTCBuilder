@@ -5,12 +5,11 @@
 import React, { useState } from 'react'
 import { RendererProps } from '../types'
 
-export const renderFormConditional = ({ block, wrapperStyles }: RendererProps): React.ReactElement => {
+function FormConditionalPreviewComponent({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement {
   const fields = block.data.fields || []
   const [formData, setFormData] = useState<Record<string, any>>({})
   
-  const FormConditionalPreview = () => {
-    return (
+  return (
       <div style={wrapperStyles} className="mb-6">
         {block.data.title && (
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
@@ -56,7 +55,9 @@ export const renderFormConditional = ({ block, wrapperStyles }: RendererProps): 
         </div>
       </div>
     )
-  }
-  return <FormConditionalPreview />
+}
+
+export const renderFormConditional = ({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement => {
+  return <FormConditionalPreviewComponent block={block} wrapperStyles={wrapperStyles} contentStyles={contentStyles} theme={theme} />
 }
 

@@ -9,24 +9,13 @@ import { RendererProps } from '../types'
 import { useTheme } from '@/contexts/ThemeContext'
 import authService from '@/services/auth.service'
 
-export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
-  if (!block) {
-    return <div className="p-4 text-red-600">Erreur : Bloc non défini</div>
-  }
-  const safeBlock = { ...block, data: block.data || {} }
-  const headerLinks = safeBlock.data.links || []
-  const logoText = safeBlock.data.logo_text || 'VTCBuilder'
-  const logoUrl = safeBlock.data.logo_url || '/'
-  const showThemeToggle = safeBlock.data.show_theme_toggle !== false
+function HeaderComponent({ block, wrapperStyles, theme }: RendererProps): React.ReactElement {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const { resolvedTheme, toggleTheme } = useTheme()
   
-  // Utiliser resolvedTheme si disponible, sinon utiliser le theme passé en prop
-  const currentTheme = resolvedTheme || theme || 'light'
-
   // Détecter l'authentification comme dans PublicHeader
   useEffect(() => {
     setIsMounted(true)
@@ -35,6 +24,19 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
       setIsSuperAdmin(authService.isSuperAdmin())
     }
   }, [])
+  
+  if (!block) {
+    return <div className="p-4 text-red-600">Erreur : Bloc non défini</div>
+  }
+  
+  const safeBlock = { ...block, data: block.data || {} }
+  const headerLinks = safeBlock.data.links || []
+  const logoText = safeBlock.data.logo_text || 'VTCBuilder'
+  const logoUrl = safeBlock.data.logo_url || '/'
+  const showThemeToggle = safeBlock.data.show_theme_toggle !== false
+  
+  // Utiliser resolvedTheme si disponible, sinon utiliser le theme passé en prop
+  const currentTheme = resolvedTheme || theme || 'light'
   
   return (
     <header 
@@ -50,143 +52,97 @@ export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): Re
         block.styles?.background_color || block.styles?.backgroundColor
           ? ''
           : currentTheme === 'dark'
-            ? 'bg-gray-900/90 backdrop-blur-md border-b border-gray-800'
-            : 'bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm'
-      }`}
+          ? 'bg-gray-900 text-gray-100'
+          : 'bg-white text-gray-900'
+      } border-b ${currentTheme === 'dark' ? 'border-gray-800' : 'border-gray-200'}`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between gap-4">
-          <Link href={logoUrl} className="flex items-center space-x-2 flex-shrink-0">
-            {safeBlock.data.logo_image && (
-              <img src={safeBlock.data.logo_image} alt={logoText} className="h-6 sm:h-8 w-auto flex-shrink-0" />
-            )}
-            <h1 className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${
-              currentTheme === 'dark' ? 'text-white' : 'text-gray-900'
-            }`}>
-              {logoText}
-            </h1>
-            {safeBlock.data.badge && (
-              <span className={`text-xs whitespace-nowrap ${
-                currentTheme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                {safeBlock.data.badge}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <Link href={logoUrl} className="flex items-center">
+              <span className="text-xl font-bold">
+                {logoText}
               </span>
-            )}
-          </Link>
-          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+            </Link>
+          </div>
+
+          {/* Navigation Desktop */}
+          <nav className="hidden md:flex space-x-8">
+            {headerLinks.map((link: any, index: number) => (
+              <Link
+                key={index}
+                href={link.url || '#'}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  currentTheme === 'dark'
+                    ? 'text-gray-300 hover:text-white hover:bg-gray-800'
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                {link.label || 'Lien'}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Actions */}
+          <div className="flex items-center gap-4">
+            {/* Toggle Theme */}
             {showThemeToggle && (
               <button
                 onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
+                className={`p-2 rounded-lg transition-colors ${
                   currentTheme === 'dark'
-                    ? 'text-gray-400 hover:text-white hover:bg-gray-800'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'text-gray-300 hover:bg-gray-800'
+                    : 'text-gray-700 hover:bg-gray-100'
                 }`}
-                aria-label={currentTheme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
-                title={currentTheme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
+                aria-label="Toggle theme"
               >
-                {currentTheme === 'dark' ? (
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                ) : (
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                )}
+                {currentTheme === 'dark' ? '☀️' : '🌙'}
               </button>
             )}
-            {/* Navigation links si définis */}
-            {headerLinks.length > 0 && (
-              <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6">
-                {headerLinks.map((link: any, index: number) => (
-                  <Link
-                    key={index}
-                    href={link.url || '#'}
-                    className={`text-sm xl:text-base whitespace-nowrap ${
-                      currentTheme === 'dark' 
-                        ? 'text-gray-300 hover:text-white' 
-                        : 'text-gray-700 hover:text-gray-900'
-                    } font-medium`}
-                  >
-                    {link.label || `Lien ${index + 1}`}
-                  </Link>
-                ))}
-              </nav>
-            )}
-            
-            {/* Boutons d'authentification - Responsive */}
-            {!isMounted ? (
-              <>
-                <Link
-                  href="/login"
-                  className={`text-sm sm:text-base whitespace-nowrap ${
-                    currentTheme === 'dark' 
-                      ? 'text-gray-300 hover:text-white' 
-                      : 'text-gray-700 hover:text-gray-900'
-                  } font-medium`}
-                  suppressHydrationWarning
-                >
-                  Connexion
-                </Link>
-              </>
-            ) : isAuthenticated ? (
-              <>
-                {isSuperAdmin ? (
-                  <Link
-                    href="/admin/dashboard"
-                    className={`px-2 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
-                      currentTheme === 'dark'
-                        ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
-                        : 'bg-white text-blue-600 hover:bg-blue-50'
-                    }`}
-                  >
-                    <span className="hidden sm:inline">Administration</span>
-                    <span className="sm:hidden">Admin</span>
-                  </Link>
-                ) : (
-                  <Link
-                    href="/dashboard"
-                    className={`px-2 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
-                      currentTheme === 'dark'
-                        ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
-                        : 'bg-white text-blue-600 hover:bg-blue-50'
-                    }`}
-                  >
-                    <span className="hidden sm:inline">Mon Dashboard</span>
-                    <span className="sm:hidden">Dashboard</span>
-                  </Link>
-                )}
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className={`text-sm sm:text-base whitespace-nowrap ${
-                    currentTheme === 'dark' 
-                      ? 'text-gray-300 hover:text-white' 
-                      : 'text-gray-700 hover:text-gray-900'
-                  } font-medium`}
-                >
-                  Connexion
-                </Link>
-                <Link
-                  href="/register"
-                  className={`px-2 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors whitespace-nowrap ${
-                    currentTheme === 'dark'
-                      ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700'
-                      : 'bg-white text-blue-600 hover:bg-blue-50'
-                  }`}
-                >
-                  <span className="hidden sm:inline">Créer un compte</span>
-                  <span className="sm:hidden">S'inscrire</span>
-                </Link>
-              </>
-            )}
+
+            {/* Menu Mobile */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`md:hidden p-2 rounded-lg transition-colors ${
+                currentTheme === 'dark'
+                  ? 'text-gray-300 hover:bg-gray-800'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+              aria-label="Toggle menu"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
         </div>
+
+        {/* Navigation Mobile */}
+        {mobileMenuOpen && (
+          <div className={`md:hidden py-4 border-t ${currentTheme === 'dark' ? 'border-gray-800' : 'border-gray-200'}`}>
+            <div className="space-y-2">
+              {headerLinks.map((link: any, index: number) => (
+                <Link
+                  key={index}
+                  href={link.url || '#'}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    currentTheme === 'dark'
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-800'
+                      : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  {link.label || 'Lien'}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   )
 }
 
+export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
+  return <HeaderComponent block={block} wrapperStyles={wrapperStyles} theme={theme} />
+}

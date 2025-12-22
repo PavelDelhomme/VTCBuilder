@@ -151,22 +151,22 @@ export function TutorialSystem({ tutorial, onClose, autoStart = false }: Tutoria
     }
   }
 
-  if (!tutorial || !isVisible || currentStep >= tutorial.steps.length) {
-    return null
-  }
-
-  const step = tutorial.steps[currentStep]
-  const position = step.position || 'bottom'
+  const step = tutorial?.steps[currentStep]
+  const position = step?.position || 'bottom'
 
   // Exécuter l'action si définie
   useEffect(() => {
-    if (step.action) {
+    if (step?.action) {
       // Délai pour s'assurer que l'élément est rendu
       setTimeout(() => {
         step.action?.()
       }, 100)
     }
-  }, [currentStep, step.action])
+  }, [currentStep, step?.action])
+
+  if (!tutorial || !isVisible || currentStep >= tutorial.steps.length) {
+    return null
+  }
 
   // Calculer la position du tooltip
   const getTooltipPosition = () => {

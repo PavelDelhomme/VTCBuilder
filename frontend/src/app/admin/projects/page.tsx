@@ -103,11 +103,11 @@ function ProjectCard({ project, onToggleStatus, onDelete, onOpen, isNavigating }
           <div className="text-sm text-gray-500 dark:text-gray-400">
             <div className="flex flex-col gap-0.5">
               <span>
-                {project.pages_count || 0} page{project.pages_count !== 1 ? 's' : ''} liée{project.pages_count !== 1 ? 's' : ''}
+                {project.pages_count || 0} page{project.pages_count !== 1 ? 's' : ''} liée{project.pages_count !== 1 ? 's' : ''} au projet
               </span>
               {project.is_system_project && project.available_pages_count !== null && project.available_pages_count !== undefined && (
                 <span className="text-xs text-gray-400 dark:text-gray-500">
-                  {project.available_pages_count} page{project.available_pages_count !== 1 ? 's' : ''} disponible{project.available_pages_count !== 1 ? 's' : ''}
+                  {project.available_pages_count} page{project.available_pages_count !== 1 ? 's' : ''} publique{project.available_pages_count !== 1 ? 's' : ''} disponible{project.available_pages_count !== 1 ? 's' : ''} (homepage + pages publiques)
                 </span>
               )}
             </div>

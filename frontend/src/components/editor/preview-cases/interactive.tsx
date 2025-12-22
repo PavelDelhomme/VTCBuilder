@@ -4,20 +4,23 @@ import { PreviewCaseProps } from './types'
 // Blocs interactifs : accordion, tabs, countdown, progress-bar, progress-circle, modal, calendar, rating
 
 // Les cases suivants utilisent des fonctions depuis './renderers/interactive'
-let renderAccordion: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderTabs: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderCountdown: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderProgressBar: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderAccordion: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderTabs: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderCountdown: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderProgressBar: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
 
-try {
-  const interactiveRenderers = require('./renderers/interactive')
-  renderAccordion = interactiveRenderers.renderAccordion || null
-  renderTabs = interactiveRenderers.renderTabs || null
-  renderCountdown = interactiveRenderers.renderCountdown || null
-  renderProgressBar = interactiveRenderers.renderProgressBar || null
-} catch (e) {
-  // Les renderers n'existent pas encore
-}
+// Import dynamique désactivé pour éviter les erreurs
+// try {
+//   const interactiveRenderers = await import('./renderers/interactive').catch(() => null)
+//   if (interactiveRenderers) {
+//     renderAccordion = interactiveRenderers.renderAccordion || null
+//     renderTabs = interactiveRenderers.renderTabs || null
+//     renderCountdown = interactiveRenderers.renderCountdown || null
+//     renderProgressBar = interactiveRenderers.renderProgressBar || null
+//   }
+// } catch (e) {
+//   // Les renderers n'existent pas encore
+// }
 
 export function renderAccordionBase(props: PreviewCaseProps): React.ReactElement | null {
   if (renderAccordion) {

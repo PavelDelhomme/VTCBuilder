@@ -3492,7 +3492,7 @@ function ContainerChildrenRenderer({
   const children = block.children || []
   const [showAddMenu, setShowAddMenu] = useState(false)
   const [collapsedChildren, setCollapsedChildren] = useState<Set<string>>(new Set())
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; childId: string } | null>(null)
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; childId?: string } | null>(null)
   const [showMenu, setShowMenu] = useState(false)
   
   // Fonction pour vérifier si un bloc est un conteneur

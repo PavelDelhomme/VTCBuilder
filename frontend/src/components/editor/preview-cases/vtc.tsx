@@ -6,28 +6,31 @@ import { PreviewCaseProps } from './types'
 // vehicle-comparison, service-packages
 
 // Les cases suivants utilisent des fonctions depuis './renderers/vtc'
-let renderBookingForm: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderPricingTable: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderServiceZones: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderVehicleGallery: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderContactButtons: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderMap: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderFareCalculator: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderAvailabilityCalendar: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderBookingForm: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderPricingTable: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderServiceZones: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderVehicleGallery: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderContactButtons: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderMap: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderFareCalculator: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderAvailabilityCalendar: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
 
-try {
-  const vtcRenderers = require('./renderers/vtc')
-  renderBookingForm = vtcRenderers.renderBookingForm || null
-  renderPricingTable = vtcRenderers.renderPricingTable || null
-  renderServiceZones = vtcRenderers.renderServiceZones || null
-  renderVehicleGallery = vtcRenderers.renderVehicleGallery || null
-  renderContactButtons = vtcRenderers.renderContactButtons || null
-  renderMap = vtcRenderers.renderMap || null
-  renderFareCalculator = vtcRenderers.renderFareCalculator || null
-  renderAvailabilityCalendar = vtcRenderers.renderAvailabilityCalendar || null
-} catch (e) {
-  // Les renderers n'existent pas encore
-}
+// Import dynamique désactivé pour éviter les erreurs
+// try {
+//   const vtcRenderers = await import('./renderers/vtc').catch(() => null)
+//   if (vtcRenderers) {
+//     renderBookingForm = vtcRenderers.renderBookingForm || null
+//     renderPricingTable = vtcRenderers.renderPricingTable || null
+//     renderServiceZones = vtcRenderers.renderServiceZones || null
+//     renderVehicleGallery = vtcRenderers.renderVehicleGallery || null
+//     renderContactButtons = vtcRenderers.renderContactButtons || null
+//     renderMap = vtcRenderers.renderMap || null
+//     renderFareCalculator = vtcRenderers.renderFareCalculator || null
+//     renderAvailabilityCalendar = vtcRenderers.renderAvailabilityCalendar || null
+//   }
+// } catch (e) {
+//   // Les renderers n'existent pas encore
+// }
 
 export function renderBookingFormBase(props: PreviewCaseProps): React.ReactElement | null {
   if (renderBookingForm) {

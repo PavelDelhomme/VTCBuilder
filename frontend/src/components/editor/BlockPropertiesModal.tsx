@@ -63,7 +63,7 @@ export default function BlockPropertiesModal({
               Modifier le bloc
             </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {blockType?.display_name || block.type}
+              {blockType?.label || block.type}
             </p>
           </div>
           <button
@@ -177,7 +177,7 @@ export default function BlockPropertiesModal({
                                 #{index + 1}
                               </span>
                               <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                {childBlockType?.display_name || childBlock.type}
+                                {childBlockType?.label || childBlock.type}
                               </span>
                             </div>
                             {childBlock.data?.title && (

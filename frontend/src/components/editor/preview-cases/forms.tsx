@@ -244,7 +244,7 @@ export function renderFormFileUpload(props: PreviewCaseProps): React.ReactElemen
 }
 
 // Composant pour form-quiz (utilise useState)
-export function renderFormQuiz(props: PreviewCaseProps): React.ReactElement | null {
+function FormQuizComponent(props: PreviewCaseProps): React.ReactElement | null {
   const { block, theme = 'light', wrapperStyles } = props
   const questions = block.data.questions || []
   const [currentQuestion, setCurrentQuestion] = useState(0)
@@ -453,8 +453,12 @@ export function renderFormSurvey(props: PreviewCaseProps): React.ReactElement | 
   )
 }
 
+export function renderFormQuiz(props: PreviewCaseProps): React.ReactElement | null {
+  return <FormQuizComponent {...props} />
+}
+
 // Composant pour form-poll (utilise useState)
-export function renderFormPoll(props: PreviewCaseProps): React.ReactElement | null {
+function FormPollComponent(props: PreviewCaseProps): React.ReactElement | null {
   const { block, theme = 'light', wrapperStyles } = props
   const options = block.data.options || []
   const [selected, setSelected] = useState<number[]>([])
@@ -547,8 +551,12 @@ export function renderFormPoll(props: PreviewCaseProps): React.ReactElement | nu
   )
 }
 
+export function renderFormPoll(props: PreviewCaseProps): React.ReactElement | null {
+  return <FormPollComponent {...props} />
+}
+
 // Composant pour form-rsvp (utilise useState)
-export function renderFormRSVP(props: PreviewCaseProps): React.ReactElement | null {
+function FormRSVPComponent(props: PreviewCaseProps): React.ReactElement | null {
   const { block, theme = 'light', wrapperStyles } = props
   const [response, setResponse] = useState<'yes' | 'no' | null>(null)
   const isDark = theme === 'dark'
@@ -683,6 +691,10 @@ export function renderFormRSVP(props: PreviewCaseProps): React.ReactElement | nu
   )
 }
 
+export function renderFormRSVP(props: PreviewCaseProps): React.ReactElement | null {
+  return <FormRSVPComponent {...props} />
+}
+
 export function renderCaptcha(props: PreviewCaseProps): React.ReactElement | null {
   const { block, theme = 'light', wrapperStyles } = props
   return (
@@ -700,22 +712,25 @@ export function renderCaptcha(props: PreviewCaseProps): React.ReactElement | nul
 
 // Les cases suivants utilisent des fonctions depuis './renderers/forms'
 // On les importe si disponibles, sinon on crée des stubs
-let renderForm: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderFormMultiStep: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderFormConditional: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderFormCalculator: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderFormPayment: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderForm: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderFormMultiStep: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderFormConditional: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderFormCalculator: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderFormPayment: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
 
-try {
-  const formsRenderers = require('./renderers/forms')
-  renderForm = formsRenderers.renderForm || null
-  renderFormMultiStep = formsRenderers.renderFormMultiStep || null
-  renderFormConditional = formsRenderers.renderFormConditional || null
-  renderFormCalculator = formsRenderers.renderFormCalculator || null
-  renderFormPayment = formsRenderers.renderFormPayment || null
-} catch (e) {
-  // Les renderers n'existent pas encore, on utilisera les stubs
-}
+// Import dynamique désactivé pour éviter les erreurs - les renderers seront importés statiquement si disponibles
+// try {
+//   const formsRenderers = await import('./renderers/forms').catch(() => null)
+//   if (formsRenderers) {
+//     renderForm = formsRenderers.renderForm || null
+//     renderFormMultiStep = formsRenderers.renderFormMultiStep || null
+//     renderFormConditional = formsRenderers.renderFormConditional || null
+//     renderFormCalculator = formsRenderers.renderFormCalculator || null
+//     renderFormPayment = formsRenderers.renderFormPayment || null
+//   }
+// } catch (e) {
+//   // Les renderers n'existent pas encore, on utilisera les stubs
+// }
 
 export function renderFormBase(props: PreviewCaseProps): React.ReactElement | null {
   if (renderForm) {

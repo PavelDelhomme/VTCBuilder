@@ -3,7 +3,7 @@
  */
 
 import React from 'react'
-import { RendererProps } from './types'
+import { RendererProps } from '../types'
 
 export const renderHeading = ({ block, contentStyles, theme }: RendererProps): React.ReactElement => {
   const headingLevel = block.data.level || 'h2'

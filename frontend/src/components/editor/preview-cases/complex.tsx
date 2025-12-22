@@ -6,20 +6,23 @@ import authService from '@/services/auth.service'
 // Blocs complexes : hero, features-grid, cta, testimonials, pricing, timeline, stats, social-links, faq, banner, contact-form
 
 // Les cases suivants utilisent des fonctions depuis './renderers/complex'
-let renderHero: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderFeaturesGrid: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderCTASection: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-let renderContactForm: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderHero: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderFeaturesGrid: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderCTASection: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
+const renderContactForm: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
 
-try {
-  const complexRenderers = require('./renderers/complex')
-  renderHero = complexRenderers.renderHero || null
-  renderFeaturesGrid = complexRenderers.renderFeaturesGrid || null
-  renderCTASection = complexRenderers.renderCTASection || null
-  renderContactForm = complexRenderers.renderContactForm || null
-} catch (e) {
-  // Les renderers n'existent pas encore
-}
+// Import dynamique désactivé pour éviter les erreurs - les renderers seront importés statiquement si disponibles
+// try {
+//   const complexRenderers = await import('./renderers/complex').catch(() => null)
+//   if (complexRenderers) {
+//     renderHero = complexRenderers.renderHero || null
+//     renderFeaturesGrid = complexRenderers.renderFeaturesGrid || null
+//     renderCTASection = complexRenderers.renderCTASection || null
+//     renderContactForm = complexRenderers.renderContactForm || null
+//   }
+// } catch (e) {
+//   // Les renderers n'existent pas encore
+// }
 
 export function renderHeroBase(props: PreviewCaseProps): React.ReactElement | null {
   if (renderHero) {

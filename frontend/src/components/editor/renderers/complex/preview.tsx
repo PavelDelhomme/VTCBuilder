@@ -4,16 +4,17 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { RendererProps } from './types'
+import { RendererProps } from '../types'
 import { useTheme } from '@/contexts/ThemeContext'
 
-export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
+function HeroComponent({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement {
+  const { resolvedTheme } = useTheme()
+  const currentTheme = resolvedTheme || theme || 'light'
+  
   if (!block) {
     return <div className="p-4 text-red-600">Erreur : Bloc non défini</div>
   }
   const safeBlock = { ...block, data: block.data || {} }
-  const { resolvedTheme } = useTheme()
-  const currentTheme = resolvedTheme || theme || 'light'
   // Convertir le gradient Tailwind en CSS gradient
   const getGradientFromTailwind = (gradient: string) => {
     if (!gradient) return 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
@@ -173,7 +174,11 @@ export const renderHero = ({ block, wrapperStyles, theme }: RendererProps): Reac
   )
 }
 
-export const renderFeaturesGrid = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
+export const renderHero = ({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement => {
+  return <HeroComponent block={block} wrapperStyles={wrapperStyles} contentStyles={contentStyles} theme={theme} />
+}
+
+export const renderFeaturesGrid = ({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement => {
   if (!block) {
     return <div className="p-4 text-red-600">Erreur : Bloc non défini</div>
   }

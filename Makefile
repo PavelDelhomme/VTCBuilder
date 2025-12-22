@@ -1,4 +1,4 @@
-.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-coverage analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean start up stop restart restart-backend restart-frontend down logs status migrate
+.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-coverage analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean start up stop restart restart-backend restart-frontend down logs status migrate frontend-clean frontend-reinstall frontend-build
 
 BLUE = \033[0;34m
 GREEN = \033[0;32m
@@ -30,6 +30,36 @@ setup: ## Installation complète de l'infrastructure (dépendances + pre-commit)
 install: setup ## Alias pour setup
 
 ##@ Frontend
+
+frontend-clean: ## Nettoyer complètement le frontend (node_modules, .next, cache, etc.)
+	@printf "$(YELLOW)🧹 Nettoyage complet du frontend...$(NC)\n"
+	@cd frontend && \
+		if [ -d "node_modules" ]; then \
+			printf "$(YELLOW)  📦 Suppression de node_modules...$(NC)\n"; \
+			rm -rf node_modules 2>/dev/null || sudo rm -rf node_modules || true; \
+		fi && \
+		if [ -d ".next" ]; then \
+			printf "$(YELLOW)  🔄 Suppression du cache Next.js...$(NC)\n"; \
+			rm -rf .next 2>/dev/null || sudo rm -rf .next || true; \
+		fi && \
+		if [ -f "package-lock.json" ]; then \
+			printf "$(YELLOW)  📄 Suppression de package-lock.json...$(NC)\n"; \
+			rm -f package-lock.json 2>/dev/null || sudo rm -f package-lock.json || true; \
+		fi && \
+		if [ -d ".turbo" ]; then \
+			printf "$(YELLOW)  ⚡ Suppression du cache Turbo...$(NC)\n"; \
+			rm -rf .turbo 2>/dev/null || sudo rm -rf .turbo || true; \
+		fi && \
+		find . -type d -name ".cache" -exec rm -rf {} + 2>/dev/null || true && \
+		find . -type f -name "tsconfig.tsbuildinfo" -delete 2>/dev/null || true
+	@printf "$(YELLOW)🔧 Correction des permissions du répertoire frontend...$(NC)\n"
+	@chmod -R u+w frontend 2>/dev/null || sudo chmod -R u+w frontend || true
+	@printf "$(GREEN)✅ Nettoyage frontend terminé !$(NC)\n"
+
+frontend-reinstall: frontend-clean ## Nettoyer et réinstaller les dépendances frontend
+	@printf "$(GREEN)📦 Réinstallation des dépendances frontend...$(NC)\n"
+	@cd frontend && npm install
+	@printf "$(GREEN)✅ Dépendances frontend réinstallées !$(NC)\n"
 
 frontend-install: ## Installer les dépendances frontend
 	@printf "$(GREEN)📦 Installation des dépendances frontend...$(NC)\n"
@@ -85,6 +115,48 @@ frontend-analyze: frontend-type-check frontend-lint frontend-format-check ## Ana
 
 frontend-quality: frontend-analyze frontend-test ## Qualité complète frontend (analyse + tests)
 	@printf "$(GREEN)✨ Qualité frontend vérifiée !$(NC)\n"
+
+frontend-build: ## Build le frontend avec détection d'erreurs et réessai automatique
+	@printf "$(GREEN)🔨 Build du frontend...$(NC)\n"
+	@printf "$(YELLOW)🔧 Vérification et correction des permissions...$(NC)\n"
+	@sudo rm -rf frontend/.next 2>/dev/null || rm -rf frontend/.next 2>/dev/null || true
+	@sudo chown -R $$(whoami):$$(whoami) frontend 2>/dev/null || true
+	@cd frontend && \
+		BUILD_OUTPUT=$$(npm run build 2>&1); \
+		BUILD_EXIT=$$?; \
+		if echo "$$BUILD_OUTPUT" | grep -qE "Failed to compile|Error:.*×|Build failed|Build error occurred|uncaughtException|EACCES"; then \
+			printf "$(YELLOW)⚠️  Erreur lors du build$(NC)\n"; \
+			printf "$(YELLOW)📋 Dernières erreurs détectées:$(NC)\n"; \
+			echo "$$BUILD_OUTPUT" | grep -E "Error:|Failed|×|uncaughtException|EACCES" | tail -10 | sed 's/^/  /'; \
+			printf "$(YELLOW)🔄 Tentative de réparation automatique...$(NC)\n"; \
+			printf "$(YELLOW)  📦 Nettoyage et réinstallation des dépendances...$(NC)\n"; \
+			cd .. && $(MAKE) frontend-reinstall && \
+			printf "$(YELLOW)  🔄 Nouvelle tentative de build...$(NC)\n"; \
+			cd frontend && \
+			RETRY_OUTPUT=$$(npm run build 2>&1); \
+			RETRY_EXIT=$$?; \
+			if echo "$$RETRY_OUTPUT" | grep -qE "Failed to compile|Error:.*×|Build failed|Build error occurred|uncaughtException|EACCES"; then \
+				printf "$(RED)❌ Build frontend échoué même après réparation$(NC)\n"; \
+				printf "$(YELLOW)📋 Dernières erreurs:$(NC)\n"; \
+				echo "$$RETRY_OUTPUT" | grep -E "Error:|Failed|×|uncaughtException|EACCES" | tail -10 | sed 's/^/  /'; \
+				printf "$(YELLOW)💡 Vérifiez les erreurs ci-dessus$(NC)\n"; \
+				exit 1; \
+			else \
+				printf "$(GREEN)✅ Build frontend réussi après réparation !$(NC)\n"; \
+			fi; \
+		elif echo "$$BUILD_OUTPUT" | grep -qE "Compiled|Creating an optimized production build"; then \
+			printf "$(GREEN)✅ Build frontend réussi !$(NC)\n"; \
+		elif [ $$BUILD_EXIT -eq 0 ]; then \
+			printf "$(GREEN)✅ Build frontend réussi !$(NC)\n"; \
+		else \
+			if ! echo "$$BUILD_OUTPUT" | grep -qE "Failed to compile|Error:.*×|Build failed|Build error occurred|uncaughtException|EACCES"; then \
+				printf "$(GREEN)✅ Build frontend réussi (avec warnings) !$(NC)\n"; \
+			else \
+				printf "$(RED)❌ Build frontend échoué$(NC)\n"; \
+				echo "$$BUILD_OUTPUT" | grep -E "Error:|Failed|×|uncaughtException|EACCES" | tail -10 | sed 's/^/  /'; \
+				exit 1; \
+			fi; \
+		fi
 
 ##@ Backend
 
@@ -207,20 +279,28 @@ type-check-frontend: frontend-type-check ## Vérifier TypeScript frontend
 
 start: ## Démarrer toute la stack (backend + frontend + services)
 	@printf "$(GREEN)🚀 Démarrage de toute la stack VTCBuilder...$(NC)\n"
-	@if [ ! -f "./start.sh" ]; then \
-		printf "$(RED)❌ Erreur: Le fichier start.sh est introuvable !$(NC)\n"; \
+	@printf "$(YELLOW)🔍 Vérification de l'état du frontend...$(NC)\n"
+	@if [ ! -d "frontend/node_modules" ]; then \
+		printf "$(YELLOW)⚠️  Dépendances frontend manquantes, installation...$(NC)\n"; \
+		$(MAKE) frontend-install || { \
+			printf "$(RED)❌ Erreur lors de l'installation des dépendances frontend$(NC)\n"; \
+			exit 1; \
+		}; \
+	fi
+	@if [ ! -f "backend-django/start.sh" ]; then \
+		printf "$(RED)❌ Erreur: Le script backend-django/start.sh est introuvable !$(NC)\n"; \
 		printf "$(YELLOW)💡 Vérifiez que vous êtes dans le répertoire racine du projet.$(NC)\n"; \
 		exit 1; \
 	fi
-	@if [ ! -x "./start.sh" ]; then \
-		printf "$(YELLOW)⚠️  Le fichier start.sh n'est pas exécutable, tentative de correction...$(NC)\n"; \
-		chmod +x ./start.sh || { \
-			printf "$(RED)❌ Impossible de rendre start.sh exécutable !$(NC)\n"; \
+	@if [ ! -x "backend-django/start.sh" ]; then \
+		printf "$(YELLOW)⚠️  Le script backend-django/start.sh n'est pas exécutable. Tentative de correction...$(NC)\n"; \
+		chmod +x backend-django/start.sh || { \
+			printf "$(RED)❌ Erreur: Impossible de rendre start.sh exécutable.$(NC)\n"; \
 			exit 1; \
 		}; \
-		printf "$(GREEN)✅ Permissions corrigées.$(NC)\n"; \
+		printf "$(GREEN)✅ start.sh est maintenant exécutable.$(NC)\n"; \
 	fi
-	@./start.sh
+	@cd backend-django && ./start.sh
 
 up: start ## Alias pour start - Démarrer toute la stack
 
