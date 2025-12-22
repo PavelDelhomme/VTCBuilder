@@ -9,7 +9,7 @@ import { RendererProps } from '../types'
 import { useTheme } from '@/contexts/ThemeContext'
 import authService from '@/services/auth.service'
 
-function HeaderComponent({ block, wrapperStyles, theme }: RendererProps): React.ReactElement {
+function HeaderComponent({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isSuperAdmin, setIsSuperAdmin] = useState(false)
