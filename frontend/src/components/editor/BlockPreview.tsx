@@ -18,6 +18,10 @@ import { getBlockPreviewCase } from './preview-cases'
 import { renderCarousel, renderLogoGrid, renderImageSlider, renderLightbox } from './renderers/media'
 import { renderBadges } from './renderers/data'
 import authService from '@/services/auth.service'
+import { SortablePreviewBlock } from './components/SortablePreviewBlock'
+import { FAQSectionPreview } from './components/FAQSectionPreview'
+import { getHoverAnimationClass, getAlignmentClasses, getLayoutWidth, getContainerClass } from './utils/blockPreviewUtils'
+import { getWrapperStyles, getContentStyles } from './utils/blockStylesUtils'
 
 interface BlockPreviewProps {
   blocks: Block[]
@@ -606,153 +610,7 @@ const MemoizedBlockPreview = memo(BlockPreview, (prevProps, nextProps) => {
 export default MemoizedBlockPreview
 
 // Sortable Preview Block Component
-function SortablePreviewBlock({
-  block,
-  blockType,
-  blockTypes,
-  theme,
-  isSelected,
-  isInteractive,
-  isEditable,
-  onClick,
-  onDoubleClick,
-  onRightClick,
-}: {
-  block: Block
-  blockType?: BlockType
-  blockTypes: BlockType[]
-  theme?: 'light' | 'dark'
-  isSelected: boolean
-  isInteractive: boolean
-  isEditable: boolean
-  onClick: () => void
-  onDoubleClick: () => void
-  onRightClick?: (e: React.MouseEvent) => void
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: block.id, disabled: !isInteractive })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      data-block-id={block.id}
-      className={`mb-6 relative group ${isInteractive ? 'cursor-move' : isEditable ? 'cursor-pointer' : ''} ${
-        isSelected ? 'ring-4 ring-blue-500 ring-offset-4 shadow-lg' : ''
-      } ${isEditable && !isSelected ? 'hover:ring-2 hover:ring-blue-300 hover:ring-offset-2' : ''}`}
-      onClick={onClick}
-      onDoubleClick={isEditable ? onDoubleClick : undefined}
-      onContextMenu={isEditable ? onRightClick : undefined}
-      {...(isInteractive ? { ...attributes, ...listeners } : {})}
-    >
-      {isInteractive && (
-        <div className="absolute -top-2 -left-2 z-10 bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-          <span className="mr-1">⋮⋮</span>
-          Déplacer
-        </div>
-      )}
-      {isEditable && !isInteractive && (
-        <div className="absolute -top-2 -left-2 z-10 bg-blue-500 text-white text-xs px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          Double-clic pour éditer
-        </div>
-      )}
-      <BlockPreviewRenderer block={block} blockType={blockType} blockTypes={blockTypes || []} theme={theme || 'light'} />
-    </div>
-  )
-}
-
-// FAQ Section Component with state
-function FAQSectionPreview({ title, items, wrapperStyles, theme = 'light' }: { title?: string; items: any[]; wrapperStyles?: React.CSSProperties; theme?: 'light' | 'dark' }) {
-  const [openIndex, setOpenIndex] = useState<number | null>(null)
-  const isDark = theme === 'dark'
-  
-  return (
-    <div style={wrapperStyles} className="mb-6">
-      {title && (
-        <h2 
-          className="text-3xl md:text-4xl font-bold text-center mb-12"
-          style={{ color: isDark ? '#f9fafb' : '#111827' }}
-        >
-          {title}
-        </h2>
-      )}
-      <div className="space-y-4 max-w-4xl mx-auto">
-        {items.length > 0 ? (
-          items.map((item: any, i: number) => (
-            <div
-              key={i}
-              className="rounded-xl shadow-lg overflow-hidden"
-              style={{
-                backgroundColor: isDark ? '#1f2937' : '#ffffff'
-              }}
-            >
-              <button
-                onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                className="w-full px-6 py-5 flex items-center justify-between text-left transition-colors"
-                style={{
-                  backgroundColor: openIndex === i ? (isDark ? '#374151' : '#f9fafb') : 'transparent'
-                }}
-                onMouseEnter={(e) => {
-                  if (openIndex !== i) {
-                    e.currentTarget.style.backgroundColor = isDark ? '#374151' : '#f9fafb'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (openIndex !== i) {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }
-                }}
-              >
-                <span 
-                  className="font-semibold pr-8"
-                  style={{ color: isDark ? '#f9fafb' : '#111827' }}
-                >
-                  {item.question || `Question ${i + 1}`}
-                </span>
-                <span className="text-blue-600 text-xl flex-shrink-0">
-                  {openIndex === i ? '−' : '+'}
-                </span>
-              </button>
-              {openIndex === i && (
-                <div 
-                  className="px-6 pb-5 border-t"
-                  style={{
-                    color: isDark ? '#9ca3af' : '#4b5563',
-                    borderColor: isDark ? '#374151' : '#e5e7eb'
-                  }}
-                >
-                  <p className="pt-4">{item.answer || 'Réponse...'}</p>
-                </div>
-              )}
-            </div>
-          ))
-        ) : (
-          <div 
-            className="text-center py-8 border-2 border-dashed rounded"
-            style={{
-              color: isDark ? '#9ca3af' : '#9ca3af',
-              borderColor: isDark ? '#4b5563' : '#d1d5db'
-            }}
-          >
-            No FAQ questions
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+// SortablePreviewBlock et FAQSectionPreview sont maintenant dans components/
 
 function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }: { block: Block; blockType?: BlockType; blockTypes?: BlockType[]; theme?: 'light' | 'dark' }) {
   // Liste des blocs qui ont un rendu hardcodé et doivent toujours utiliser le switch case
@@ -868,139 +726,16 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
   }
   
   // Fallback to original switch-based rendering
-  // Styles du wrapper (container) - position, margin, padding du container
-  // IMPORTANT: Ne jamais utiliser padding shorthand ici pour éviter les conflits avec les propriétés individuelles
-  const hasIndividualPadding = !!(block.styles?.padding_top || block.styles?.padding_bottom || 
-                                block.styles?.padding_left || block.styles?.padding_right ||
-                                block.styles?.padding_vertical || block.styles?.padding_horizontal ||
-                                block.styles?.paddingTop || block.styles?.paddingBottom ||
-                                block.styles?.paddingLeft || block.styles?.paddingRight ||
-                                block.styles?.paddingVertical || block.styles?.paddingHorizontal)
-  
-  // Calculer les valeurs de padding individuelles
-  const paddingTop = block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical
-  const paddingBottom = block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom
-  const paddingLeft = block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft
-  const paddingRight = block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight
-  
-  const wrapperStyles: React.CSSProperties = {
-    // Position
-    position: block.position?.type || block.styles?.position || 'static',
-    // Coordonnées de position
-    top: block.position?.top || block.styles?.top,
-    right: block.position?.right || block.styles?.right,
-    bottom: block.position?.bottom || block.styles?.bottom,
-    left: block.position?.left || block.styles?.left,
-    // Z-index
-    zIndex: block.styles?.z_index || block.styles?.zIndex,
-    // Overflow
-    overflow: block.styles?.overflow || 'visible',
-    // Margin (espacement externe)
-    marginTop: block.styles?.margin_vertical || block.styles?.margin_top || block.styles?.marginTop,
-    marginBottom: block.styles?.margin_vertical || block.styles?.margin_bottom || block.styles?.marginBottom,
-    marginLeft: block.styles?.margin_horizontal || block.styles?.margin_left || block.styles?.marginLeft,
-    marginRight: block.styles?.margin_horizontal || block.styles?.margin_right || block.styles?.marginRight,
-    // Transition
-    transition: block.styles?.transition || (block.styles?.transition_duration 
-      ? `all ${block.styles?.transition_duration || 300}ms ease-in-out`
-      : undefined),
-    // Couleur de fond du wrapper (appliquée au conteneur)
-    background: block.styles?.background && block.styles?.background.includes('gradient')
-      ? block.styles?.background
-      : block.styles?.background_color || block.styles?.backgroundColor || undefined,
-    // Couleur de texte du wrapper - Ne pas appliquer si le thème est actif pour laisser les classes dark: gérer
-    color: theme === 'dark' ? undefined : block.styles?.color,
-    // Padding du wrapper - Utiliser uniquement les propriétés individuelles pour éviter les conflits
-    // Ne jamais utiliser padding shorthand si on a des propriétés individuelles
-    ...(hasIndividualPadding ? {
-      ...(paddingTop !== undefined && paddingTop !== null && paddingTop !== '' ? { paddingTop } : {}),
-      ...(paddingBottom !== undefined && paddingBottom !== null && paddingBottom !== '' ? { paddingBottom } : {}),
-      ...(paddingLeft !== undefined && paddingLeft !== null && paddingLeft !== '' ? { paddingLeft } : {}),
-      ...(paddingRight !== undefined && paddingRight !== null && paddingRight !== '' ? { paddingRight } : {}),
-    } : block.styles?.padding ? {
-      padding: block.styles.padding
-    } : {}),
-    // Bordures du wrapper
-    borderWidth: block.styles?.border_width || block.styles?.borderWidth,
-    borderStyle: block.styles?.border_style || block.styles?.borderStyle,
-    borderColor: block.styles?.border_color || block.styles?.borderColor,
-    borderRadius: block.styles?.border_radius || block.styles?.borderRadius,
-    // Box shadow
-    boxShadow: block.styles?.box_shadow === 'sm' ? '0 1px 2px 0 rgb(0 0 0 / 0.05)' :
-               block.styles?.box_shadow === 'md' ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' :
-               block.styles?.box_shadow === 'lg' ? '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' :
-               block.styles?.box_shadow === 'xl' ? '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' :
-               block.styles?.box_shadow === '2xl' ? '0 25px 50px -12px rgb(0 0 0 / 0.25)' :
-               block.styles?.box_shadow === 'none' ? 'none' :
-               block.styles?.box_shadow || block.styles?.boxShadow || undefined,
-  }
-
-  // Content styles (applied to internal elements like buttons, texts, etc.)
-  const contentStyles: React.CSSProperties = {
-    // Couleur de fond - Utiliser background pour tout (évite le conflit avec backgroundColor)
-    background: block.styles?.background && block.styles?.background.includes('gradient')
-      ? block.styles?.background
-      : block.styles?.background_color || block.styles?.backgroundColor || undefined,
-    // Couleur de texte - Ne pas appliquer si le thème est actif pour laisser les classes dark: gérer
-    color: theme === 'dark' ? undefined : block.styles?.color,
-    // Typographie
-    fontFamily: block.styles?.font_family || block.styles?.fontFamily || undefined,
-    fontSize: block.styles?.font_size || block.styles?.fontSize || undefined,
-    fontWeight: block.styles?.font_weight || block.styles?.fontWeight || undefined,
-    fontStyle: block.styles?.font_style || block.styles?.fontStyle || undefined,
-    lineHeight: block.styles?.line_height || block.styles?.lineHeight || undefined,
-    letterSpacing: block.styles?.letter_spacing || block.styles?.letterSpacing || undefined,
-    wordSpacing: block.styles?.word_spacing || block.styles?.wordSpacing || undefined,
-    textTransform: block.styles?.text_transform || block.styles?.textTransform || undefined,
-    textDecoration: block.styles?.text_decoration || block.styles?.textDecoration || undefined,
-    textShadow: block.styles?.text_shadow || block.styles?.textShadow || undefined,
-    // Opacité
-    opacity: block.styles?.opacity !== undefined ? block.styles?.opacity : 1,
-    // Transform
-    transform: block.styles?.transform,
-    // Box shadow (support des nouvelles valeurs)
-    boxShadow: block.styles?.box_shadow === 'sm' ? '0 1px 2px 0 rgb(0 0 0 / 0.05)' :
-               block.styles?.box_shadow === 'md' ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' :
-               block.styles?.box_shadow === 'lg' ? '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)' :
-               block.styles?.box_shadow === 'xl' ? '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' :
-               block.styles?.box_shadow === '2xl' ? '0 25px 50px -12px rgb(0 0 0 / 0.25)' :
-               block.styles?.box_shadow === 'none' ? 'none' :
-               block.styles?.box_shadow || block.styles?.boxShadow || undefined,
-    // Border radius
-    borderRadius: block.styles?.border_radius || block.styles?.borderRadius,
-    // Backdrop filter
-    backdropFilter: block.styles?.backdrop_filter || block.styles?.backdropFilter,
-    // Padding (internal spacing of content)
-    paddingTop: block.styles?.padding_vertical || block.styles?.padding_top || block.styles?.paddingVertical,
-    paddingBottom: block.styles?.padding_vertical || block.styles?.padding_bottom || block.styles?.paddingBottom,
-    paddingLeft: block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft,
-    paddingRight: block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight,
-    // Bordures
-    borderWidth: block.styles?.border_width || block.styles?.borderWidth,
-    borderStyle: block.styles?.border_style || block.styles?.borderStyle,
-    borderColor: block.styles?.border_color || block.styles?.borderColor,
-    // Text alignment
-    textAlign: block.styles?.text_align || block.styles?.textAlign || 'left',
-  }
+  // Utiliser les fonctions utilitaires pour calculer les styles
+  const wrapperStyles = getWrapperStyles(block, theme)
+  const contentStyles = getContentStyles(block, theme)
 
   // Get layout width (Bootstrap 12-column system)
   const layoutCols = typeof block.layout === 'number' ? block.layout : 12
-  const layoutWidth = layoutCols === 12 ? 'w-full' :
-    layoutCols === 11 ? 'w-[91.666667%]' :
-    layoutCols === 10 ? 'w-[83.333333%]' :
-    layoutCols === 9 ? 'w-3/4' :
-    layoutCols === 8 ? 'w-2/3' :
-    layoutCols === 7 ? 'w-[58.333333%]' :
-    layoutCols === 6 ? 'w-1/2' :
-    layoutCols === 5 ? 'w-[41.666667%]' :
-    layoutCols === 4 ? 'w-1/3' :
-    layoutCols === 3 ? 'w-1/4' :
-    layoutCols === 2 ? 'w-1/6' :
-    layoutCols === 1 ? 'w-[8.333333%]' : 'w-full'
-
+  const layoutWidth = getLayoutWidth(layoutCols)
+  
   // Get container class
-  const containerClass = block.container === 'container-fluid' ? 'w-full' :
-    block.container === 'none' ? '' : 'max-w-7xl mx-auto'
+  const containerClass = getContainerClass(block.container, layoutCols)
 
   // Function to render block content (replacing IIFE for better compiler compatibility)
   const getBlockContent = (): React.ReactElement => {
@@ -5056,68 +4791,16 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
 
   const content = getBlockContent()
 
-  // Generate hover animation classes
-  const getHoverAnimationClass = () => {
-    const animation = block.styles?.hover_animation || 'none'
-    switch (animation) {
-      case 'scale': {
-        return 'hover:scale-105'
-      }
-      case 'lift': {
-        return 'hover:-translate-y-2 hover:shadow-lg'
-      }
-      case 'fade': {
-        return 'hover:opacity-80'
-      }
-      case 'rotate': {
-        return 'hover:rotate-3'
-      }
-      case 'glow': {
-        return 'hover:shadow-2xl hover:shadow-blue-500/50'
-      }
-      default:
-        return ''
-    }
-  }
-
-  // Apply alignment based on position type
-  const getAlignmentClasses = () => {
-    if (block.position?.type === 'relative' || block.position?.type === 'absolute' || block.position?.type === 'fixed' || block.position?.type === 'sticky') {
-      const align = block.position?.align || 'left'
-      switch (align) {
-        case 'left': {
-          return 'mr-auto'
-        }
-        case 'center': {
-          return 'mx-auto'
-        }
-        case 'right': {
-          return 'ml-auto'
-        }
-        case 'stretch': {
-          return 'w-full'
-        }
-        default:
-          return ''
-      }
-    }
-    return ''
-  }
+  // Utiliser les fonctions utilitaires importées
 
   // Wrap content with layout and container
   // IMPORTANT: Le layoutWidth (colonnes) doit être appliqué au container, pas à l'intérieur
   // Le container respecte la largeur définie par les colonnes
-  const finalContainerClass = block.container === 'container-fluid' 
-    ? 'w-full' 
-    : block.container === 'none' 
-      ? '' 
-      : layoutCols === 12 
-        ? 'max-w-7xl mx-auto' 
-        : '' // Si pas pleine largeur, on applique le layoutWidth directement
+  const finalContainerClass = getContainerClass(block.container, layoutCols)
   
   return (
     <div 
-      className={`${finalContainerClass} ${layoutWidth !== 'w-full' ? layoutWidth : ''} mb-6 ${getHoverAnimationClass()} ${getAlignmentClasses()}`} 
+      className={`${finalContainerClass} ${layoutWidth !== 'w-full' ? layoutWidth : ''} mb-6 ${getHoverAnimationClass(block)} ${getAlignmentClasses(block)}`} 
       style={{
         ...wrapperStyles,
         // Si container est 'container' et layout < 12, centrer le contenu
