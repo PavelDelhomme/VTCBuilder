@@ -57,7 +57,9 @@ import { renderFormNewsletter, renderFormSearch, renderFormInscription, renderFo
 import { renderPricingCards } from './complex'
 import { renderBookingForm, renderPricingTable, renderServiceZones, renderVehicleGallery, renderContactButtons, renderMap } from './vtc'
 import { renderBadges } from './data'
-import { renderCountdown, renderProgressBar } from './interactive'
+import { renderCountdown, renderProgressBar, renderTabs, renderProgressCircle, renderModal } from './interactive'
+import { renderIconBox, renderFeatureCard, renderVideoEmbed, renderTeamMember, renderCard, renderRating, renderBreadcrumb, renderTags, renderSearchBar, renderPagination, renderLink } from './content'
+import { renderChart, renderCalendar } from './data'
 
 // Import des configs
 import {
@@ -193,6 +195,28 @@ const rendererCases: Record<string, RendererCaseFunction> = {
   // Interactive inline cases
   'countdown': renderCountdown,
   'progress-bar': renderProgressBar,
+  
+  // Content inline cases
+  'icon-box': renderIconBox,
+  'feature-card': renderFeatureCard,
+  'video-embed': renderVideoEmbed,
+  'team-member': renderTeamMember,
+  'card': renderCard,
+  'rating': renderRating,
+  'breadcrumb': renderBreadcrumb,
+  'tags': renderTags,
+  'search-bar': renderSearchBar,
+  'pagination': renderPagination,
+  'link': renderLink,
+  
+  // Interactive inline cases (continued)
+  'tabs': renderTabs,
+  'progress-circle': renderProgressCircle,
+  'modal': renderModal,
+  
+  // Data inline cases (continued)
+  'chart': renderChart,
+  'calendar': renderCalendar,
   
   // Configs VTC
   'driver-profile': ({ block, onUpdate }) => <DriverProfileConfig block={block} onUpdate={onUpdate} />,

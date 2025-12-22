@@ -113,3 +113,126 @@ export function renderBadges({ block, onUpdate }: RendererCaseProps) {
   )
 }
 
+export function renderChart({ block, onUpdate }: RendererCaseProps) {
+  const safeBlock = { ...block, data: block.data || {} }
+  
+  return (
+    <div className="space-y-3">
+      <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-800">
+        <p className="text-xs text-yellow-800 dark:text-yellow-200 flex items-center gap-1">
+          <span>⭐</span>
+          <span>Fonctionnalité Premium</span>
+        </p>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Type de graphique
+        </label>
+        <select
+          value={safeBlock.data.chart_type || 'line'}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, chart_type: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        >
+          <option value="line">Ligne</option>
+          <option value="bar">Barres</option>
+          <option value="pie">Camembert</option>
+          <option value="doughnut">Donut</option>
+          <option value="area">Aire</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Titre
+        </label>
+        <input
+          type="text"
+          value={safeBlock.data.title || ''}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+          placeholder="Titre du graphique"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Données (JSON)
+        </label>
+        <textarea
+          value={safeBlock.data.data || '{"labels": ["Jan", "Feb", "Mar"], "datasets": [{"label": "Ventes", "data": [10, 20, 30]}]}'}
+          onChange={(e) => {
+            try {
+              JSON.parse(e.target.value)
+              onUpdate({ data: { ...block.data, data: e.target.value } })
+            } catch {
+              // Ignore invalid JSON
+            }
+          }}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-mono"
+          placeholder='{"labels": [...], "datasets": [...]}'
+          rows={6}
+        />
+        <p className="text-[10px] text-gray-500 mt-1">Format Chart.js JSON</p>
+      </div>
+    </div>
+  )
+}
+
+export function renderCalendar({ block, onUpdate }: RendererCaseProps) {
+  const safeBlock = { ...block, data: block.data || {} }
+  
+  return (
+    <div className="space-y-3">
+      <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-800">
+        <p className="text-xs text-yellow-800 dark:text-yellow-200 flex items-center gap-1">
+          <span>⭐</span>
+          <span>Fonctionnalité Premium</span>
+        </p>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Type de calendrier
+        </label>
+        <select
+          value={safeBlock.data.calendar_type || 'month'}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, calendar_type: e.target.value } })}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800"
+        >
+          <option value="month">Mensuel</option>
+          <option value="week">Hebdomadaire</option>
+          <option value="day">Quotidien</option>
+          <option value="agenda">Agenda</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Afficher les événements
+        </label>
+        <input
+          type="checkbox"
+          checked={safeBlock.data.show_events !== false}
+          onChange={(e) => onUpdate({ data: { ...safeBlock.data, show_events: e.target.checked } })}
+          className="w-4 h-4"
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Événements (JSON)
+        </label>
+        <textarea
+          value={safeBlock.data.events || '[]'}
+          onChange={(e) => {
+            try {
+              JSON.parse(e.target.value)
+              onUpdate({ data: { ...block.data, events: e.target.value } })
+            } catch {
+              // Ignore invalid JSON
+            }
+          }}
+          className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-mono"
+          placeholder='[{"title": "Événement", "date": "2024-01-15", "time": "10:00"}]'
+          rows={4}
+        />
+      </div>
+    </div>
+  )
+}
+

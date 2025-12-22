@@ -1,5 +1,6 @@
 import React from 'react'
 import { RendererCaseProps } from './types'
+import { CollapsibleSection } from '../CollapsibleSection'
 
 export function renderCountdown({ block, onUpdate }: RendererCaseProps) {
   const safeBlock = { ...block, data: block.data || {} }
