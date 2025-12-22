@@ -556,19 +556,20 @@ function BlockPreview({
             ) : (
               <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
                 {blocks.map((block) => (
-                  <SortablePreviewBlock
-                    key={block.id}
-                    block={block}
-                    blockType={blockTypes.find((bt: BlockType) => bt.name === block.type)}
-                    blockTypes={blockTypes}
-                    theme={theme}
-                    isSelected={selectedBlockId === block.id}
-                    isInteractive={isInteractive}
-                    isEditable={isEditable}
-                    onClick={() => handleBlockClick(block.id)}
-                    onDoubleClick={() => handleBlockDoubleClick(block.id)}
-                    onRightClick={(e) => handleBlockRightClick(block.id, e)}
-                  />
+                  <div key={block.id}>
+                    <SortablePreviewBlock
+                      block={block}
+                      blockType={blockTypes.find((bt: BlockType) => bt.name === block.type)}
+                      blockTypes={blockTypes}
+                      theme={theme}
+                      isSelected={selectedBlockId === block.id}
+                      isInteractive={isInteractive}
+                      isEditable={isEditable}
+                      onClick={() => handleBlockClick(block.id)}
+                      onDoubleClick={() => handleBlockDoubleClick(block.id)}
+                      onRightClick={(e) => handleBlockRightClick(block.id, e)}
+                    />
+                  </div>
                 ))}
               </SortableContext>
             )}
