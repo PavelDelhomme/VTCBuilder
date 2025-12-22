@@ -14,6 +14,7 @@ import { renderBookingForm, renderPricingTable, renderServiceZones, renderVehicl
 import { renderForm, renderFormMultiStep, renderFormConditional, renderFormCalculator, renderFormPayment } from './renderers/forms'
 import { renderAccordion, renderTabs, renderCountdown, renderProgressBar } from './renderers/interactive'
 import { renderHeader, renderFooter, renderContainer } from './renderers/layout'
+import { getBlockPreviewCase } from './preview-cases'
 import { renderCarousel, renderLogoGrid, renderImageSlider, renderLightbox } from './renderers/media'
 import { renderBadges } from './renderers/data'
 import authService from '@/services/auth.service'
@@ -953,7 +954,6 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     textTransform: block.styles?.text_transform || block.styles?.textTransform || undefined,
     textDecoration: block.styles?.text_decoration || block.styles?.textDecoration || undefined,
     textShadow: block.styles?.text_shadow || block.styles?.textShadow || undefined,
-    textAlign: block.styles?.text_align || block.styles?.textAlign || undefined,
     // Opacité
     opacity: block.styles?.opacity !== undefined ? block.styles?.opacity : 1,
     // Transform
@@ -1006,9 +1006,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
   const getBlockContent = (): React.ReactElement => {
     // Essayer d'utiliser les cases extraits d'abord
     try {
-      // Import dynamique pour éviter les erreurs de compilation si le module n'existe pas encore
-      const previewCasesModule = require('./preview-cases')
-      const caseRenderer = previewCasesModule.getBlockPreviewCase?.(block.type)
+      const caseRenderer = getBlockPreviewCase(block.type)
       if (caseRenderer) {
         const result = caseRenderer({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
         if (result) return result
