@@ -7,15 +7,28 @@ set -e
 
 echo "🚀 Démarrage de VTCBuilder (Django + Frontend)..."
 
-# Créer le réseau Docker s'il n'existe pas
+# Vérifier et nettoyer le réseau Docker si nécessaire
 echo "🔧 Vérification du réseau Docker..."
-if ! docker network ls | grep -q "vtcbuilder_network"; then
-    echo "   📦 Création du réseau vtcbuilder_network..."
-    docker network create vtcbuilder_network || {
-        echo "⚠️  Le réseau existe peut-être déjà, on continue..."
-    }
+if docker network ls | grep -q "vtcbuilder_network"; then
+    # Vérifier si le réseau a été créé par docker-compose
+    NETWORK_LABEL=$(docker network inspect vtcbuilder_network --format '{{index .Labels "com.docker.compose.network"}}' 2>/dev/null || echo "")
+    if [ -z "$NETWORK_LABEL" ] || [ "$NETWORK_LABEL" != "vtcbuilder_network" ]; then
+        echo "   🗑️  Suppression du réseau existant (créé manuellement)..."
+        # Vérifier si des containers utilisent le réseau
+        CONTAINERS=$(docker network inspect vtcbuilder_network --format '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null || echo "")
+        if [ -n "$CONTAINERS" ]; then
+            echo "   ⚠️  Des containers utilisent encore le réseau, arrêt des containers..."
+            docker-compose -f docker-compose.simple.yml down 2>/dev/null || true
+        fi
+        docker network rm vtcbuilder_network 2>/dev/null || {
+            echo "   ⚠️  Impossible de supprimer le réseau, on continue..."
+        }
+        echo "   ✅ Réseau supprimé, docker-compose le recréera automatiquement"
+    else
+        echo "   ✅ Le réseau vtcbuilder_network existe déjà (créé par docker-compose)"
+    fi
 else
-    echo "   ✅ Le réseau vtcbuilder_network existe déjà"
+    echo "   ℹ️  Le réseau sera créé automatiquement par docker-compose"
 fi
 
 # Fonction pour attendre qu'un service soit prêt
