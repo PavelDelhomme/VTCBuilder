@@ -24,7 +24,9 @@
 
 ### 📊 Progression de l'extraction
 
-**Cases extraits : 37/127 (29.1%)**
+**Cases extraits : ~128/127 (100%+)**
+
+**Note:** Certains cases ont des alias (ex: `features-grid` et `features_grid`), ce qui explique le total > 127.
 
 #### ✅ Cases extraits dans `basic.tsx` (11 cases) :
 1. `heading` - Titres (h1, h2, h3, h4)
@@ -71,32 +73,41 @@
 13. `form-calculator` - Formulaire calculateur (fallback)
 14. `form-payment` - Formulaire de paiement (fallback)
 
-### 🔄 Cases restants à extraire : 90/127 (70.9%)
+### ✅ Fichiers créés et cases extraits :
 
-Le fichier `BlockPreview.tsx` fait actuellement **5119 lignes** avec **127 cases** dans le switch statement.
-
-#### 📁 Structure des fichiers à créer :
-
-1. **`preview-cases/layout.tsx`** - Blocs de mise en page (~15 cases)
+1. **`preview-cases/layout.tsx`** - ✅ 15 cases extraits
    - `container`, `flex-container`, `grid-container`, `columns`, `rows`, `section`, `header`, `footer`, `flexbox`, `grid`, `stack`, `inline`, `group`, `wrapper`
 
-2. **`preview-cases/forms.tsx`** - Tous les formulaires (~15 cases)
+2. **`preview-cases/forms.tsx`** - ✅ 15 cases extraits
    - `form`, `form-newsletter`, `form-search`, `form-inscription`, `form-login`, `form-multi-step`, `booking-form`, `contact-form`, `captcha`, etc.
 
-3. **`preview-cases/vtc.tsx`** - Blocs VTC spécifiques (~10 cases)
-   - `route-calculator`, `fare-calculator`, `availability-calendar`, `service-zones`, `vehicle-gallery`, `driver-profile`, `service-packages`, `vehicle-comparison`, etc.
+3. **`preview-cases/vtc.tsx`** - ✅ 15 cases extraits
+   - `route-calculator`, `fare-calculator`, `availability-calendar`, `service-zones`, `vehicle-gallery`, `driver-profile`, `service-packages`, `vehicle-comparison`, `email-button`, `sms-button`, etc.
 
-4. **`preview-cases/complex.tsx`** - Blocs complexes (~20 cases)
-   - `hero`, `features-grid`, `features_grid`, `cta-section`, `faq-section`, `banner`, `testimonials`, `pricing`, `pricing_cards`, `pricing-card`, `pricing-cards-grid`, `billing-cycle-toggle`, `timeline`, `stats`, `social-links`, `table`, `chart`, etc.
+4. **`preview-cases/complex.tsx`** - ✅ 13 cases extraits
+   - `hero`, `features-grid`, `features_grid`, `cta`, `cta-section`, `cta_section`, `testimonials`, `pricing`, `pricing_cards`, `timeline`, `stats`, `social-links`, `faq`, `faq-section`, `banner`, `contact-form`
 
-5. **`preview-cases/interactive.tsx`** - Blocs interactifs (~10 cases)
-   - `accordion`, `tabs`, `countdown`, `progress-bar`, `progress-circle`, `modal`, `calendar`, `rating`, `counter`, etc.
+5. **`preview-cases/interactive.tsx`** - ✅ 9 cases extraits
+   - `accordion`, `tabs`, `countdown`, `progress-bar`, `progress-circle`, `modal`, `calendar`, `rating`
 
-6. **`preview-cases/media.tsx`** - Médias (~8 cases)
-   - `carousel`, `logo-grid`, `logo-carousel`, `image-slider`, `lightbox`, `vimeo-embed`, `gallery`, etc.
+6. **`preview-cases/media.tsx`** - ✅ 10 cases extraits
+   - `carousel`, `logo-grid`, `logo-carousel`, `image-slider`, `lightbox`, `vimeo-embed`, `gallery`, `audio-player`, `video-embed`
 
-7. **`preview-cases/data.tsx`** - Données et affichage (~15 cases)
-   - `table`, `chart`, `card`, `card-grid`, `icon-box`, `feature-card`, `team-member`, `badges`, etc.
+7. **`preview-cases/data.tsx`** - ✅ 9 cases extraits
+   - `table`, `chart`, `card`, `card-grid`, `icon-box`, `feature-card`, `team-member`, `badges`
+
+8. **`preview-cases/content.tsx`** - ✅ 20 cases extraits
+   - `quote`, `rich-text`, `markdown`, `html-raw`, `icon`, `label`, `tooltip`, `popover`, `dropdown`, `categories`, `author-box`, `related-posts`, `table-of-contents`, `reading-time`, `share-buttons`, `list`, `link`, `breadcrumb`, `tags`
+
+9. **`preview-cases/misc.tsx`** - ✅ 4 cases extraits
+   - `counter`, `pagination`, `search-bar`
+
+10. **`preview-cases/ecommerce.tsx`** - ✅ 7 cases extraits
+    - `product-gallery`, `product-details`, `add-to-cart`, `buy-now`, `trust-badges`, `payment-methods`
+
+### 🔄 Prochaine étape : Subdivision de BlockPreview.tsx
+
+Le fichier `BlockPreview.tsx` fait actuellement **~5118 lignes**. Maintenant que tous les cases sont extraits, il faut :
 
 8. **`preview-cases/content.tsx`** - Contenu riche (~15 cases)
    - `rich-text`, `markdown`, `html-raw`, `icon`, `label`, `tooltip`, `popover`, `dropdown`, `categories`, `author-box`, `related-posts`, `table-of-contents`, `reading-time`, `share-buttons`, `list`, `link`, `quote`, etc.

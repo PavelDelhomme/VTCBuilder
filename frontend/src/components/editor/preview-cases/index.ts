@@ -6,16 +6,14 @@ import React from 'react'
 import { basicCases } from './basic'
 import { layoutCases } from './layout'
 import { formsCases } from './forms'
-// TODO: Importer les autres fichiers au fur et à mesure
-// import { formsCases } from './forms'
-// import { vtcCases } from './vtc'
-// import { complexCases } from './complex'
-// import { interactiveCases } from './interactive'
-// import { mediaCases } from './media'
-// import { dataCases } from './data'
-// import { contentCases } from './content'
-// import { ecommerceCases } from './ecommerce'
-// import { miscCases } from './misc'
+import { dataCases } from './data'
+import { contentCases } from './content'
+import { miscCases } from './misc'
+import { interactiveCases } from './interactive'
+import { mediaCases } from './media'
+import { complexCases } from './complex'
+import { vtcCases } from './vtc'
+import { ecommerceCases } from './ecommerce'
 
 // Fonction principale pour obtenir le renderer d'un bloc
 export function getBlockPreviewCase(blockType: string): ((props: PreviewCaseProps) => React.ReactElement | null) | null {
@@ -24,15 +22,14 @@ export function getBlockPreviewCase(blockType: string): ((props: PreviewCaseProp
     ...basicCases,
     ...layoutCases,
     ...formsCases,
-    // ...formsCases,
-    // ...vtcCases,
-    // ...complexCases,
-    // ...interactiveCases,
-    // ...mediaCases,
-    // ...dataCases,
-    // ...contentCases,
-    // ...ecommerceCases,
-    // ...miscCases,
+    ...dataCases,
+    ...contentCases,
+    ...miscCases,
+    ...interactiveCases,
+    ...mediaCases,
+    ...complexCases,
+    ...vtcCases,
+    ...ecommerceCases,
   }
   
   return allCases[blockType] || null
@@ -42,13 +39,12 @@ export function getBlockPreviewCase(blockType: string): ((props: PreviewCaseProp
 export { basicCases }
 export { layoutCases }
 export { formsCases }
-// export { formsCases }
-// export { vtcCases }
-// export { complexCases }
-// export { interactiveCases }
-// export { mediaCases }
-// export { dataCases }
-// export { contentCases }
-// export { ecommerceCases }
-// export { miscCases }
+export { dataCases }
+export { contentCases }
+export { miscCases }
+export { interactiveCases }
+export { mediaCases }
+export { complexCases }
+export { vtcCases }
+export { ecommerceCases }
 
