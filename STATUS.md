@@ -24,7 +24,7 @@
 
 ### 📊 Progression de l'extraction
 
-**Cases extraits : 24/127 (18.9%)**
+**Cases extraits : 37/127 (29.1%)**
 
 #### ✅ Cases extraits dans `basic.tsx` (11 cases) :
 1. `heading` - Titres (h1, h2, h3, h4)
@@ -55,7 +55,23 @@
 13. `group` - Alias pour container
 14. `wrapper` - Alias pour container
 
-### 🔄 Cases restants à extraire : 103/127 (81.1%)
+#### ✅ Cases extraits dans `forms.tsx` (13 cases) :
+1. `form-newsletter` - Formulaire newsletter
+2. `form-search` - Formulaire de recherche
+3. `form-inscription` - Formulaire d'inscription
+4. `form-file-upload` - Upload de fichiers
+5. `form-quiz` - Quiz interactif (avec useState)
+6. `form-survey` - Sondage
+7. `form-poll` - Sondage rapide (avec useState)
+8. `form-rsvp` - Confirmation d'événement (avec useState)
+9. `captcha` - Captcha
+10. `form` - Formulaire générique (fallback)
+11. `form-multi-step` - Formulaire multi-étapes (fallback)
+12. `form-conditional` - Formulaire conditionnel (fallback)
+13. `form-calculator` - Formulaire calculateur (fallback)
+14. `form-payment` - Formulaire de paiement (fallback)
+
+### 🔄 Cases restants à extraire : 90/127 (70.9%)
 
 Le fichier `BlockPreview.tsx` fait actuellement **5119 lignes** avec **127 cases** dans le switch statement.
 
@@ -215,5 +231,8 @@ Toujours vérifier `theme === 'dark'` pour les couleurs et styles adaptatifs.
 
 ---
 
-**Dernière mise à jour** : Après extraction de 24 cases (11 basic + 13 layout)
-**Prochaine étape** : Extraire les cases de forms (form, form-newsletter, form-search, etc.)
+**Dernière mise à jour** : Après extraction de 37 cases (11 basic + 13 layout + 13 forms)
+**Prochaine étape** : 
+1. Continuer l'extraction des cases restants (vtc, complex, interactive, media, data, content, ecommerce, misc)
+2. Commencer la subdivision de BlockPreview.tsx selon REFACTORING_PLAN.md
+3. Commencer la subdivision de BlockRenderer.tsx selon REFACTORING_PLAN.md
