@@ -143,6 +143,6 @@ function HeaderComponent({ block, wrapperStyles, theme }: RendererProps): React.
   )
 }
 
-export const renderHeader = ({ block, wrapperStyles, theme }: RendererProps): React.ReactElement => {
-  return <HeaderComponent block={block} wrapperStyles={wrapperStyles} theme={theme} />
+export const renderHeader = ({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement => {
+  return <HeaderComponent block={block} wrapperStyles={wrapperStyles} contentStyles={contentStyles} theme={theme} />
 }
