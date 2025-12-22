@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Block } from '../types'
 import { BlockType } from '@/services/blocks.service'
-import { BlockPreviewRenderer } from '../BlockPreviewRenderer'
+import { BlockPreviewRenderer } from '../BlockPreview'
 
 interface SortablePreviewBlockProps {
   block: Block

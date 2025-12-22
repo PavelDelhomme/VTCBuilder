@@ -13,9 +13,14 @@ import { renderHero, renderFeaturesGrid, renderCTASection, renderContactForm } f
 import { renderBookingForm, renderPricingTable, renderServiceZones, renderVehicleGallery, renderContactButtons, renderMap, renderFareCalculator, renderAvailabilityCalendar } from './renderers/vtc'
 import { renderForm, renderFormMultiStep, renderFormConditional, renderFormCalculator, renderFormPayment } from './renderers/forms'
 import { renderAccordion, renderTabs, renderCountdown, renderProgressBar } from './renderers/interactive'
-import { renderHeader, renderFooter, renderContainer } from './renderers/layout'
+import { renderHeader } from './renderers/layout/header'
+import { renderFooter } from './renderers/layout/footer'
+import { renderContainer } from './renderers/layout/containers'
 import { getBlockPreviewCase } from './preview-cases'
-import { renderCarousel, renderLogoGrid, renderImageSlider, renderLightbox } from './renderers/media'
+import { renderCarousel } from './renderers/media/carousel'
+import { renderLogoGrid } from './renderers/media/logo-grid'
+import { renderImageSlider } from './renderers/media/image-slider'
+import { renderLightbox } from './renderers/media/lightbox'
 import { renderBadges } from './renderers/data'
 import authService from '@/services/auth.service'
 import { SortablePreviewBlock } from './components/SortablePreviewBlock'
@@ -613,7 +618,7 @@ export default MemoizedBlockPreview
 // Sortable Preview Block Component
 // SortablePreviewBlock et FAQSectionPreview sont maintenant dans components/
 
-function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }: { block: Block; blockType?: BlockType; blockTypes?: BlockType[]; theme?: 'light' | 'dark' }) {
+export function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }: { block: Block; blockType?: BlockType; blockTypes?: BlockType[]; theme?: 'light' | 'dark' }) {
   // Liste des blocs qui ont un rendu hardcodé et doivent toujours utiliser le switch case
   const blocksWithHardcodedRender = [
     'hero', 'progress-bar', 'cta-section', 'features-grid', 'features_grid', 'pricing', 'pricing_cards', 
@@ -2141,7 +2146,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
       const currentWrapperStyles = wrapperStyles
       // Utiliser le même rendu que 'pricing' mais avec un style spécifique
       const PricingCardsPreview = () => {
-        const [plans, setPlans] = useState<any[]>(pricingCardsBlock.data.plans || [])
+        const [plans, setPlans] = useState<any[]>((pricingCardsBlock.data as any)?.plans || [])
         const [loading, setLoading] = useState(false)
         
         useEffect(() => {
@@ -2151,9 +2156,11 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
           if (shouldLoad) {
             setLoading(true)
             // Utiliser l'URL correcte de l'API
-            const apiUrl = pricingCardsBlock.data.api_endpoint || '/api/pricing-plans/'
+            const apiUrl = (pricingCardsBlock.data as any)?.api_endpoint || '/api/pricing-plans/'
             // Construire l'URL complète en utilisant l'origine du backend
-            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9495'
+            const backendUrl = typeof window !== 'undefined' 
+              ? (window.location.origin.includes('localhost') ? 'http://localhost:9495' : window.location.origin)
+              : 'http://localhost:9495'
             const fullUrl = apiUrl.startsWith('http') ? apiUrl : `${backendUrl}${apiUrl}`
             
             fetch(fullUrl, {
@@ -2220,7 +2227,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
                   })
                 
                 // Appliquer l'override du plan "featured" si défini
-                const featuredOverride = pricingCardsBlock.data.featured_plan_override
+                const featuredOverride = (pricingCardsBlock.data as any)?.featured_plan_override
                 if (featuredOverride) {
                   // Réinitialiser tous les plans à is_featured = false
                   filteredPlans = filteredPlans.map((p: any) => ({ ...p, is_featured: false }))
@@ -2249,7 +2256,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
               })
               .finally(() => setLoading(false))
           }
-        }, [pricingCardsBlock.data.source, pricingCardsBlock.data.api_endpoint, pricingCardsBlock.data.show_plans, pricingCardsBlock.data.featured_plan_override])
+        }, [pricingCardsBlock.data.source, (pricingCardsBlock.data as any)?.api_endpoint, pricingCardsBlock.data.show_plans, (pricingCardsBlock.data as any)?.featured_plan_override])
         
         const formatPrice = (price: number) => {
           return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price)
@@ -2266,20 +2273,20 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
             }} 
             className={`mb-6 py-12 px-4 sm:px-6 lg:px-8 overflow-visible ${isDark ? 'dark' : ''}`}
           >
-            {pricingCardsBlock.data.show_title !== false && pricingCardsBlock.data.title && (
+            {pricingCardsBlock.data.show_title !== false && (pricingCardsBlock.data as any)?.title && (
               <div className="text-center mb-4">
                 <h2 
                   className="text-3xl md:text-4xl font-bold text-center mb-4"
                   style={{ color: isDark ? '#f9fafb' : '#111827' }}
                 >
-                  {pricingCardsBlock.data.title}
+                  {(pricingCardsBlock.data as any).title}
                 </h2>
-                {pricingCardsBlock.data.subtitle && (
+                {(pricingCardsBlock.data as any)?.subtitle && (
                   <p 
                     className="text-center mb-12 max-w-2xl mx-auto"
                     style={{ color: isDark ? '#d1d5db' : '#4b5563' }}
                   >
-                    {pricingCardsBlock.data.subtitle}
+                    {(pricingCardsBlock.data as any).subtitle}
                   </p>
                 )}
               </div>

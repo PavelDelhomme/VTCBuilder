@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 
 interface CollapsibleSectionProps {
   title: string
-  children: React.ReactNode
+  children?: React.ReactNode
   defaultCollapsed?: boolean
   count?: number
 }
