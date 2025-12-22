@@ -105,9 +105,36 @@
 10. **`preview-cases/ecommerce.tsx`** - ✅ 7 cases extraits
     - `product-gallery`, `product-details`, `add-to-cart`, `buy-now`, `trust-badges`, `payment-methods`
 
-### 🔄 Prochaine étape : Subdivision de BlockPreview.tsx
+### ✅ Subdivision de BlockPreview.tsx
 
-Le fichier `BlockPreview.tsx` fait actuellement **~5118 lignes**. Maintenant que tous les cases sont extraits, il faut :
+Le fichier `BlockPreview.tsx` fait maintenant **~4817 lignes** (réduit de ~316 lignes).
+
+#### Fichiers créés :
+
+1. **`components/FAQSectionPreview.tsx`** - Composant FAQ avec état
+2. **`components/SortablePreviewBlock.tsx`** - Composant sortable pour les blocs
+3. **`utils/blockPreviewUtils.ts`** - Fonctions utilitaires :
+   - `getHoverAnimationClass()` - Classes CSS pour animations au survol
+   - `getAlignmentClasses()` - Classes CSS pour l'alignement
+   - `getLayoutWidth()` - Calcul de la largeur du layout (système 12 colonnes)
+   - `getContainerClass()` - Calcul de la classe du container
+4. **`utils/blockStylesUtils.ts`** - Utilitaires de styles :
+   - `getWrapperStyles()` - Calcul des styles du wrapper (container)
+   - `getContentStyles()` - Calcul des styles du contenu interne
+
+#### Modifications apportées :
+
+- ✅ Extraction de `SortablePreviewBlock` dans `components/`
+- ✅ Extraction de `FAQSectionPreview` dans `components/`
+- ✅ Extraction des fonctions utilitaires dans `utils/`
+- ✅ Simplification de `BlockPreview.tsx` en utilisant les imports
+- ✅ Réduction de la taille du fichier de ~316 lignes
+
+### 🔄 Prochaines étapes possibles :
+
+1. **Extraction de BlockPreviewRenderer** - Créer un fichier séparé pour le renderer principal
+2. **Création de hooks personnalisés** - Extraire la logique métier dans des hooks
+3. **Optimisation des imports** - Nettoyer les imports inutilisés
 
 8. **`preview-cases/content.tsx`** - Contenu riche (~15 cases)
    - `rich-text`, `markdown`, `html-raw`, `icon`, `label`, `tooltip`, `popover`, `dropdown`, `categories`, `author-box`, `related-posts`, `table-of-contents`, `reading-time`, `share-buttons`, `list`, `link`, `quote`, etc.
