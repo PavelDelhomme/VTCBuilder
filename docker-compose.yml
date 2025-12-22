@@ -129,7 +129,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - /app/.next
+      # Ne pas monter .next en volume pour éviter les problèmes de cache corrompu
+      # - /app/.next
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:9495
