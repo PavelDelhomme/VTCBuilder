@@ -1,4 +1,34 @@
-# État du Projet - Extraction des Cases de BlockPreview.tsx
+# État du Projet - VTCBuilder
+
+## 📋 Vue d'ensemble
+
+Ce document centralise l'état actuel du projet, les subdivisions en cours, les tests, et la roadmap.
+
+**Dernière mise à jour :** 2025-12-23
+
+---
+
+## 📊 Subdivision des Fichiers de l'Éditeur
+
+**Voir [SUBDIVISION_STATUS.md](./SUBDIVISION_STATUS.md) pour l'état détaillé.**
+
+### État actuel :
+- ✅ **BlockPreview.tsx** : 100% subdivisé (tous les cases extraits)
+- 🟡 **BlockRenderer.tsx** : Partiellement subdivisé (cases extraits dans `renderer-cases/`)
+- 🔴 **BlockEditor.tsx** : À faire (4277 lignes) - **PRIORITÉ 1**
+- 🔴 **ComplexRenderers.tsx** : À faire (1860 lignes) - **PRIORITÉ 2**
+- 🔴 **BlockStylePanel.tsx** : À faire (978 lignes) - **PRIORITÉ 3**
+
+### Plan d'action :
+1. Subdiviser `BlockEditor.tsx` (le plus gros fichier)
+2. Subdiviser `ComplexRenderers.tsx`
+3. Subdiviser `BlockStylePanel.tsx`
+4. Créer les tests pour toutes les fonctionnalités
+5. Continuer le Blocks Roadmap
+
+---
+
+## 📊 État du Projet - Extraction des Cases de BlockPreview.tsx
 
 ## 📍 Où nous en sommes
 
@@ -99,178 +129,48 @@
 8. **`preview-cases/content.tsx`** - ✅ 20 cases extraits
    - `quote`, `rich-text`, `markdown`, `html-raw`, `icon`, `label`, `tooltip`, `popover`, `dropdown`, `categories`, `author-box`, `related-posts`, `table-of-contents`, `reading-time`, `share-buttons`, `list`, `link`, `breadcrumb`, `tags`
 
-9. **`preview-cases/misc.tsx`** - ✅ 4 cases extraits
-   - `counter`, `pagination`, `search-bar`
+---
 
-10. **`preview-cases/ecommerce.tsx`** - ✅ 7 cases extraits
-    - `product-gallery`, `product-details`, `add-to-cart`, `buy-now`, `trust-badges`, `payment-methods`
+## 🧪 Tests et Validation
 
-### ✅ Subdivision de BlockPreview.tsx
+### Fichiers de référence :
+- **TESTING_CHECKLIST.md** : Checklist complète de tous les tests à effectuer
+- **TESTS_COMPLETS.md** : Tests détaillés et résultats
+- **VALIDATION_WORKFLOW.md** : Workflow de validation
 
-Le fichier `BlockPreview.tsx` fait maintenant **~4817 lignes** (réduit de ~316 lignes).
-
-#### Fichiers créés :
-
-1. **`components/FAQSectionPreview.tsx`** - Composant FAQ avec état
-2. **`components/SortablePreviewBlock.tsx`** - Composant sortable pour les blocs
-3. **`utils/blockPreviewUtils.ts`** - Fonctions utilitaires :
-   - `getHoverAnimationClass()` - Classes CSS pour animations au survol
-   - `getAlignmentClasses()` - Classes CSS pour l'alignement
-   - `getLayoutWidth()` - Calcul de la largeur du layout (système 12 colonnes)
-   - `getContainerClass()` - Calcul de la classe du container
-4. **`utils/blockStylesUtils.ts`** - Utilitaires de styles :
-   - `getWrapperStyles()` - Calcul des styles du wrapper (container)
-   - `getContentStyles()` - Calcul des styles du contenu interne
-
-#### Modifications apportées :
-
-- ✅ Extraction de `SortablePreviewBlock` dans `components/`
-- ✅ Extraction de `FAQSectionPreview` dans `components/`
-- ✅ Extraction des fonctions utilitaires dans `utils/`
-- ✅ Simplification de `BlockPreview.tsx` en utilisant les imports
-- ✅ Réduction de la taille du fichier de ~316 lignes
-
-### 🔄 Prochaines étapes possibles :
-
-1. **Extraction de BlockPreviewRenderer** - Créer un fichier séparé pour le renderer principal
-2. **Création de hooks personnalisés** - Extraire la logique métier dans des hooks
-3. **Optimisation des imports** - Nettoyer les imports inutilisés
-
-8. **`preview-cases/content.tsx`** - Contenu riche (~15 cases)
-   - `rich-text`, `markdown`, `html-raw`, `icon`, `label`, `tooltip`, `popover`, `dropdown`, `categories`, `author-box`, `related-posts`, `table-of-contents`, `reading-time`, `share-buttons`, `list`, `link`, `quote`, etc.
-
-9. **`preview-cases/ecommerce.tsx`** - E-commerce (~8 cases)
-   - `product-gallery`, `product-details`, `add-to-cart`, `buy-now`, `trust-badges`, `payment-methods`, etc.
-
-10. **`preview-cases/misc.tsx`** - Divers (~10 cases)
-    - `search-bar`, `audio-player`, `email-button`, `sms-button`, `docs-grid`, `quick-start-section`, `support-hours`, `trial-info`, etc.
-
-## 🔧 Comment continuer le travail
-
-### Étape 1 : Identifier les cases à extraire
-
-Dans `BlockPreview.tsx`, chercher tous les `case 'xxx':` dans la fonction `getBlockContent()` (ligne ~1006).
-
-### Étape 2 : Créer les fichiers de catégories
-
-Pour chaque catégorie, créer un fichier dans `frontend/src/components/editor/preview-cases/` :
-
-```typescript
-import React from 'react'
-import { PreviewCaseProps } from './types'
-
-export function renderContainer(props: PreviewCaseProps): React.ReactElement | null {
-  const { block, theme = 'light', wrapperStyles, contentStyles, blockTypes } = props
-  // ... code du case original ...
-}
-
-// Export map
-export const layoutCases: Record<string, (props: PreviewCaseProps) => React.ReactElement | null> = {
-  'container': renderContainer,
-  'flex-container': renderFlexContainer,
-  // ... etc
-}
-```
-
-### Étape 3 : Mettre à jour l'index
-
-Dans `frontend/src/components/editor/preview-cases/index.ts` :
-
-```typescript
-import { layoutCases } from './layout'
-// ... autres imports ...
-
-export function getBlockPreviewCase(blockType: string): ((props: PreviewCaseProps) => React.ReactElement | null) | null {
-  const allCases: Record<string, (props: PreviewCaseProps) => React.ReactElement | null> = {
-    ...basicCases,
-    ...layoutCases,
-    // ... autres cases ...
-  }
-  
-  return allCases[blockType] || null
-}
-```
-
-### Étape 4 : Tester
-
-1. Vérifier que les cases extraits fonctionnent correctement
-2. Vérifier que le fallback vers le switch original fonctionne si un case n'est pas extrait
-3. Tester dans l'éditeur et la prévisualisation
-
-### Étape 5 : Supprimer les cases du switch original
-
-Une fois tous les cases extraits et testés, supprimer les cases du switch dans `BlockPreview.tsx` et ne garder que le `default` case.
-
-## 📝 Notes importantes
-
-### Structure des props
-
-Tous les renderers reçoivent `PreviewCaseProps` :
-```typescript
-interface PreviewCaseProps {
-  block: Block
-  blockType?: BlockType
-  blockTypes?: BlockType[]
-  theme?: 'light' | 'dark'
-  wrapperStyles: React.CSSProperties
-  contentStyles: React.CSSProperties
-}
-```
-
-### Gestion des enfants (recursion)
-
-Pour les blocs qui ont des enfants (container, columns, etc.), utiliser `BlockPreviewRenderer` :
-```typescript
-import { BlockPreviewRenderer } from '../BlockPreview'
-
-// Dans le renderer
-{block.children && block.children.map((childBlock: Block) => (
-  <BlockPreviewRenderer
-    key={childBlock.id}
-    block={childBlock}
-    blockType={blockTypes?.find(bt => bt.name === childBlock.type)}
-    blockTypes={blockTypes}
-    theme={theme}
-  />
-))}
-```
-
-### Gestion du thème
-
-Toujours vérifier `theme === 'dark'` pour les couleurs et styles adaptatifs.
-
-### Styles wrapper vs content
-
-- `wrapperStyles` : styles du conteneur externe (margin, padding, background, etc.)
-- `contentStyles` : styles du contenu interne (typography, colors, etc.)
-
-## 🎯 Objectif final
-
-- ✅ Extraire tous les 127 cases dans des fichiers modulaires
-- ✅ Réduire `BlockPreview.tsx` de 5119 lignes à ~500 lignes (wrapper + fallback)
-- ✅ Améliorer la maintenabilité et la lisibilité du code
-- ✅ Faciliter l'ajout de nouveaux blocs
-
-## 📌 Prochaine session
-
-1. Commencer par `layout.tsx` (blocs de mise en page)
-2. Puis `forms.tsx` (formulaires)
-3. Continuer avec les autres catégories dans l'ordre logique
-4. Tester après chaque catégorie extraite
-5. Commit régulier après chaque catégorie complète
-
-## 🔗 Fichiers clés
-
-- `frontend/src/components/editor/BlockPreview.tsx` - Fichier source (5119 lignes)
-- `frontend/src/components/editor/preview-cases/types.ts` - Interfaces
-- `frontend/src/components/editor/preview-cases/basic.tsx` - Cases de base (11 cases)
-- `frontend/src/components/editor/preview-cases/index.ts` - Index centralisé
-- `frontend/src/components/editor/BlockEditor.tsx` - Éditeur (largeur corrigée)
+### État des tests :
+- 🔴 Tests à créer pour toutes les fonctionnalités selon TESTING_CHECKLIST.md
+- 🔴 Validation workflow à mettre en place
+- 🔴 Tests unitaires pour les composants subdivisés
+- 🔴 Tests d'intégration pour l'éditeur complet
 
 ---
 
-**Dernière mise à jour** : Après extraction de 37 cases (11 basic + 13 layout + 13 forms)
-**Prochaine étape** : 
-1. Continuer l'extraction des cases restants (vtc, complex, interactive, media, data, content, ecommerce, misc)
-2. Commencer la subdivision de BlockPreview.tsx selon REFACTORING_PLAN.md
-3. Commencer la subdivision de BlockRenderer.tsx selon REFACTORING_PLAN.md
+## 🗺️ Roadmap
+
+### Blocks Roadmap
+- **BLOCKS_ROADMAP.md** : Roadmap des blocs à implémenter
+- **CHECKLIST_BLOCKS_ROADMAP.md** : Checklist de suivi
+
+### Editor Roadmap
+- **EDITOR_ROADMAP.md** : Roadmap de l'éditeur
+
+### Refactoring Plan
+- **REFACTORING_PLAN.md** : Plan de refactoring global
+
+---
+
+## 📝 Prochaines étapes
+
+1. ✅ Créer SUBDIVISION_STATUS.md
+2. ✅ Mettre à jour STATUS.md
+3. 🔴 Subdiviser BlockEditor.tsx (4277 lignes)
+4. 🔴 Subdiviser ComplexRenderers.tsx (1860 lignes)
+5. 🔴 Subdiviser BlockStylePanel.tsx (978 lignes)
+6. 🔴 Créer les tests pour toutes les fonctionnalités
+7. 🔴 Mettre en place le validation workflow
+8. 🔴 Continuer le Blocks Roadmap
+
+---
+
+**Note :** Ce fichier sera mis à jour régulièrement au fur et à mesure de l'avancement.
