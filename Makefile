@@ -207,6 +207,19 @@ type-check-frontend: frontend-type-check ## Vérifier TypeScript frontend
 
 start: ## Démarrer toute la stack (backend + frontend + services)
 	@printf "$(GREEN)🚀 Démarrage de toute la stack VTCBuilder...$(NC)\n"
+	@if [ ! -f "./start.sh" ]; then \
+		printf "$(RED)❌ Erreur: Le fichier start.sh est introuvable !$(NC)\n"; \
+		printf "$(YELLOW)💡 Vérifiez que vous êtes dans le répertoire racine du projet.$(NC)\n"; \
+		exit 1; \
+	fi
+	@if [ ! -x "./start.sh" ]; then \
+		printf "$(YELLOW)⚠️  Le fichier start.sh n'est pas exécutable, tentative de correction...$(NC)\n"; \
+		chmod +x ./start.sh || { \
+			printf "$(RED)❌ Impossible de rendre start.sh exécutable !$(NC)\n"; \
+			exit 1; \
+		}; \
+		printf "$(GREEN)✅ Permissions corrigées.$(NC)\n"; \
+	fi
 	@./start.sh
 
 up: start ## Alias pour start - Démarrer toute la stack
