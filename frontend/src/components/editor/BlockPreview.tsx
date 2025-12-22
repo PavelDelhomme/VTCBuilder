@@ -1004,18 +1004,34 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
 
   // Function to render block content (replacing IIFE for better compiler compatibility)
   const getBlockContent = (): React.ReactElement => {
-    // Essayer d'utiliser les cases extraits d'abord
-    try {
-      const caseRenderer = getBlockPreviewCase(block.type)
-      if (caseRenderer) {
-        const result = caseRenderer({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
-        if (result) return result
-      }
-    } catch (e) {
-      // Si les cases extraits ne sont pas disponibles, continuer avec le switch
+    // Utiliser les cases extraits
+    const caseRenderer = getBlockPreviewCase(block.type)
+    if (caseRenderer) {
+      const result = caseRenderer({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
+      if (result) return result
     }
     
-    // Fallback vers le switch case original
+    // Fallback pour les cases non encore extraits
+    return (
+      <div style={wrapperStyles} className="mb-6 p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Block {block.type}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Preview not available</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  
+  // Ancien switch case supprimé - tous les cases sont maintenant dans preview-cases/
+  const getBlockContentOld = (): React.ReactElement => {
+    // Ce code est conservé temporairement pour référence mais n'est plus utilisé
     switch (block.type) {
     case 'heading': {
       const headingLevel = block.data.level || 'h2'
