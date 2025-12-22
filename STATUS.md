@@ -24,9 +24,9 @@
 
 ### 📊 Progression de l'extraction
 
-**Cases extraits : 11/127 (8.7%)**
+**Cases extraits : 24/127 (18.9%)**
 
-#### ✅ Cases extraits dans `basic.tsx` :
+#### ✅ Cases extraits dans `basic.tsx` (11 cases) :
 1. `heading` - Titres (h1, h2, h3, h4)
 2. `text` - Texte avec support HTML
 3. `image` - Images avec légende
@@ -39,7 +39,23 @@
 10. `paragraph` - Paragraphes
 11. `line` - Lignes de texte
 
-### 🔄 Cases restants à extraire : 116/127 (91.3%)
+#### ✅ Cases extraits dans `layout.tsx` (13 cases) :
+1. `container` - Conteneur avec enfants récursifs
+2. `flex-container` - Conteneur flexbox
+3. `grid-container` - Conteneur grid
+4. `columns` - Colonnes avec grille
+5. `rows` - Lignes
+6. `section` - Section avec background et overlay
+7. `header` - En-tête de page
+8. `footer` - Pied de page
+9. `flexbox` - Alias pour container
+10. `grid` - Alias pour container
+11. `stack` - Alias pour container
+12. `inline` - Alias pour container
+13. `group` - Alias pour container
+14. `wrapper` - Alias pour container
+
+### 🔄 Cases restants à extraire : 103/127 (81.1%)
 
 Le fichier `BlockPreview.tsx` fait actuellement **5119 lignes** avec **127 cases** dans le switch statement.
 
@@ -199,5 +215,5 @@ Toujours vérifier `theme === 'dark'` pour les couleurs et styles adaptatifs.
 
 ---
 
-**Dernière mise à jour** : Après correction de la largeur dans l'éditeur et extraction de 11 cases de base
-**Prochaine étape** : Extraire les cases de layout (container, flex-container, etc.)
+**Dernière mise à jour** : Après extraction de 24 cases (11 basic + 13 layout)
+**Prochaine étape** : Extraire les cases de forms (form, form-newsletter, form-search, etc.)

@@ -980,7 +980,7 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
     borderStyle: block.styles?.border_style || block.styles?.borderStyle,
     borderColor: block.styles?.border_color || block.styles?.borderColor,
     // Text alignment
-    textAlign: block.styles?.text_align || block.styles?.textAlign || block.styles?.text_align || 'left',
+    textAlign: block.styles?.text_align || block.styles?.textAlign || 'left',
   }
 
   // Get layout width (Bootstrap 12-column system)
@@ -1006,8 +1006,9 @@ function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'light' }:
   const getBlockContent = (): React.ReactElement => {
     // Essayer d'utiliser les cases extraits d'abord
     try {
-      const { getBlockPreviewCase } = require('./preview-cases')
-      const caseRenderer = getBlockPreviewCase(block.type)
+      // Import dynamique pour éviter les erreurs de compilation si le module n'existe pas encore
+      const previewCasesModule = require('./preview-cases')
+      const caseRenderer = previewCasesModule.getBlockPreviewCase?.(block.type)
       if (caseRenderer) {
         const result = caseRenderer({ block, blockType, blockTypes, theme, wrapperStyles, contentStyles })
         if (result) return result

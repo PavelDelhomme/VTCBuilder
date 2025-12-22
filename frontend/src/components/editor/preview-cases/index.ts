@@ -4,8 +4,8 @@ import React from 'react'
 
 // Import des différents fichiers de cases
 import { basicCases } from './basic'
+import { layoutCases } from './layout'
 // TODO: Importer les autres fichiers au fur et à mesure
-// import { layoutCases } from './layout'
 // import { formsCases } from './forms'
 // import { vtcCases } from './vtc'
 // import { complexCases } from './complex'
@@ -21,7 +21,7 @@ export function getBlockPreviewCase(blockType: string): ((props: PreviewCaseProp
   // Combiner tous les cases
   const allCases: Record<string, (props: PreviewCaseProps) => React.ReactElement | null> = {
     ...basicCases,
-    // ...layoutCases,
+    ...layoutCases,
     // ...formsCases,
     // ...vtcCases,
     // ...complexCases,
@@ -38,7 +38,7 @@ export function getBlockPreviewCase(blockType: string): ((props: PreviewCaseProp
 
 // Export de tous les cases pour utilisation directe si nécessaire
 export { basicCases }
-// export { layoutCases }
+export { layoutCases }
 // export { formsCases }
 // export { vtcCases }
 // export { complexCases }
