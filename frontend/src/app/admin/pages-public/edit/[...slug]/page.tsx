@@ -55,6 +55,7 @@ export default function EditPublicPage() {
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const { resolvedTheme } = useTheme()
   const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>(resolvedTheme || 'light') // Thème de la prévisualisation, synchronisé avec le thème global
+  const [linksEnabled, setLinksEnabled] = useState(true) // Activer les liens dans la prévisualisation par défaut
   const [availablePages, setAvailablePages] = useState<Array<{ slug: string; title: string; isSubPage?: boolean; parentSlug?: string }>>([])
   const [currentPageSubPages, setCurrentPageSubPages] = useState<Array<{ slug: string; title: string }>>([])
   const [headerVisible, setHeaderVisible] = useState(true)
@@ -634,24 +635,6 @@ export default function EditPublicPage() {
           }
         }
         
-        // Créer un conteneur avec le header uniquement
-        const mainContainer = {
-          id: `container-${now}`,
-          type: 'container',
-          layout: 12,
-          data: {
-            max_width: 'max-w-7xl',
-            padding: 'px-4 sm:px-6 lg:px-8',
-            margin: 'mx-auto'
-          },
-          styles: {
-            maxWidth: '80rem',
-            margin: '0 auto',
-            padding: '0 1rem'
-          },
-          children: [headerBlock]
-        }
-        
         // Créer le bloc pricing (tarifs transparents)
         const pricingBlock = {
           id: `pricing-${now}`,
@@ -718,8 +701,26 @@ export default function EditPublicPage() {
           }
         }
         
-        // Hero, Features, Pricing, CTA et Footer en dehors du container pour avoir le fond gradient complet
-        homepageBlocks = [mainContainer, heroBlock, featuresBlock, pricingBlock, ctaBlock, footerBlock]
+        // Créer un conteneur global qui contient tous les blocs de la page
+        const globalContainer = {
+          id: `global-container-${now}`,
+          type: 'container',
+          layout: 12,
+          data: {
+            max_width: 'max-w-7xl',
+            padding: 'px-4 sm:px-6 lg:px-8',
+            margin: 'mx-auto'
+          },
+          styles: {
+            maxWidth: '80rem',
+            margin: '0 auto',
+            padding: '0 1rem'
+          },
+          children: [headerBlock, heroBlock, featuresBlock, pricingBlock, ctaBlock, footerBlock]
+        }
+        
+        // Tous les blocs dans un conteneur global
+        homepageBlocks = [globalContainer]
         
         // Sauvegarder immédiatement les blocs par défaut
         try {
@@ -869,6 +870,19 @@ export default function EditPublicPage() {
               description: contactPage.description,
               meta_title: contactPage.metaTitle,
               meta_description: contactPage.metaDescription
+            }
+          } else if (pageSlug === 'features') {
+            // Page features avec structure complète (comme sur localhost:9494/features)
+            // Utiliser la structure de createFeaturesPage() du script
+            const { createFeaturesPage } = await import('@/scripts/create-public-pages')
+            const featuresPage = createFeaturesPage()
+            pageData = {
+              ...pageData,
+              blocks: featuresPage.blocks,
+              title: featuresPage.title,
+              description: featuresPage.description,
+              meta_title: featuresPage.metaTitle,
+              meta_description: featuresPage.metaDescription
             }
           } else {
             // Pages génériques avec structure de base
@@ -1277,6 +1291,21 @@ export default function EditPublicPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                 )}
+              </button>
+              {/* Toggle Links pour activer/désactiver les liens dans la prévisualisation */}
+              <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+              <button
+                onClick={() => setLinksEnabled(!linksEnabled)}
+                className={`p-2.5 rounded-lg transition-colors flex items-center justify-center ${
+                  linksEnabled
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600'
+                }`}
+                title={linksEnabled ? 'Désactiver les liens' : 'Activer les liens'}
+              >
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
               </button>
             </div>
           )}
@@ -1996,13 +2025,21 @@ export default function EditPublicPage() {
                         onBlockSelect={setSelectedBlockId}
                         theme={previewTheme}
                         onBlockDoubleClick={(blockId) => {
-                          setModalBlockId(blockId)
-                          setPropertiesModalOpen(true)
+                          // Sélectionner le bloc dans l'éditeur au lieu d'ouvrir la popup
+                          setSelectedBlockId(blockId)
+                          // Scroller vers le bloc dans l'éditeur
+                          setTimeout(() => {
+                            const blockElement = document.querySelector(`[data-block-list-id="${blockId}"]`)
+                            if (blockElement) {
+                              blockElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                            }
+                          }, 100)
                         }}
                         onBlockRightClick={(blockId, position) => {
                           setContextMenu({ blockId, position })
                         }}
                         isEditable={true}
+                        isInteractive={linksEnabled}
                         onNavigate={(url) => {
                           router.push(url)
                         }}

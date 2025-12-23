@@ -33,18 +33,28 @@ function HeaderComponent({ block, wrapperStyles, contentStyles, theme }: Rendere
   const headerLinks = safeBlock.data.links || []
   const logoText = safeBlock.data.logo_text || 'VTCBuilder'
   const logoUrl = safeBlock.data.logo_url || '/'
+  const badge = safeBlock.data.badge || ''
   const showThemeToggle = safeBlock.data.show_theme_toggle !== false
+  // S'assurer que cta_button est bien récupéré, même si c'est un objet vide
+  const ctaButton = safeBlock.data.cta_button && typeof safeBlock.data.cta_button === 'object' && safeBlock.data.cta_button.text
+    ? safeBlock.data.cta_button
+    : null
   
   // Utiliser resolvedTheme si disponible, sinon utiliser le theme passé en prop
   const currentTheme = resolvedTheme || theme || 'light'
+  
+  // Gérer le sticky - s'assurer que wrapperStyles ne l'écrase pas
+  const stickyStyle = safeBlock.data.sticky ? {
+    position: 'sticky' as const,
+    top: '0',
+    zIndex: 50,
+  } : {}
   
   return (
     <header 
       style={{
         ...(wrapperStyles || {}),
-        position: safeBlock.data.sticky ? 'sticky' : 'static',
-        top: safeBlock.data.sticky ? '0' : undefined,
-        zIndex: safeBlock.data.sticky ? 50 : undefined,
+        ...stickyStyle,
         marginLeft: 0,
         marginRight: 0,
       }}
@@ -60,10 +70,19 @@ function HeaderComponent({ block, wrapperStyles, contentStyles, theme }: Rendere
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href={logoUrl} className="flex items-center">
+            <Link href={logoUrl} className="flex items-center gap-2">
               <span className="text-xl font-bold">
                 {logoText}
               </span>
+              {badge && (
+                <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
+                  currentTheme === 'dark'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {badge}
+                </span>
+              )}
             </Link>
           </div>
 
@@ -86,6 +105,27 @@ function HeaderComponent({ block, wrapperStyles, contentStyles, theme }: Rendere
 
           {/* Actions */}
           <div className="flex items-center gap-4">
+            {/* CTA Button */}
+            {ctaButton && ctaButton.text && (
+              <Link
+                href={ctaButton.url || '#'}
+                className={`hidden md:inline-flex px-4 py-2.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                  ctaButton.style === 'primary'
+                    ? currentTheme === 'dark'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                    : currentTheme === 'dark'
+                      ? 'bg-gray-800 text-gray-100 hover:bg-gray-700 border border-gray-700'
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300'
+                }`}
+                style={{
+                  marginLeft: 'auto',
+                }}
+              >
+                {ctaButton.text}
+              </Link>
+            )}
+            
             {/* Toggle Theme */}
             {showThemeToggle && (
               <button
@@ -135,6 +175,22 @@ function HeaderComponent({ block, wrapperStyles, contentStyles, theme }: Rendere
                   {link.label || 'Lien'}
                 </Link>
               ))}
+              {ctaButton && ctaButton.text && (
+                <Link
+                  href={ctaButton.url || '#'}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors text-center ${
+                    ctaButton.style === 'primary'
+                      ? currentTheme === 'dark'
+                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : currentTheme === 'dark'
+                        ? 'bg-gray-800 text-gray-100 hover:bg-gray-700 border border-gray-700'
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-300'
+                  }`}
+                >
+                  {ctaButton.text}
+                </Link>
+              )}
             </div>
           </div>
         )}

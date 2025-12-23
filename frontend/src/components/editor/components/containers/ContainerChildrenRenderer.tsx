@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Composant pour afficher et gérer les enfants d'un conteneur
  */
@@ -204,7 +206,15 @@ export function ContainerChildrenRenderer({
               </div>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div 
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: block.data?.children_gap_vertical || block.data?.children_gap || '0.5rem',
+                rowGap: block.data?.children_gap_vertical || block.data?.children_gap || '0.5rem',
+                columnGap: block.data?.children_gap_horizontal || block.data?.children_gap || '0.5rem',
+              } as React.CSSProperties}
+            >
               {children.map((child) => {
                 const childBlockType = blockTypes.find((bt) => bt.name === child.type)
                 return (

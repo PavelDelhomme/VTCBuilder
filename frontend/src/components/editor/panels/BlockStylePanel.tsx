@@ -347,6 +347,159 @@ export function BlockStylePanel({
           </div>
         </div>
 
+        {/* Styles spécifiques pour Hero - Titre et Sous-titre */}
+        {block.type === 'hero' && (
+          <>
+            <div className="flex items-center gap-2 mb-2 mt-4">
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Titre Hero</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+            </div>
+            
+            {/* Taille du titre */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Taille du titre
+              </label>
+              <input
+                type="text"
+                value={block.styles?.title_font_size || block.styles?.titleFontSize || ''}
+                onChange={(e) => {
+                  updateStyle('title_font_size', e.target.value)
+                  updateStyle('titleFontSize', e.target.value)
+                }}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                placeholder="3rem, 48px, 4xl..."
+              />
+            </div>
+            
+            {/* Poids du titre */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Poids du titre
+              </label>
+              <select
+                value={block.styles?.title_font_weight || block.styles?.titleFontWeight || 'bold'}
+                onChange={(e) => {
+                  updateStyle('title_font_weight', e.target.value)
+                  updateStyle('titleFontWeight', e.target.value)
+                }}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              >
+                <option value="400">400 - Normal</option>
+                <option value="500">500 - Medium</option>
+                <option value="600">600 - Semi Bold</option>
+                <option value="700">700 - Bold</option>
+                <option value="800">800 - Extra Bold</option>
+                <option value="900">900 - Black</option>
+                <option value="bold">Bold (700)</option>
+                <option value="extrabold">Extra Bold (800)</option>
+              </select>
+            </div>
+            
+            {/* Couleur du titre */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Couleur du titre
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={block.styles?.title_color || block.styles?.titleColor || '#ffffff'}
+                  onChange={(e) => {
+                    updateStyle('title_color', e.target.value)
+                    updateStyle('titleColor', e.target.value)
+                  }}
+                  className="w-12 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={block.styles?.title_color || block.styles?.titleColor || '#ffffff'}
+                  onChange={(e) => {
+                    updateStyle('title_color', e.target.value)
+                    updateStyle('titleColor', e.target.value)
+                  }}
+                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="#ffffff"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 mb-2 mt-4">
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+              <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Sous-titre Hero</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+            </div>
+            
+            {/* Taille du sous-titre */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Taille du sous-titre
+              </label>
+              <input
+                type="text"
+                value={block.styles?.subtitle_font_size || block.styles?.subtitleFontSize || ''}
+                onChange={(e) => {
+                  updateStyle('subtitle_font_size', e.target.value)
+                  updateStyle('subtitleFontSize', e.target.value)
+                }}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                placeholder="1.5rem, 24px, xl..."
+              />
+            </div>
+            
+            {/* Poids du sous-titre */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Poids du sous-titre
+              </label>
+              <select
+                value={block.styles?.subtitle_font_weight || block.styles?.subtitleFontWeight || 'normal'}
+                onChange={(e) => {
+                  updateStyle('subtitle_font_weight', e.target.value)
+                  updateStyle('subtitleFontWeight', e.target.value)
+                }}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              >
+                <option value="300">300 - Light</option>
+                <option value="400">400 - Normal</option>
+                <option value="500">500 - Medium</option>
+                <option value="600">600 - Semi Bold</option>
+                <option value="700">700 - Bold</option>
+                <option value="normal">Normal (400)</option>
+              </select>
+            </div>
+            
+            {/* Couleur du sous-titre */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Couleur du sous-titre
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={block.styles?.subtitle_color || block.styles?.subtitleColor || '#ffffff'}
+                  onChange={(e) => {
+                    updateStyle('subtitle_color', e.target.value)
+                    updateStyle('subtitleColor', e.target.value)
+                  }}
+                  className="w-12 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={block.styles?.subtitle_color || block.styles?.subtitleColor || '#ffffff'}
+                  onChange={(e) => {
+                    updateStyle('subtitle_color', e.target.value)
+                    updateStyle('subtitleColor', e.target.value)
+                  }}
+                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  placeholder="#ffffff"
+                />
+              </div>
+            </div>
+          </>
+        )}
+
         {/* Espacement des lettres */}
         <div className="mb-3">
           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">

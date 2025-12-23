@@ -19,11 +19,14 @@ export function getWrapperStyles(block: Block, theme: 'light' | 'dark' = 'light'
   const paddingLeft = block.styles?.padding_horizontal || block.styles?.padding_left || block.styles?.paddingLeft
   const paddingRight = block.styles?.padding_horizontal || block.styles?.padding_right || block.styles?.paddingRight
   
+  // Pour les blocs header avec sticky, ne pas écraser la position sticky
+  const isHeaderSticky = block.type === 'header' && block.data?.sticky
+  
   return {
-    // Position
-    position: block.position?.type || block.styles?.position || 'static',
+    // Position - Ne pas écraser si c'est un header sticky
+    position: isHeaderSticky ? 'sticky' : (block.position?.type || block.styles?.position || 'static'),
     // Coordonnées de position
-    top: block.position?.top || block.styles?.top,
+    top: isHeaderSticky ? '0' : (block.position?.top || block.styles?.top),
     right: block.position?.right || block.styles?.right,
     bottom: block.position?.bottom || block.styles?.bottom,
     left: block.position?.left || block.styles?.left,
@@ -41,9 +44,14 @@ export function getWrapperStyles(block: Block, theme: 'light' | 'dark' = 'light'
       ? `all ${block.styles?.transition_duration || 300}ms ease-in-out`
       : undefined),
     // Couleur de fond du wrapper (appliquée au conteneur)
-    background: block.styles?.background && block.styles?.background.includes('gradient')
-      ? block.styles?.background
-      : block.styles?.background_color || block.styles?.backgroundColor || undefined,
+    // Gérer les gradients correctement
+    ...(block.styles?.background_gradient 
+      ? { background: block.styles.background_gradient }
+      : block.styles?.background && block.styles?.background.includes('gradient')
+      ? { background: block.styles.background }
+      : block.styles?.background_color || block.styles?.backgroundColor
+      ? { backgroundColor: block.styles.background_color || block.styles.backgroundColor }
+      : {}),
     // Couleur de texte du wrapper - Ne pas appliquer si le thème est actif pour laisser les classes dark: gérer
     color: theme === 'dark' ? undefined : block.styles?.color,
     // Padding du wrapper - Utiliser uniquement les propriétés individuelles pour éviter les conflits

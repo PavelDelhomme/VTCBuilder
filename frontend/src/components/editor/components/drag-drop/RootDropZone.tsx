@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Zone de drop racine pour les blocs
  */

@@ -53,7 +53,13 @@ export default function AdminBlocksPage() {
   const loadPricingPlans = async () => {
     try {
       const plans = await billingService.getPricingPlans()
-      setPricingPlans(Array.isArray(plans) ? plans : plans.results || [])
+      const plansArray = Array.isArray(plans) ? plans : plans.results || []
+      setPricingPlans(plansArray)
+      
+      // Si aucun plan n'est disponible, afficher un avertissement
+      if (plansArray.length === 0) {
+        console.warn('⚠️ Aucun plan tarifaire trouvé. Utilisez la commande: python manage.py init_pricing_plans')
+      }
     } catch (error: any) {
       console.error('Error chargement plans tarifaires:', error)
     }
@@ -488,69 +494,185 @@ export default function AdminBlocksPage() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Plans tarifaires requis
                   </label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                    Si aucun plan n'est sélectionné, le bloc est gratuit (accessible à tous)
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Sélectionnez les plans tarifaires qui ont accès à ce bloc. Si aucun plan n'est sélectionné, le bloc est <strong className="text-green-600 dark:text-green-400">gratuit</strong> (accessible à tous les utilisateurs).
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {pricingPlans.map((plan) => (
-                      <label key={plan.id} className="flex items-center p-3 border dark:bg-gray-700 dark:border-gray-600 border-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.available_plans.includes(plan.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFormData({
-                                ...formData,
-                                available_plans: [...formData.available_plans, plan.id],
-                              })
-                            } else {
-                              setFormData({
-                                ...formData,
-                                available_plans: formData.available_plans.filter(id => id !== plan.id),
-                              })
-                            }
-                          }}
-                          className="mr-2"
-                        />
-                        <div>
-                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{plan.name}</span>
-                          <span className="block text-xs text-gray-500 dark:text-gray-400">{plan.price_monthly}€/mois</span>
+                  {pricingPlans.length === 0 ? (
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">
+                        ⚠️ Aucun plan tarifaire trouvé.
+                      </p>
+                      <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-3">
+                        Créez des plans tarifaires dans la section <strong>Facturation</strong> pour pouvoir les associer aux blocs.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => router.push('/admin/billing')}
+                        className="px-3 py-1.5 text-xs bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+                      >
+                        Aller à la section Facturation
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        {pricingPlans.map((plan) => {
+                          const isSelected = formData.available_plans.includes(plan.id)
+                          return (
+                            <label
+                              key={plan.id}
+                              className={`relative flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                                isSelected
+                                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-600'
+                                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFormData({
+                                      ...formData,
+                                      available_plans: [...formData.available_plans, plan.id],
+                                    })
+                                  } else {
+                                    setFormData({
+                                      ...formData,
+                                      available_plans: formData.available_plans.filter(id => id !== plan.id),
+                                    })
+                                  }
+                                }}
+                                className="mt-1 mr-3 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className={`text-sm font-semibold ${isSelected ? 'text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-gray-100'}`}>
+                                    {plan.name}
+                                  </span>
+                                  {plan.is_featured && (
+                                    <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-full font-medium">
+                                      ⭐ Populaire
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-xs font-medium ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>
+                                      {plan.price_monthly}€/mois
+                                    </span>
+                                    {plan.price_yearly && (
+                                      <>
+                                        <span className="text-xs text-gray-400 dark:text-gray-500">•</span>
+                                        <span className={`text-xs ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>
+                                          {plan.price_yearly}€/an
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                  {plan.description && (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                                      {plan.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <div className="absolute top-2 right-2">
+                                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                              )}
+                            </label>
+                          )
+                        })}
+                      </div>
+                      {formData.available_plans.length === 0 && (
+                        <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                          <p className="text-sm text-green-800 dark:text-green-200 flex items-center gap-2">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span>Ce bloc sera <strong>gratuit</strong> et accessible à tous les utilisateurs.</span>
+                          </p>
                         </div>
-                      </label>
-                    ))}
-                  </div>
-                  {pricingPlans.length === 0 && (
-                    <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                      ⚠️ Aucun plan tarifaire trouvé. Créez des plans dans la section Facturation.
-                    </p>
+                      )}
+                      {formData.available_plans.length > 0 && (
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                          <p className="text-sm text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                            <span>
+                              Ce bloc sera <strong>premium</strong> et accessible uniquement aux plans sélectionnés ({formData.available_plans.length} plan{formData.available_plans.length > 1 ? 's' : ''}).
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Statut
+                    Statut et visibilité
                   </label>
-                  <div className="space-y-2">
-                    <label className="flex items-center">
+                  <div className="space-y-3">
+                    <label className="flex items-start p-3 border-2 rounded-lg cursor-pointer transition-all border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500">
                       <input
                         type="checkbox"
                         checked={formData.is_active}
                         onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                        className="mr-2"
+                        className="mt-1 mr-3 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Actif</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-semibold ${formData.is_active ? 'text-green-700 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                            {formData.is_active ? '✓ Actif' : '○ Inactif'}
+                          </span>
+                          {formData.is_active && (
+                            <span className="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full font-medium">
+                              Visible
+                            </span>
+                          )}
+                          {!formData.is_active && (
+                            <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full font-medium">
+                              Masqué
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {formData.is_active 
+                            ? 'Le bloc sera visible et utilisable dans l\'éditeur' 
+                            : 'Le bloc sera masqué et ne sera pas disponible dans l\'éditeur'}
+                        </p>
+                      </div>
                     </label>
-                    <label className="flex items-center">
+                    <label className="flex items-start p-3 border-2 rounded-lg cursor-pointer transition-all border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500">
                       <input
                         type="checkbox"
                         checked={formData.is_admin_only}
                         onChange={(e) => setFormData({ ...formData, is_admin_only: e.target.checked })}
-                        className="mr-2"
+                        className="mt-1 mr-3 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Réservé aux administrateurs uniquement</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-sm font-semibold ${formData.is_admin_only ? 'text-purple-700 dark:text-purple-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                            {formData.is_admin_only ? '✓ Admin uniquement' : '○ Tous les utilisateurs'}
+                          </span>
+                          {formData.is_admin_only && (
+                            <span className="px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-full font-medium">
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {formData.is_admin_only 
+                            ? 'Ce bloc ne sera visible que pour les administrateurs dans l\'éditeur' 
+                            : 'Ce bloc sera accessible à tous les utilisateurs autorisés'}
+                        </p>
+                      </div>
                     </label>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
-                      Si coché, ce bloc ne sera visible que pour les administrateurs dans l'éditeur
-                    </p>
                   </div>
                 </div>
               </div>
@@ -876,24 +998,43 @@ export default function AdminBlocksPage() {
                     </p>
                   )}
                   
-                  <div className="flex flex-wrap gap-2">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getCategoryBadge(block.category)}`}>
-                      {getCategoryLabel(block.category)}
-                    </span>
-                    {block.plan_names && block.plan_names.length > 0 ? (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                        {block.plan_names.length} plan{block.plan_names.length > 1 ? 's' : ''}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getCategoryBadge(block.category)}`}>
+                        {getCategoryLabel(block.category)}
                       </span>
-                    ) : (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                        Gratuit
-                      </span>
-                    )}
-                    {(block as any).is_admin_only && (
-                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                        Admin
-                      </span>
-                    )}
+                      {(block as any).is_admin_only && (
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                          Admin
+                        </span>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      {block.plan_names && block.plan_names.length > 0 ? (
+                        <div>
+                          <div className="flex items-center gap-1 mb-1">
+                            <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 2.852a1 1 0 10-1.414-1.414L7.293 9.293a1 1 0 101.414 1.414l3.001-3.001z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-xs font-medium text-blue-600 dark:text-blue-400">Plans requis:</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {block.plan_names.map((planName, idx) => (
+                              <span key={idx} className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-700">
+                                {planName}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="text-xs font-medium text-green-600 dark:text-green-400">Gratuit (accessible à tous)</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 

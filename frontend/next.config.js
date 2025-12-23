@@ -49,8 +49,14 @@ const nextConfig = {
       '@': path.resolve(__dirname, './src'),
     }
     
+    // Désactiver la création de vendor-chunks en développement pour éviter les erreurs MODULE_NOT_FOUND
+    if (dev) {
+      // En développement, utiliser la configuration par défaut de Next.js
+      return config
+    }
+    
     // Optimisation: Réduire la taille des bundles en production
-    if (!dev && !isServer) {
+    if (!isServer) {
       config.optimization = {
         ...config.optimization,
         moduleIds: 'deterministic',

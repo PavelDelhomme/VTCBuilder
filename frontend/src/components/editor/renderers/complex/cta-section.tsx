@@ -65,10 +65,12 @@ export const renderCTASection = ({ block, blockType, blockTypes, theme, wrapperS
   return (
     <div
       style={{
+        // Copier wrapperStyles pour les gradients et autres styles
+        ...(wrapperStyles || {}),
         // Copier contentStyles sans les propriétés de padding pour éviter les conflits
         ...Object.fromEntries(
-          Object.entries(contentStyles).filter(([key]) => 
-            !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight'].includes(key)
+          Object.entries(contentStyles || {}).filter(([key]) => 
+            !['padding', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'background', 'backgroundColor'].includes(key)
           )
         ),
         ...backgroundStyle,
@@ -76,13 +78,16 @@ export const renderCTASection = ({ block, blockType, blockTypes, theme, wrapperS
         ...(block.styles?.padding && !block.styles?.padding_top && !block.styles?.padding_bottom && !block.styles?.padding_left && !block.styles?.padding_right
           ? { padding: block.styles.padding }
           : {
-              paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '8rem',
+              paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '10rem',
               paddingRight: block.styles?.padding_right || block.styles?.padding_horizontal || '2rem',
-              paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '8rem',
+              paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '10rem',
               paddingLeft: block.styles?.padding_left || block.styles?.padding_horizontal || '2rem',
             }),
+        // S'assurer que le gradient s'affiche complètement
+        width: '100%',
+        minHeight: block.minHeight || 'auto',
       }}
-      className="mb-6 rounded-lg"
+      className="mb-6 rounded-lg w-full"
     >
       <div className="max-w-4xl mx-auto text-center">
         {block.data.title && (

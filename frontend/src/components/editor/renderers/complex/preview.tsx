@@ -105,7 +105,7 @@ function HeroComponent({ block, wrapperStyles, contentStyles, theme }: RendererP
   
   return (
     <section 
-      className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 text-center transition-colors duration-300 ${
+      className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 text-center transition-colors duration-300 ${
         !safeBlock.data.background_type && !safeBlock.data.background_image && !safeBlock.data.background_color && !safeBlock.data.background_gradient
           ? currentTheme === 'dark'
             ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
@@ -122,19 +122,44 @@ function HeroComponent({ block, wrapperStyles, contentStyles, theme }: RendererP
           background: finalBg,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
         } : {}),
         textAlign: block.styles?.text_align || 'center',
+        width: '100%',
+        minHeight: block.minHeight || 'auto',
       }}
     >
-      <h1 className={`text-4xl md:text-6xl font-extrabold mb-6 ${
-        currentTheme === 'dark' ? 'text-white' : 'text-white'
-      }`}>
+      <h1 
+        className={`text-4xl md:text-6xl font-extrabold mb-6 ${
+          currentTheme === 'dark' ? 'text-white' : 'text-white'
+        }`}
+        style={{
+          fontSize: block.styles?.title_font_size || block.styles?.titleFontSize || undefined,
+          fontWeight: block.styles?.title_font_weight || block.styles?.titleFontWeight || undefined,
+          color: block.styles?.title_color || block.styles?.titleColor || undefined,
+          fontFamily: block.styles?.title_font_family || block.styles?.titleFontFamily || undefined,
+          textAlign: block.styles?.title_text_align || block.styles?.titleTextAlign || undefined,
+          lineHeight: block.styles?.title_line_height || block.styles?.titleLineHeight || undefined,
+          letterSpacing: block.styles?.title_letter_spacing || block.styles?.titleLetterSpacing || undefined,
+        }}
+      >
         {safeBlock.data.title || 'Hero Title'}
       </h1>
       {safeBlock.data.subtitle && (
-        <p className={`text-xl md:text-2xl mb-8 max-w-3xl mx-auto ${
-          currentTheme === 'dark' ? 'text-white/90' : 'text-white/90'
-        }`}>
+        <p 
+          className={`text-xl md:text-2xl mb-8 max-w-3xl mx-auto ${
+            currentTheme === 'dark' ? 'text-white/90' : 'text-white/90'
+          }`}
+          style={{
+            fontSize: block.styles?.subtitle_font_size || block.styles?.subtitleFontSize || undefined,
+            fontWeight: block.styles?.subtitle_font_weight || block.styles?.subtitleFontWeight || undefined,
+            color: block.styles?.subtitle_color || block.styles?.subtitleColor || undefined,
+            fontFamily: block.styles?.subtitle_font_family || block.styles?.subtitleFontFamily || undefined,
+            textAlign: block.styles?.subtitle_text_align || block.styles?.subtitleTextAlign || undefined,
+            lineHeight: block.styles?.subtitle_line_height || block.styles?.subtitleLineHeight || undefined,
+            letterSpacing: block.styles?.subtitle_letter_spacing || block.styles?.subtitleLetterSpacing || undefined,
+          }}
+        >
           {safeBlock.data.subtitle}
         </p>
       )}

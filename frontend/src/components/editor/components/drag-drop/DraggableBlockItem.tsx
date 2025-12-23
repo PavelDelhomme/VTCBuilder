@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Composant pour un élément de bloc draggable dans la popup
  */

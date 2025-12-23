@@ -1,11 +1,16 @@
+'use client'
+
 /**
  * Modal pour choisir un bloc (nouveau ou existant)
  */
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Block } from '../../types'
 import { BlockType } from '@/services/blocks.service'
 import { DraggableBlockItem } from '../drag-drop/DraggableBlockItem'
+import { useFeatures } from '@/contexts/FeaturesContext'
+import authService from '@/services/auth.service'
+import billingService, { PricingPlan } from '@/services/billing.service'
 
 interface BlockPickerModalProps {
   blockTypes: BlockType[]
@@ -26,21 +31,81 @@ export function BlockPickerModal({
 }: BlockPickerModalProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'new' | 'existing'>('new')
-  
-  // Filtrer les blocs selon la recherche
-  const filteredBlockTypes = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return blockTypes
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [pricingFilter, setPricingFilter] = useState<'all' | 'free' | 'premium'>('all')
+  const [planFilter, setPlanFilter] = useState<number | 'all'>('all')
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([])
+  const { canUseBlockType } = useFeatures()
+  const isSuperAdmin = authService.isSuperAdmin()
+
+  // Charger les forfaits
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const plans = await billingService.getPricingPlans()
+        setPricingPlans(plans)
+      } catch (error) {
+        console.warn('Erreur chargement forfaits:', error)
+      }
     }
-    const query = searchQuery.toLowerCase()
-    return blockTypes.filter((bt) => {
-      const name = (bt.name || '').toLowerCase()
-      const label = (bt.label || '').toLowerCase()
-      const description = (bt.description || '').toLowerCase()
-      const category = (bt.category || '').toLowerCase()
-      return name.includes(query) || label.includes(query) || description.includes(query) || category.includes(query)
-    })
-  }, [blockTypes, searchQuery])
+    loadPlans()
+  }, [])
+
+  // Filtrer les blocs selon la recherche, catégorie, prix et forfait
+  const filteredBlockTypes = useMemo(() => {
+    let filtered = blockTypes
+
+    // Filtre par recherche
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter((bt) => {
+        const name = (bt.name || '').toLowerCase()
+        const label = (bt.label || '').toLowerCase()
+        const description = (bt.description || '').toLowerCase()
+        const category = (bt.category || '').toLowerCase()
+        return name.includes(query) || label.includes(query) || description.includes(query) || category.includes(query)
+      })
+    }
+
+    // Filtre par catégorie
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter((bt) => bt.category === categoryFilter)
+    }
+
+    // Filtre par gratuit/payant
+    if (pricingFilter !== 'all') {
+      filtered = filtered.filter((bt) => {
+        const isPremium = (bt as any).is_premium || (bt.available_plans && bt.available_plans.length > 0)
+        if (pricingFilter === 'free') {
+          return !isPremium
+        } else if (pricingFilter === 'premium') {
+          return isPremium
+        }
+        return true
+      })
+    }
+
+    // Filtre par forfait
+    if (planFilter !== 'all') {
+      filtered = filtered.filter((bt) => {
+        if (!bt.available_plans || bt.available_plans.length === 0) {
+          // Bloc gratuit disponible pour tous
+          return planFilter === 'all' || pricingFilter === 'free'
+        }
+        return bt.available_plans.includes(planFilter as number)
+      })
+    }
+
+    // Filtrer selon les permissions (sauf pour les super admins)
+    if (!isSuperAdmin) {
+      filtered = filtered.filter((bt) => {
+        const isPremium = (bt as any).is_premium || (bt.available_plans && bt.available_plans.length > 0)
+        return canUseBlockType(bt.name, isPremium)
+      })
+    }
+
+    return filtered
+  }, [blockTypes, searchQuery, categoryFilter, pricingFilter, planFilter, canUseBlockType, isSuperAdmin])
   
   // Grouper les blocs filtrés par catégorie
   const groupedBlocks = useMemo(() => {
@@ -54,6 +119,17 @@ export function BlockPickerModal({
     })
     return groups
   }, [filteredBlockTypes])
+
+  // Obtenir les catégories uniques
+  const categories = useMemo(() => {
+    const cats = new Set<string>()
+    blockTypes.forEach((bt) => {
+      if (bt.category) {
+        cats.add(bt.category)
+      }
+    })
+    return Array.from(cats).sort()
+  }, [blockTypes])
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -119,8 +195,8 @@ export function BlockPickerModal({
           </div>
         )}
 
-        {/* Barre de recherche */}
-        <div className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        {/* Barre de recherche et filtres */}
+        <div className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 space-y-3">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,6 +219,65 @@ export function BlockPickerModal({
                 <svg className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Filtres */}
+          <div className="flex flex-wrap gap-2">
+            {/* Filtre par catégorie */}
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">Toutes les catégories</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat === 'layout' ? 'Mise en page' : cat === 'content' ? 'Contenu' : cat === 'media' ? 'Média' : cat === 'custom' ? 'Personnalisé' : cat}
+                </option>
+              ))}
+            </select>
+
+            {/* Filtre gratuit/payant */}
+            <select
+              value={pricingFilter}
+              onChange={(e) => setPricingFilter(e.target.value as 'all' | 'free' | 'premium')}
+              className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">Tous les blocs</option>
+              <option value="free">Gratuit</option>
+              <option value="premium">Premium</option>
+            </select>
+
+            {/* Filtre par forfait */}
+            {pricingPlans.length > 0 && (
+              <select
+                value={planFilter}
+                onChange={(e) => setPlanFilter(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
+                className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">Tous les forfaits</option>
+                {pricingPlans.map((plan) => (
+                  <option key={plan.id} value={plan.id}>
+                    {plan.name}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {/* Bouton réinitialiser les filtres */}
+            {(categoryFilter !== 'all' || pricingFilter !== 'all' || planFilter !== 'all' || searchQuery) && (
+              <button
+                onClick={() => {
+                  setCategoryFilter('all')
+                  setPricingFilter('all')
+                  setPlanFilter('all')
+                  setSearchQuery('')
+                }}
+                className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Réinitialiser
               </button>
             )}
           </div>

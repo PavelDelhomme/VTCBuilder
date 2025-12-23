@@ -782,16 +782,29 @@ export function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'li
   // Le container respecte la largeur définie par les colonnes
   const finalContainerClass = getContainerClass(block.container, layoutCols)
   
+  // Gérer les gradients dans wrapperStyles
+  const finalWrapperStyles = {
+    ...wrapperStyles,
+    // Si container est 'container' et layout < 12, centrer le contenu
+    ...(block.container === 'container' && layoutCols < 12 ? { marginLeft: 'auto', marginRight: 'auto' } : {}),
+    // Appliquer la largeur max si container est défini et layout < 12
+    ...(block.container === 'container' && layoutCols < 12 ? { maxWidth: '1280px' } : {}),
+    // S'assurer que les gradients s'affichent complètement
+    ...(block.styles?.background_gradient ? { 
+      background: block.styles.background_gradient,
+      minHeight: block.minHeight || (block.children && block.children.length > 0 ? 'auto' : '100%'),
+      width: '100%',
+    } : {}),
+    // S'assurer que les conteneurs avec enfants prennent toute la hauteur nécessaire
+    ...(block.children && block.children.length > 0 && !block.minHeight ? {
+      minHeight: 'auto',
+    } : {}),
+  }
+  
   return (
     <div 
       className={`${finalContainerClass} ${layoutWidth !== 'w-full' ? layoutWidth : ''} mb-6 ${getHoverAnimationClass(block)} ${getAlignmentClasses(block)}`} 
-      style={{
-        ...wrapperStyles,
-        // Si container est 'container' et layout < 12, centrer le contenu
-        ...(block.container === 'container' && layoutCols < 12 ? { marginLeft: 'auto', marginRight: 'auto' } : {}),
-        // Appliquer la largeur max si container est défini et layout < 12
-        ...(block.container === 'container' && layoutCols < 12 ? { maxWidth: '1280px' } : {}),
-      }}
+      style={finalWrapperStyles}
     >
       {content}
     </div>

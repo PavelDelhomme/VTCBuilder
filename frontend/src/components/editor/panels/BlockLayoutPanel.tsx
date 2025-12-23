@@ -171,6 +171,41 @@ export function BlockLayoutPanel({
           })()}
         </h4>
         <div className="space-y-3">
+          {/* Espacement entre les enfants du conteneur */}
+          {(block.type === 'container' || block.type === 'grid-container' || block.type === 'flex-container' || block.type === 'columns') && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Espacement vertical entre les enfants
+                </label>
+                <input
+                  type="text"
+                  value={safeBlock.data?.children_gap_vertical || safeBlock.data?.children_gap || ''}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, children_gap_vertical: e.target.value } })}
+                  className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="1rem, 20px, 2em..."
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Exemples: 1rem, 20px, 2em, 0.5rem
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Espacement horizontal entre les enfants
+                </label>
+                <input
+                  type="text"
+                  value={safeBlock.data?.children_gap_horizontal || safeBlock.data?.children_gap || ''}
+                  onChange={(e) => onUpdate({ data: { ...safeBlock.data, children_gap_horizontal: e.target.value } })}
+                  className="w-full px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="1rem, 20px, 2em..."
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Exemples: 1rem, 20px, 2em, 0.5rem
+                </p>
+              </div>
+            </>
+          )}
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">

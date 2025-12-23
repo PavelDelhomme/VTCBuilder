@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Zone de drop pour les conteneurs
  */

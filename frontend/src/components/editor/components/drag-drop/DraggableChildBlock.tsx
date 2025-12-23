@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Composant pour un bloc enfant draggable dans un conteneur
  */
@@ -8,7 +10,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Block } from '../../types'
 import { BlockType } from '@/services/blocks.service'
 import { BlockRenderer } from '../../BlockRenderer'
-import { ContainerChildrenRenderer } from './ContainerChildrenRenderer'
+import { ContainerChildrenRenderer } from '../containers/ContainerChildrenRenderer'
 
 interface DraggableChildBlockProps {
   child: Block

@@ -1,138 +1,32 @@
 import React, { useState, useEffect } from 'react'
 import { PreviewCaseProps } from './types'
 import authService from '@/services/auth.service'
+import { renderHero as renderHeroFromPreview } from '../renderers/complex/preview'
+import { renderFeaturesGrid as renderFeaturesGridFromPreview } from '../renderers/complex/preview'
+import { renderCTASection as renderCTASectionFromComplex } from '../renderers/complex/cta-section'
 // FAQSectionPreview sera importé depuis BlockPreview ou créé localement
 
 // Blocs complexes : hero, features-grid, cta, testimonials, pricing, timeline, stats, social-links, faq, banner, contact-form
 
-// Les cases suivants utilisent des fonctions depuis './renderers/complex'
-const renderHero: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-const renderFeaturesGrid: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-const renderCTASection: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-const renderContactForm: ((props: PreviewCaseProps) => React.ReactElement | null) | null = null
-
-// Import dynamique désactivé pour éviter les erreurs - les renderers seront importés statiquement si disponibles
-// try {
-//   const complexRenderers = await import('./renderers/complex').catch(() => null)
-//   if (complexRenderers) {
-//     renderHero = complexRenderers.renderHero || null
-//     renderFeaturesGrid = complexRenderers.renderFeaturesGrid || null
-//     renderCTASection = complexRenderers.renderCTASection || null
-//     renderContactForm = complexRenderers.renderContactForm || null
-//   }
-// } catch (e) {
-//   // Les renderers n'existent pas encore
-// }
-
 export function renderHeroBase(props: PreviewCaseProps): React.ReactElement | null {
-  if (renderHero) {
-    return renderHero(props)
-  }
-  return (
-    <div style={props.wrapperStyles} className="mb-6 p-6 border-2 border-dashed rounded">
-      <p className="text-gray-500">Hero renderer not available</p>
-    </div>
-  )
+  return renderHeroFromPreview(props)
 }
 
 export function renderFeaturesGridBase(props: PreviewCaseProps): React.ReactElement | null {
-  if (renderFeaturesGrid) {
-    return renderFeaturesGrid(props)
-  }
-  // Fallback inline
-  const { block, theme = 'light', wrapperStyles } = props
-  const features = block.data.features || []
-  const columns = block.data.columns || 3
-  const isDark = theme === 'dark'
-  const gridClasses = {
-    1: 'grid-cols-1',
-    2: 'grid-cols-1 sm:grid-cols-2',
-    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-  }[columns] || 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-  
-  return (
-    <div 
-      style={{
-        ...wrapperStyles,
-        backgroundColor: isDark ? '#111827' : (block.styles?.background_color || 'transparent'),
-        color: isDark ? '#f9fafb' : '#111827'
-      }} 
-      className="mb-6 w-full min-w-0 overflow-hidden"
-    >
-      {block.data.title && (
-        <h2 
-          className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12 px-4"
-          style={{ color: isDark ? '#f9fafb' : '#111827' }}
-        >
-          {block.data.title}
-        </h2>
-      )}
-      <div className={`grid ${gridClasses} gap-4 sm:gap-6 lg:gap-8 w-full min-w-0`}>
-        {features.length > 0 ? (
-          features.map((feature: any, i: number) => {
-            const cardStyle: React.CSSProperties = {
-              background: isDark 
-                ? 'linear-gradient(135deg, #1f2937 0%, #111827 100%)'
-                : 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 50%, rgba(236, 72, 153, 0.05) 100%)',
-              borderColor: isDark ? '#374151' : 'rgba(59, 130, 246, 0.2)',
-              borderWidth: '1px',
-              borderStyle: 'solid',
-              boxShadow: isDark 
-                ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
-                : '0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(147, 51, 234, 0.08)',
-              transition: 'all 0.3s ease',
-            }
-            
-            return (
-              <div 
-                key={i} 
-                className="text-center p-4 sm:p-6 rounded-xl hover:shadow-xl hover:scale-105 transition-all min-w-0 overflow-hidden relative group"
-                style={cardStyle}
-              >
-                <div className="text-4xl sm:text-5xl mb-3 sm:mb-4 relative z-10 transform group-hover:scale-110 transition-transform">
-                  {feature.icon || '✨'}
-                </div>
-                <h3 
-                  className="text-lg sm:text-xl font-bold mb-2 break-words relative z-10"
-                  style={{ color: isDark ? '#f9fafb' : '#111827' }}
-                >
-                  {feature.title || `Fonctionnalité ${i + 1}`}
-                </h3>
-                <p 
-                  className="text-sm sm:text-base break-words relative z-10"
-                  style={{ color: isDark ? '#d1d5db' : '#4b5563' }}
-                >
-                  {feature.description || 'Description...'}
-                </p>
-              </div>
-            )
-          })
-        ) : (
-          <div 
-            className="col-span-full text-center py-8 border-2 border-dashed rounded"
-            style={{
-              color: isDark ? '#9ca3af' : '#9ca3af',
-              borderColor: isDark ? '#4b5563' : '#d1d5db'
-            }}
-          >
-            No features
-          </div>
-        )}
-      </div>
-    </div>
-  )
+  return renderFeaturesGridFromPreview(props)
 }
 
 export function renderCTASectionBase(props: PreviewCaseProps): React.ReactElement | null {
-  if (renderCTASection) {
-    return renderCTASection(props)
+  // Convertir PreviewCaseProps en RendererProps
+  const rendererProps = {
+    block: props.block,
+    blockType: props.blockType,
+    blockTypes: props.blockTypes,
+    theme: props.theme || 'light',
+    wrapperStyles: props.wrapperStyles || {},
+    contentStyles: props.contentStyles || {},
   }
-  return (
-    <div style={props.wrapperStyles} className="mb-6 p-6 border-2 border-dashed rounded">
-      <p className="text-gray-500">CTA section renderer not available</p>
-    </div>
-  )
+  return renderCTASectionFromComplex(rendererProps)
 }
 
 export function renderTestimonials(props: PreviewCaseProps): React.ReactElement | null {
@@ -185,24 +79,10 @@ export function renderPricing(props: PreviewCaseProps): React.ReactElement | nul
     const isDark = theme === 'dark'
     
     useEffect(() => {
-      if (block.data.source === 'dynamic' || block.data.source === 'api') {
-        try {
-          const isSuperAdmin = authService.isSuperAdmin()
-          const isPublicProject = typeof window !== 'undefined' && window.location.pathname.includes('/admin/pages-public/edit/')
-          
-          if (!isSuperAdmin || !isPublicProject) {
-            setPlans(block.data.plans || [])
-            return
-          }
-        } catch (e) {
-          setPlans(block.data.plans || [])
-          return
-        }
-      }
-      
-      if (block.data.source === 'dynamic' || block.data.source === 'api') {
+      // Si source est 'api' ou 'dynamic', récupérer depuis l'API
+      if (block.data.source === 'api' || block.data.source === 'dynamic') {
         setLoading(true)
-        const apiUrl = block.data.api_endpoint || '/api/pricing-plans/'
+        const apiUrl = block.data.api_endpoint || '/api/billing/pricing-plans/'
         const fullUrl = apiUrl.startsWith('http') ? apiUrl : `${window.location.origin}${apiUrl}`
         fetch(fullUrl, {
           headers: {
@@ -214,20 +94,40 @@ export function renderPricing(props: PreviewCaseProps): React.ReactElement | nul
           .then(async res => {
             if (!res.ok) {
               if (res.status === 401 || res.status === 403) {
+                // Si non autorisé, utiliser les plans par défaut
                 setPlans(block.data.plans || [])
                 return
               }
               throw new Error(`HTTP error! status: ${res.status}`)
             }
             const data = await res.json()
-            setPlans(data.results || data || [])
+            // Convertir les plans de l'API au format attendu
+            const formattedPlans = Array.isArray(data) ? data : (data.results || [])
+            setPlans(formattedPlans.map((plan: any) => ({
+              name: plan.name,
+              description: plan.description,
+              price_monthly: plan.price_monthly,
+              price_yearly: plan.price_yearly,
+              currency: plan.currency || 'EUR',
+              badge: plan.is_featured ? 'POPULAIRE' : '',
+              is_featured: plan.is_featured,
+              features: plan.features || [],
+              button_text: 'Choisir ce plan',
+              button_url: `/register?plan=${plan.slug || plan.id}`,
+              button_style: plan.is_featured ? 'primary' : 'secondary'
+            })))
           })
-          .catch(() => {
+          .catch((error) => {
+            console.warn('Erreur lors du chargement des plans depuis l\'API:', error)
+            // En cas d'erreur, utiliser les plans par défaut
             setPlans(block.data.plans || [])
           })
           .finally(() => {
             setLoading(false)
           })
+      } else {
+        // Si source n'est pas 'api', utiliser les plans définis manuellement
+        setPlans(block.data.plans || [])
       }
     }, [block.data.source, block.data.api_endpoint, block.data.plans])
     
@@ -249,7 +149,7 @@ export function renderPricing(props: PreviewCaseProps): React.ReactElement | nul
           </h2>
         )}
         {plans.length > 0 ? (
-          <div className={`grid grid-cols-1 md:grid-cols-${Math.min(plans.length, 4)} gap-6`}>
+          <div className={`grid grid-cols-1 md:grid-cols-${Math.min(plans.length, 4)} gap-6 px-4 sm:px-6 lg:px-8`}>
             {plans.map((plan: any, index: number) => {
               const isFeatured = plan.featured || block.data.featured_plan_override === index
               return (

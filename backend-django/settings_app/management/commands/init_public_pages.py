@@ -50,6 +50,16 @@ class Command(BaseCommand):
                 'is_active': True,
                 'order': 2
             },
+            'features': {
+                'title': 'Fonctionnalités',
+                'description': 'Découvrez toutes les fonctionnalités de VTCBuilder',
+                'slug': 'features',
+                'blocks': [],
+                'meta_title': 'Fonctionnalités - VTCBuilder',
+                'meta_description': 'Découvrez toutes les fonctionnalités de VTCBuilder pour créer et gérer votre site VTC professionnel',
+                'is_active': True,
+                'order': 2
+            },
             'contact': {
                 'title': 'Contact',
                 'description': 'Page de contact avec formulaire',

@@ -3,6 +3,8 @@ import { PreviewCaseProps } from './types'
 import { BlockPreviewRenderer } from '../BlockPreview'
 import { Block } from '../types'
 import { BlockType } from '@/services/blocks.service'
+import { renderHeader as renderHeaderFromLayout } from '../renderers/layout/header'
+import { renderFooter as renderFooterFromLayout } from '../renderers/layout/footer'
 
 // Blocs de mise en page : container, flex-container, grid-container, columns, rows, section, header, footer, flexbox, grid, stack, inline, group, wrapper
 
@@ -12,18 +14,32 @@ export function renderContainer(props: PreviewCaseProps): React.ReactElement | n
   // Container should render its children, not just show placeholder text
   // Le container doit respecter la largeur définie par layout (colonnes)
   // Note: Le layoutWidth sera appliqué par le wrapper final, donc ici on ne l'applique pas
+  
+  // Gérer les gradients correctement
+  const backgroundStyle = block.styles?.background_gradient 
+    ? { background: block.styles.background_gradient }
+    : block.styles?.background && block.styles?.background.includes('gradient')
+    ? { background: block.styles.background }
+    : block.styles?.background_color
+    ? { backgroundColor: block.styles.background_color }
+    : isDark 
+    ? { backgroundColor: '#1f2937' }
+    : { backgroundColor: 'transparent' }
+  
   return (
     <div 
       data-block-id={block.id}
       style={{
         ...wrapperStyles,
         ...contentStyles,
-        minHeight: block.minHeight || 'auto',
+        ...backgroundStyle,
+        minHeight: block.minHeight || (block.children && block.children.length > 0 ? 'auto' : '200px'),
         height: block.height || 'auto',
         maxHeight: block.maxHeight || 'none',
-        backgroundColor: isDark ? (block.styles?.background_color || '#1f2937') : (block.styles?.background_color || 'transparent'),
+        width: '100%',
         color: isDark ? '#f9fafb' : '#111827',
       }}
+      className="w-full"
     >
       {block.children && block.children.length > 0 ? (
         // Render children blocks recursively
@@ -296,93 +312,15 @@ export function renderSection(props: PreviewCaseProps): React.ReactElement | nul
 }
 
 export function renderHeader(props: PreviewCaseProps): React.ReactElement | null {
-  const { block, theme = 'light', wrapperStyles, contentStyles, blockTypes } = props
-  const isDark = theme === 'dark'
-  // Header est similaire à container mais avec un style spécifique
-  return (
-    <header 
-      data-block-id={block.id}
-      style={{
-        ...wrapperStyles,
-        ...contentStyles,
-        backgroundColor: isDark ? (block.styles?.background_color || '#1f2937') : (block.styles?.background_color || '#ffffff'),
-        color: isDark ? '#f9fafb' : '#111827',
-        borderBottom: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-        padding: block.styles?.padding || '1rem 2rem',
-      }}
-      className="mb-6"
-    >
-      {block.children && block.children.length > 0 ? (
-        <div className="flex items-center justify-between">
-          {block.children.map((childBlock: Block, idx: number) => (
-            <div key={childBlock.id || idx} data-block-id={childBlock.id} data-child-block-id={childBlock.id}>
-              <BlockPreviewRenderer
-                block={childBlock}
-                blockType={blockTypes?.find((bt: BlockType) => bt.name === childBlock.type)}
-                blockTypes={blockTypes}
-                theme={theme}
-              />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div 
-          className="p-4 border-2 border-dashed rounded text-center"
-          style={{
-            borderColor: isDark ? '#4b5563' : '#d1d5db',
-            color: isDark ? '#9ca3af' : '#6b7280',
-          }}
-        >
-          <div className="text-sm">Empty header - Add blocks here</div>
-        </div>
-      )}
-    </header>
-  )
+  const { block, theme = 'light', wrapperStyles, contentStyles } = props
+  // Utiliser le renderer depuis renderers/layout/header.tsx qui affiche le header avec ses données
+  return renderHeaderFromLayout({ block, wrapperStyles, contentStyles, theme })
 }
 
 export function renderFooter(props: PreviewCaseProps): React.ReactElement | null {
-  const { block, theme = 'light', wrapperStyles, contentStyles, blockTypes } = props
-  const isDark = theme === 'dark'
-  // Footer est similaire à container mais avec un style spécifique
-  return (
-    <footer 
-      data-block-id={block.id}
-      style={{
-        ...wrapperStyles,
-        ...contentStyles,
-        backgroundColor: isDark ? (block.styles?.background_color || '#1f2937') : (block.styles?.background_color || '#f9fafb'),
-        color: isDark ? '#9ca3af' : '#6b7280',
-        borderTop: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-        padding: block.styles?.padding || '2rem',
-      }}
-      className="mt-6"
-    >
-      {block.children && block.children.length > 0 ? (
-        <div>
-          {block.children.map((childBlock: Block, idx: number) => (
-            <div key={childBlock.id || idx} data-block-id={childBlock.id} data-child-block-id={childBlock.id}>
-              <BlockPreviewRenderer
-                block={childBlock}
-                blockType={blockTypes?.find((bt: BlockType) => bt.name === childBlock.type)}
-                blockTypes={blockTypes}
-                theme={theme}
-              />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div 
-          className="p-4 border-2 border-dashed rounded text-center"
-          style={{
-            borderColor: isDark ? '#4b5563' : '#d1d5db',
-            color: isDark ? '#9ca3af' : '#6b7280',
-          }}
-        >
-          <div className="text-sm">Empty footer - Add blocks here</div>
-        </div>
-      )}
-    </footer>
-  )
+  const { block, theme = 'light', wrapperStyles } = props
+  // Utiliser le renderer depuis renderers/layout/footer.tsx qui affiche le footer avec ses données
+  return renderFooterFromLayout({ block, wrapperStyles, theme })
 }
 
 // flexbox, grid, stack, inline, group, wrapper utilisent tous renderContainer

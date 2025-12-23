@@ -20,7 +20,7 @@ export interface PageDefinition {
 /**
  * Crée les blocs pour la page Features avec toutes les fonctionnalités
  */
-function createFeaturesPage(): PageDefinition {
+export function createFeaturesPage(): PageDefinition {
   const now = Date.now()
   
   const features = [
