@@ -18,6 +18,7 @@ interface BlockPropertiesModalProps {
   onDelete?: (blockId: string) => void
   onDuplicate?: (block: Block) => void
   onEditChild?: (blockId: string) => void // Callback pour modifier un bloc enfant
+  selectedSubElement?: { blockId: string; type: string; index: number } | null
 }
 
 // Fonction pour vérifier si un type de bloc est un conteneur
@@ -35,6 +36,7 @@ export default function BlockPropertiesModal({
   onDelete,
   onDuplicate,
   onEditChild,
+  selectedSubElement,
 }: BlockPropertiesModalProps) {
   const [activeTab, setActiveTab] = useState<'content' | 'layout' | 'style'>('content')
   const { confirm, ConfirmDialog } = useConfirm()

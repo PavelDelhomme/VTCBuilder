@@ -1730,6 +1730,11 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                       if (bt.name === 'header') {
                         return false
                       }
+                      // Filtrer les blocs inactifs (sauf pour les super admins qui voient tout)
+                      const isSuperAdmin = authService.isSuperAdmin()
+                      if (!isSuperAdmin && bt.is_active === false) {
+                        return false
+                      }
                       const matchesCategory = categoryFilter === 'all' || bt.category === categoryFilter
                       const matchesSearch = !searchQuery || 
                         bt.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1737,6 +1742,15 @@ export default function BlockEditor({ blocks, onChange, availableBlockTypes, onB
                         (bt.description && bt.description.toLowerCase().includes(searchQuery.toLowerCase()))
                       return matchesCategory && matchesSearch
                     })
+                    
+                    // Debug: vérifier pourquoi aucun bloc n'est disponible
+                    if (filteredBlockTypes.length === 0 && blockTypes.length > 0) {
+                      console.warn('⚠️ Aucun bloc filtré alors que blockTypes contient', blockTypes.length, 'blocs')
+                      console.log('Filtres appliqués:', { categoryFilter, searchQuery, blockTypesCount: blockTypes.length })
+                    }
+                    if (blockTypes.length === 0) {
+                      console.warn('⚠️ blockTypes est vide ! Vérifiez le chargement des blocs.')
+                    }
 
                     // Si recherche active, afficher tous les résultats sans groupement
                     if (searchQuery) {

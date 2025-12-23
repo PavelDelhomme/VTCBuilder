@@ -4,7 +4,7 @@
 
 Ce document centralise l'état actuel du projet, les subdivisions en cours, les tests, et la roadmap.
 
-**Dernière mise à jour :** 2025-12-23
+**Dernière mise à jour :** 2025-12-24
 
 ---
 
@@ -170,6 +170,262 @@ Ce document centralise l'état actuel du projet, les subdivisions en cours, les 
 6. 🔴 Créer les tests pour toutes les fonctionnalités
 7. 🔴 Mettre en place le validation workflow
 8. 🔴 Continuer le Blocks Roadmap
+
+---
+
+## 🔍 Diagnostic des Erreurs PATCH /system-settings/
+
+### Problème identifié
+Les requêtes PATCH vers `/api/system-settings/` échouent avec des erreurs 403 (Forbidden) même pour les super admins authentifiés.
+
+### Analyse technique
+
+#### 1. **Permissions Backend**
+- **Permission class**: `IsSuperAdminOrReadOnly` dans `backend-django/settings_app/views.py`
+- **Comportement attendu**:
+  - GET : Accès public (pas d'authentification requise)
+  - POST/PATCH/PUT/DELETE : Requiert super admin (vérifié depuis le token JWT uniquement)
+- **Vérification super admin**: Utilise `is_super_admin_from_token(request)` qui lit le token JWT directement
+
+#### 2. **Flux d'authentification**
+1. Le frontend envoie une requête PATCH avec le token JWT dans le header `Authorization: Bearer <token>`
+2. Le middleware `UserStatusMiddleware` vérifie si le chemin est public (GET `/system-settings/` est public, mais PATCH ne l'est pas)
+3. Le middleware vérifie le statut de l'utilisateur (actif/suspendu) - les super admins sont toujours autorisés
+4. La permission `IsSuperAdminOrReadOnly` vérifie le statut super admin depuis le token JWT
+5. Si l'utilisateur n'est pas super admin, retourne 403
+
+#### 3. **Problèmes potentiels identifiés**
+
+**A. Expiration du token**
+- Le token JWT peut expirer pendant la session
+- Le rafraîchissement automatique peut échouer si le refresh token est aussi expiré
+- **Solution actuelle (temporaire)**: Gestion silencieuse des erreurs PATCH (⚠️ **À CORRIGER**)
+
+**B. Vérification du statut super admin**
+- La fonction `is_super_admin_from_token()` peut échouer si :
+  - Le token est invalide ou expiré
+  - L'utilisateur n'a pas le rôle super-admin dans la base de données
+  - Le token ne contient pas les bonnes informations
+
+**C. Middleware UserStatusMiddleware**
+- Le middleware peut bloquer la requête avant même d'arriver à la permission class
+- Les super admins sont autorisés, mais il faut vérifier que le middleware détecte correctement le statut super admin
+
+#### 4. **Actions à prendre**
+
+**🔴 PRIORITÉ HAUTE - À CORRIGER IMMÉDIATEMENT**
+
+1. **Retirer la gestion silencieuse des erreurs PATCH**
+   - Les erreurs doivent être loggées et affichées à l'utilisateur
+   - Ne pas masquer les problèmes d'authentification
+
+2. **Améliorer le diagnostic**
+   - Ajouter des logs détaillés dans `IsSuperAdminOrReadOnly.has_permission()`
+   - Logger le contenu du token JWT (en mode DEBUG uniquement)
+   - Logger pourquoi `is_super_admin_from_token()` retourne `False`
+
+3. **Vérifier le rafraîchissement du token**
+   - S'assurer que le refresh token fonctionne correctement
+   - Vérifier que le nouveau token contient bien les informations super admin
+   - Tester le rafraîchissement automatique dans différents scénarios
+
+4. **Tester le flux complet**
+   - Tester avec un super admin authentifié
+   - Tester avec un token expiré (doit déclencher le rafraîchissement)
+   - Tester avec un refresh token expiré (doit demander une nouvelle connexion)
+   - Tester avec un utilisateur non-super-admin (doit retourner 403 avec message clair)
+
+5. **Améliorer les messages d'erreur**
+   - Retourner des messages d'erreur clairs au frontend
+   - Distinguer entre "token expiré" et "permission refusée"
+   - Afficher un message à l'utilisateur pour qu'il se reconnecte si nécessaire
+
+### État actuel
+- ⚠️ **Gestion silencieuse activée** (temporaire, à retirer)
+- 🔴 **Diagnostic incomplet** - besoin de logs détaillés
+- 🔴 **Messages d'erreur masqués** - l'utilisateur ne sait pas pourquoi ça échoue
+- 🔴 **Rafraîchissement du token non testé** - peut être la cause racine
+
+### Prochaines étapes
+1. Retirer la gestion silencieuse des erreurs PATCH
+2. Ajouter des logs détaillés pour diagnostiquer
+3. Tester le rafraîchissement du token
+4. Corriger les problèmes identifiés
+5. Documenter la solution finale
+
+---
+
+## 🔍 Diagnostic des Erreurs 403 (Forbidden) - Suite
+
+### Problème actuel
+Les erreurs 403 persistent pour plusieurs endpoints même pour les super admins authentifiés :
+- `GET /api/users/impersonation-status/` → 403 (Forbidden)
+- `GET /api/blocks/types/` → 403 (Forbidden)
+- `GET /api/system-settings/` → 403 (Forbidden) (mais les logs montrent que l'utilisateur est authentifié)
+- `PATCH /api/system-settings/` → 403 (Forbidden)
+- `GET /api/billing/pricing-plans/` → 500 (Internal Server Error) (résolu précédemment)
+
+### Analyse des logs backend
+
+#### Observations
+1. **Authentification réussie** : Les logs montrent que les requêtes GET vers `/api/system-settings/` sont bien authentifiées :
+   - `User: admin@vtcbuilder.com`
+   - `is_authenticated: True`
+   - `auth_header=present`
+
+2. **Permissions non vérifiées** : Il n'y a **aucun log** de `IsSuperAdminOrReadOnly` dans les logs backend, ce qui suggère que :
+   - La permission n'est peut-être pas appelée du tout
+   - Les requêtes sont bloquées avant d'atteindre la vue
+   - Il y a un problème de configuration DRF
+
+3. **Middleware actif** : Les logs montrent uniquement `SuppressExpected401Middleware`, ce qui indique que les requêtes passent le middleware mais n'atteignent peut-être pas la vue.
+
+### Hypothèses
+
+#### Hypothèse 1 : Problème de configuration DRF
+- La permission `IsSuperAdminOrReadOnly` permet les GET sans authentification (ligne 49-51)
+- Mais peut-être que DRF bloque quand même les requêtes si le token est présent mais invalide/expiré
+
+#### Hypothèse 2 : Problème de middleware
+- Le `UserStatusMiddleware` peut bloquer les requêtes avant qu'elles n'atteignent les vues
+- Les chemins publics sont configurés, mais peut-être que la correspondance ne fonctionne pas correctement
+
+#### Hypothèse 3 : Problème de token
+- Le token JWT peut être expiré ou invalide
+- Le rafraîchissement automatique peut échouer silencieusement
+
+### Actions à prendre
+
+1. **Ajouter des logs détaillés** dans `IsSuperAdminOrReadOnly.has_permission()` pour voir si elle est appelée
+2. **Vérifier le middleware** pour s'assurer qu'il n'interfère pas avec les endpoints publics
+3. **Tester avec un token frais** pour éliminer le problème de token expiré
+4. **Vérifier la configuration DRF** pour s'assurer que les permissions sont correctement appliquées
+
+### État actuel
+- 🔴 **Diagnostic en cours** - Les logs montrent que l'authentification fonctionne, mais les permissions ne sont pas vérifiées
+- 🔴 **Problème non résolu** - Les erreurs 403 persistent
+- 🔴 **Logs insuffisants** - Besoin de plus de logs pour diagnostiquer
+
+---
+
+## 🔧 Corrections Apportées (23/12/2025)
+
+### 1. Correction de l'AssertionError pour `/api/billing/pricing-plans/`
+
+**Problème** : `AssertionError: .accepted_renderer not set on Response` se produisait dans `CORSAlwaysMiddleware.process_response` lorsque Django appelait `response.render()` automatiquement.
+
+**Solution** :
+- Le middleware `CORSAlwaysMiddleware` ne touche plus aux réponses DRF dans `process_response`
+- Les headers CORS sont ajoutés par `CORSMixin.finalize_response` qui est appelé avant `process_response`
+- Le middleware retourne directement les réponses DRF sans les modifier
+
+**Fichiers modifiés** :
+- `backend-django/vtcbuilder/cors_middleware.py` : Amélioration de `process_response` pour éviter tout accès aux réponses DRF
+
+### 2. Amélioration de la gestion des erreurs pour PATCH `/system-settings/`
+
+**Problème** : Les requêtes PATCH vers `/system-settings/` retournaient 403 même après rafraîchissement du token, et l'erreur n'était pas clairement communiquée à l'utilisateur.
+
+**Solution** :
+- Amélioration de la gestion des erreurs dans `frontend/src/lib/api.ts` pour les requêtes PATCH vers `/system-settings/`
+- Quand le refresh token est expiré, l'erreur est maintenant rejetée avec un message clair indiquant que l'utilisateur doit se reconnecter
+- Les requêtes GET vers `/system-settings/`, `/blocks/types/`, et `/users/impersonation-status/` continuent de retourner des données par défaut en cas d'échec du rafraîchissement
+
+**Fichiers modifiés** :
+- `frontend/src/lib/api.ts` : Ajout d'une gestion spécifique pour les requêtes PATCH vers `/system-settings/` avec message d'erreur clair
+
+### État après corrections
+- ✅ **AssertionError corrigé** - Le middleware ne touche plus aux réponses DRF avant leur finalisation
+- ✅ **Gestion des erreurs améliorée** - Messages d'erreur plus clairs pour les tokens expirés
+- ✅ **Nettoyage automatique des tokens expirés** - Les tokens sont automatiquement supprimés du localStorage quand le refresh token est expiré
+- ✅ **Gestion améliorée des requêtes GET publiques** - Les requêtes GET publiques fonctionnent maintenant même avec un token expiré (le token est retiré de la requête et une nouvelle tentative est effectuée)
+
+**Corrections apportées (23/12/2025 - suite)** :
+- Nettoyage automatique des tokens expirés dans `frontend/src/lib/api.ts` et `frontend/src/services/auth.service.ts`
+- Amélioration de la gestion des requêtes GET publiques : si une requête GET publique échoue avec 403 à cause d'un token expiré, le token est retiré de la requête et une nouvelle tentative est effectuée sans token
+- Les requêtes GET vers `/system-settings/`, `/blocks/types/`, et `/users/impersonation-status/` fonctionnent maintenant même avec un token expiré
+
+**Note importante** : Si les erreurs 403 persistent pour les requêtes PATCH, c'est probablement parce que le refresh token est expiré. L'utilisateur doit se reconnecter pour obtenir de nouveaux tokens. Les requêtes GET publiques devraient maintenant fonctionner même avec un token expiré.
+
+### 3. Correction de l'AssertionError pour `/api/billing/pricing-plans/` (suite - 23/12/2025)
+
+**Problème** : La fonction de compatibilité `billing_pricing_plans_compat` dans `api/urls.py` créait manuellement une requête DRF, ce qui pouvait causer l'`AssertionError: .accepted_renderer not set on Response` car le renderer n'était pas correctement configuré.
+
+**Solution (première tentative)** :
+- Modification de `billing_pricing_plans_compat` pour utiliser `ViewSet.as_view()` qui gère correctement le cycle de requête/réponse DRF
+- Le renderer est maintenant correctement configuré via le flux normal de DRF
+- La réponse est correctement finalisée avec les headers CORS via `CORSMixin`
+
+**Solution (correction finale - 23/12/2025)** :
+- Modification de `billing_pricing_plans_compat` pour utiliser `HttpResponsePermanentRedirect` afin de rediriger vers `/api/pricing-plans/`
+- Cela garantit que la requête passe par le router DRF normal, avec le cycle de requête/réponse complet
+- Le frontend a été mis à jour pour utiliser directement `/api/pricing-plans/` au lieu de `/api/billing/pricing-plans/`
+
+**Fichiers modifiés** :
+- `backend-django/api/urls.py` : Correction de `billing_pricing_plans_compat` pour utiliser `HttpResponsePermanentRedirect` vers `/api/pricing-plans/`
+- `frontend/src/app/admin/pages-public/edit/[...slug]/page.tsx` : Mise à jour de `api_endpoint` pour utiliser `/api/pricing-plans/`
+- `frontend/src/components/editor/preview-cases/complex.tsx` : Mise à jour de l'endpoint par défaut pour utiliser `/pricing-plans/`
+
+**État après correction** :
+- ✅ **AssertionError corrigé** - La fonction de compatibilité redirige maintenant vers le router DRF qui garantit le cycle complet
+- ✅ **Renderer correctement configuré** - Le renderer est défini via le flux normal du router DRF
+- ✅ **CORS headers ajoutés** - Les headers CORS sont ajoutés via `CORSMixin.finalize_response`
+- ✅ **Frontend mis à jour** - Le frontend utilise maintenant directement `/api/pricing-plans/`
+- ✅ **Backend redémarré** - Les modifications sont actives
+
+---
+
+### 4. Correction des erreurs 403 pour PATCH `/system-settings/` (24/12/2025)
+
+**Problème** : Les requêtes PATCH vers `/system-settings/` étaient annulées côté frontend si `isSuperAdmin()` retournait `false`, même si un token était présent. Cela empêchait le rafraîchissement automatique du token et causait des erreurs 403.
+
+**Solution** :
+- Modification de la logique dans `frontend/src/lib/api.ts` pour ne pas annuler les requêtes PATCH si un token est présent
+- Si un token est présent, la requête est envoyée au backend qui peut rafraîchir le token automatiquement
+- Seulement annuler si aucun token n'est présent ET l'utilisateur n'est pas super admin
+
+**Fichiers modifiés** :
+- `frontend/src/lib/api.ts` : Correction de la logique d'annulation des requêtes PATCH vers `/system-settings/`
+- `frontend/src/components/editor/preview-cases/complex.tsx` : Correction de l'endpoint par défaut pour utiliser `/api/pricing-plans/`
+- `backend-django/settings_app/views.py` : Ajout de logs détaillés pour diagnostiquer les requêtes PATCH
+
+**État après correction** :
+- ✅ **Requêtes PATCH autorisées** - Les requêtes PATCH sont maintenant envoyées au backend si un token est présent
+- ✅ **Rafraîchissement automatique** - Le backend peut rafraîchir le token automatiquement si nécessaire
+- ✅ **Logs détaillés** - Les logs backend montrent maintenant clairement pourquoi une requête PATCH échoue
+- ✅ **Endpoint pricing-plans corrigé** - Le composant PricingPreview utilise maintenant le bon endpoint
+
+### 5. Problèmes restants à résoudre
+
+**🔴 PRIORITÉ HAUTE**
+
+1. **Vérifier que le refresh token fonctionne correctement**
+   - Tester le rafraîchissement automatique du token après expiration
+   - Vérifier que le nouveau token contient bien les informations super admin
+   - S'assurer que les requêtes PATCH fonctionnent après rafraîchissement
+
+2. **Améliorer les messages d'erreur pour l'utilisateur**
+   - Afficher un message clair si le refresh token est expiré
+   - Demander à l'utilisateur de se reconnecter si nécessaire
+   - Ne pas masquer les erreurs d'authentification
+
+3. **Tester le flux complet**
+   - Tester avec un super admin authentifié
+   - Tester avec un token expiré (doit déclencher le rafraîchissement)
+   - Tester avec un refresh token expiré (doit demander une nouvelle connexion)
+   - Vérifier que les requêtes PATCH fonctionnent dans tous les cas
+
+**🟡 PRIORITÉ MOYENNE**
+
+1. **Continuer la subdivision des fichiers de l'éditeur**
+   - Subdiviser `BlockEditor.tsx` (4277 lignes) - **PRIORITÉ 1**
+   - Subdiviser `ComplexRenderers.tsx` (1860 lignes) - **PRIORITÉ 2**
+   - Subdiviser `BlockStylePanel.tsx` (978 lignes) - **PRIORITÉ 3**
+
+2. **Créer les tests pour toutes les fonctionnalités**
+   - Tests pour les fonctionnalités de l'éditeur
+   - Tests pour les fonctionnalités du backoffice
+   - Tests pour les fonctionnalités de l'interface publique
 
 ---
 

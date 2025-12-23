@@ -1,9 +1,9 @@
 'use client'
 
 import React from 'react'
-import { Block } from '../../../types'
+import { Block } from '@/components/editor/types'
 import { BlockType } from '@/services/blocks.service'
-import { CollapsibleSection } from '../../../CollapsibleSection'
+import { CollapsibleSection } from '@/components/editor/CollapsibleSection'
 
 interface ComplexRendererProps {
   block: Block

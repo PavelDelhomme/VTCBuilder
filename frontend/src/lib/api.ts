@@ -70,6 +70,14 @@ api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      // Si pas de token et que ce n'est pas un endpoint public, logger un avertissement
+      const isPublicEndpoint = config.url?.includes('/analytics/') || 
+                               config.url?.includes('/auth/') ||
+                               config.url?.includes('/templates/');
+      if (!isPublicEndpoint) {
+        console.warn('⚠️ Aucun token trouvé pour la requête:', config.url);
+      }
     }
   } else {
     // S'assurer qu'aucun token n'est envoyé pour les endpoints analytics
@@ -77,12 +85,16 @@ api.interceptors.request.use((config) => {
   }
   
   // Pour les requêtes PATCH vers /system-settings/, vérifier si l'utilisateur est super admin
-  // Si ce n'est pas le cas, annuler la requête AVANT qu'elle ne soit envoyée
+  // MAIS: Ne pas annuler si un token est présent - laisser le backend vérifier
+  // (car isSuperAdmin() peut retourner false si le token est expiré, mais le refresh peut réussir)
   if (config.url?.includes('/system-settings/') && (config.method === 'patch' || config.method === 'PATCH')) {
-    if (!authService.isSuperAdmin()) {
+    const token = localStorage.getItem('token');
+    // Seulement annuler si pas de token ET pas super admin
+    // Si un token est présent, laisser le backend vérifier (il peut rafraîchir le token)
+    if (!token && !authService.isSuperAdmin()) {
       // Créer un CancelToken et annuler immédiatement
       const source = axios.CancelToken.source();
-      source.cancel('Request cancelled: user is not super admin');
+      source.cancel('Request cancelled: user is not super admin and no token available');
       config.cancelToken = source.token;
       // Marquer la config pour que l'intercepteur de réponse sache que c'est silencieux
       (config as any).__shouldRejectSilently = true;
@@ -129,13 +141,19 @@ api.interceptors.response.use(
     
     // PRIORITÉ 1: Gérer IMMÉDIATEMENT les erreurs 403 pour les endpoints publics
     // AVANT tout autre traitement pour éviter qu'elles soient loggées
+    // MAIS: Si l'utilisateur est super admin, ne pas ignorer l'erreur - c'est un vrai problème
     const publicEndpoints403 = [
       '/system-settings/',
       '/analytics/block-usage/',
       '/users/impersonation-status/',
       '/blocks/types/',
+      '/auth/refresh/', // Ajouté pour s'assurer que le refresh token lui-même n'est pas bloqué
     ];
-    if (status === 403 && publicEndpoints403.some(endpoint => url.includes(endpoint))) {
+    const isPublicEndpoint403 = status === 403 && publicEndpoints403.some(endpoint => url.includes(endpoint));
+    const isSuperAdmin = authService.isSuperAdmin();
+    
+    // Si c'est un utilisateur non-super-admin avec une erreur 403 sur un endpoint public, ignorer silencieusement
+    if (isPublicEndpoint403 && !isSuperAdmin) {
       // Marquer l'erreur comme silencieuse pour éviter tout log
       error.silent = true;
       error.config = error.config || {};
@@ -159,6 +177,308 @@ api.interceptors.response.use(
         statusText: 'Forbidden', 
         headers: {}, 
         config: error.config 
+      });
+    }
+    
+    // Si c'est un super admin avec une erreur 403 sur un endpoint public, essayer de rafraîchir le token d'abord
+    // MAIS: Ne pas essayer de rafraîchir si la requête est déjà vers /auth/refresh/ (éviter les boucles infinies)
+    // ET: Ne pas essayer de rafraîchir si on a déjà essayé (éviter les boucles infinies)
+    // ET: Ne pas essayer de rafraîchir si on est déjà en train de rafraîchir (éviter les boucles infinies)
+    // ET: Pour les requêtes GET publiques, ne pas essayer de rafraîchir - elles devraient fonctionner sans token
+    const isRefreshEndpoint = url.includes('/auth/refresh/');
+    const isPublicGetRequest = 
+      (url.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'get') ||
+      (url.includes('/blocks/types/') && originalRequest.method?.toLowerCase() === 'get') ||
+      (url.includes('/users/impersonation-status/') && originalRequest.method?.toLowerCase() === 'get');
+    
+    // Pour les requêtes GET publiques avec un token expiré, retirer le token et réessayer
+    if (isPublicGetRequest && status === 403 && hasToken) {
+      console.warn('⚠️ Requête GET publique avec token expiré, retrait du token et nouvelle tentative...');
+      // Retirer le token de la requête
+      if (originalRequest.headers) {
+        delete originalRequest.headers.Authorization;
+      }
+      // Réessayer sans token
+      return api(originalRequest);
+    }
+    
+    // Ne pas essayer de rafraîchir le token si :
+    // 1. C'est une requête GET publique (elles devraient fonctionner sans token)
+    // 2. C'est une requête vers /auth/refresh/ (boucle infinie)
+    // 3. On a déjà essayé de rafraîchir (éviter les boucles)
+    // 4. On est déjà en train de rafraîchir (éviter les requêtes concurrentes)
+    // 5. Il n'y a pas de refresh token disponible
+    const shouldTryRefresh = 
+      isPublicEndpoint403 && 
+      isSuperAdmin && 
+      hasToken && 
+      refreshToken && 
+      !originalRequest._retry && 
+      !isRefreshEndpoint && 
+      !window.__isRefreshingToken && 
+      !isPublicGetRequest;
+    
+    // Gestion spéciale pour /auth/logout/ : permettre la requête même si le token est expiré
+    // Le logout doit fonctionner même avec un token expiré car on veut nettoyer les tokens côté client
+    const isLogoutEndpoint = url.includes('/auth/logout/');
+    if (isLogoutEndpoint && (status === 401 || status === 403)) {
+      // Pour le logout, on ne veut pas essayer de rafraîchir le token
+      // On retourne une réponse réussie silencieusement car le logout fonctionne de toute façon
+      // (les tokens seront nettoyés côté client dans auth.service.ts)
+      return Promise.resolve({ 
+        data: { message: 'Logged out successfully' }, 
+        status: 200, 
+        statusText: 'OK', 
+        headers: {}, 
+        config: error.config 
+      });
+    }
+    
+    // Si c'est une erreur 403 sur /auth/refresh/, ne pas essayer de rafraîchir à nouveau (boucle infinie)
+    if (isRefreshEndpoint) {
+      // Nettoyer les tokens expirés
+      localStorage.removeItem('token');
+      localStorage.removeItem('refresh_token');
+      console.error('❌ Erreur 403 sur /auth/refresh/ - Le refresh token est probablement expiré ou invalide. Veuillez vous reconnecter.');
+      // Retourner une erreur claire pour que l'utilisateur sache qu'il doit se reconnecter
+      return Promise.reject(new Error('Token de rafraîchissement expiré. Veuillez vous reconnecter.'));
+    }
+    
+    if (shouldTryRefresh) {
+      // Vérifier si le refresh token est disponible avant d'essayer de rafraîchir
+      const currentRefreshToken = localStorage.getItem('refresh_token');
+      if (!currentRefreshToken) {
+        console.warn('⚠️ Super admin reçoit 403 mais aucun refresh token disponible - impossible de rafraîchir');
+        // Si c'est une requête PATCH vers /system-settings/, cela pourrait être un problème de permissions
+        // plutôt qu'un problème de token expiré
+        if (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'patch') {
+          console.warn('⚠️ Requête PATCH vers /system-settings/ échouée avec 403 - vérifier les permissions backend');
+        }
+        return Promise.reject(error);
+      }
+      
+      console.warn('⚠️ Super admin reçoit 403, tentative de rafraîchissement du token...', {
+        url: originalRequest.url,
+        method: originalRequest.method,
+        hasRefreshToken: !!currentRefreshToken,
+        refreshTokenLength: currentRefreshToken.length
+      });
+      originalRequest._retry = true;
+      
+      if (window.__isRefreshingToken) {
+        return new Promise((resolve, reject) => {
+          if (!window.__failedQueue) {
+            window.__failedQueue = [];
+          }
+          window.__failedQueue.push({ resolve, reject, config: originalRequest });
+        }).then((token) => {
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+          }
+          return api(originalRequest);
+        }).catch((err) => {
+          // Si le rafraîchissement échoue et que c'est une requête GET vers /system-settings/, /blocks/types/, ou /users/impersonation-status/, retourner des données par défaut
+          if (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'get') {
+            return Promise.resolve({ 
+              data: { public_pages: {}, public_homepage_blocks: [] }, 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            });
+          }
+          if (originalRequest.url?.includes('/blocks/types/') && originalRequest.method?.toLowerCase() === 'get') {
+            return Promise.resolve({ 
+              data: [], 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            });
+          }
+          if (originalRequest.url?.includes('/users/impersonation-status/') && originalRequest.method?.toLowerCase() === 'get') {
+            return Promise.resolve({ 
+              data: { is_impersonating: false, impersonator_email: null }, 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            });
+          }
+          return Promise.reject(err);
+        });
+      }
+      
+      window.__isRefreshingToken = true;
+      
+      return authService.refreshToken().then((success) => {
+        window.__isRefreshingToken = false;
+        
+        if (success) {
+          if (window.__failedQueue) {
+            window.__failedQueue.forEach(({ resolve }) => {
+              const newToken = localStorage.getItem('token');
+              resolve(newToken);
+            });
+            window.__failedQueue = [];
+          }
+          
+          const newToken = localStorage.getItem('token');
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          }
+          return api(originalRequest);
+        } else {
+          // Si le rafraîchissement échoue et que c'est une requête GET vers /system-settings/ ou /blocks/types/, retourner des données par défaut
+          if (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'get') {
+            console.warn('⚠️ Impossible de rafraîchir le token, utilisation de données par défaut pour /system-settings/');
+            return Promise.resolve({ 
+              data: { public_pages: {}, public_homepage_blocks: [] }, 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            });
+          }
+          if (originalRequest.url?.includes('/blocks/types/') && originalRequest.method?.toLowerCase() === 'get') {
+            console.warn('⚠️ Impossible de rafraîchir le token, utilisation de données par défaut pour /blocks/types/');
+            return Promise.resolve({ 
+              data: [], 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            });
+          }
+          // Pour /users/impersonation-status/, retourner une réponse par défaut
+          if (originalRequest.url?.includes('/users/impersonation-status/') && originalRequest.method?.toLowerCase() === 'get') {
+            console.warn('⚠️ Impossible de rafraîchir le token, utilisation de données par défaut pour /users/impersonation-status/');
+            return Promise.resolve({ 
+              data: { is_impersonating: false, impersonator_email: null }, 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            });
+          }
+          // Ne logger l'erreur que si ce n'est pas une requête GET silencieuse
+          // Pour les requêtes PATCH, on doit logger l'erreur pour diagnostiquer
+          const isSilentGetRequest = 
+            (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'get') ||
+            (originalRequest.url?.includes('/blocks/types/') && originalRequest.method?.toLowerCase() === 'get') ||
+            (originalRequest.url?.includes('/users/impersonation-status/') && originalRequest.method?.toLowerCase() === 'get');
+          
+          if (!isSilentGetRequest) {
+            // Améliorer le logging pour diagnostiquer le problème
+            const refreshTokenAvailable = !!localStorage.getItem('refresh_token');
+            const refreshTokenLength = localStorage.getItem('refresh_token')?.length || 0;
+            console.error('❌ Impossible de rafraîchir le token pour super admin (refreshToken() a retourné false)', {
+              url: originalRequest.url,
+              method: originalRequest.method,
+              hasRefreshToken: refreshTokenAvailable,
+              refreshTokenLength: refreshTokenLength,
+              originalErrorStatus: status,
+              originalErrorUrl: url,
+              note: 'Le refreshToken() a probablement échoué - vérifier les logs précédents pour plus de détails'
+            });
+          }
+          return Promise.reject(error);
+        }
+      }).catch((refreshError) => {
+        window.__isRefreshingToken = false;
+        
+        // Si le refresh token est expiré, nettoyer les tokens
+        if (refreshError?.response?.status === 403 || refreshError?.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refresh_token');
+        }
+        
+        // Traiter la queue des requêtes en attente avec erreur
+        if (window.__failedQueue) {
+          window.__failedQueue.forEach(({ reject }) => {
+            reject(refreshError);
+          });
+          window.__failedQueue = [];
+        }
+        
+        // Améliorer le logging pour diagnostiquer le problème
+        const isSilentGetRequest = 
+          (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'get') ||
+          (originalRequest.url?.includes('/blocks/types/') && originalRequest.method?.toLowerCase() === 'get') ||
+          (originalRequest.url?.includes('/users/impersonation-status/') && originalRequest.method?.toLowerCase() === 'get');
+        
+        if (!isSilentGetRequest) {
+          console.error('❌ Erreur lors du rafraîchissement du token pour super admin', {
+            url: originalRequest.url,
+            method: originalRequest.method,
+            refreshErrorStatus: refreshError?.response?.status,
+            refreshErrorDetails: refreshError?.response?.data || refreshError?.message,
+            originalErrorStatus: status,
+            originalErrorUrl: url
+          });
+        }
+        
+        // Si c'est une requête GET vers /system-settings/, /blocks/types/, ou /users/impersonation-status/, retourner des données par défaut plutôt que de rejeter
+        if (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'get') {
+          console.warn('⚠️ Échec du rafraîchissement du token, utilisation de données par défaut pour /system-settings/');
+          return Promise.resolve({ 
+            data: { public_pages: {}, public_homepage_blocks: [] }, 
+            status: 200, 
+            statusText: 'OK', 
+            headers: {}, 
+            config: originalRequest 
+          });
+        }
+        if (originalRequest.url?.includes('/blocks/types/') && originalRequest.method?.toLowerCase() === 'get') {
+          console.warn('⚠️ Échec du rafraîchissement du token, utilisation de données par défaut pour /blocks/types/');
+          return Promise.resolve({ 
+            data: [], 
+            status: 200, 
+            statusText: 'OK', 
+            headers: {}, 
+            config: originalRequest 
+          });
+        }
+        
+        // Pour les requêtes PATCH vers /system-settings/, logger un message clair indiquant que le refresh token est expiré
+        if (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'patch') {
+          console.error('❌ Échec du rafraîchissement du token pour PATCH /system-settings/. Le refresh token est probablement expiré. Veuillez vous reconnecter.');
+          // Rejeter avec un message clair pour que l'utilisateur sache qu'il doit se reconnecter
+          return Promise.reject(new Error('Token de rafraîchissement expiré. Veuillez vous reconnecter pour continuer.'));
+        }
+        if (originalRequest.url?.includes('/users/impersonation-status/') && originalRequest.method?.toLowerCase() === 'get') {
+          console.warn('⚠️ Échec du rafraîchissement du token, utilisation de données par défaut pour /users/impersonation-status/');
+          return Promise.resolve({ 
+            data: { is_impersonating: false, impersonator_email: null }, 
+            status: 200, 
+            statusText: 'OK', 
+            headers: {}, 
+            config: originalRequest 
+          });
+        }
+        // Pour les requêtes PATCH vers /system-settings/, logger l'erreur pour diagnostic mais ne pas créer de boucle
+        if (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'patch') {
+          console.error('❌ Échec du rafraîchissement du token pour PATCH /system-settings/. Le refresh token est probablement expiré. Veuillez vous reconnecter.', {
+            url: originalRequest.url,
+            method: originalRequest.method,
+            hasRefreshToken: !!localStorage.getItem('refresh_token'),
+            refreshErrorStatus: refreshError?.response?.status,
+            refreshErrorData: refreshError?.response?.data,
+          });
+          // Retourner une erreur claire pour que l'utilisateur sache qu'il doit se reconnecter
+          return Promise.reject(new Error('Token expiré. Veuillez vous reconnecter pour sauvegarder vos modifications.'));
+        }
+        // Ne pas logger d'erreur si c'est juste que le refresh token n'existe pas
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (refreshToken) {
+          // Seulement logger si on avait un refresh token mais que ça a échoué
+          // et seulement en mode développement
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('⚠️ Échec du rafraîchissement du token (peut être normal si le token est expiré):', refreshError);
+          }
+        }
+        // Rejeter avec l'erreur originale
+        return Promise.reject(error);
       });
     }
     

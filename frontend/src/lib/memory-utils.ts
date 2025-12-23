@@ -65,13 +65,40 @@ export function deepEqual(obj1: any, obj2: any, maxDepth: number = 5, currentDep
 /**
  * Hash simple pour comparer rapidement de gros objets
  * Utilise une fonction de hash rapide au lieu de JSON.stringify
+ * Ignore les propriétés qui ne devraient pas déclencher de sauvegarde (comme les états de sélection)
  */
-export function quickHash(obj: any): string {
+export function quickHash(obj: any, depth: number = 0, maxDepth: number = 10): string {
+  if (depth > maxDepth) return 'max_depth'
   if (obj === null || obj === undefined) return 'null'
   if (typeof obj !== 'object') return String(obj)
   
-  // Pour les tableaux et objets, créer un hash basé sur les clés et valeurs
-  const keys = Object.keys(obj).sort()
+  // Pour les tableaux, créer un hash basé sur les éléments
+  if (Array.isArray(obj)) {
+    const hashParts: string[] = []
+    for (let i = 0; i < obj.length; i++) {
+      const item = obj[i]
+      if (item === null || item === undefined) {
+        hashParts.push(`[${i}]:null`)
+      } else if (typeof item === 'object') {
+        // Pour les blocs, ignorer les propriétés qui ne sont pas pertinentes pour la sauvegarde
+        if (item.id && item.type) {
+          // C'est probablement un bloc - créer un hash basé sur les propriétés importantes uniquement
+          const blockHash = quickHashBlock(item, depth + 1, maxDepth)
+          hashParts.push(`[${i}]:${blockHash}`)
+        } else {
+          hashParts.push(`[${i}]:${quickHash(item, depth + 1, maxDepth)}`)
+        }
+      } else {
+        hashParts.push(`[${i}]:${String(item)}`)
+      }
+    }
+    return `[${hashParts.join('|')}]`
+  }
+  
+  // Pour les objets, créer un hash basé sur les clés et valeurs
+  // Ignorer les propriétés qui ne devraient pas déclencher de sauvegarde
+  const ignoredKeys = ['_selected', '_hovered', '_active', '__selected', '__hovered', '__active']
+  const keys = Object.keys(obj).filter(key => !ignoredKeys.includes(key)).sort()
   const hashParts: string[] = []
   
   for (const key of keys) {
@@ -80,13 +107,45 @@ export function quickHash(obj: any): string {
       hashParts.push(`${key}:null`)
     } else if (typeof value === 'object') {
       // Limiter la profondeur pour éviter les problèmes de mémoire
-      hashParts.push(`${key}:${quickHash(value)}`)
+      hashParts.push(`${key}:${quickHash(value, depth + 1, maxDepth)}`)
     } else {
       hashParts.push(`${key}:${String(value)}`)
     }
   }
   
-  return hashParts.join('|')
+  return `{${hashParts.join('|')}}`
+}
+
+/**
+ * Hash optimisé pour les blocs - ignore les propriétés non pertinentes
+ */
+function quickHashBlock(block: any, depth: number, maxDepth: number): string {
+  if (depth > maxDepth) return 'max_depth'
+  
+  // Propriétés importantes pour la sauvegarde
+  const importantProps = ['id', 'type', 'data', 'styles', 'layout', 'container', 'children']
+  const hashParts: string[] = []
+  
+  for (const prop of importantProps) {
+    const value = block[prop]
+    if (value === null || value === undefined) {
+      hashParts.push(`${prop}:null`)
+    } else if (prop === 'children' && Array.isArray(value)) {
+      // Hasher récursivement les enfants
+      const childrenHash = value.map((child: any, index: number) => 
+        child?.id && child?.type 
+          ? quickHashBlock(child, depth + 1, maxDepth)
+          : quickHash(child, depth + 1, maxDepth)
+      ).join('|')
+      hashParts.push(`${prop}:[${childrenHash}]`)
+    } else if (typeof value === 'object') {
+      hashParts.push(`${prop}:${quickHash(value, depth + 1, maxDepth)}`)
+    } else {
+      hashParts.push(`${prop}:${String(value)}`)
+    }
+  }
+  
+  return `block:${hashParts.join('|')}`
 }
 
 /**

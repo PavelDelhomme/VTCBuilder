@@ -17,6 +17,7 @@ from .serializers import (
     InvoiceSerializer, PaymentSerializer, PaymentMethodSerializer, InvoiceTemplateSerializer
 )
 from tenants.models import Tenant
+from api.mixins import CORSMixin
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ def add_cors_headers(response, request):
         logger.warning(f"Error adding CORS headers: {e}")
 
 
-class PricingPlanViewSet(viewsets.ModelViewSet):
+class PricingPlanViewSet(CORSMixin, viewsets.ModelViewSet):
     """ViewSet for managing pricing plans"""
     queryset = PricingPlan.objects.all()
     serializer_class = PricingPlanSerializer
@@ -85,16 +86,14 @@ class PricingPlanViewSet(viewsets.ModelViewSet):
         """List pricing plans with error handling - public access allowed"""
         try:
             response = super().list(request, *args, **kwargs)
-            add_cors_headers(response, request)
+            # Ne pas ajouter les headers CORS ici - le middleware CORSAlwaysMiddleware s'en charge
+            # Cela évite le problème ".accepted_renderer not set on Response"
             return response
         except Exception as e:
             logger.error(f"Error in PricingPlanViewSet.list: {e}", exc_info=True)
-            error_response = Response({
-                'error': 'An error occurred while fetching pricing plans',
-                'message': str(e) if settings.DEBUG else 'Unable to load pricing plans'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            add_cors_headers(error_response, request)
-            return error_response
+            # Laisser DRF gérer l'exception normalement - les headers CORS seront ajoutés par le middleware
+            # Ne pas créer une nouvelle Response ici car elle n'aura pas de renderer défini
+            raise
 
     def create(self, request, *args, **kwargs):
         """Only super admin can create pricing plans"""

@@ -143,10 +143,33 @@ class SuppressExpected401Middleware(MiddlewareMixin):
             if has_auth:
                 auth_header = request.headers.get('Authorization') or request.META.get('HTTP_AUTHORIZATION', '')
                 auth_preview = auth_header[:50] if auth_header else 'empty'
+            # Vérifier l'authentification depuis le token JWT si DRF n'a pas encore authentifié
+            user_email = 'anonymous'
+            is_authenticated = False
+            if request.user and hasattr(request.user, 'email'):
+                user_email = request.user.email
+                is_authenticated = request.user.is_authenticated
+            elif has_auth:
+                # Essayer d'authentifier depuis le token JWT
+                try:
+                    from rest_framework_simplejwt.authentication import JWTAuthentication
+                    jwt_auth = JWTAuthentication()
+                    header = jwt_auth.get_header(request)
+                    if header:
+                        raw_token = jwt_auth.get_raw_token(header)
+                        if raw_token:
+                            validated_token = jwt_auth.get_validated_token(raw_token)
+                            user = jwt_auth.get_user(validated_token)
+                            if user:
+                                user_email = user.email if hasattr(user, 'email') else 'authenticated'
+                                is_authenticated = True
+                except Exception:
+                    pass
+            
             logger.info(
                 f"SuppressExpected401Middleware.process_request: {request.method} {request.path}. "
-                f"User: {request.user.email if request.user and hasattr(request.user, 'email') else 'anonymous'}, "
-                f"is_authenticated: {request.user.is_authenticated if request.user else False}, "
+                f"User: {user_email}, "
+                f"is_authenticated: {is_authenticated}, "
                 f"auth_header={'present' if has_auth else 'missing'}, "
                 f"auth_preview: {auth_preview}, "
                 f"Content-Type: {request.META.get('CONTENT_TYPE', 'not set')}"

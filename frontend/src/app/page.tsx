@@ -307,9 +307,11 @@ export default function HomePage() {
   // La page d'accueil peut être administrée via /admin/pages-public/edit/home
   // Les blocs contiennent déjà header et footer, donc pas besoin de PublicHeader/PublicFooter
   if (useBlocks && homepageStatus === 'published' && homepageBlocks.length > 0) {
+    // Les blocs sont gérés dans le tenant du projet admin, pas directement dans les fichiers tsx
+    // Le thème est déterminé par le système de thème global
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900">
-        <BlockPreview blocks={homepageBlocks} blockTypes={[]} />
+      <div className="min-h-screen">
+        <BlockPreview blocks={homepageBlocks} blockTypes={[]} theme="light" />
       </div>
     )
   }

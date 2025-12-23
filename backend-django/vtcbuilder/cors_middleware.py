@@ -97,32 +97,54 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
                 '/api/users/impersonation-status',
                 '/api/system-settings',
                 '/api/pricing-plans',
+                '/api/billing/pricing-plans',
                 '/api/blocks/types',
                 '/api/projects/page-projects',
             ]
             path = request.path.rstrip('/')
             for endpoint in silent_endpoints:
-                if path == endpoint or path == endpoint + '/' or path.startswith(endpoint + '?'):
+                if path == endpoint or path == endpoint + '/' or path.startswith(endpoint + '/'):
                     # Ne pas logger cette erreur - c'est attendu
                     # Marquer la réponse pour supprimer le log
                     response._suppress_logging = True
                     break
         
-        # Toujours ajouter les headers CORS, même pour les erreurs
-        return self._add_cors_headers(response, request)
+        # Pour les réponses DRF, ne JAMAIS essayer de les rendre ou d'accéder à accepted_renderer
+        # Le problème est que Django peut appeler response.render() automatiquement, ce qui déclenche
+        # l'assertion si accepted_renderer n'est pas encore défini.
+        # Solution: Ne pas toucher aux réponses DRF dans process_response - laisser CORSMixin/finalize_response s'en charger
+        from rest_framework.response import Response as DRFResponse
+        if isinstance(response, DRFResponse):
+            # Pour les réponses DRF, ne pas ajouter les headers ici car:
+            # 1. CORSMixin.finalize_response s'en charge déjà (appelé AVANT process_response)
+            # 2. Accéder à response peut déclencher le rendu et l'assertion
+            # 3. Django peut appeler response.render() automatiquement, ce qui déclenche l'assertion
+            # 
+            # IMPORTANT: Ne rien faire avec les réponses DRF ici - laisser CORSMixin.finalize_response gérer
+            # Les headers CORS sont déjà ajoutés par CORSMixin avant que process_response ne soit appelé
+            # 
+            # CRITIQUE: Ne même pas accéder à response.status_code pour les réponses DRF car cela peut déclencher le rendu
+            # Utiliser hasattr pour vérifier le type sans accéder aux propriétés
+            return response
+        else:
+            # Pour les autres types de réponses (HttpResponse, JsonResponse, etc.), ajouter les headers normalement
+            return self._add_cors_headers(response, request)
     
     def process_exception(self, request, exception):
         """
-        Si une exception est levée, retourner une réponse avec headers CORS
+        Si une exception est levée, ne pas retourner de réponse directement
+        Laisser Django/DRF gérer l'exception normalement
+        Les headers CORS seront ajoutés dans process_response
         """
-        from django.http import JsonResponse
+        # Ne pas logger les exceptions attendues (comme ValidationError, PermissionDenied, etc.)
+        # car elles sont gérées par DRF
+        import logging
+        logger = logging.getLogger(__name__)
         
-        logger.error(f"Exception in CORSAlwaysMiddleware: {exception}", exc_info=True)
+        # Seulement logger les exceptions inattendues
+        from rest_framework.exceptions import APIException
+        if not isinstance(exception, APIException):
+            logger.error(f"Exception in CORSAlwaysMiddleware: {exception}", exc_info=True)
         
-        # Créer une réponse d'error avec headers CORS
-        error_response = JsonResponse({
-            'error': 'Internal server error',
-            'message': str(exception) if settings.DEBUG else 'An error occurred'
-        }, status=500)
-        
-        return self._add_cors_headers(error_response, request)
+        # Ne pas retourner de réponse - laisser Django/DRF gérer l'exception
+        return None

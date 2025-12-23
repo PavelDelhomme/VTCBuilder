@@ -26,6 +26,27 @@ export const renderFooter = ({ block, wrapperStyles, theme }: RendererProps): Re
   const legalLinks = safeBlock.data.legal_links || []
   const showSocialLinks = safeBlock.data.show_social_links !== false
   
+  // Construire les colonnes finales : utiliser columns si disponibles, sinon construire depuis links/legal_links
+  let finalColumns = footerColumns
+  if (finalColumns.length === 0) {
+    // Construire les colonnes depuis links et legal_links
+    finalColumns = []
+    if (footerLinks.length > 0) {
+      finalColumns.push({
+        title: 'Produit',
+        description: '',
+        links: footerLinks
+      })
+    }
+    if (legalLinks.length > 0) {
+      finalColumns.push({
+        title: 'Légal',
+        description: '',
+        links: legalLinks
+      })
+    }
+  }
+  
   return (
     <footer style={wrapperStyles || {}} className={`mb-0 ${footerIsDark ? 'bg-gray-800' : 'bg-gray-100'} ${footerIsDark ? 'text-gray-100' : 'text-gray-900'} py-8 sm:py-12 w-full min-w-0 overflow-hidden`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full min-w-0">
@@ -44,77 +65,40 @@ export const renderFooter = ({ block, wrapperStyles, theme }: RendererProps): Re
             )}
           </div>
         )}
-        {(footerColumns.length > 0 || footerLinks.length > 0 || legalLinks.length > 0) ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 w-full min-w-0 mb-8">
-            {footerColumns.length > 0 ? (
-              footerColumns.map((column: any, colIndex: number) => (
-                <div key={colIndex} className="min-w-0 overflow-hidden">
-                  {column.title && (
-                    <h3 className={`${colIndex === 0 ? 'text-lg sm:text-xl font-bold' : 'font-bold text-base sm:text-lg'} mb-3 sm:mb-4 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'} break-words`}>
-                      {column.title}
-                    </h3>
-                  )}
-                  {column.description && (
-                    <p className={`text-sm sm:text-base ${footerIsDark ? 'text-gray-300' : 'text-gray-600'} mb-3 sm:mb-4 break-words`}>{column.description}</p>
-                  )}
-                  {(column.links || []).length > 0 && (
-                    <ul className={`space-y-2 text-sm sm:text-base ${footerIsDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {(column.links || []).map((link: any, linkIndex: number) => (
-                        <li key={linkIndex} className="break-words">
-                          <a
-                            href={link.url || '#'}
-                            className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors break-words`}
-                          >
-                            {link.label || 'Lien'}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))
-            ) : (
-              <>
-                {footerLinks.length > 0 && (
-                  <div className="min-w-0 overflow-hidden">
-                    {footerLinks.length > 0 && (
-                      <h4 className={`font-bold mb-4 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'}`}>
-                        {footerTitle || 'Liens'}
-                      </h4>
-                    )}
-                    <ul className={`space-y-2 text-sm sm:text-base ${footerIsDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {footerLinks.map((link: any, linkIndex: number) => (
-                        <li key={linkIndex} className="break-words">
-                          <a
-                            href={link.url || '#'}
-                            className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors break-words`}
-                          >
-                            {link.label || 'Lien'}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+        {finalColumns.length > 0 ? (
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${Math.min(finalColumns.length, 4)} gap-6 sm:gap-8 w-full min-w-0 mb-8`}>
+            {finalColumns.map((column: any, colIndex: number) => (
+              <div 
+                key={colIndex} 
+                data-sub-element-type="footer-column"
+                data-sub-element-index={colIndex}
+                data-block-id={block.id}
+                className="min-w-0 overflow-hidden cursor-pointer"
+              >
+                {column.title && (
+                  <h3 className={`font-bold text-base sm:text-lg mb-3 sm:mb-4 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'} break-words`}>
+                    {column.title}
+                  </h3>
                 )}
-                {legalLinks.length > 0 && (
-                  <div className="min-w-0 overflow-hidden">
-                    <h4 className={`font-bold mb-4 ${footerIsDark ? 'text-gray-100' : 'text-gray-900'}`}>Légal</h4>
-                    <ul className={`space-y-2 text-sm sm:text-base ${footerIsDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {legalLinks.map((link: any, linkIndex: number) => (
-                        <li key={linkIndex} className="break-words">
-                          <a
-                            href={link.url || '#'}
-                            className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors break-words`}
-                          >
-                            {link.label || 'Lien'}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                {column.description && (
+                  <p className={`text-sm sm:text-base ${footerIsDark ? 'text-gray-300' : 'text-gray-600'} mb-3 sm:mb-4 break-words`}>{column.description}</p>
                 )}
-              </>
-            )}
+                {(column.links || []).length > 0 && (
+                  <ul className={`space-y-2 text-sm sm:text-base ${footerIsDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {(column.links || []).map((link: any, linkIndex: number) => (
+                      <li key={linkIndex} className="break-words">
+                        <a
+                          href={link.url || '#'}
+                          className={`${footerIsDark ? 'hover:text-gray-100' : 'hover:text-gray-900'} transition-colors break-words`}
+                        >
+                          {link.label || 'Lien'}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
           </div>
         ) : (
           // Footer par défaut si aucune colonne n'est configurée

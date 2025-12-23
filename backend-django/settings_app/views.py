@@ -51,33 +51,44 @@ class IsSuperAdminOrReadOnly(BasePermission):
             return True
         
         # For all other methods (POST, PATCH, PUT, DELETE), require super admin
-        # Vérifier d'abord depuis request.user (DRF peut avoir authentifié)
+        # PRIORITÉ: Vérifier d'abord depuis le token JWT directement (source de vérité)
+        # Ensuite, vérifier depuis request.user comme fallback
         is_super_admin = False
         user_email = 'unknown'
         
-        # Si DRF a authentifié, vérifier depuis request.user
-        if request.user and request.user.is_authenticated:
+        # PRIORITÉ 1: Vérifier depuis le token JWT directement (source de vérité)
+        is_super_admin = is_super_admin_from_token(request)
+        if is_super_admin:
+            user_from_token, _ = get_authenticated_user_from_token(request)
+            if user_from_token:
+                user_email = user_from_token.email if hasattr(user_from_token, 'email') else 'unknown'
+        
+        # PRIORITÉ 2: Si pas encore vérifié, essayer depuis request.user (DRF peut avoir authentifié)
+        if not is_super_admin and request.user and request.user.is_authenticated:
             try:
                 if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
                     is_super_admin = request.user.is_super_admin()
                 elif hasattr(request.user, 'is_superuser'):
                     is_super_admin = request.user.is_superuser
-                user_email = request.user.email if hasattr(request.user, 'email') else 'unknown'
+                if not user_email or user_email == 'unknown':
+                    user_email = request.user.email if hasattr(request.user, 'email') else 'unknown'
             except Exception as e:
                 logger.warning(f"Error checking super admin from request.user: {e}")
         
-        # Si pas encore vérifié, essayer depuis le token JWT directement
         if not is_super_admin:
-            is_super_admin = is_super_admin_from_token(request)
-            if is_super_admin:
-                user_from_token, _ = get_authenticated_user_from_token(request)
-                if user_from_token:
-                    user_email = user_from_token.email if hasattr(user_from_token, 'email') else 'unknown'
-        
-        if not is_super_admin:
+            # Log détaillé pour diagnostic
+            has_auth_header = 'HTTP_AUTHORIZATION' in request.META or 'Authorization' in request.headers
+            auth_header_preview = ''
+            if has_auth_header:
+                auth_header = request.META.get('HTTP_AUTHORIZATION', '') or request.headers.get('Authorization', '')
+                auth_header_preview = auth_header[:50] if auth_header else 'empty'
+            
             logger.warning(
                 f"IsSuperAdminOrReadOnly: Permission denied for {request.method} {request.path}. "
-                f"User: {user_email} is not super admin (verified from JWT token)."
+                f"User: {user_email} is not super admin (verified from JWT token). "
+                f"Auth header present: {has_auth_header}, Auth preview: {auth_header_preview}, "
+                f"request.user authenticated: {request.user.is_authenticated if request.user else False}, "
+                f"request.user: {request.user.email if request.user and hasattr(request.user, 'email') else 'not set'}"
             )
         else:
             logger.info(
@@ -222,16 +233,28 @@ def system_settings_view(request):
             add_cors_headers(response, request)
             return response
         
-        # IsSuperAdminOrOptions already checks authentication and super admin status
+        # IsSuperAdminOrReadOnly already checks authentication and super admin status
         # Log user info for debugging
         user_email = getattr(request.user, 'email', 'unknown')
         user_id = getattr(request.user, 'id', None)
         has_auth_header = 'HTTP_AUTHORIZATION' in request.META
         auth_header = request.META.get('HTTP_AUTHORIZATION', 'not present')[:50] if has_auth_header else 'not present'
-        logger.info(
-            f"System settings request ({request.method}) - User: {user_email} (ID: {user_id}), "
-            f"Auth header present: {has_auth_header}, Auth header preview: {auth_header}"
-        )
+        
+        # Vérifier le statut super admin depuis le token pour les requêtes non-GET
+        is_super_admin_from_token_check = False
+        if request.method != 'GET':
+            is_super_admin_from_token_check = is_super_admin_from_token(request)
+            logger.info(
+                f"System settings {request.method} request - User: {user_email} (ID: {user_id}), "
+                f"Auth header present: {has_auth_header}, Auth header preview: {auth_header}, "
+                f"is_super_admin_from_token: {is_super_admin_from_token_check}, "
+                f"request.user.is_authenticated: {request.user.is_authenticated if request.user else False}"
+            )
+        else:
+            logger.info(
+                f"System settings request ({request.method}) - User: {user_email} (ID: {user_id}), "
+                f"Auth header present: {has_auth_header}, Auth header preview: {auth_header}"
+            )
         
         # GET - Retrieve settings
         if request.method == 'GET':

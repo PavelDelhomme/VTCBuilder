@@ -43,8 +43,11 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
 
     if (!enabled || !data) return
 
+    // Calculer le hash actuel
+    const currentHash = quickHash(data)
+    
     // Vérifier si les données ont vraiment changé (comparaison par hash)
-    if (!hasDataChanged(lastSavedHashRef.current, data)) {
+    if (lastSavedHashRef.current === currentHash) {
       return // Pas de changement, pas de sauvegarde
     }
 
@@ -56,8 +59,8 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
     // Set new timeout (2 secondes par défaut)
     timeoutRef.current = window.setTimeout(async () => {
       // Vérifier une dernière fois si les données ont changé
-      const currentHash = quickHash(data)
-      if (lastSavedHashRef.current === currentHash) {
+      const finalHash = quickHash(data)
+      if (lastSavedHashRef.current === finalHash) {
         return
       }
 
@@ -66,7 +69,7 @@ export function useAutoSave({ data, onSave, debounceMs = 2000, enabled = true }:
       try {
         // Utiliser la fonction onSave stockée dans une ref pour éviter les problèmes de dépendances
         await onSaveRef.current(data)
-        lastSavedHashRef.current = currentHash
+        lastSavedHashRef.current = finalHash
         setLastSaved(new Date())
       } catch (error: any) {
         // Ignorer silencieusement les erreurs de requêtes annulées ou les 403 pour /system-settings/

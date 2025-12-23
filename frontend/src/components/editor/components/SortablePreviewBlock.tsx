@@ -53,8 +53,22 @@ export function SortablePreviewBlock({
       className={`mb-6 relative group ${isInteractive ? 'cursor-move' : isEditable ? 'cursor-pointer' : ''} ${
         isSelected ? 'ring-4 ring-blue-500 ring-offset-4 shadow-lg' : ''
       } ${isEditable && !isSelected ? 'hover:ring-2 hover:ring-blue-300 hover:ring-offset-2' : ''}`}
-      onClick={onClick}
-      onDoubleClick={isEditable ? onDoubleClick : undefined}
+      onClick={(e) => {
+        // Vérifier si on clique sur un enfant avant de sélectionner le parent
+        const target = e.target as HTMLElement
+        const childElement = target.closest('[data-child-block-id]')
+        if (!childElement) {
+          onClick()
+        }
+      }}
+      onDoubleClick={isEditable ? (e) => {
+        // Vérifier si on double-clique sur un enfant avant de sélectionner le parent
+        const target = e.target as HTMLElement
+        const childElement = target.closest('[data-child-block-id]')
+        if (!childElement) {
+          onDoubleClick()
+        }
+      } : undefined}
       onContextMenu={isEditable ? onRightClick : undefined}
       {...(isInteractive ? { ...attributes, ...listeners } : {})}
     >

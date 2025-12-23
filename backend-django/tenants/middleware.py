@@ -26,6 +26,7 @@ class UserStatusMiddleware:
             '/api/auth/register',
             '/api/auth/register-with-plan',
             '/api/auth/logout',  # Allow logout even if suspended
+            '/api/auth/refresh',  # Allow token refresh even if expired - CRITICAL: Must be public
             '/api/auth/reset-password/request',
             '/api/auth/reset-password/reset',
             '/api/auth/reset-password/verify',
@@ -41,8 +42,17 @@ class UserStatusMiddleware:
         path_without_query = request.path.split('?')[0]  # Remove query params
         path_normalized = path_without_query.rstrip('/')  # Remove trailing slash
         
-        if any(path_normalized.startswith(path.rstrip('/')) for path in public_paths):
-            return self.get_response(request)
+        # Vérifier si le chemin correspond exactement ou commence par un chemin public
+        for public_path in public_paths:
+            public_path_normalized = public_path.rstrip('/')
+            # Correspondance exacte ou le chemin commence par le chemin public
+            if path_normalized == public_path_normalized or path_normalized.startswith(public_path_normalized + '/'):
+                # Log pour debug si c'est /auth/refresh
+                if 'refresh' in path_normalized:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.info(f"UserStatusMiddleware: Allowing public access to {request.path} (refresh token endpoint)")
+                return self.get_response(request)
 
         # Check user status for authenticated requests
         try:

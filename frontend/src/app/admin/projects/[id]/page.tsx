@@ -35,6 +35,8 @@ export default function ProjectDetailPage() {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [creatingSubPage, setCreatingSubPage] = useState<string | null>(null)
   const [subPageName, setSubPageName] = useState<string>('')
+  const [expandedPages, setExpandedPages] = useState<Set<number>>(new Set()) // Pages avec sous-pages dépliées
+  const [draggedPageId, setDraggedPageId] = useState<number | null>(null)
 
   // Ref pour éviter les exécutions multiples du nettoyage (désactivé - nettoyage automatique supprimé)
   // const cleanupExecutedRef = useRef(false)
@@ -1275,7 +1277,7 @@ export default function ProjectDetailPage() {
                     )}
                     
                     {/* Affichage des sous-pages */}
-                    {children.length > 0 && (
+                    {children.length > 0 && expandedPages.has(parent.id) && (
                       <div className="ml-6 space-y-2 border-l-2 border-indigo-200 dark:border-indigo-800 pl-4">
                         {children.map((childPage: ProjectPage) => {
                           // Find child page data based on page_type

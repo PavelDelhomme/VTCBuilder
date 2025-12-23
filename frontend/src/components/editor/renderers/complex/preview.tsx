@@ -5,11 +5,10 @@
 import React from 'react'
 import Link from 'next/link'
 import { RendererProps } from '../types'
-import { useTheme } from '@/contexts/ThemeContext'
 
 function HeroComponent({ block, wrapperStyles, contentStyles, theme }: RendererProps): React.ReactElement {
-  const { resolvedTheme } = useTheme()
-  const currentTheme = resolvedTheme || theme || 'light'
+  // Utiliser uniquement le thème de prévisualisation, pas le thème global
+  const currentTheme = theme || 'light'
   
   if (!block) {
     return <div className="p-4 text-red-600">Erreur : Bloc non défini</div>
@@ -105,7 +104,7 @@ function HeroComponent({ block, wrapperStyles, contentStyles, theme }: RendererP
   
   return (
     <section 
-      className={`w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 text-center transition-colors duration-300 ${
+      className={`w-full max-w-7xl mx-auto px-1 xs:px-2 sm:px-4 md:px-6 lg:px-8 py-12 xs:py-16 sm:py-20 md:py-24 lg:py-32 text-center transition-colors duration-300 ${
         !safeBlock.data.background_type && !safeBlock.data.background_image && !safeBlock.data.background_color && !safeBlock.data.background_gradient
           ? currentTheme === 'dark'
             ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
@@ -130,7 +129,7 @@ function HeroComponent({ block, wrapperStyles, contentStyles, theme }: RendererP
       }}
     >
       <h1 
-        className={`text-4xl md:text-6xl font-extrabold mb-6 ${
+        className={`text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-3 xs:mb-4 sm:mb-5 md:mb-6 ${
           currentTheme === 'dark' ? 'text-white' : 'text-white'
         }`}
         style={{
@@ -147,7 +146,7 @@ function HeroComponent({ block, wrapperStyles, contentStyles, theme }: RendererP
       </h1>
       {safeBlock.data.subtitle && (
         <p 
-          className={`text-xl md:text-2xl mb-8 max-w-3xl mx-auto ${
+          className={`text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl mb-4 xs:mb-5 sm:mb-6 md:mb-8 max-w-3xl mx-auto px-1 xs:px-2 ${
             currentTheme === 'dark' ? 'text-white/90' : 'text-white/90'
           }`}
           style={{
@@ -164,11 +163,14 @@ function HeroComponent({ block, wrapperStyles, contentStyles, theme }: RendererP
         </p>
       )}
       {heroButtons.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-2 xs:gap-3 sm:gap-4 justify-center px-1 xs:px-2">
           {heroButtons.map((btn: any, index: number) => (
             <Link
               key={index}
               href={btn.url || '#'}
+              data-sub-element-type="hero-button"
+              data-sub-element-index={index}
+              data-block-id={block.id}
               onClick={(e) => {
                 // Si c'est un lien d'ancrage (#pricing), faire défiler vers l'élément
                 if (btn.url && btn.url.startsWith('#')) {
@@ -180,7 +182,7 @@ function HeroComponent({ block, wrapperStyles, contentStyles, theme }: RendererP
                   }
                 }
               }}
-              className={`px-8 py-4 rounded-lg font-bold text-lg transition-colors ${
+              className={`px-4 xs:px-5 sm:px-6 md:px-8 py-2 xs:py-2.5 sm:py-3 md:py-4 rounded-lg font-bold text-xs xs:text-sm sm:text-base md:text-lg transition-colors ${
                 btn.style === 'primary'
                   ? currentTheme === 'dark'
                     ? 'bg-white text-gray-900 hover:bg-gray-100 shadow-xl'
@@ -258,7 +260,10 @@ export const renderFeaturesGrid = ({ block, wrapperStyles, contentStyles, theme 
             return (
               <div 
                 key={i} 
-                className="text-center p-4 sm:p-6 rounded-xl hover:shadow-xl hover:scale-105 transition-all min-w-0 overflow-hidden relative group"
+                data-sub-element-type="feature"
+                data-sub-element-index={i}
+                data-block-id={block.id}
+                className="text-center p-4 sm:p-6 rounded-xl hover:shadow-xl hover:scale-105 transition-all min-w-0 overflow-hidden relative group cursor-pointer"
                 style={cardStyle}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.boxShadow = isDark

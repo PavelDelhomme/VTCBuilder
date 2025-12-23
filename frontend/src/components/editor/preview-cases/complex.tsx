@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { PreviewCaseProps } from './types'
 import authService from '@/services/auth.service'
+import api from '@/lib/api'
 import { renderHero as renderHeroFromPreview } from '../renderers/complex/preview'
 import { renderFeaturesGrid as renderFeaturesGridFromPreview } from '../renderers/complex/preview'
 import { renderCTASection as renderCTASectionFromComplex } from '../renderers/complex/cta-section'
@@ -82,43 +83,40 @@ export function renderPricing(props: PreviewCaseProps): React.ReactElement | nul
       // Si source est 'api' ou 'dynamic', récupérer depuis l'API
       if (block.data.source === 'api' || block.data.source === 'dynamic') {
         setLoading(true)
-        const apiUrl = block.data.api_endpoint || '/api/billing/pricing-plans/'
-        const fullUrl = apiUrl.startsWith('http') ? apiUrl : `${window.location.origin}${apiUrl}`
-        fetch(fullUrl, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          credentials: 'include',
-        })
-          .then(async res => {
-            if (!res.ok) {
-              if (res.status === 401 || res.status === 403) {
-                // Si non autorisé, utiliser les plans par défaut
-                setPlans(block.data.plans || [])
-                return
-              }
-              throw new Error(`HTTP error! status: ${res.status}`)
-            }
-            const data = await res.json()
+        // Utiliser /api/pricing-plans/ comme valeur par défaut (endpoint correct)
+        const apiUrl = block.data.api_endpoint || '/api/pricing-plans/'
+        // Nettoyer l'URL pour qu'elle soit relative à /api
+        const cleanUrl = apiUrl.startsWith('/api/') 
+          ? apiUrl.replace('/api/', '/') 
+          : apiUrl.startsWith('/') 
+            ? apiUrl.substring(1)
+            : apiUrl
+        
+        api.get(cleanUrl)
+          .then((response) => {
+            const data = response.data
             // Convertir les plans de l'API au format attendu
             const formattedPlans = Array.isArray(data) ? data : (data.results || [])
             setPlans(formattedPlans.map((plan: any) => ({
               name: plan.name,
               description: plan.description,
-              price_monthly: plan.price_monthly,
+              price: plan.price_monthly || plan.price || 0,
+              price_monthly: plan.price_monthly || plan.price,
               price_yearly: plan.price_yearly,
               currency: plan.currency || 'EUR',
-              badge: plan.is_featured ? 'POPULAIRE' : '',
-              is_featured: plan.is_featured,
+              featured: plan.is_featured || plan.featured || false,
+              is_featured: plan.is_featured || plan.featured || false,
               features: plan.features || [],
-              button_text: 'Choisir ce plan',
-              button_url: `/register?plan=${plan.slug || plan.id}`,
-              button_style: plan.is_featured ? 'primary' : 'secondary'
+              button_text: plan.button_text || 'Choisir ce plan',
+              button_url: plan.button_url || `/register?plan=${plan.slug || plan.id}`,
+              button_style: (plan.is_featured || plan.featured) ? 'primary' : 'secondary'
             })))
           })
           .catch((error) => {
-            console.warn('Erreur lors du chargement des plans depuis l\'API:', error)
+            // Ne logger que si ce n'est pas une erreur silencieuse (403 pour non-super-admin, etc.)
+            if (!error?.silent && !error?.config?.silent) {
+              console.warn('Erreur lors du chargement des plans depuis l\'API:', error)
+            }
             // En cas d'erreur, utiliser les plans par défaut
             setPlans(block.data.plans || [])
           })
@@ -151,11 +149,16 @@ export function renderPricing(props: PreviewCaseProps): React.ReactElement | nul
         {plans.length > 0 ? (
           <div className={`grid grid-cols-1 md:grid-cols-${Math.min(plans.length, 4)} gap-6 px-4 sm:px-6 lg:px-8`}>
             {plans.map((plan: any, index: number) => {
-              const isFeatured = plan.featured || block.data.featured_plan_override === index
+              const isFeatured = plan.featured || plan.is_featured || block.data.featured_plan_override === index
+              const planPrice = plan.price || plan.price_monthly || 0
+              const planCurrency = plan.currency || '€'
               return (
                 <div
                   key={index}
-                  className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border-2 ${isFeatured ? 'border-blue-500' : isDark ? 'border-gray-700' : 'border-gray-200'} p-6 relative ${isFeatured ? 'transform scale-105' : ''}`}
+                  data-sub-element-type="pricing-plan"
+                  data-sub-element-index={index}
+                  data-block-id={block.id}
+                  className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg border-2 ${isFeatured ? 'border-blue-500' : isDark ? 'border-gray-700' : 'border-gray-200'} p-6 relative ${isFeatured ? 'transform scale-105' : ''} cursor-pointer`}
                 >
                   {isFeatured && (
                     <div className="absolute top-0 right-0 bg-blue-600 text-white px-3 py-1 rounded-bl-lg text-xs font-bold">
@@ -168,7 +171,7 @@ export function renderPricing(props: PreviewCaseProps): React.ReactElement | nul
                     </h3>
                   )}
                   <div className={`text-4xl font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'} mb-4`}>
-                    {plan.price || 0} {plan.currency || '€'}
+                    {planPrice} {planCurrency}
                   </div>
                   {plan.description && (
                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
@@ -185,14 +188,17 @@ export function renderPricing(props: PreviewCaseProps): React.ReactElement | nul
                       ))}
                     </ul>
                   )}
-                  {plan.button_text && (
-                    <button className={`w-full px-6 py-3 rounded-lg font-medium transition-colors ${
-                      isFeatured
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : isDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
-                    }`}>
-                      {plan.button_text}
-                    </button>
+                  {(plan.button_text || plan.buttonText) && (
+                    <a
+                      href={plan.button_url || plan.buttonUrl || '#'}
+                      className={`block w-full text-center px-6 py-3 rounded-lg font-medium transition-colors ${
+                        isFeatured
+                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          : isDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600' : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+                      }`}
+                    >
+                      {plan.button_text || plan.buttonText}
+                    </a>
                   )}
                 </div>
               )
@@ -200,7 +206,7 @@ export function renderPricing(props: PreviewCaseProps): React.ReactElement | nul
           </div>
         ) : (
           <div className={`text-center py-12 ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>
-            No pricing plan available
+            Aucun plan tarifaire disponible
           </div>
         )}
       </div>

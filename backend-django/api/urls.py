@@ -110,29 +110,22 @@ router.register(r'invoice-templates', InvoiceTemplateViewSet, basename='invoice-
 
 # Compatibility function for old pricing-plans URL
 def billing_pricing_plans_compat(request):
-    """Compatibility view for /api/billing/pricing-plans/ - calls PricingPlanViewSet.list directly"""
-    from rest_framework.request import Request
-    from rest_framework.test import APIRequestFactory
+    """
+    Compatibility view for /api/billing/pricing-plans/ - redirects to router endpoint
+    Uses HTTP 301 redirect to ensure proper DRF request/response cycle
+    """
+    from django.http import HttpResponsePermanentRedirect
+    from django.urls import reverse
     
-    # Create a proper DRF request
-    factory = APIRequestFactory()
-    drf_request = Request(factory.get('/api/billing/pricing-plans/'))
-    drf_request.user = request.user if hasattr(request, 'user') else None
+    # Build the new URL with query parameters if present
+    new_url = reverse('pricing-plan-list')
+    if request.GET:
+        query_string = request.GET.urlencode()
+        new_url = f"{new_url}?{query_string}"
     
-    # Create ViewSet instance and call list
-    viewset = PricingPlanViewSet()
-    viewset.request = drf_request
-    viewset.format_kwarg = None
-    viewset.action = 'list'
-    
-    # Call the list method
-    response = viewset.list(drf_request)
-    
-    # Add CORS headers
-    from billing.views import add_cors_headers
-    add_cors_headers(response, request)
-    
-    return response
+    # Use permanent redirect (301) to the router endpoint
+    # This ensures the client uses the correct URL in the future
+    return HttpResponsePermanentRedirect(new_url)
 
 urlpatterns = [
     # IMPORTANT: Specific routes must come BEFORE the router to avoid conflicts

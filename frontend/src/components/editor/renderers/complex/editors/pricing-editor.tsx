@@ -1,10 +1,10 @@
 'use client'
 
 import React from 'react'
-import { Block } from '../../../types'
+import { Block } from '@/components/editor/types'
 import { BlockType } from '@/services/blocks.service'
-import { CollapsibleSection } from '../../../CollapsibleSection'
-import UrlInputWithSuggestions from '../../../ui/UrlInputWithSuggestions'
+import { CollapsibleSection } from '@/components/editor/CollapsibleSection'
+import UrlInputWithSuggestions from '@/components/editor/ui/UrlInputWithSuggestions'
 
 interface ComplexRendererProps {
   block: Block

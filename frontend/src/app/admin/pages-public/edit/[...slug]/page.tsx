@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useRouter, useParams, usePathname, useSearchParams } from 'next/navigation'
 import authService from '@/services/auth.service'
 import AdminLayout from '@/components/admin/AdminLayout'
@@ -54,12 +54,21 @@ export default function EditPublicPage() {
   const [showPreview, setShowPreview] = useState(true)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const { resolvedTheme } = useTheme()
-  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>(resolvedTheme || 'light') // Thème de la prévisualisation, synchronisé avec le thème global
+  // Thème de la prévisualisation indépendant du thème global
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>(() => {
+    // Initialiser à 'light' par défaut, indépendamment du thème global
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('preview-theme')
+      return (saved === 'dark' || saved === 'light') ? saved : 'light'
+    }
+    return 'light'
+  })
   const [linksEnabled, setLinksEnabled] = useState(true) // Activer les liens dans la prévisualisation par défaut
   const [availablePages, setAvailablePages] = useState<Array<{ slug: string; title: string; isSubPage?: boolean; parentSlug?: string }>>([])
   const [currentPageSubPages, setCurrentPageSubPages] = useState<Array<{ slug: string; title: string }>>([])
   const [headerVisible, setHeaderVisible] = useState(true)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
+  const [selectedSubElement, setSelectedSubElement] = useState<{ blockId: string; type: string; index: number } | null>(null)
   const [inspectorMode, setInspectorMode] = useState(false)
   const [blocksPaletteOpen, setBlocksPaletteOpen] = useState(false) // Popup des blocs disponibles fermée par défaut
   const [propertiesModalOpen, setPropertiesModalOpen] = useState(false)
@@ -136,9 +145,18 @@ export default function EditPublicPage() {
     await api.patch('/system-settings/', settingsData)
   }, [pageSlug])
 
+  // Mémoriser les données pour éviter les sauvegardes inutiles lors de la sélection
+  // Ne recréer l'objet que si les valeurs réelles changent
+  const saveData = useMemo(() => ({
+    blocks,
+    metaTitle,
+    metaDescription,
+    status
+  }), [blocks, metaTitle, metaDescription, status])
+  
   // Sauvegarde automatique
   const { isSaving: isAutoSaving, lastSaved, updateLastSaved } = useAutoSave({
-    data: { blocks, metaTitle, metaDescription, status },
+    data: saveData,
     onSave: handleSave,
     debounceMs: 2000,
     enabled: true,
@@ -334,10 +352,31 @@ export default function EditPublicPage() {
       const newTitle = searchParams?.get('title') || ''
       
       // Load block types and page data in parallel
-      const [blockTypesData, settingsResponse] = await Promise.all([
-        blocksService.getBlockTypes(),
-        api.get('/system-settings/')
-      ])
+      // Gérer les erreurs pour system-settings sans bloquer le chargement
+      let blockTypesData: BlockType[] = []
+      let settingsData: any = { public_pages: {}, public_homepage_blocks: [] }
+      
+      try {
+        blockTypesData = await blocksService.getBlockTypes()
+      } catch (error: any) {
+        console.error('Erreur lors du chargement des types de blocs:', error)
+        // Continuer avec un tableau vide plutôt que de bloquer
+      }
+      
+      try {
+        const settingsResponse = await api.get('/system-settings/')
+        settingsData = settingsResponse.data || { public_pages: {}, public_homepage_blocks: [] }
+      } catch (error: any) {
+        // Si l'erreur est silencieuse (403 pour non-super-admin), utiliser les données par défaut
+        if (error?.silent || error?.config?.silent) {
+          console.warn('⚠️ Accès à system-settings refusé, utilisation des valeurs par défaut')
+          settingsData = { public_pages: {}, public_homepage_blocks: [] }
+        } else {
+          console.error('Erreur lors du chargement des paramètres système:', error)
+          // Continuer avec des données par défaut plutôt que de bloquer
+          settingsData = { public_pages: {}, public_homepage_blocks: [] }
+        }
+      }
       
       // Filtrer uniquement les blocs actifs (sauf pour les super admins qui voient tout)
       const isSuperAdmin = authService.isSuperAdmin()
@@ -360,7 +399,7 @@ export default function EditPublicPage() {
         count: validBlockTypes.length,
         blockTypes: validBlockTypes
       })
-      const data = settingsResponse.data
+      const data = settingsData
       
       // Load available pages for navigation - Si projectId est présent, charger les pages du projet
       const pagesList: Array<{ slug: string; title: string; isSubPage?: boolean; parentSlug?: string }> = []
@@ -558,11 +597,13 @@ export default function EditPublicPage() {
               { label: 'Documentation', url: '/docs' },
               { label: 'Contact', url: '/contact' }
             ],
-            cta_button: {
-              text: 'Créer un compte',
-              url: '/register',
-              style: 'primary'
-            }
+            cta_buttons: [
+              {
+                text: 'Connexion',
+                url: '/login',
+                style: 'primary'
+              }
+            ]
           },
           styles: {
             position: 'sticky',
@@ -644,7 +685,7 @@ export default function EditPublicPage() {
             title: 'Tarifs Transparents',
             subtitle: 'Choisissez le plan adapté à vos besoins. Pas d\'engagement, changez de plan à tout moment.',
             source: 'api',
-            api_endpoint: '/api/billing/pricing-plans/',
+            api_endpoint: '/api/pricing-plans/',
             show_title: true,
             columns: 3
           },
@@ -657,7 +698,7 @@ export default function EditPublicPage() {
         // Créer le bloc CTA "Prêt à démarrer"
         const ctaBlock = {
           id: `cta-${now}`,
-          type: 'cta',
+          type: 'cta-section',
           layout: 12,
           data: {
             title: 'Prêt à démarrer ?',
@@ -681,17 +722,33 @@ export default function EditPublicPage() {
           layout: 12,
           data: {
             copyright_text: `© ${new Date().getFullYear()} VTCBuilder. Tous droits réservés.`,
-            links: [
-              { label: 'Tarifs', url: '/#pricing' },
-              { label: 'Fonctionnalités', url: '/features' },
-              { label: 'Templates', url: '/templates' },
-              { label: 'Documentation', url: '/docs' },
-              { label: 'Contact', url: '/contact' },
-              { label: 'FAQ', url: '/faq' }
-            ],
-            legal_links: [
-              { label: 'CGV', url: '/legal/terms' },
-              { label: 'Confidentialité', url: '/legal/privacy' }
+            columns: [
+              {
+                title: 'Produit',
+                description: '',
+                links: [
+                  { label: 'Tarifs', url: '/#pricing' },
+                  { label: 'Fonctionnalités', url: '/features' },
+                  { label: 'Templates', url: '/templates' }
+                ]
+              },
+              {
+                title: 'Support',
+                description: '',
+                links: [
+                  { label: 'Documentation', url: '/docs' },
+                  { label: 'Contact', url: '/contact' },
+                  { label: 'FAQ', url: '/faq' }
+                ]
+              },
+              {
+                title: 'Légal',
+                description: '',
+                links: [
+                  { label: 'CGV', url: '/legal/terms' },
+                  { label: 'Confidentialité', url: '/legal/privacy' }
+                ]
+              }
             ],
             show_social_links: false
           },
@@ -722,7 +779,7 @@ export default function EditPublicPage() {
         // Tous les blocs dans un conteneur global
         homepageBlocks = [globalContainer]
         
-        // Sauvegarder immédiatement les blocs par défaut
+        // Sauvegarder immédiatement les blocs par défaut (silencieusement si erreur 403)
         try {
           const saveResponse = await api.patch('/system-settings/', {
             public_homepage_blocks: homepageBlocks
@@ -733,8 +790,15 @@ export default function EditPublicPage() {
           })
           toast.success('Structure minimale créée avec succès!')
         } catch (error: any) {
-          console.error('❌ Erreur lors de la sauvegarde des blocs par défaut:', error)
-          toast.error(`Erreur lors de la sauvegarde: ${error.response?.data?.error || error.message}`)
+          // Si l'erreur est silencieuse (403 pour non-super-admin ou erreur attendue), ne pas afficher de toast
+          if (error?.silent || error?.config?.silent || error?.config?.__shouldRejectSilently) {
+            console.warn('⚠️ Sauvegarde des blocs par défaut ignorée (accès refusé)')
+            // Continuer sans erreur - les blocs sont quand même définis localement
+          } else {
+            console.error('❌ Erreur lors de la sauvegarde des blocs par défaut:', error)
+            // Ne pas bloquer l'affichage - les blocs sont quand même définis localement
+            // toast.error(`Erreur lors de la sauvegarde: ${error.response?.data?.error || error.message}`)
+          }
         }
         
         console.log('📦 Blocs chargés pour la page d\'accueil:', {
@@ -915,12 +979,17 @@ export default function EditPublicPage() {
             }
           }
           
-          // Sauvegarder la structure par défaut
+          // Sauvegarder la structure par défaut (silencieusement si erreur 403)
           try {
             const updatedPages = { ...publicPages, [pageSlug]: pageData }
             await api.patch('/system-settings/', { public_pages: updatedPages })
-          } catch (error) {
-            console.error('Error sauvegarde structure par défaut:', error)
+          } catch (error: any) {
+            // Si l'erreur est silencieuse (403 pour non-super-admin ou erreur attendue), ne pas logger
+            if (error?.silent || error?.config?.silent || error?.config?.__shouldRejectSilently) {
+              console.warn('⚠️ Sauvegarde de la structure par défaut ignorée (accès refusé)')
+            } else {
+              console.error('Error sauvegarde structure par défaut:', error)
+            }
           }
         } else {
           // Convertir l'ancienne structure si nécessaire
@@ -960,12 +1029,12 @@ export default function EditPublicPage() {
     }
   }, [blocks, metaTitle, metaDescription, status, pathname, saveEditorState])
 
-  // Synchroniser le thème de prévisualisation avec le thème global
+  // Sauvegarder le thème de prévisualisation dans localStorage quand il change (indépendant du thème global)
   useEffect(() => {
-    if (resolvedTheme) {
-      setPreviewTheme(resolvedTheme)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('preview-theme', previewTheme)
     }
-  }, [resolvedTheme])
+  }, [previewTheme])
 
   // Restaurer l'état après reconnexion
   useEffect(() => {
@@ -1076,6 +1145,103 @@ export default function EditPublicPage() {
   }
 
   return (
+    <>
+      {/* Styles pour la prévisualisation responsive */}
+      <style jsx global>{`
+        /* Réinitialiser les marges et padding du body et html pour la prévisualisation */
+        .mobile-preview,
+        .tablet-preview,
+        .desktop-preview {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        .mobile-preview * {
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        /* Ne pas forcer de padding sur les conteneurs - laisser les blocs gérer leur propre padding */
+        .mobile-preview .container,
+        .mobile-preview [class*="container"],
+        .tablet-preview .container,
+        .tablet-preview [class*="container"],
+        .desktop-preview .container,
+        .desktop-preview [class*="container"] {
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+          max-width: 100% !important;
+          width: 100% !important;
+        }
+        /* S'assurer que le conteneur principal prend toute la largeur */
+        .block-preview-container {
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        .mobile-preview,
+        .tablet-preview,
+        .desktop-preview {
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        /* S'assurer que tous les éléments prennent la largeur disponible */
+        .mobile-preview > *,
+        .tablet-preview > *,
+        .desktop-preview > * {
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        /* Réduire drastiquement les padding des classes Tailwind en mode mobile très petit */
+        .mobile-preview [class*="px-1"],
+        .mobile-preview [class*="px-2"],
+        .mobile-preview [class*="px-4"],
+        .mobile-preview [class*="px-6"],
+        .mobile-preview [class*="px-8"] {
+          padding-left: 0.25rem !important;
+          padding-right: 0.25rem !important;
+        }
+        /* Réduire les padding xs sur très petits écrans */
+        .mobile-preview [class*="xs:px-"] {
+          padding-left: 0.5rem !important;
+          padding-right: 0.5rem !important;
+        }
+        /* Ne pas forcer de marges auto en mode mobile */
+        .mobile-preview [class*="mx-auto"] {
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+        }
+        .tablet-preview .container,
+        .tablet-preview [class*="container"] {
+          padding-left: 0 !important;
+          padding-right: 0 !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+          max-width: 100% !important;
+        }
+        .tablet-preview [class*="px-4"],
+        .tablet-preview [class*="px-6"],
+        .tablet-preview [class*="px-8"] {
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+        }
+        /* S'assurer que le wrapper de prévisualisation prend toute la largeur */
+        .block-preview-container,
+        .block-preview-container > * {
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        /* Forcer la largeur à 100% pour tous les éléments dans la prévisualisation */
+        .mobile-preview *,
+        .tablet-preview *,
+        .desktop-preview * {
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+      `}</style>
     <AdminLayout
       title={
         <div className="flex items-center gap-3 flex-wrap">
@@ -1274,7 +1440,11 @@ export default function EditPublicPage() {
               {/* Toggle Theme pour la prévisualisation */}
               <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
               <button
-                onClick={() => setPreviewTheme(previewTheme === 'light' ? 'dark' : 'light')}
+                onClick={() => {
+                  const newTheme = previewTheme === 'light' ? 'dark' : 'light'
+                  setPreviewTheme(newTheme)
+                  localStorage.setItem('preview-theme', newTheme)
+                }}
                 className={`p-2.5 rounded-lg transition-colors flex items-center justify-center ${
                   previewTheme === 'dark'
                     ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700'
@@ -2006,23 +2176,43 @@ export default function EditPublicPage() {
                   {previewMode === 'desktop' ? '💻 Desktop' : previewMode === 'tablet' ? '📱 Tablette' : '📱 Mobile'}
                 </span>
               </div>
-              <div className="flex-1 overflow-hidden relative min-h-0">
-                <div className={`absolute inset-0 overflow-auto ${
-                  previewMode === 'tablet' ? 'px-4' : previewMode === 'mobile' ? 'px-2' : ''
+              <div className="flex-1 overflow-hidden relative min-h-0 w-full h-full">
+                <div className={`absolute inset-0 overflow-auto w-full h-full ${
+                  previewMode === 'tablet' ? '' : previewMode === 'mobile' ? '' : ''
                 }`}>
-                  <div className={`${
+                  <div className={`w-full h-full ${
                     previewMode === 'tablet' ? 'max-w-[768px] mx-auto' : 
                     previewMode === 'mobile' ? 'max-w-[375px] mx-auto' : 
                     'w-full'
                   }`}>
                     {/* Utiliser uniquement les blocs - pas de composants statiques */}
                     {/* Supprimer min-h-screen et h-full pour que la hauteur s'adapte au contenu réel */}
-                    <div className="bg-white dark:bg-gray-900">
+                    <div 
+                      className={`block-preview-container w-full ${
+                        previewMode === 'mobile' ? 'mobile-preview' : 
+                        previewMode === 'tablet' ? 'tablet-preview' : 
+                        'desktop-preview'
+                      }`}
+                      style={{
+                        backgroundColor: previewTheme === 'dark' ? '#111827' : '#ffffff',
+                        isolation: 'isolate' as const,
+                        position: 'relative' as const,
+                        minHeight: '100%',
+                        width: '100%',
+                        maxWidth: '100%',
+                        // Supprimer complètement les marges et padding sur mobile/tablet
+                        padding: '0',
+                        margin: '0',
+                        boxSizing: 'border-box' as const,
+                      } as React.CSSProperties}
+                    >
                       <BlockPreview 
                         blocks={blocks} 
                         blockTypes={blockTypes}
                         selectedBlockId={selectedBlockId}
                         onBlockSelect={setSelectedBlockId}
+                        onSubElementSelect={setSelectedSubElement}
+                        selectedSubElement={selectedSubElement}
                         theme={previewTheme}
                         onBlockDoubleClick={(blockId) => {
                           // Sélectionner le bloc dans l'éditeur au lieu d'ouvrir la popup
@@ -2062,6 +2252,7 @@ export default function EditPublicPage() {
           onClose={() => {
             setPropertiesModalOpen(false)
             setModalBlockId(null)
+            setSelectedSubElement(null)
           }}
           onEditChild={(childBlockId) => {
             setModalBlockId(childBlockId)
@@ -2073,6 +2264,7 @@ export default function EditPublicPage() {
           })()}
           blockTypes={blockTypes}
           allBlocks={blocks}
+          selectedSubElement={selectedSubElement}
           onUpdate={(updates) => {
             // Mettre à jour le bloc dans l'arbre
             const updateBlock = (blocks: Block[], id: string, updates: Partial<Block>): Block[] => {
@@ -2240,6 +2432,7 @@ export default function EditPublicPage() {
       {/* Modal de confirmation */}
       <ConfirmDialog />
     </AdminLayout>
+    </>
   )
 }
 

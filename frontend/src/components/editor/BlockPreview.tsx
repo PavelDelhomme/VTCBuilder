@@ -33,9 +33,11 @@ interface BlockPreviewProps {
   blockTypes: BlockType[]
   onBlocksChange?: (blocks: Block[]) => void
   onBlockSelect?: (blockId: string | null) => void
+  onSubElementSelect?: (subElement: { blockId: string; type: string; index: number } | null) => void
   onBlockDoubleClick?: (blockId: string) => void
   onBlockRightClick?: (blockId: string, position: { x: number; y: number }) => void
   selectedBlockId?: string | null
+  selectedSubElement?: { blockId: string; type: string; index: number } | null
   isInteractive?: boolean
   isEditable?: boolean
   onNavigate?: (url: string) => void // Callback pour navigation dans l'éditeur
@@ -49,9 +51,11 @@ function BlockPreview({
   blockTypes, 
   onBlocksChange,
   onBlockSelect,
+  onSubElementSelect,
   onBlockDoubleClick,
   onBlockRightClick,
   selectedBlockId,
+  selectedSubElement,
   isInteractive = false,
   isEditable = false,
   onNavigate,
@@ -101,8 +105,61 @@ function BlockPreview({
     }
   }
 
-  const handleBlockDoubleClick = (blockId: string) => {
+  const handleBlockDoubleClick = (blockId: string, event?: React.MouseEvent) => {
     if (onBlockDoubleClick && !isDragging && !inspectorMode) {
+      // Si un événement est fourni, vérifier l'élément cliqué pour sélectionner l'enfant le plus proche
+      if (event) {
+        const target = event.target as HTMLElement
+        // Prioriser la sélection d'un enfant si on double-clique sur un élément avec data-child-block-id
+        const childElement = target.closest('[data-child-block-id]') as HTMLElement
+        if (childElement) {
+          const childId = childElement.getAttribute('data-child-block-id')
+          if (childId && onBlockSelect) {
+            onBlockSelect(childId)
+            if (onBlockDoubleClick) {
+              onBlockDoubleClick(childId)
+            }
+            return
+          }
+        }
+        
+        // Sinon, trouver le bloc le plus proche dans le DOM
+        const allBlockElements = target.closest('.block-preview-container')?.querySelectorAll('[data-block-id]')
+        if (allBlockElements) {
+          let closestBlock: HTMLElement | null = null
+          let closestDistance = Infinity
+          
+          allBlockElements.forEach((el) => {
+            const elBlockId = el.getAttribute('data-block-id')
+            if (elBlockId && el.contains(target)) {
+              // Calculer la distance dans le DOM
+              let distance = 0
+              let current: HTMLElement | null = target as HTMLElement
+              while (current && current !== el && distance < 20) {
+                current = current.parentElement
+                distance++
+              }
+              if (distance < closestDistance) {
+                closestDistance = distance
+                closestBlock = el as HTMLElement
+              }
+            }
+          })
+          
+          if (closestBlock) {
+            const closestBlockId = closestBlock.getAttribute('data-block-id')
+            if (closestBlockId && onBlockSelect) {
+              onBlockSelect(closestBlockId)
+              if (onBlockDoubleClick) {
+                onBlockDoubleClick(closestBlockId)
+              }
+              return
+            }
+          }
+        }
+      }
+      
+      // Fallback : utiliser le blockId fourni
       onBlockDoubleClick(blockId)
     }
   }
@@ -192,23 +249,39 @@ function BlockPreview({
     if (previewContainer) {
       previewContainer.addEventListener('click', handleLinkClick, true) // Use capture phase
       
-      // Désactiver les liens via CSS si isInteractive est false
-      if (!isInteractive) {
+      // Fonction pour désactiver/activer tous les liens
+      const updateLinksInteractivity = () => {
         const links = previewContainer.querySelectorAll('a')
         links.forEach(link => {
-          link.style.pointerEvents = 'none'
-          link.style.cursor = 'default'
-        })
-      } else {
-        const links = previewContainer.querySelectorAll('a')
-        links.forEach(link => {
-          link.style.pointerEvents = 'auto'
-          link.style.cursor = 'pointer'
+          if (!isInteractive) {
+            link.style.pointerEvents = 'none'
+            link.style.cursor = 'default'
+            link.setAttribute('data-link-disabled', 'true')
+          } else {
+            link.style.pointerEvents = 'auto'
+            link.style.cursor = 'pointer'
+            link.removeAttribute('data-link-disabled')
+          }
         })
       }
       
+      // Désactiver/activer les liens existants
+      updateLinksInteractivity()
+      
+      // Observer les nouveaux liens ajoutés dynamiquement
+      const observer = new MutationObserver(() => {
+        updateLinksInteractivity()
+      })
+      
+      observer.observe(previewContainer, {
+        childList: true,
+        subtree: true,
+        attributes: false,
+      })
+      
       return () => {
         previewContainer.removeEventListener('click', handleLinkClick, true)
+        observer.disconnect()
       }
     }
   }, [onNavigate, inspectorMode, isInteractive])
@@ -380,23 +453,87 @@ function BlockPreview({
     }
 
     const handleClick = (e: MouseEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      
+      // Ne pas empêcher le comportement par défaut si on clique sur un lien ou un bouton (sauf si isInteractive est false)
       const target = e.target as HTMLElement
+      const isLinkOrButton = target.closest('a, button, [role="button"]')
       
-      // Prioriser la sélection d'un enfant si on clique sur un élément avec data-child-block-id
+      if (!isInteractive && isLinkOrButton) {
+        e.preventDefault()
+        e.stopPropagation()
+      } else if (!isEditable) {
+        // Si ce n'est pas en mode éditable, ne pas intercepter les clics
+        return
+      }
+      
+      // PRIORITÉ 1: Vérifier si on clique sur un sous-élément (lien, bouton, fonctionnalité, plan, colonne)
+      // Vérifier d'abord si l'élément cliqué lui-même a l'attribut, puis chercher dans les parents
+      let subElement = target.hasAttribute('data-sub-element-type') 
+        ? target as HTMLElement
+        : target.closest('[data-sub-element-type]') as HTMLElement
+      
+      if (subElement && onSubElementSelect) {
+        const subElementType = subElement.getAttribute('data-sub-element-type')
+        const subElementIndex = subElement.getAttribute('data-sub-element-index')
+        const blockId = subElement.getAttribute('data-block-id')
+        
+        if (subElementType && subElementIndex !== null && blockId) {
+          // Empêcher la propagation pour éviter que le clic remonte au bloc parent
+          e.preventDefault()
+          e.stopPropagation()
+          
+          const index = parseInt(subElementIndex, 10)
+          const currentSubElement = selectedSubElement
+          
+          // Si c'est le même sous-élément, le désélectionner, sinon le sélectionner
+          if (currentSubElement && 
+              currentSubElement.blockId === blockId && 
+              currentSubElement.type === subElementType && 
+              currentSubElement.index === index) {
+            onSubElementSelect(null)
+            if (onBlockSelect) {
+              onBlockSelect(blockId)
+            }
+          } else {
+            onSubElementSelect({ blockId, type: subElementType, index })
+            if (onBlockSelect) {
+              onBlockSelect(blockId)
+            }
+          }
+          return // IMPORTANT: Retourner immédiatement pour éviter de sélectionner le bloc parent
+        }
+      }
+      
+      // PRIORITÉ 2: Prioriser la sélection d'un enfant si on clique sur un élément avec data-child-block-id
       const childElement = target.closest('[data-child-block-id]') as HTMLElement
       if (childElement) {
         const childId = childElement.getAttribute('data-child-block-id')
         if (childId && onBlockSelect) {
+          e.preventDefault()
+          e.stopPropagation()
           onBlockSelect(childId === selectedBlockId ? null : childId)
-          return
+          if (onSubElementSelect) {
+            onSubElementSelect(null)
+          }
+          return // IMPORTANT: Retourner immédiatement pour éviter de sélectionner le bloc parent
         }
       }
       
-      // Sinon, trouver le bloc le plus proche
+      // PRIORITÉ 3: Toujours trouver le bloc parent le plus proche, même si on clique sur un élément enfant (lien, bouton, etc.)
+      // MAIS: Ne pas sélectionner le bloc parent si on a cliqué sur un sous-élément (déjà géré ci-dessus)
       let blockElement = target.closest('[data-block-id]') as HTMLElement
+      
+      // Si on ne trouve pas directement, chercher dans tous les parents
+      if (!blockElement) {
+        let current: HTMLElement | null = target as HTMLElement
+        while (current && current !== document.body) {
+          const found = current.closest('[data-block-id]') as HTMLElement
+          if (found) {
+            blockElement = found
+            break
+          }
+          current = current.parentElement
+        }
+      }
       
       // Si on clique sur un enfant d'un conteneur, vérifier s'il y a un bloc enfant plus proche
       if (blockElement) {
@@ -408,17 +545,23 @@ function BlockPreview({
           
           allBlockElements.forEach((el) => {
             const elBlockId = el.getAttribute('data-block-id')
-            if (elBlockId && el.contains(target) && el !== blockElement) {
-              // Calculer la distance dans le DOM (nombre d'ancêtres)
-              let distance = 0
-              let current: HTMLElement | null = target as HTMLElement
-              while (current && current !== el && distance < 20) {
-                current = current.parentElement
-                distance++
-              }
-              if (distance < closestDistance) {
-                closestDistance = distance
-                closestChild = el as HTMLElement
+            // Vérifier que l'élément contient la cible ET qu'il n'est pas le même que blockElement
+            // ET qu'il n'a pas d'attribut data-sub-element-type (pour éviter de sélectionner un conteneur qui contient un sous-élément)
+            if (elBlockId && el.contains(target) && el !== blockElement && !el.hasAttribute('data-sub-element-type')) {
+              // Vérifier aussi qu'on n'a pas cliqué sur un sous-élément à l'intérieur
+              const hasSubElement = el.querySelector('[data-sub-element-type]')
+              if (!hasSubElement || !hasSubElement.contains(target)) {
+                // Calculer la distance dans le DOM (nombre d'ancêtres)
+                let distance = 0
+                let current: HTMLElement | null = target as HTMLElement
+                while (current && current !== el && distance < 20) {
+                  current = current.parentElement
+                  distance++
+                }
+                if (distance < closestDistance) {
+                  closestDistance = distance
+                  closestChild = el as HTMLElement
+                }
               }
             }
           })
@@ -431,6 +574,9 @@ function BlockPreview({
         const blockId = blockElement.getAttribute('data-block-id')
         if (blockId && onBlockSelect) {
           onBlockSelect(blockId === selectedBlockId ? null : blockId)
+          if (onSubElementSelect) {
+            onSubElementSelect(null)
+          }
         }
       }
     }
@@ -463,6 +609,8 @@ function BlockPreview({
       style={{
         backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
         color: theme === 'dark' ? '#f9fafb' : '#111827',
+        isolation: 'isolate' as const,
+        position: 'relative' as const,
       } as React.CSSProperties}
       data-theme-isolated
       data-preview-theme={theme}
@@ -571,7 +719,7 @@ function BlockPreview({
                       isInteractive={isInteractive}
                       isEditable={isEditable}
                       onClick={() => handleBlockClick(block.id)}
-                      onDoubleClick={() => handleBlockDoubleClick(block.id)}
+                      onDoubleClick={(e) => handleBlockDoubleClick(block.id, e)}
                       onRightClick={(e) => handleBlockRightClick(block.id, e)}
                     />
                   </div>
@@ -716,6 +864,7 @@ export function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'li
         
         return (
           <div 
+            data-block-id={block.id}
             className={`${containerClass} mb-6`} 
             style={wrapperStyles}
           >
@@ -753,17 +902,49 @@ export function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'li
     }
     
     // Fallback pour les cases non encore extraits
+    const isDark = theme === 'dark'
     return (
-      <div style={wrapperStyles} className="mb-6 p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-center">
+      <div 
+        data-block-id={block.id}
+        style={{
+          ...wrapperStyles,
+          background: isDark 
+            ? 'linear-gradient(to bottom right, #1f2937, #111827)' 
+            : 'linear-gradient(to bottom right, #f9fafb, #f3f4f6)',
+          borderColor: isDark ? '#374151' : '#d1d5db',
+        } as React.CSSProperties}
+        className="mb-6 p-8 rounded-xl border-2 border-dashed text-center"
+      >
         <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-            <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div 
+            className="w-16 h-16 rounded-full flex items-center justify-center"
+            style={{
+              backgroundColor: isDark ? '#374151' : '#e5e7eb',
+            }}
+          >
+            <svg 
+              className="w-8 h-8" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+              style={{ color: isDark ? '#6b7280' : '#9ca3af' }}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Block {block.type}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Preview not available</p>
+            <p 
+              className="text-sm font-semibold mb-1"
+              style={{ color: isDark ? '#d1d5db' : '#374151' }}
+            >
+              Block {block.type}
+            </p>
+            <p 
+              className="text-xs"
+              style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
+            >
+              Preview not available
+            </p>
           </div>
         </div>
       </div>
@@ -803,6 +984,7 @@ export function BlockPreviewRenderer({ block, blockType, blockTypes, theme = 'li
   
   return (
     <div 
+      data-block-id={block.id}
       className={`${finalContainerClass} ${layoutWidth !== 'w-full' ? layoutWidth : ''} mb-6 ${getHoverAnimationClass(block)} ${getAlignmentClasses(block)}`} 
       style={finalWrapperStyles}
     >

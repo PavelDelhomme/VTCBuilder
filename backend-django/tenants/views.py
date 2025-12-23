@@ -1709,37 +1709,83 @@ L'équipe VTCBuilder
 @permission_classes([AllowAny])
 def refresh_token_view(request):
     """Refresh token endpoint"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         refresh_token = request.data.get('refresh')
         if not refresh_token:
-            return Response(
+            logger.warning('refresh_token_view: Refresh token manquant dans la requête')
+            response = Response(
                 {'error': 'Refresh token is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+            add_cors_headers(response, request)
+            return response
+        
+        logger.info(f'refresh_token_view: Tentative de rafraîchissement du token (longueur: {len(refresh_token)})')
         
         token = RefreshToken(refresh_token)
         new_access_token = token.access_token
         
+        # Obtenir l'utilisateur depuis le token (RefreshToken surcharge __getitem__ pour accéder au payload)
+        user_id = token.get('user_id') or token.payload.get('user_id')
+        if not user_id:
+            # Essayer d'obtenir depuis le access_token
+            try:
+                user_id = new_access_token.get('user_id') or new_access_token.payload.get('user_id')
+            except Exception:
+                pass
+        
+        if not user_id:
+            logger.error('refresh_token_view: Impossible de récupérer user_id depuis le refresh token')
+            response = Response(
+                {'error': 'Invalid refresh token - user_id not found'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        # Récupérer l'utilisateur depuis la base de données
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            logger.error(f'refresh_token_view: Utilisateur avec ID {user_id} non trouvé')
+            response = Response(
+                {'error': 'User not found'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+            add_cors_headers(response, request)
+            return response
+        
+        logger.info(f'refresh_token_view: Token rafraîchi avec succès pour l\'utilisateur {user.email if hasattr(user, "email") else "unknown"}')
+        
         # Si ROTATE_REFRESH_TOKENS est activé, retourner aussi un nouveau refresh token
         if hasattr(token, 'blacklist'):
             # Rotation activée, créer un nouveau refresh token
-            user = token.user
             new_refresh = RefreshToken.for_user(user)
             token.blacklist()  # Blacklister l'ancien refresh token
             
-            return Response({
+            response = Response({
                 'access': str(new_access_token),
                 'refresh': str(new_refresh),
             })
+            add_cors_headers(response, request)
+            return response
         else:
-            return Response({
+            response = Response({
                 'access': str(new_access_token),
             })
+            add_cors_headers(response, request)
+            return response
     except Exception as e:
-        return Response(
-            {'error': 'Invalid or expired refresh token'},
+        logger.error(f'refresh_token_view: Erreur lors du rafraîchissement du token: {e}', exc_info=True)
+        response = Response(
+            {'error': 'Invalid or expired refresh token', 'detail': str(e) if settings.DEBUG else None},
             status=status.HTTP_401_UNAUTHORIZED
         )
+        add_cors_headers(response, request)
+        return response
 
 
 @api_view(['POST'])

@@ -48,7 +48,18 @@ class AuthService {
   async logout() {
     try {
       await api.post('/auth/logout/');
+    } catch (error: any) {
+      // Si le token est expiré (401), c'est normal - on nettoie quand même les tokens côté client
+      // Ne pas afficher l'erreur à l'utilisateur car le logout fonctionne de toute façon
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        // Token expiré ou invalide - c'est attendu, on nettoie quand même
+        console.debug('Token expiré lors du logout - nettoyage des tokens côté client');
+      } else {
+        // Autre erreur - on la log mais on nettoie quand même
+        console.warn('Erreur lors du logout:', error?.message || error);
+      }
     } finally {
+      // Toujours nettoyer les tokens, même si le logout a échoué
       localStorage.removeItem('token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
@@ -76,6 +87,7 @@ class AuthService {
     try {
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) {
+        console.error('❌ refreshToken: Aucun refresh token trouvé dans localStorage');
         return false;
       }
 
@@ -87,6 +99,12 @@ class AuthService {
         },
       });
 
+      console.log('🔄 refreshToken: Tentative de rafraîchissement du token...', {
+        hasRefreshToken: !!refreshToken,
+        refreshTokenLength: refreshToken.length,
+        baseURL: api.defaults.baseURL
+      });
+
       const response = await axiosInstance.post('/auth/refresh/', {
         refresh: refreshToken,
       });
@@ -96,11 +114,32 @@ class AuthService {
         if (response.data.refresh) {
           localStorage.setItem('refresh_token', response.data.refresh);
         }
+        console.log('✅ refreshToken: Token rafraîchi avec succès');
         return true;
       }
+      console.error('❌ refreshToken: Réponse invalide - pas de token access dans la réponse', response.data);
       return false;
-    } catch (error) {
+    } catch (error: any) {
       // Refresh token invalide ou expiré
+      // Ne pas logger si c'est une erreur 403 ou 401 attendue (token expiré)
+      const status = error?.response?.status;
+      const isExpectedError = status === 401 || status === 403;
+      
+      if (!isExpectedError) {
+        console.error('❌ refreshToken: Erreur lors du rafraîchissement', {
+          error: error,
+          message: error?.message,
+          response: error?.response?.data,
+          status: error?.response?.status,
+          statusText: error?.response?.statusText,
+          url: error?.config?.url,
+        });
+      } else {
+        console.warn('⚠️ refreshToken: Le refresh token est expiré ou invalide (status: ' + status + '). Veuillez vous reconnecter.');
+        // Nettoyer les tokens expirés
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh_token');
+      }
       return false;
     }
   }

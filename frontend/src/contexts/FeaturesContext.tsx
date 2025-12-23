@@ -217,7 +217,11 @@ export function FeaturesProvider({ children }: { children: ReactNode }) {
       return true
     }
     
-    if (!features) return true // Par défaut, autoriser si features non chargées
+    // Si features n'est pas encore chargé, autoriser par défaut (pour éviter de bloquer l'affichage)
+    if (!features || loading) {
+      console.log('⚠️ Features non chargées, autorisation par défaut pour', blockType)
+      return true
+    }
     
     // Si le bloc nécessite premium et que l'utilisateur n'a pas accès
     if (requiresPremium && !features.can_use_premium_blocks) {
@@ -227,6 +231,12 @@ export function FeaturesProvider({ children }: { children: ReactNode }) {
     // Vérifier si le type de bloc est dans la liste disponible
     if (features.available_block_types.includes('*')) {
       return true // Tous les blocs sont disponibles
+    }
+
+    // Si la liste est vide, autoriser par défaut (pour éviter de bloquer tous les blocs)
+    if (features.available_block_types.length === 0) {
+      console.warn('⚠️ available_block_types est vide, autorisation par défaut pour', blockType)
+      return true
     }
 
     return features.available_block_types.includes(blockType)

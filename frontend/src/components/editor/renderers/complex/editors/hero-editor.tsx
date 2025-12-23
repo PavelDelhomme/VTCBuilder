@@ -5,10 +5,10 @@
  */
 
 import React from 'react'
-import { Block } from '../../../types'
-import { CollapsibleSection } from '../../../CollapsibleSection'
-import ImageSelector from '../../../ui/ImageSelector'
-import PageSelector from '../../../ui/PageSelector'
+import { Block } from '@/components/editor/types'
+import { CollapsibleSection } from '@/components/editor/CollapsibleSection'
+import ImageSelector from '@/components/editor/ui/ImageSelector'
+import PageSelector from '@/components/editor/ui/PageSelector'
 
 interface ComplexRendererProps {
   block: Block
@@ -133,20 +133,65 @@ export function renderHero({ block, onUpdate }: ComplexRendererProps) {
       
       {/* Gradient de fond */}
       {heroBackgroundType === 'gradient' && (
-        <div>
+        <div className="space-y-2">
           <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Dégradé (format Tailwind)
+            Dégradé
           </label>
-          <input
-            type="text"
-            value={safeBlock.data.background_gradient || 'from-blue-500 via-purple-600 to-pink-500'}
-            onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_gradient: e.target.value } })}
-            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-            placeholder="from-blue-500 via-purple-600 to-pink-500"
-          />
-          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
-            Exemples: from-blue-500 to-purple-600, from-pink-500 via-red-500 to-yellow-500
-          </p>
+          {(() => {
+            const gradientMap: Record<string, string> = {
+              'blue-purple-pink': 'from-blue-500 via-purple-600 to-pink-500',
+              'blue-cyan': 'from-blue-500 to-cyan-500',
+              'purple-pink': 'from-purple-500 to-pink-500',
+              'green-blue': 'from-green-500 to-blue-500',
+              'orange-red': 'from-orange-500 to-red-500',
+              'indigo-purple': 'from-indigo-500 to-purple-500',
+              'teal-cyan': 'from-teal-500 to-cyan-500',
+              'rose-pink': 'from-rose-500 to-pink-500',
+              'violet-purple': 'from-violet-500 to-purple-500',
+              'dark-gray': 'from-gray-900 via-gray-800 to-gray-900',
+            }
+            const reverseMap: Record<string, string> = {}
+            Object.entries(gradientMap).forEach(([key, value]) => {
+              reverseMap[value] = key
+            })
+            const currentGradient = safeBlock.data.background_gradient || 'from-blue-500 via-purple-600 to-pink-500'
+            const selectedKey = reverseMap[currentGradient] || 'blue-purple-pink'
+            return (
+              <select
+                value={selectedKey}
+                onChange={(e) => {
+                  onUpdate({ data: { ...safeBlock.data, background_gradient: gradientMap[e.target.value] || gradientMap['blue-purple-pink'] } })
+                }}
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              >
+                <option value="blue-purple-pink">Bleu → Violet → Rose</option>
+                <option value="blue-cyan">Bleu → Cyan</option>
+                <option value="purple-pink">Violet → Rose</option>
+                <option value="green-blue">Vert → Bleu</option>
+                <option value="orange-red">Orange → Rouge</option>
+                <option value="indigo-purple">Indigo → Violet</option>
+                <option value="teal-cyan">Sarcelle → Cyan</option>
+                <option value="rose-pink">Rose → Rose clair</option>
+                <option value="violet-purple">Violet → Violet foncé</option>
+                <option value="dark-gray">Gris foncé (mode sombre)</option>
+              </select>
+            )
+          })()}
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 mt-2">
+              Dégradé personnalisé (format Tailwind - optionnel)
+            </label>
+            <input
+              type="text"
+              value={safeBlock.data.background_gradient || ''}
+              onChange={(e) => onUpdate({ data: { ...safeBlock.data, background_gradient: e.target.value } })}
+              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              placeholder="from-blue-500 via-purple-600 to-pink-500"
+            />
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+              Exemples: from-blue-500 to-purple-600, from-pink-500 via-red-500 to-yellow-500
+            </p>
+          </div>
         </div>
       )}
       <CollapsibleSection title="Boutons" count={heroButtons.length} defaultCollapsed={false}>

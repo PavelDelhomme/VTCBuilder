@@ -89,6 +89,11 @@ export function DraggableChildBlock({
         }
       })}
       onClick={(e) => {
+        // Ne pas sélectionner si on clique sur un bouton
+        const target = e.target as HTMLElement
+        if (target.closest('button')) {
+          return
+        }
         e.stopPropagation()
         onSelectChild(child.id)
       }}
@@ -113,9 +118,28 @@ export function DraggableChildBlock({
           <button
             onClick={(e) => {
               e.stopPropagation()
+              e.preventDefault()
               toggleChildCollapse(child.id)
+              // Ne pas sélectionner le parent, mais trouver le bloc suivant dans la liste
+              // et le sélectionner à la place
+              if (allBlocks && findBlockInTree) {
+                const result = findBlockInTree(allBlocks, child.id)
+                if (result && result.parent) {
+                  const currentIndex = result.index
+                  const nextIndex = currentIndex + 1
+                  if (nextIndex < result.parent.length) {
+                    onSelectChild(result.parent[nextIndex].id)
+                  } else if (currentIndex > 0) {
+                    onSelectChild(result.parent[currentIndex - 1].id)
+                  }
+                }
+              }
             }}
-            className="flex-shrink-0 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            onMouseDown={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+            }}
+            className="flex-shrink-0 p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors z-20 relative"
             title={collapsedChildren.has(child.id) ? "Développer" : "Réduire"}
           >
             <svg 
