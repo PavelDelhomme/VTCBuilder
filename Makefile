@@ -1,4 +1,4 @@
-.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-coverage analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean start up stop restart restart-backend restart-frontend down logs status migrate frontend-clean frontend-reinstall frontend-build
+.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-coverage analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean build start up stop restart restart-backend restart-frontend down logs status migrate frontend-clean frontend-reinstall frontend-build
 
 BLUE = \033[0;34m
 GREEN = \033[0;32m
@@ -275,10 +275,61 @@ type-check: type-check-frontend ## Vérifier les types (frontend uniquement)
 
 type-check-frontend: frontend-type-check ## Vérifier TypeScript frontend
 
+##@ Build et Infrastructure
+
+build: ## Créer les réseaux Docker, volumes et construire les images
+	@printf "$(GREEN)🔨 Construction de l'infrastructure Docker...$(NC)\n"
+	@printf "$(YELLOW)🌐 Vérification et création du réseau Docker...$(NC)\n"
+	@if ! docker network ls | grep -q "vtcbuilder_network"; then \
+		printf "$(YELLOW)  📡 Création du réseau vtcbuilder_network...$(NC)\n"; \
+		docker network create vtcbuilder_network || { \
+			printf "$(RED)❌ Erreur lors de la création du réseau$(NC)\n"; \
+			exit 1; \
+		}; \
+		printf "$(GREEN)  ✅ Réseau créé$(NC)\n"; \
+	else \
+		printf "$(GREEN)  ✅ Réseau vtcbuilder_network existe déjà$(NC)\n"; \
+	fi
+	@printf "$(YELLOW)💾 Création des volumes et réseaux via docker-compose...$(NC)\n"
+	@docker-compose -f docker-compose.simple.yml up --no-start 2>/dev/null || { \
+		printf "$(YELLOW)⚠️  Création des ressources (peut afficher des warnings si déjà existantes)$(NC)\n"; \
+		true; \
+	}
+	@printf "$(YELLOW)🏗️  Construction des images Docker...$(NC)\n"
+	@docker-compose -f docker-compose.simple.yml build || { \
+		printf "$(RED)❌ Erreur lors de la construction des images$(NC)\n"; \
+		exit 1; \
+	}
+	@printf "$(GREEN)✅ Infrastructure Docker prête !$(NC)\n"
+	@printf "$(BLUE)💡 Vous pouvez maintenant utiliser 'make start' pour démarrer les services$(NC)\n"
+
 ##@ Gestion des Services
 
 start: ## Démarrer toute la stack (backend + frontend + services)
 	@printf "$(GREEN)🚀 Démarrage de toute la stack VTCBuilder...$(NC)\n"
+	@printf "$(YELLOW)🔍 Vérification de l'infrastructure Docker...$(NC)\n"
+	@NEED_BUILD=0; \
+	if ! docker network ls | grep -q "vtcbuilder_network"; then \
+		printf "$(YELLOW)⚠️  Réseau Docker manquant$(NC)\n"; \
+		NEED_BUILD=1; \
+	fi; \
+	if ! docker images | grep -q "vtcbuilder-backend"; then \
+		printf "$(YELLOW)⚠️  Image backend manquante$(NC)\n"; \
+		NEED_BUILD=1; \
+	fi; \
+	if ! docker images | grep -q "vtcbuilder-frontend"; then \
+		printf "$(YELLOW)⚠️  Image frontend manquante$(NC)\n"; \
+		NEED_BUILD=1; \
+	fi; \
+	if [ $$NEED_BUILD -eq 1 ]; then \
+		printf "$(YELLOW)🔨 Build nécessaire, exécution de 'make build'...$(NC)\n"; \
+		$(MAKE) build || { \
+			printf "$(RED)❌ Erreur lors du build$(NC)\n"; \
+			exit 1; \
+		}; \
+	else \
+		printf "$(GREEN)✅ Infrastructure Docker prête$(NC)\n"; \
+	fi
 	@printf "$(YELLOW)🔍 Vérification de l'état du frontend...$(NC)\n"
 	@if [ ! -d "frontend/node_modules" ]; then \
 		printf "$(YELLOW)⚠️  Dépendances frontend manquantes, installation...$(NC)\n"; \
