@@ -4,7 +4,69 @@
 
 Ce document centralise l'état actuel du projet, les subdivisions en cours, les tests, et la roadmap.
 
-**Dernière mise à jour :** 2025-12-24
+**Dernière mise à jour :** 2025-12-24 (ajout commandes make build, vérification automatique, et analyse complète de l'état du projet)
+
+---
+
+## 📊 Résumé Exécutif - État Actuel du Projet
+
+### ✅ Réalisations récentes (24/12/2025)
+- ✅ **Infrastructure Docker** : Commandes `make build` et vérification automatique dans `make start`
+- ✅ **BlockPreview.tsx** : 100% subdivisé (tous les cases extraits)
+- 🟡 **BlockRenderer.tsx** : Partiellement subdivisé (411 lignes)
+- 🟡 **ComplexRenderers.tsx** : Réduit de 1860 à 798 lignes (partiellement subdivisé)
+- 🟡 **BlockEditor.tsx** : Réduit de 4277 à 2448 lignes (encore à subdiviser)
+
+### 🔴 Priorités immédiates
+1. **Subdivision BlockEditor.tsx** (2448 lignes) - PRIORITÉ 1
+2. **Subdivision BlockStylePanel.tsx** (1131 lignes) - PRIORITÉ 2
+3. **Finaliser ComplexRenderers.tsx** (798 lignes) - PRIORITÉ 3
+4. **Créer les tests** pour toutes les fonctionnalités - PRIORITÉ 4
+
+### 📈 Progression globale
+- **Infrastructure** : ✅ 100% (commandes Docker opérationnelles)
+- **Subdivision BlockPreview** : ✅ 100% (tous les cases extraits)
+- **Subdivision BlockRenderer** : 🟡 ~60% (cases extraits, à finaliser)
+- **Subdivision BlockEditor** : 🟡 ~40% (réduit mais encore trop volumineux)
+- **Subdivision ComplexRenderers** : 🟡 ~60% (réduit, à finaliser)
+- **Subdivision BlockStylePanel** : 🔴 0% (à faire)
+- **Tests** : 🔴 0% (à créer)
+
+---
+
+## 🛠️ Infrastructure et DevOps
+
+### Commandes Makefile
+
+#### ✅ Commandes récemment ajoutées (24/12/2025)
+
+1. **`make build`** - Construction de l'infrastructure Docker
+   - ✅ Crée le réseau Docker `vtcbuilder_network` s'il n'existe pas
+   - ✅ Crée les volumes Docker nécessaires (postgres_data, redis_data)
+   - ✅ Construit les images Docker pour le backend et le frontend
+   - ✅ Prépare toute l'infrastructure avant le démarrage
+
+2. **`make start`** - Démarrage intelligent de la stack
+   - ✅ Vérifie automatiquement si un build est nécessaire
+   - ✅ Exécute automatiquement `make build` si le réseau ou les images manquent
+   - ✅ Vérifie et installe les dépendances frontend si nécessaire
+   - ✅ Démarre toute la stack (backend + frontend + services)
+
+#### Workflow recommandé
+
+```bash
+# Après un make down, simplement :
+make start  # Vérifie et reconstruit automatiquement si nécessaire
+
+# Ou explicitement :
+make build  # Construire l'infrastructure
+make start  # Démarrer les services
+```
+
+#### État actuel
+- ✅ **Commande `make build` créée** - Construction complète de l'infrastructure Docker
+- ✅ **Vérification automatique dans `make start`** - Détection et reconstruction automatique si nécessaire
+- ✅ **Workflow simplifié** - Plus besoin de se soucier de l'ordre des commandes après `make down`
 
 ---
 
@@ -12,19 +74,20 @@ Ce document centralise l'état actuel du projet, les subdivisions en cours, les 
 
 **Voir [SUBDIVISION_STATUS.md](./SUBDIVISION_STATUS.md) pour l'état détaillé.**
 
-### État actuel :
-- ✅ **BlockPreview.tsx** : 100% subdivisé (tous les cases extraits)
-- 🟡 **BlockRenderer.tsx** : Partiellement subdivisé (cases extraits dans `renderer-cases/`)
-- 🔴 **BlockEditor.tsx** : À faire (4277 lignes) - **PRIORITÉ 1**
-- 🔴 **ComplexRenderers.tsx** : À faire (1860 lignes) - **PRIORITÉ 2**
-- 🔴 **BlockStylePanel.tsx** : À faire (978 lignes) - **PRIORITÉ 3**
+### État actuel (vérifié le 24/12/2025) :
+- ✅ **BlockPreview.tsx** : 100% subdivisé (tous les cases extraits dans `preview-cases/`)
+- 🟡 **BlockRenderer.tsx** : Partiellement subdivisé (411 lignes, cases extraits dans `renderer-cases/`)
+- 🟡 **BlockEditor.tsx** : Réduit à 2448 lignes (était ~4277) - **PRIORITÉ 1** - Encore à subdiviser
+- 🟡 **ComplexRenderers.tsx** : Réduit à 798 lignes (était ~1860) - **PRIORITÉ 2** - Encore à subdiviser
+- 🔴 **BlockStylePanel.tsx** : 1131 lignes (était ~978) - **PRIORITÉ 3** - À subdiviser
 
 ### Plan d'action :
-1. Subdiviser `BlockEditor.tsx` (le plus gros fichier)
-2. Subdiviser `ComplexRenderers.tsx`
-3. Subdiviser `BlockStylePanel.tsx`
-4. Créer les tests pour toutes les fonctionnalités
-5. Continuer le Blocks Roadmap
+1. 🔴 Subdiviser `BlockEditor.tsx` (2448 lignes - encore trop volumineux)
+2. 🟡 Subdiviser `ComplexRenderers.tsx` (798 lignes - déjà partiellement fait, continuer)
+3. 🔴 Subdiviser `BlockStylePanel.tsx` (1131 lignes - à faire)
+4. 🟡 Finaliser la subdivision de `BlockRenderer.tsx` (411 lignes - vérifier si tout est extrait)
+5. 🔴 Créer les tests pour toutes les fonctionnalités
+6. 🔴 Continuer le Blocks Roadmap
 
 ---
 
@@ -160,16 +223,18 @@ Ce document centralise l'état actuel du projet, les subdivisions en cours, les 
 
 ---
 
-## 📝 Prochaines étapes
+## 📝 Prochaines étapes (mis à jour le 24/12/2025)
 
 1. ✅ Créer SUBDIVISION_STATUS.md
 2. ✅ Mettre à jour STATUS.md
-3. 🔴 Subdiviser BlockEditor.tsx (4277 lignes)
-4. 🔴 Subdiviser ComplexRenderers.tsx (1860 lignes)
-5. 🔴 Subdiviser BlockStylePanel.tsx (978 lignes)
-6. 🔴 Créer les tests pour toutes les fonctionnalités
-7. 🔴 Mettre en place le validation workflow
-8. 🔴 Continuer le Blocks Roadmap
+3. ✅ Créer commandes `make build` et vérification automatique dans `make start`
+4. 🟡 Subdiviser BlockEditor.tsx (2448 lignes - réduit mais encore trop volumineux)
+5. 🟡 Finaliser subdivision ComplexRenderers.tsx (798 lignes - déjà partiellement fait)
+6. 🔴 Subdiviser BlockStylePanel.tsx (1131 lignes - à faire)
+7. 🟡 Vérifier et finaliser subdivision BlockRenderer.tsx (411 lignes)
+8. 🔴 Créer les tests pour toutes les fonctionnalités
+9. 🔴 Mettre en place le validation workflow
+10. 🔴 Continuer le Blocks Roadmap
 
 ---
 
@@ -418,9 +483,10 @@ Les erreurs 403 persistent pour plusieurs endpoints même pour les super admins 
 **🟡 PRIORITÉ MOYENNE**
 
 1. **Continuer la subdivision des fichiers de l'éditeur**
-   - Subdiviser `BlockEditor.tsx` (4277 lignes) - **PRIORITÉ 1**
-   - Subdiviser `ComplexRenderers.tsx` (1860 lignes) - **PRIORITÉ 2**
-   - Subdiviser `BlockStylePanel.tsx` (978 lignes) - **PRIORITÉ 3**
+   - Subdiviser `BlockEditor.tsx` (2448 lignes - réduit mais encore trop volumineux) - **PRIORITÉ 1**
+   - Finaliser subdivision `ComplexRenderers.tsx` (798 lignes - déjà partiellement fait) - **PRIORITÉ 2**
+   - Subdiviser `BlockStylePanel.tsx` (1131 lignes) - **PRIORITÉ 3**
+   - Vérifier et finaliser `BlockRenderer.tsx` (411 lignes) - **PRIORITÉ 4**
 
 2. **Créer les tests pour toutes les fonctionnalités**
    - Tests pour les fonctionnalités de l'éditeur

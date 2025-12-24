@@ -1,6 +1,6 @@
 # 📊 État des Subdivisions - VTCBuilder Editor
 
-**Dernière mise à jour :** 2025-12-23  
+**Dernière mise à jour :** 2025-12-24  
 **Objectif :** Subdiviser les gros fichiers de l'éditeur pour améliorer la maintenabilité et la lisibilité
 
 ---
@@ -9,12 +9,12 @@
 
 ### Fichiers à subdiviser (par ordre de priorité)
 
-| Fichier | Lignes | Statut | Priorité |
-|---------|--------|--------|----------|
-| `BlockEditor.tsx` | ~4277 | 🔴 À faire | 1 (Plus gros) |
-| `ComplexRenderers.tsx` | ~1860 | 🔴 À faire | 2 |
-| `BlockStylePanel.tsx` | ~978 | 🔴 À faire | 3 |
-| `BlockRenderer.tsx` | ~412 | 🟡 Partiellement fait | 4 |
+| Fichier | Lignes (actuel) | Lignes (initial) | Statut | Priorité |
+|---------|----------------|------------------|--------|----------|
+| `BlockEditor.tsx` | 2448 | ~4277 | 🟡 Réduit mais encore trop volumineux | 1 |
+| `BlockStylePanel.tsx` | 1131 | ~978 | 🔴 À faire (a augmenté) | 2 |
+| `ComplexRenderers.tsx` | 798 | ~1860 | 🟡 Partiellement fait (réduit) | 3 |
+| `BlockRenderer.tsx` | 411 | ~412 | 🟡 Partiellement fait | 4 |
 
 ---
 
@@ -34,23 +34,27 @@
   - `preview-cases/content.tsx` (20 cases)
   - `preview-cases/index.ts` (export centralisé)
 
-### 2. BlockRenderer.tsx - 🟡 PARTIELLEMENT FAIT
+### 2. BlockRenderer.tsx - 🟡 PARTIELLEMENT FAIT (411 lignes)
 - **Statut :** Cases extraits dans `renderer-cases/`
 - **Fichiers créés :**
-  - `renderer-cases/content-cards.tsx`
-  - `renderer-cases/content-navigation.tsx`
-  - `renderer-cases/content-media.tsx`
-  - `renderer-cases/content-display.tsx`
-  - `renderer-cases/vtc-forms.tsx`
-  - `renderer-cases/vtc-display.tsx`
+  - `renderer-cases/content-cards.tsx` (4 fonctions render)
+  - `renderer-cases/content-navigation.tsx` (5 fonctions render)
+  - `renderer-cases/content-media.tsx` (1 fonction render)
+  - `renderer-cases/content-display.tsx` (1 fonction render)
+  - `renderer-cases/vtc-forms.tsx` (1 fonction render)
+  - `renderer-cases/vtc-display/` (5 fichiers avec fonctions render)
+  - `renderer-cases/interactive.tsx` (5 fonctions render)
+  - `renderer-cases/data.tsx` (3 fonctions render)
+  - `renderer-cases/forms.tsx` (4 fonctions render)
+  - `renderer-cases/complex.tsx` (1 fonction render)
   - `renderer-cases/index.ts` (export centralisé)
-- **Reste à faire :** Vérifier si tous les cases sont bien extraits
+- **Reste à faire :** Vérifier si tous les cases sont bien extraits et si le fichier peut être encore réduit
 
 ---
 
 ## 🔴 À FAIRE - Plan de Subdivision
 
-### 1. BlockEditor.tsx (~4277 lignes) - PRIORITÉ 1
+### 1. BlockEditor.tsx (2448 lignes, était ~4277) - PRIORITÉ 1
 
 **Objectif :** Extraire les composants et hooks pour réduire la complexité
 
@@ -79,7 +83,7 @@
 
 ---
 
-### 2. ComplexRenderers.tsx (~1860 lignes) - PRIORITÉ 2
+### 2. ComplexRenderers.tsx (798 lignes, était ~1860) - PRIORITÉ 3
 
 **Objectif :** Subdiviser les renderers complexes en fichiers thématiques
 
@@ -100,7 +104,7 @@
 
 ---
 
-### 3. BlockStylePanel.tsx (~978 lignes) - PRIORITÉ 3
+### 3. BlockStylePanel.tsx (1131 lignes, était ~978) - PRIORITÉ 2
 
 **Objectif :** Extraire les panneaux de style en composants réutilisables
 
