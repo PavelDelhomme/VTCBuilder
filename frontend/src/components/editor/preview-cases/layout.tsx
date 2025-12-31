@@ -77,52 +77,86 @@ export function renderContainer(props: PreviewCaseProps): React.ReactElement | n
 export function renderFlexContainer(props: PreviewCaseProps): React.ReactElement | null {
   const { block, theme = 'light', contentStyles, blockTypes } = props
   const isDark = theme === 'dark'
+  const hasChildren = block.children && block.children.length > 0
+  
+  // Convertir gap en valeur CSS valide
+  let flexGap = block.data?.gap || '1rem'
+  if (typeof flexGap === 'string' && flexGap.startsWith('gap-')) {
+    const gapMap: Record<string, string> = {
+      'gap-0': '0',
+      'gap-1': '0.25rem',
+      'gap-2': '0.5rem',
+      'gap-3': '0.75rem',
+      'gap-4': '1rem',
+      'gap-6': '1.5rem',
+      'gap-8': '2rem',
+      'gap-12': '3rem',
+      'gap-16': '4rem',
+    }
+    flexGap = gapMap[flexGap] || '1rem'
+  }
+  
   return (
     <div 
+      data-block-id={block.id}
       style={{ 
         ...contentStyles, 
         display: 'flex', 
         flexDirection: block.data?.direction || 'row', 
-        gap: block.data?.gap || '1rem', 
+        gap: flexGap,
+        justifyContent: block.data?.justify || 'flex-start',
+        alignItems: block.data?.align || 'stretch',
         flexWrap: block.data?.wrap || 'nowrap',
-        minHeight: block.minHeight || '200px',
+        minHeight: hasChildren ? 'auto' : (block.minHeight || '200px'),
         height: block.height || 'auto',
         maxHeight: block.maxHeight || 'none',
-        borderColor: isDark ? '#4b5563' : '#d1d5db',
-        borderWidth: '2px',
-        borderStyle: 'dashed',
+        border: hasChildren ? '2px dashed transparent' : `2px dashed ${isDark ? '#4b5563' : '#d1d5db'}`,
+        borderRadius: '0.5rem',
+        padding: hasChildren ? '0' : '1.5rem',
+        backgroundColor: hasChildren ? 'transparent' : (isDark ? 'rgba(31, 41, 55, 0.3)' : 'rgba(249, 250, 251, 0.5)'),
+        position: 'relative',
       }} 
-      className="p-6 rounded-lg"
+      className="mb-6 relative group"
     >
-      <div 
-        className="text-center flex-1"
-        style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
-      >
-        <div className="text-2xl mb-2">📐</div>
-        <div className="text-sm font-semibold">Flex Container</div>
-        <div className="text-xs mt-1">Direction: {block.data?.direction || 'row'}</div>
-        {block.children && block.children.length > 0 && (
-          <div className="mt-4 space-y-2">
-            {block.children.map((child: Block, idx: number) => (
-              <div 
-                key={idx} 
-                className="p-2 rounded text-xs"
-                style={{
-                  backgroundColor: isDark ? '#1f2937' : '#f3f4f6',
-                  color: isDark ? '#d1d5db' : '#374151'
-                }}
-              >
-                <BlockPreviewRenderer
-                  block={child}
-                  blockType={blockTypes?.find((bt: BlockType) => bt.name === child.type)}
-                  blockTypes={blockTypes}
-                  theme={theme}
-                />
-              </div>
-            ))}
+      {/* Badge indicateur de flex - visible en haut à droite */}
+      {hasChildren && (
+        <div 
+          className="absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-medium z-10"
+          style={{
+            backgroundColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.15)',
+            color: isDark ? '#93c5fd' : '#2563eb',
+            border: `1px solid ${isDark ? '#3b82f6' : '#3b82f6'}`,
+            backdropFilter: 'blur(4px)',
+          }}
+          title={`Flex ${block.data?.direction || 'row'}`}
+        >
+          <span className="mr-1">📐</span>
+          <span className="font-semibold">Flex</span>
+        </div>
+      )}
+      
+      {hasChildren ? (
+        block.children.map((child: Block, idx: number) => (
+          <div key={child.id || idx} data-block-id={child.id} data-child-block-id={child.id} style={{ flex: '1 1 auto' }}>
+            <BlockPreviewRenderer
+              block={child}
+              blockType={blockTypes?.find((bt: BlockType) => bt.name === child.type)}
+              blockTypes={blockTypes}
+              theme={theme}
+            />
           </div>
-        )}
-      </div>
+        ))
+      ) : (
+        <div 
+          className="text-center flex-1 flex flex-col items-center justify-center"
+          style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
+        >
+          <div className="text-2xl mb-2">📐</div>
+          <div className="text-sm font-semibold">Flex Container</div>
+          <div className="text-xs mt-1">Direction: {block.data?.direction || 'row'}</div>
+          <div className="text-xs mt-2 text-gray-400">Ajoutez des blocs dans ce conteneur Flex</div>
+        </div>
+      )}
     </div>
   )
 }
@@ -130,58 +164,109 @@ export function renderFlexContainer(props: PreviewCaseProps): React.ReactElement
 export function renderGridContainer(props: PreviewCaseProps): React.ReactElement | null {
   const { block, theme = 'light', contentStyles, blockTypes } = props
   const isDark = theme === 'dark'
-  const gridColumns = block.data?.columns || 'repeat(3, 1fr)'
+  
+  // Convertir le nombre de colonnes en format CSS grid
+  const columnsCount = typeof block.data?.columns === 'number' ? block.data.columns : 
+                       typeof block.data?.columns === 'string' && !isNaN(Number(block.data.columns)) ? Number(block.data.columns) : 2
+  const gridColumns = typeof block.data?.columns === 'string' && block.data.columns.includes('repeat') 
+    ? block.data.columns 
+    : `repeat(${columnsCount}, 1fr)`
   const gridRows = block.data?.rows || 'auto'
-  const gridGap = block.data?.gap || '1rem'
+  // Convertir gap en valeur CSS valide (supprimer les classes Tailwind comme 'gap-12')
+  let gridGap = block.data?.gap || block.styles?.gap || '1rem'
+  if (typeof gridGap === 'string' && gridGap.startsWith('gap-')) {
+    // Convertir les classes Tailwind gap en valeurs CSS
+    const gapMap: Record<string, string> = {
+      'gap-0': '0',
+      'gap-1': '0.25rem',
+      'gap-2': '0.5rem',
+      'gap-3': '0.75rem',
+      'gap-4': '1rem',
+      'gap-6': '1.5rem',
+      'gap-8': '2rem',
+      'gap-12': '3rem',
+      'gap-16': '4rem',
+    }
+    gridGap = gapMap[gridGap] || '1rem'
+  }
+  const hasChildren = block.children && block.children.length > 0
+  
   return (
     <div 
+      data-block-id={block.id}
+      className="mb-6 relative group"
       style={{
         ...contentStyles,
         display: 'grid',
         gridTemplateColumns: gridColumns,
         gridTemplateRows: gridRows,
         gap: gridGap,
-        minHeight: block.minHeight || '200px',
+        minHeight: block.minHeight || (hasChildren ? 'auto' : '200px'),
         height: block.height || 'auto',
         maxHeight: block.maxHeight || 'none',
-        borderColor: isDark ? '#4b5563' : '#d1d5db',
-        borderWidth: '2px',
-        borderStyle: 'dashed',
-        backgroundColor: isDark ? (block.styles?.background_color || '#1f2937') : (block.styles?.background_color || '#f9fafb'),
-        color: isDark ? '#f9fafb' : '#111827',
-      }} 
-      className="p-6 rounded-lg"
+        ...(block.styles?.padding ? { padding: block.styles.padding } : {}),
+        position: 'relative',
+        border: hasChildren ? '2px dashed transparent' : `2px dashed ${isDark ? '#4b5563' : '#d1d5db'}`,
+        borderRadius: '0.5rem',
+        backgroundColor: hasChildren ? 'transparent' : (isDark ? 'rgba(31, 41, 55, 0.3)' : 'rgba(249, 250, 251, 0.5)'),
+      }}
     >
+      {/* Badge indicateur de grille - visible en haut à droite */}
       <div 
-        className="text-center"
-        style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
+        className="absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-medium z-10"
+        style={{
+          backgroundColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.15)',
+          color: isDark ? '#93c5fd' : '#2563eb',
+          border: `1px solid ${isDark ? '#3b82f6' : '#3b82f6'}`,
+          backdropFilter: 'blur(4px)',
+        }}
+        title={`Grille avec ${columnsCount} colonnes`}
       >
-        <div className="text-2xl mb-2">⚏</div>
-        <div className="text-sm font-semibold">Grille</div>
-        <div className="text-xs mt-1">Columns: {gridColumns}</div>
-        <div className="text-xs mt-1">Rows: {gridRows}</div>
-        {block.children && block.children.length > 0 && (
-          <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: gridColumns, gridTemplateRows: gridRows }}>
-            {block.children.map((child: Block, idx: number) => (
-              <div 
-                key={idx} 
-                className="p-2 rounded text-xs"
-                style={{
-                  backgroundColor: isDark ? '#1f2937' : '#f3f4f6',
-                  color: isDark ? '#d1d5db' : '#374151'
-                }}
-              >
-                <BlockPreviewRenderer
-                  block={child}
-                  blockType={blockTypes?.find((bt: BlockType) => bt.name === child.type)}
-                  blockTypes={blockTypes}
-                  theme={theme}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+        <span className="mr-1">⚏</span>
+        <span className="font-semibold">Grille</span>
+        <span className="ml-1 opacity-75">({columnsCount})</span>
       </div>
+      
+      {/* Indicateur visuel de grille - visible seulement si vide */}
+      {!hasChildren && (
+        <div 
+          className="absolute inset-0 flex flex-col items-center justify-center"
+          style={{
+            zIndex: 0,
+          }}
+        >
+          <div className="text-4xl mb-2" style={{ color: isDark ? '#6b7280' : '#9ca3af' }}>⚏</div>
+          <div className="text-sm font-semibold mb-1" style={{ color: isDark ? '#d1d5db' : '#374151' }}>
+            Grille ({columnsCount} colonnes)
+          </div>
+          <div className="text-xs" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+            Ajoutez des blocs dans cette grille
+          </div>
+        </div>
+      )}
+      
+      {/* Affichage des blocs enfants */}
+      {hasChildren ? (
+        block.children.map((child: Block, idx: number) => (
+          <div 
+            key={child.id || idx} 
+            data-block-id={child.id}
+            data-child-block-id={child.id}
+            className="relative"
+            style={{
+              minHeight: '100px',
+              zIndex: 1,
+            }}
+          >
+            <BlockPreviewRenderer
+              block={child}
+              blockType={blockTypes?.find((bt: BlockType) => bt.name === child.type)}
+              blockTypes={blockTypes}
+              theme={theme}
+            />
+          </div>
+        ))
+      ) : null}
     </div>
   )
 }
@@ -264,11 +349,21 @@ export function renderRows(props: PreviewCaseProps): React.ReactElement | null {
 
 export function renderSection(props: PreviewCaseProps): React.ReactElement | null {
   const { block, theme = 'light', contentStyles, blockTypes } = props
+  const isDark = theme === 'dark'
+  
+  // Appliquer les styles de background depuis data ou styles
+  const backgroundColor = block.data?.background || block.styles?.background_color || block.styles?.backgroundColor
+  const backgroundClass = block.data?.background && typeof block.data.background === 'string' && block.data.background.startsWith('bg-') 
+    ? block.data.background 
+    : undefined
+  
   return (
     <div
       data-block-id={block.id}
+      className={`mb-6 ${block.data?.rounded || 'rounded-lg'} ${block.data?.shadow || ''} ${backgroundClass || ''}`}
       style={{
         ...contentStyles,
+        backgroundColor: backgroundColor && !backgroundClass ? backgroundColor : undefined,
         backgroundImage: block.data.background_image ? `url(${block.data.background_image})` : undefined,
         backgroundSize: block.data.background_size || 'cover',
         backgroundPosition: block.data.background_position || 'center',
@@ -277,14 +372,16 @@ export function renderSection(props: PreviewCaseProps): React.ReactElement | nul
         ...(block.styles?.padding && !block.styles?.padding_top && !block.styles?.padding_bottom && !block.styles?.padding_left && !block.styles?.padding_right
           ? { padding: block.styles.padding }
           : {
-              paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || '2rem',
-              paddingRight: block.styles?.padding_right || block.styles?.padding_horizontal || '2rem',
-              paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || '2rem',
-              paddingLeft: block.styles?.padding_left || block.styles?.padding_horizontal || '2rem',
+              paddingTop: block.styles?.padding_top || block.styles?.padding_vertical || (block.data?.padding ? undefined : '2rem'),
+              paddingRight: block.styles?.padding_right || block.styles?.padding_horizontal || (block.data?.padding ? undefined : '2rem'),
+              paddingBottom: block.styles?.padding_bottom || block.styles?.padding_vertical || (block.data?.padding ? undefined : '2rem'),
+              paddingLeft: block.styles?.padding_left || block.styles?.padding_horizontal || (block.data?.padding ? undefined : '2rem'),
             }),
+        // Appliquer le padding depuis data si présent
+        ...(block.data?.padding && typeof block.data.padding === 'string' ? {} : {}),
         minHeight: block.styles?.min_height || 'auto',
+        boxShadow: block.data?.shadow === 'shadow-lg' ? '0 10px 15px -3px rgba(0, 0, 0, 0.1)' : undefined,
       }}
-      className="mb-6 rounded-lg"
     >
       {block.data.overlay && block.data.background_image && (
         <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg"></div>
@@ -318,9 +415,9 @@ export function renderHeader(props: PreviewCaseProps): React.ReactElement | null
 }
 
 export function renderFooter(props: PreviewCaseProps): React.ReactElement | null {
-  const { block, theme = 'light', wrapperStyles } = props
+  const { block, theme = 'light', wrapperStyles, contentStyles = {} } = props
   // Utiliser le renderer depuis renderers/layout/footer.tsx qui affiche le footer avec ses données
-  return renderFooterFromLayout({ block, wrapperStyles, theme })
+  return renderFooterFromLayout({ block, wrapperStyles, contentStyles, theme })
 }
 
 // flexbox, grid, stack, inline, group, wrapper utilisent tous renderContainer

@@ -21,18 +21,31 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'email' | 'security' | 'billing' | 'notifications' | 'maintenance' | 'payment'>('general')
 
   useEffect(() => {
-    // Vérifier l'authentification avant de charger
-    if (!authService.isAuthenticated()) {
-      authService.saveRedirectUrl()
-      router.push('/login')
-      return
+    const checkAndLoad = async () => {
+      // Vérifier l'authentification avant de charger
+      if (!authService.isAuthenticated()) {
+        authService.saveRedirectUrl()
+        router.push('/login')
+        return
+      }
+      
+      if (!authService.isSuperAdmin()) {
+        router.push('/dashboard')
+        return
+      }
+      
+      // Vérifier si on vient de se connecter (dans les 5 secondes)
+      const loginTimestamp = localStorage.getItem('login_timestamp');
+      const justLoggedIn = loginTimestamp && (Date.now() - parseInt(loginTimestamp, 10)) < 5000;
+      
+      if (justLoggedIn) {
+        // Attendre un peu avant de charger les données après le login
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      loadSettings()
     }
-    
-    if (!authService.isSuperAdmin()) {
-      router.push('/dashboard')
-      return
-    }
-    loadSettings()
+    checkAndLoad()
   }, [router])
 
   const loadSettings = async () => {

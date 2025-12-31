@@ -119,18 +119,36 @@ export default function SecurityPage() {
   })
 
   useEffect(() => {
-    if (!authService.isSuperAdmin()) {
-      router.push('/dashboard')
-      return
+    const checkAndLoad = async () => {
+      if (!authService.isSuperAdmin()) {
+        router.push('/dashboard')
+        return
+      }
+      
+      // Vérifier si on vient de se connecter (dans les 5 secondes)
+      const loginTimestamp = localStorage.getItem('login_timestamp');
+      const justLoggedIn = loginTimestamp && (Date.now() - parseInt(loginTimestamp, 10)) < 5000;
+      
+      if (justLoggedIn) {
+        // Attendre un peu avant de charger les données après le login
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      loadData()
     }
-    loadData()
+    checkAndLoad()
   }, [router, activeTab, alertFilter])
 
   const loadData = async () => {
     setLoading(true)
     try {
       if (activeTab === 'waf') {
-        await Promise.all([loadWAFRules(), loadWAFLogs(), loadWAFStats()])
+        // Charger les données de manière SÉRIELLE pour éviter le rate limiting WAF
+        await loadWAFRules()
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await loadWAFLogs()
+        await new Promise(resolve => setTimeout(resolve, 300));
+        await loadWAFStats()
       } else if (activeTab === 'monitoring') {
         await loadAlerts()
       } else if (activeTab === 'firewall') {
@@ -166,8 +184,14 @@ export default function SecurityPage() {
       
       const logs = await securityService.getWAFLogs(params)
       setWafLogs(logs)
-    } catch (error) {
-      console.error('Error chargement logs WAF:', error)
+    } catch (error: any) {
+      // Si erreur 403, c'est normal (pas de permissions) - ne pas logger comme erreur
+      if (error.response?.status === 403) {
+        console.warn('⚠️ Accès aux logs WAF refusé (permissions insuffisantes)')
+        setWafLogs([])
+      } else {
+        console.error('Error chargement logs WAF:', error)
+      }
     }
   }
 

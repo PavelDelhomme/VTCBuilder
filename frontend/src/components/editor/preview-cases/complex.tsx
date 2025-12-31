@@ -5,6 +5,7 @@ import api from '@/lib/api'
 import { renderHero as renderHeroFromPreview } from '../renderers/complex/preview'
 import { renderFeaturesGrid as renderFeaturesGridFromPreview } from '../renderers/complex/preview'
 import { renderCTASection as renderCTASectionFromComplex } from '../renderers/complex/cta-section'
+import { renderContactForm as renderContactFormFromComplex } from '../renderers/complex/contact-form'
 // FAQSectionPreview sera importé depuis BlockPreview ou créé localement
 
 // Blocs complexes : hero, features-grid, cta, testimonials, pricing, timeline, stats, social-links, faq, banner, contact-form
@@ -460,14 +461,16 @@ export function renderBanner(props: PreviewCaseProps): React.ReactElement | null
 }
 
 export function renderContactFormBase(props: PreviewCaseProps): React.ReactElement | null {
-  if (renderContactForm) {
-    return renderContactForm(props)
+  // Convertir PreviewCaseProps en RendererProps
+  const rendererProps = {
+    block: props.block,
+    blockType: props.blockType,
+    blockTypes: props.blockTypes,
+    theme: props.theme || 'light',
+    wrapperStyles: props.wrapperStyles || {},
+    contentStyles: props.contentStyles || {},
   }
-  return (
-    <div style={props.wrapperStyles} className="mb-6 p-6 border-2 border-dashed rounded">
-      <p className="text-gray-500">Contact form renderer not available</p>
-    </div>
-  )
+  return renderContactFormFromComplex(rendererProps)
 }
 
 // Export map

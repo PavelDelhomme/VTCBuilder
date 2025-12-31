@@ -128,10 +128,30 @@ export default function StatsPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Vérifier d'abord si le token existe
+      const token = localStorage.getItem('token')
+      if (!token) {
+        // Pas de token, rediriger vers login
+        authService.saveRedirectUrl()
+        router.push('/login')
+        return
+      }
+      
+      // Vérifier si super admin
       if (!authService.isSuperAdmin()) {
         router.push('/dashboard')
         return
       }
+      
+      // Vérifier si on vient de se connecter (dans les 5 secondes)
+      const loginTimestamp = localStorage.getItem('login_timestamp');
+      const justLoggedIn = loginTimestamp && (Date.now() - parseInt(loginTimestamp, 10)) < 5000;
+      
+      if (justLoggedIn) {
+        // Attendre un peu avant de charger les données après le login
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
       await loadStats()
     }
     checkAuth()
@@ -141,22 +161,40 @@ export default function StatsPage() {
     try {
       setLoading(true)
       
-      // Charger les stats détaillées, les stats de billing et les stats d'utilisation en parallèle
-      const [statsResponse, billingStatsResponse, usageStatsResponse] = await Promise.allSettled([
-        api.get('/stats/detailed/'),
-        billingService.getBillingStats().catch(() => null), // Ne pas bloquer si billing stats échoue
-        analyticsService.getUsageStats().catch((err) => {
-          // Ne pas logger d'error si c'est juste un 404 (endpoint pas encore disponible)
-          if (err?.response?.status !== 404) {
-            console.warn('Error chargement usage stats:', err)
-          }
-          return null
-        }) // Ne pas bloquer si usage stats échoue
-      ])
+      // Charger les stats de manière SÉRIELLE pour éviter le rate limiting WAF
+      // 1. Stats détaillées
+      let response = null
+      try {
+        response = await api.get('/stats/detailed/')
+      } catch (error: any) {
+        console.warn('Error chargement stats détaillées:', error)
+      }
       
-      const response = statsResponse.status === 'fulfilled' ? statsResponse.value : null
-      const billingData = billingStatsResponse.status === 'fulfilled' ? billingStatsResponse.value : null
-      const usageData = usageStatsResponse.status === 'fulfilled' ? usageStatsResponse.value : null
+      // Attendre 300ms avant la prochaine requête
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 2. Stats de billing
+      let billingData = null
+      try {
+        billingData = await billingService.getBillingStats()
+      } catch (error: any) {
+        // Ne pas bloquer si billing stats échoue
+        console.warn('Error chargement billing stats:', error)
+      }
+      
+      // Attendre 300ms avant la prochaine requête
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 3. Stats d'utilisation
+      let usageData = null
+      try {
+        usageData = await analyticsService.getUsageStats()
+      } catch (err: any) {
+        // Ne pas logger d'error si c'est juste un 404 (endpoint pas encore disponible)
+        if (err?.response?.status !== 404) {
+          console.warn('Error chargement usage stats:', err)
+        }
+      }
       
       if (billingData) {
         setBillingStats(billingData)

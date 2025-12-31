@@ -338,31 +338,89 @@ export default function BillingPage() {
   }
 
   useEffect(() => {
-    if (!authService.isSuperAdmin()) {
-      router.push('/dashboard')
-      return
+    const checkAndLoad = async () => {
+      if (!authService.isSuperAdmin()) {
+        router.push('/dashboard')
+        return
+      }
+      
+      // Vérifier si on vient de se connecter (dans les 5 secondes)
+      const loginTimestamp = localStorage.getItem('login_timestamp');
+      const justLoggedIn = loginTimestamp && (Date.now() - parseInt(loginTimestamp, 10)) < 5000;
+      
+      if (justLoggedIn) {
+        // Attendre un peu avant de charger les données après le login
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      loadBillingData()
     }
-    loadBillingData()
+    checkAndLoad()
   }, [router])
 
   const loadBillingData = async () => {
     try {
-      const results = await Promise.allSettled([
-        billingService.getBillingStats(),
-        billingService.getSubscriptions(),
-        billingService.getInvoices(),
-        billingService.getPayments(),
-        billingService.getPricingPlans(),
-        billingService.getPaymentMethods().catch(() => []), // Retourne tableau vide si 404
-      ])
+      setLoading(true)
       
-      if (results[0].status === 'fulfilled') setStats(results[0].value)
-      if (results[1].status === 'fulfilled') setSubscriptions(results[1].value)
-      if (results[2].status === 'fulfilled') setInvoices(results[2].value)
-      if (results[3].status === 'fulfilled') setPayments(results[3].value)
-      if (results[4].status === 'fulfilled') setPricingPlans(results[4].value)
-      if (results[5].status === 'fulfilled') setPaymentMethods(results[5].value || [])
-      else setPaymentMethods([]) // Si erreur, tableau vide
+      // Charger les données de manière SÉRIELLE pour éviter le rate limiting WAF
+      // 1. Stats de billing
+      try {
+        const statsData = await billingService.getBillingStats()
+        setStats(statsData)
+      } catch (error: any) {
+        console.warn('Error chargement stats billing:', error)
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 2. Abonnements
+      try {
+        const subscriptionsData = await billingService.getSubscriptions()
+        setSubscriptions(subscriptionsData)
+      } catch (error: any) {
+        console.warn('Error chargement abonnements:', error)
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 3. Factures
+      try {
+        const invoicesData = await billingService.getInvoices()
+        setInvoices(invoicesData)
+      } catch (error: any) {
+        console.warn('Error chargement factures:', error)
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 4. Paiements
+      try {
+        const paymentsData = await billingService.getPayments()
+        setPayments(paymentsData)
+      } catch (error: any) {
+        console.warn('Error chargement paiements:', error)
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 5. Plans tarifaires
+      try {
+        const plansData = await billingService.getPricingPlans()
+        setPricingPlans(plansData)
+      } catch (error: any) {
+        console.warn('Error chargement plans tarifaires:', error)
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 6. Méthodes de paiement
+      try {
+        const methodsData = await billingService.getPaymentMethods()
+        setPaymentMethods(methodsData || [])
+      } catch (error: any) {
+        // Retourne tableau vide si 404
+        setPaymentMethods([])
+      }
     } catch (error: any) {
       // Ne pas logger les erreurs attendues (gérées gracieusement)
       if (!error.response || (error.response?.status !== 404 && error.response?.status !== 500)) {

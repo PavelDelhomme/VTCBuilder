@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import authService from '@/services/auth.service'
+import { requestManager } from '@/lib/request-manager'
 import toast from 'react-hot-toast'
 import { getTenantSlug, isTenantSubdomain } from '@/lib/tenant-utils'
 import tenantService from '@/services/tenant.service'
@@ -86,16 +87,30 @@ export default function LoginPage() {
       })
       
       // Vérifier si l'utilisateur est authentifié
+      // Attendre un peu pour que le token soit bien sauvegardé
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       if (authService.isAuthenticated()) {
+        // Augmenter le délai entre les requêtes après le login pour éviter le rate limiting WAF
+        requestManager.setMinDelay(600); // 600ms entre chaque requête (augmenté pour éviter WAF)
+        // Réinitialiser après 30 secondes
+        setTimeout(() => {
+          requestManager.resetMinDelay();
+        }, 30000);
+        
         // Récupérer l'URL de redirection sauvegardée
         const redirectUrl = authService.getAndClearRedirectUrl()
         
         if (redirectUrl) {
+          // Attendre un peu avant de rediriger pour éviter les requêtes simultanées
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Augmenté pour éviter WAF
           // Rediriger vers l'URL sauvegardée
           router.push(redirectUrl)
         } else {
           // Sinon, rediriger selon le rôle
           const user = authService.getStoredUser()
+          // Attendre un peu avant de rediriger pour éviter les requêtes simultanées
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Augmenté pour éviter WAF
           if (user?.roles?.some((role: any) => role === 'super-admin' || role.name === 'super-admin')) {
             router.push('/admin/dashboard')
           } else {
@@ -108,6 +123,19 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error('Login error:', error)
+      
+      // Gérer les erreurs WAF en premier
+      if (error.isWAFError || error.message?.includes('WAF') || error.message?.includes('blocked by WAF')) {
+        toast.error(
+          `🔒 ${error.message || 'Votre requête a été bloquée par le système de sécurité (WAF).'}\n\n` +
+          `💡 Solutions:\n` +
+          `• Attendez quelques instants avant de réessayer\n` +
+          `• Vérifiez que vous n'avez pas fait trop de tentatives de connexion\n` +
+          `• Contactez le support si le problème persiste`,
+          { duration: 10000 }
+        )
+        return
+      }
       
       // Gérer les erreurs de réseau spécifiquement
       const isBlockedError = error.code === 'ERR_BLOCKED_BY_CLIENT' || 
@@ -249,13 +277,14 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  suppressHydrationWarning
                 >
                   {showPassword ? (
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                     </svg>
                   ) : (
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" suppressHydrationWarning>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>

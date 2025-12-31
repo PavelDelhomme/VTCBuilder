@@ -21,8 +21,18 @@ import { useConfirm } from '@/hooks/useConfirm'
 import { useTheme } from '@/contexts/ThemeContext'
 import SubscriptionInfo from '@/components/editor/ui/SubscriptionInfo'
 import { findBlockInTree, duplicateBlockInTree, removeBlockFromTree } from '@/lib/block-utils'
-import billingService from '@/services/billing.service'
-import projectService from '@/services/project.service'
+import billingService, { Subscription, PricingPlan } from '@/services/billing.service'
+import projectService, { ProjectPage } from '@/services/project.service'
+import { SystemSettings, PublicPageData } from '@/services/settings.service'
+import { requestManager } from '@/lib/request-manager'
+
+// Extension de l'interface Window pour les fonctions d'undo/redo
+declare global {
+  interface Window {
+    __blockEditorUndo?: () => void
+    __blockEditorRedo?: () => void
+  }
+}
 
 const PAGE_TITLES: Record<string, string> = {
   home: 'Page d\'accueil',
@@ -79,7 +89,7 @@ export default function EditPublicPage() {
   const [canRedo, setCanRedo] = useState(false)
   const [showSeoExpanded, setShowSeoExpanded] = useState(false) // État pour afficher/masquer les paramètres SEO
   const [showMoreMenu, setShowMoreMenu] = useState(false) // État pour le menu "Plus d'options"
-  const [subscription, setSubscription] = useState<any>(null)
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [subscriptionLoading, setSubscriptionLoading] = useState(true)
   const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -109,7 +119,7 @@ export default function EditPublicPage() {
 
   // Fonction de sauvegarde (mémorisée pour éviter les re-renders)
   const handleSave = useCallback(async (data: { blocks: Block[]; metaTitle: string; metaDescription: string; status: 'draft' | 'published' }) => {
-    const settingsData: any = {}
+    const settingsData: Partial<SystemSettings> = {}
     
     if (pageSlug === 'home') {
       // Sauvegarder les blocs en mode brouillon
@@ -127,22 +137,69 @@ export default function EditPublicPage() {
       settingsData.public_homepage_meta_title = data.metaTitle
       settingsData.public_homepage_meta_description = data.metaDescription
     } else {
-      const currentSettings = await api.get('/system-settings/')
-      const publicPages = currentSettings.data.public_pages || {}
+      // Gérer les erreurs réseau gracieusement
+      let publicPages: Record<string, PublicPageData> = {}
+      try {
+        const currentSettings = await api.get('/system-settings/')
+        publicPages = currentSettings.data.public_pages || {}
+      } catch (error: unknown) {
+        // Si l'erreur est une Network Error ou une erreur de connexion, utiliser des données par défaut
+        const isNetworkError = error instanceof Error && (error.message === 'Network Error' || (error as { code?: string }).code === 'ERR_NETWORK')
+        const hasNoResponse = error && typeof error === 'object' && 'response' in error && !(error as { response?: unknown }).response
+        if (isNetworkError || hasNoResponse) {
+          console.warn('⚠️ Erreur réseau lors de la récupération des paramètres système, utilisation de données par défaut')
+          // Essayer de récupérer depuis localStorage si disponible
+          try {
+            const cachedSettings = localStorage.getItem('cached-system-settings')
+            if (cachedSettings) {
+              const parsed = JSON.parse(cachedSettings)
+              publicPages = parsed.public_pages || {}
+            }
+          } catch (e) {
+            // Si le cache est invalide, utiliser un objet vide
+            publicPages = {}
+          }
+        } else {
+          // Pour les autres erreurs (401, 403, etc.), l'intercepteur devrait les gérer
+          // Mais si on arrive ici, on utilise des données par défaut
+          const errorMsg = error instanceof Error ? error.message : String(error)
+          console.warn('⚠️ Erreur lors de la récupération des paramètres système:', errorMsg)
+          publicPages = {}
+        }
+      }
       
       publicPages[pageSlug] = {
-        ...publicPages[pageSlug],
+        ...(publicPages[pageSlug] || {}),
         title: PAGE_TITLES[pageSlug] || pageSlug,
         blocks: data.blocks,
         meta_title: data.metaTitle,
         meta_description: data.metaDescription,
         is_active: publicPages[pageSlug]?.is_active !== false,
-      }
+      } as PublicPageData
       
       settingsData.public_pages = publicPages
     }
     
-    await api.patch('/system-settings/', settingsData)
+    // Sauvegarder les paramètres
+    try {
+      await api.patch('/system-settings/', settingsData)
+      // Mettre en cache les paramètres après une sauvegarde réussie
+      if (pageSlug !== 'home') {
+        try {
+          localStorage.setItem('cached-system-settings', JSON.stringify({ public_pages: settingsData.public_pages }))
+        } catch (e) {
+          // Ignorer les erreurs de localStorage
+        }
+      }
+    } catch (error: unknown) {
+      // Si la sauvegarde échoue, relancer l'erreur pour que l'appelant puisse la gérer
+      const isNetworkError = error instanceof Error && (error.message === 'Network Error' || (error as { code?: string }).code === 'ERR_NETWORK')
+      const hasNoResponse = error && typeof error === 'object' && 'response' in error && !(error as { response?: unknown }).response
+      if (isNetworkError || hasNoResponse) {
+        throw new Error('Erreur réseau lors de la sauvegarde. Vérifiez votre connexion internet.')
+      }
+      throw error
+    }
   }, [pageSlug])
 
   // Mémoriser les données pour éviter les sauvegardes inutiles lors de la sélection
@@ -170,9 +227,12 @@ export default function EditPublicPage() {
       // Mettre à jour le timestamp de dernière sauvegarde
       updateLastSaved()
       toast.success('Page sauvegardée avec succès !')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sauvegarde:', error)
-      toast.error(error.response?.data?.error || 'Error lors de la sauvegarde')
+      const errorMessage = error && typeof error === 'object' && 'response' in error 
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error 
+        : undefined
+      toast.error(errorMessage || 'Error lors de la sauvegarde')
     } finally {
       setSaving(false)
     }
@@ -219,13 +279,30 @@ export default function EditPublicPage() {
 
   // Gestion du redimensionnement des panneaux avec snap
   useEffect(() => {
-    if (!isResizing) return
+    if (!isResizing) {
+      // Nettoyer le curseur si on n'est pas en train de redimensionner
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      return
+    }
+
+    // Utiliser une référence pour éviter les problèmes de closure
+    let currentEditorWidth = editorWidth
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return
-      
-      const container = document.querySelector('.flex-1.flex.overflow-hidden.min-h-0')
-      if (!container) return
+      // Trouver le conteneur parent qui contient les deux panneaux
+      const container = document.querySelector('[data-editor-container]') || 
+                       document.querySelector('.flex-1.flex.overflow-hidden.min-h-0.relative') ||
+                       document.querySelector('.flex.flex-1.overflow-hidden')
+      if (!container) {
+        // Fallback : utiliser la fenêtre
+        const windowWidth = window.innerWidth
+        let newWidth = (e.clientX / windowWidth) * 100
+        newWidth = Math.max(20, Math.min(80, newWidth))
+        currentEditorWidth = newWidth
+        setEditorWidth(newWidth)
+        return
+      }
       
       const containerRect = container.getBoundingClientRect()
       let newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100
@@ -234,7 +311,7 @@ export default function EditPublicPage() {
       newWidth = Math.max(20, Math.min(80, newWidth))
       
       // Vérifier si on est proche d'un point d'ancrage (aimantation)
-      const { point: snapPoint, distance } = findNearestSnapPoint(newWidth)
+      const { point: snapPoint } = findNearestSnapPoint(newWidth)
       if (snapPoint !== null) {
         // Aimantation active : forcer le snap
         newWidth = snapPoint
@@ -244,6 +321,7 @@ export default function EditPublicPage() {
         setSnappedPoint(null)
       }
       
+      currentEditorWidth = newWidth
       setEditorWidth(newWidth)
     }
 
@@ -251,7 +329,7 @@ export default function EditPublicPage() {
       setIsResizing(false)
       
       // Vérifier le snap final au relâchement
-      const { point: finalSnapPoint } = findNearestSnapPoint(editorWidth)
+      const { point: finalSnapPoint } = findNearestSnapPoint(currentEditorWidth)
       if (finalSnapPoint !== null) {
         setEditorWidth(finalSnapPoint)
         setSnappedPoint(finalSnapPoint)
@@ -261,19 +339,22 @@ export default function EditPublicPage() {
       
       // Sauvegarder dans localStorage
       if (typeof window !== 'undefined') {
-        localStorage.setItem('editor-panel-width', editorWidth.toString())
+        localStorage.setItem('editor-panel-width', currentEditorWidth.toString())
       }
       
       // Réinitialiser l'indicateur après un court délai
       setTimeout(() => setSnappedPoint(null), 300)
+      
+      // Nettoyer le curseur
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
     }
 
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove)
-      document.addEventListener('mouseup', handleMouseUp)
-      document.body.style.cursor = 'col-resize'
-      document.body.style.userSelect = 'none'
-    }
+    // Ajouter les listeners
+    document.addEventListener('mousemove', handleMouseMove, { passive: false })
+    document.addEventListener('mouseup', handleMouseUp, { passive: false })
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove)
@@ -351,24 +432,30 @@ export default function EditPublicPage() {
       const isNew = searchParams?.get('new') === 'true'
       const newTitle = searchParams?.get('title') || ''
       
-      // Load block types and page data in parallel
+      // Load block types and page data SEQUENTIALLY to avoid rate limiting
       // Gérer les erreurs pour system-settings sans bloquer le chargement
       let blockTypesData: BlockType[] = []
-      let settingsData: any = { public_pages: {}, public_homepage_blocks: [] }
+      let settingsData: Partial<SystemSettings> = { public_pages: {}, public_homepage_blocks: [] }
       
+      // Charger les types de blocs en premier
       try {
         blockTypesData = await blocksService.getBlockTypes()
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erreur lors du chargement des types de blocs:', error)
         // Continuer avec un tableau vide plutôt que de bloquer
       }
       
+      // Attendre un peu avant la prochaine requête pour éviter le rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Charger les paramètres système ensuite
       try {
         const settingsResponse = await api.get('/system-settings/')
         settingsData = settingsResponse.data || { public_pages: {}, public_homepage_blocks: [] }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Si l'erreur est silencieuse (403 pour non-super-admin), utiliser les données par défaut
-        if (error?.silent || error?.config?.silent) {
+        const errorObj = error && typeof error === 'object' ? error as { silent?: boolean; config?: { silent?: boolean } } : null
+        if (errorObj?.silent || errorObj?.config?.silent) {
           console.warn('⚠️ Accès à system-settings refusé, utilisation des valeurs par défaut')
           settingsData = { public_pages: {}, public_homepage_blocks: [] }
         } else {
@@ -405,30 +492,33 @@ export default function EditPublicPage() {
       const pagesList: Array<{ slug: string; title: string; isSubPage?: boolean; parentSlug?: string }> = []
       const subPagesMap = new Map<string, Array<{ slug: string; title: string }>>()
       
+      // Attendre un peu avant de charger les pages du projet
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       if (projectId) {
         // Charger les pages du projet depuis l'API
         try {
           const project = await projectService.getById(projectId)
           if (project && project.pages) {
             // Organiser les pages par hiérarchie
-            const projectPages = project.pages.filter((p: any) => p.page_type === 'public')
+            const projectPages = project.pages?.filter((p) => p.page_type === 'public') || []
             
             // Trier par slug pour avoir un ordre cohérent
-            projectPages.sort((a: any, b: any) => a.page_slug.localeCompare(b.page_slug))
+            projectPages.sort((a, b) => a.page_slug.localeCompare(b.page_slug))
             
             // Séparer les pages principales et sous-pages
-            const mainPages = projectPages.filter((p: any) => !p.page_slug.includes('/'))
-            const subPages = projectPages.filter((p: any) => p.page_slug.includes('/'))
+            const mainPages = projectPages.filter((p) => !p.page_slug.includes('/'))
+            const subPages = projectPages.filter((p) => p.page_slug.includes('/'))
             
             // Ajouter les pages principales
-            mainPages.forEach((page: any) => {
+            mainPages.forEach((page) => {
               const pageData = data.public_pages?.[page.page_slug] || {}
-              const title = pageData.title || PAGE_TITLES[page.page_slug] || page.page_slug.charAt(0).toUpperCase() + page.page_slug.slice(1)
+              const title = (pageData as PublicPageData & { title?: string }).title || PAGE_TITLES[page.page_slug] || page.page_slug.charAt(0).toUpperCase() + page.page_slug.slice(1)
               pagesList.push({ slug: page.page_slug, title })
             })
             
             // Ajouter les sous-pages
-            subPages.forEach((page: any) => {
+            subPages.forEach((page) => {
               const pageData = data.public_pages?.[page.page_slug] || {}
               const title = pageData.title || page.page_slug.split('/').pop() || page.page_slug
               const parentSlug = page.page_slug.split('/')[0]
@@ -454,7 +544,7 @@ export default function EditPublicPage() {
         
         // Autres pages
         const otherPages = data.public_pages || {}
-        Object.entries(otherPages).forEach(([slug, pageData]: [string, any]) => {
+        Object.entries(otherPages).forEach(([slug, pageData]: [string, PublicPageData & { title?: string }]) => {
           const slugParts = slug.split('/')
           const title = pageData.title || PAGE_TITLES[slug] || slug.charAt(0).toUpperCase() + slug.slice(1)
           
@@ -777,7 +867,7 @@ export default function EditPublicPage() {
         }
         
         // Tous les blocs dans un conteneur global
-        homepageBlocks = [globalContainer]
+        homepageBlocks = [globalContainer as Block]
         
         // Sauvegarder immédiatement les blocs par défaut (silencieusement si erreur 403)
         try {
@@ -789,9 +879,10 @@ export default function EditPublicPage() {
             response: saveResponse.data
           })
           toast.success('Structure minimale créée avec succès!')
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Si l'erreur est silencieuse (403 pour non-super-admin ou erreur attendue), ne pas afficher de toast
-          if (error?.silent || error?.config?.silent || error?.config?.__shouldRejectSilently) {
+          const errorObj = error && typeof error === 'object' ? error as { silent?: boolean; config?: { silent?: boolean; __shouldRejectSilently?: boolean } } : null
+          if (errorObj?.silent || errorObj?.config?.silent || errorObj?.config?.__shouldRejectSilently) {
             console.warn('⚠️ Sauvegarde des blocs par défaut ignorée (accès refusé)')
             // Continuer sans erreur - les blocs sont quand même définis localement
           } else {
@@ -920,20 +1011,679 @@ export default function EditPublicPage() {
             
             pageData = {
               ...pageData,
-              blocks: [docsHero, docsContainer]
+              blocks: [docsHero as Block, docsContainer as Block]
             }
           } else if (pageSlug === 'contact') {
-            // Page de contact avec structure complète (comme sur localhost:9494/contact)
-            // Utiliser la structure de createContactPage() du script
-            const { createContactPage } = await import('@/scripts/create-public-pages')
-            const contactPage = createContactPage()
+            // Page de contact avec structure exacte comme localhost:9494/contact
+            const contactNow = Date.now()
+            
+            // Container principal - exactement comme la page contact originale
+            const contactContainer = {
+              id: `contact-container-${contactNow}`,
+              type: 'container',
+              layout: 12,
+              data: {
+                max_width: 'max-w-7xl',
+                padding: 'px-4 sm:px-6 lg:px-8',
+                margin: 'mx-auto'
+              },
+              styles: {
+                maxWidth: '80rem',
+                margin: '0 auto',
+                padding: '5rem 1rem',
+                paddingTop: '5rem',
+                paddingBottom: '5rem',
+                width: '100%',
+                boxSizing: 'border-box'
+              },
+              children: [
+                // Grid container - gap-12 comme dans l'original
+                {
+                  id: `contact-grid-${contactNow}`,
+                  type: 'grid-container',
+                  layout: 12,
+                  data: {
+                    columns: 2,
+                    gap: '3rem'
+                  },
+                  styles: {
+                    padding: '0',
+                    gap: '3rem',
+                    width: '100%'
+                  },
+                  children: [
+                    // Formulaire de contact - exactement comme l'original
+                    {
+                      id: `contact-form-section-${contactNow}`,
+                      type: 'section',
+                      layout: 6,
+                      data: {
+                        background: 'bg-white dark:bg-gray-800',
+                        padding: 'p-8',
+                        rounded: 'rounded-xl',
+                        shadow: 'shadow-lg'
+                      },
+                      styles: {
+                        backgroundColor: '#ffffff',
+                        padding: '2rem',
+                        borderRadius: '0.75rem',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        width: '100%',
+                        height: 'fit-content'
+                      },
+                      children: [
+                        {
+                          id: `contact-form-title-${contactNow}`,
+                          type: 'heading',
+                          layout: 12,
+                          data: {
+                            text: 'Envoyez-nous un message',
+                            level: 2
+                          },
+                          styles: {
+                            fontSize: '1.5rem',
+                            fontWeight: '700',
+                            marginBottom: '1.5rem',
+                            color: '#111827',
+                            lineHeight: '1.5'
+                          }
+                        },
+                        {
+                          id: `contact-form-${contactNow}`,
+                          type: 'contact-form',
+                          layout: 12,
+                          data: {
+                            fields: [
+                              { name: 'name', label: 'Nom complet', type: 'text', required: true },
+                              { name: 'email', label: 'Email', type: 'email', required: true },
+                              { name: 'subject', label: 'Sujet', type: 'select', required: true, options: [
+                                { value: 'support', label: 'Support technique' },
+                                { value: 'sales', label: 'Question commerciale' },
+                                { value: 'billing', label: 'Question de facturation' },
+                                { value: 'feature', label: 'Suggestion de fonctionnalité' },
+                                { value: 'other', label: 'Autre' }
+                              ]},
+                              { name: 'message', label: 'Message', type: 'textarea', required: true, rows: 6 }
+                            ],
+                            submit_text: 'Envoyer le message',
+                            success_message: 'Message envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.'
+                          },
+                          styles: {
+                            padding: '0'
+                          }
+                        }
+                      ]
+                    },
+                    // Informations de contact - space-y-8 comme dans l'original
+                    {
+                      id: `contact-info-section-${contactNow}`,
+                      type: 'section',
+                      layout: 6,
+                      data: {
+                        background: 'transparent',
+                        padding: 'p-0'
+                      },
+                      styles: {
+                        padding: '0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2rem',
+                        width: '100%'
+                      },
+                      children: [
+                        // Coordonnées - exactement comme l'original
+                        {
+                          id: `contact-coordinates-${contactNow}`,
+                          type: 'section',
+                          layout: 12,
+                          data: {
+                            background: 'bg-white dark:bg-gray-800',
+                            padding: 'p-8',
+                            rounded: 'rounded-xl',
+                            shadow: 'shadow-lg'
+                          },
+                          styles: {
+                            backgroundColor: '#ffffff',
+                            padding: '2rem',
+                            borderRadius: '0.75rem',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                            marginBottom: '0',
+                            width: '100%'
+                          },
+                          children: [
+                            {
+                              id: `contact-coordinates-title-${contactNow}`,
+                              type: 'heading',
+                              layout: 12,
+                              data: {
+                                text: 'Nos coordonnées',
+                                level: 2
+                              },
+                              styles: {
+                                fontSize: '1.5rem',
+                                fontWeight: '700',
+                                marginBottom: '1.5rem',
+                                color: '#111827',
+                                lineHeight: '1.5'
+                              }
+                            },
+                            // Email avec structure flex comme l'original
+                            {
+                              id: `contact-email-container-${contactNow}`,
+                              type: 'flex-container',
+                              layout: 12,
+                              data: {
+                                direction: 'row',
+                                align: 'start',
+                                gap: '1rem'
+                              },
+                              styles: {
+                                marginBottom: '1.5rem'
+                              },
+                              children: [
+                                {
+                                  id: `contact-email-icon-${contactNow}`,
+                                  type: 'section',
+                                  layout: 2,
+                                  data: {
+                                    background: 'bg-blue-100',
+                                    padding: 'p-3',
+                                    rounded: 'rounded-lg'
+                                  },
+                                  styles: {
+                                    backgroundColor: '#dbeafe',
+                                    padding: '0.75rem',
+                                    borderRadius: '0.5rem',
+                                    flexShrink: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  },
+                                  children: [
+                                    {
+                                      id: `contact-email-icon-text-${contactNow}`,
+                                      type: 'text',
+                                      layout: 12,
+                                      data: {
+                                        content: '📧'
+                                      },
+                                      styles: {
+                                        fontSize: '1.5rem',
+                                        padding: '0',
+                                        margin: '0'
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  id: `contact-email-content-${contactNow}`,
+                                  type: 'section',
+                                  layout: 10,
+                                  data: {
+                                    padding: 'p-0'
+                                  },
+                                  styles: {
+                                    padding: '0',
+                                    marginLeft: '1rem'
+                                  },
+                                  children: [
+                                    {
+                                      id: `contact-email-label-${contactNow}`,
+                                      type: 'heading',
+                                      layout: 12,
+                                      data: {
+                                        text: 'Email',
+                                        level: 3
+                                      },
+                                      styles: {
+                                        fontSize: '1rem',
+                                        fontWeight: '600',
+                                        marginBottom: '0.25rem',
+                                        color: '#111827',
+                                        padding: '0'
+                                      }
+                                    },
+                                    {
+                                      id: `contact-email-link-${contactNow}`,
+                                      type: 'text',
+                                      layout: 12,
+                                      data: {
+                                        content: '[support@vtcbuilder.com](mailto:support@vtcbuilder.com)'
+                                      },
+                                      styles: {
+                                        padding: '0',
+                                        color: '#2563eb'
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            // Téléphone avec structure flex
+                            {
+                              id: `contact-phone-container-${contactNow}`,
+                              type: 'flex-container',
+                              layout: 12,
+                              data: {
+                                direction: 'row',
+                                align: 'start',
+                                gap: '1rem'
+                              },
+                              styles: {
+                                marginBottom: '1.5rem'
+                              },
+                              children: [
+                                {
+                                  id: `contact-phone-icon-${contactNow}`,
+                                  type: 'section',
+                                  layout: 2,
+                                  data: {
+                                    background: 'bg-blue-100',
+                                    padding: 'p-3',
+                                    rounded: 'rounded-lg'
+                                  },
+                                  styles: {
+                                    backgroundColor: '#dbeafe',
+                                    padding: '0.75rem',
+                                    borderRadius: '0.5rem',
+                                    flexShrink: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  },
+                                  children: [
+                                    {
+                                      id: `contact-phone-icon-text-${contactNow}`,
+                                      type: 'text',
+                                      layout: 12,
+                                      data: {
+                                        content: '📞'
+                                      },
+                                      styles: {
+                                        fontSize: '1.5rem',
+                                        padding: '0',
+                                        margin: '0'
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  id: `contact-phone-content-${contactNow}`,
+                                  type: 'section',
+                                  layout: 10,
+                                  data: {
+                                    padding: 'p-0'
+                                  },
+                                  styles: {
+                                    padding: '0',
+                                    marginLeft: '1rem'
+                                  },
+                                  children: [
+                                    {
+                                      id: `contact-phone-label-${contactNow}`,
+                                      type: 'heading',
+                                      layout: 12,
+                                      data: {
+                                        text: 'Téléphone',
+                                        level: 3
+                                      },
+                                      styles: {
+                                        fontSize: '1rem',
+                                        fontWeight: '600',
+                                        marginBottom: '0.25rem',
+                                        color: '#111827',
+                                        padding: '0'
+                                      }
+                                    },
+                                    {
+                                      id: `contact-phone-link-${contactNow}`,
+                                      type: 'text',
+                                      layout: 12,
+                                      data: {
+                                        content: '[+33 1 23 45 67 89](tel:+33123456789)'
+                                      },
+                                      styles: {
+                                        padding: '0',
+                                        color: '#2563eb'
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            // Adresse avec structure flex
+                            {
+                              id: `contact-address-container-${contactNow}`,
+                              type: 'flex-container',
+                              layout: 12,
+                              data: {
+                                direction: 'row',
+                                align: 'start',
+                                gap: '1rem'
+                              },
+                              styles: {
+                                marginBottom: '0'
+                              },
+                              children: [
+                                {
+                                  id: `contact-address-icon-${contactNow}`,
+                                  type: 'section',
+                                  layout: 2,
+                                  data: {
+                                    background: 'bg-blue-100',
+                                    padding: 'p-3',
+                                    rounded: 'rounded-lg'
+                                  },
+                                  styles: {
+                                    backgroundColor: '#dbeafe',
+                                    padding: '0.75rem',
+                                    borderRadius: '0.5rem',
+                                    flexShrink: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  },
+                                  children: [
+                                    {
+                                      id: `contact-address-icon-text-${contactNow}`,
+                                      type: 'text',
+                                      layout: 12,
+                                      data: {
+                                        content: '📍'
+                                      },
+                                      styles: {
+                                        fontSize: '1.5rem',
+                                        padding: '0',
+                                        margin: '0'
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  id: `contact-address-content-${contactNow}`,
+                                  type: 'section',
+                                  layout: 10,
+                                  data: {
+                                    padding: 'p-0'
+                                  },
+                                  styles: {
+                                    padding: '0',
+                                    marginLeft: '1rem'
+                                  },
+                                  children: [
+                                    {
+                                      id: `contact-address-label-${contactNow}`,
+                                      type: 'heading',
+                                      layout: 12,
+                                      data: {
+                                        text: 'Adresse',
+                                        level: 3
+                                      },
+                                      styles: {
+                                        fontSize: '1rem',
+                                        fontWeight: '600',
+                                        marginBottom: '0.25rem',
+                                        color: '#111827',
+                                        padding: '0'
+                                      }
+                                    },
+                                    {
+                                      id: `contact-address-text-${contactNow}`,
+                                      type: 'text',
+                                      layout: 12,
+                                      data: {
+                                        content: '123 Avenue des Exemples\n75000 PARIS\nFrance'
+                                      },
+                                      styles: {
+                                        padding: '0',
+                                        color: '#6b7280'
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        // Horaires - exactement comme l'original
+                        {
+                          id: `contact-hours-${contactNow}`,
+                          type: 'section',
+                          layout: 12,
+                          data: {
+                            background: 'bg-white dark:bg-gray-800',
+                            padding: 'p-8',
+                            rounded: 'rounded-xl',
+                            shadow: 'shadow-lg'
+                          },
+                          styles: {
+                            backgroundColor: '#ffffff',
+                            padding: '2rem',
+                            borderRadius: '0.75rem',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                            marginBottom: '0',
+                            width: '100%'
+                          },
+                          children: [
+                            {
+                              id: `contact-hours-title-${contactNow}`,
+                              type: 'heading',
+                              layout: 12,
+                              data: {
+                                text: 'Horaires de support',
+                                level: 2
+                              },
+                              styles: {
+                                fontSize: '1.25rem',
+                                fontWeight: '700',
+                                marginBottom: '1rem',
+                                color: '#111827',
+                                lineHeight: '1.5'
+                              }
+                            },
+                            {
+                              id: `contact-hours-list-${contactNow}`,
+                              type: 'section',
+                              layout: 12,
+                              data: {
+                                padding: 'p-0'
+                              },
+                              styles: {
+                                padding: '0',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.5rem'
+                              },
+                              children: [
+                                {
+                                  id: `contact-hours-item-1-${contactNow}`,
+                                  type: 'flex-container',
+                                  layout: 12,
+                                  data: {
+                                    direction: 'row',
+                                    justify: 'space-between',
+                                    align: 'center'
+                                  },
+                                  styles: {
+                                    padding: '0'
+                                  },
+                                  children: [
+                                    {
+                                      id: `contact-hours-day-1-${contactNow}`,
+                                      type: 'text',
+                                      layout: 6,
+                                      data: {
+                                        content: 'Lundi - Vendredi'
+                                      },
+                                      styles: {
+                                        padding: '0',
+                                        color: '#6b7280'
+                                      }
+                                    },
+                                    {
+                                      id: `contact-hours-time-1-${contactNow}`,
+                                      type: 'text',
+                                      layout: 6,
+                                      data: {
+                                        content: '**9h - 18h**'
+                                      },
+                                      styles: {
+                                        padding: '0',
+                                        color: '#6b7280',
+                                        textAlign: 'right',
+                                        fontWeight: '600'
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  id: `contact-hours-item-2-${contactNow}`,
+                                  type: 'flex-container',
+                                  layout: 12,
+                                  data: {
+                                    direction: 'row',
+                                    justify: 'space-between',
+                                    align: 'center'
+                                  },
+                                  styles: {
+                                    padding: '0'
+                                  },
+                                  children: [
+                                    {
+                                      id: `contact-hours-day-2-${contactNow}`,
+                                      type: 'text',
+                                      layout: 6,
+                                      data: {
+                                        content: 'Samedi'
+                                      },
+                                      styles: {
+                                        padding: '0',
+                                        color: '#6b7280'
+                                      }
+                                    },
+                                    {
+                                      id: `contact-hours-time-2-${contactNow}`,
+                                      type: 'text',
+                                      layout: 6,
+                                      data: {
+                                        content: '**10h - 16h**'
+                                      },
+                                      styles: {
+                                        padding: '0',
+                                        color: '#6b7280',
+                                        textAlign: 'right',
+                                        fontWeight: '600'
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  id: `contact-hours-item-3-${contactNow}`,
+                                  type: 'flex-container',
+                                  layout: 12,
+                                  data: {
+                                    direction: 'row',
+                                    justify: 'space-between',
+                                    align: 'center'
+                                  },
+                                  styles: {
+                                    padding: '0'
+                                  },
+                                  children: [
+                                    {
+                                      id: `contact-hours-day-3-${contactNow}`,
+                                      type: 'text',
+                                      layout: 6,
+                                      data: {
+                                        content: 'Dimanche'
+                                      },
+                                      styles: {
+                                        padding: '0',
+                                        color: '#6b7280'
+                                      }
+                                    },
+                                    {
+                                      id: `contact-hours-time-3-${contactNow}`,
+                                      type: 'text',
+                                      layout: 6,
+                                      data: {
+                                        content: '**Fermé**'
+                                      },
+                                      styles: {
+                                        padding: '0',
+                                        color: '#6b7280',
+                                        textAlign: 'right',
+                                        fontWeight: '600'
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        // Conseil - exactement comme l'original
+                        {
+                          id: `contact-tip-${contactNow}`,
+                          type: 'section',
+                          layout: 12,
+                          data: {
+                            background: 'bg-blue-50',
+                            padding: 'p-6',
+                            rounded: 'rounded-xl'
+                          },
+                          styles: {
+                            backgroundColor: '#eff6ff',
+                            padding: '1.5rem',
+                            borderRadius: '0.75rem',
+                            width: '100%'
+                          },
+                          children: [
+                            {
+                              id: `contact-tip-title-${contactNow}`,
+                              type: 'heading',
+                              layout: 12,
+                              data: {
+                                text: '💡 Conseil',
+                                level: 3
+                              },
+                              styles: {
+                                fontSize: '1rem',
+                                fontWeight: '600',
+                                marginBottom: '0.5rem',
+                                color: '#111827',
+                                padding: '0'
+                              }
+                            },
+                            {
+                              id: `contact-tip-content-${contactNow}`,
+                              type: 'text',
+                              layout: 12,
+                              data: {
+                                content: 'Pour une réponse plus rapide, consultez d\'abord notre [FAQ](/faq) ou notre [documentation](/docs).'
+                              },
+                              styles: {
+                                fontSize: '0.875rem',
+                                color: '#374151',
+                                padding: '0'
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+            
             pageData = {
               ...pageData,
-              blocks: contactPage.blocks,
-              title: contactPage.title,
-              description: contactPage.description,
-              meta_title: contactPage.metaTitle,
-              meta_description: contactPage.metaDescription
+              blocks: [contactContainer as Block],
+              title: 'Contact',
+              description: 'Page de contact avec formulaire',
+              meta_title: 'Contact - VTCBuilder',
+              meta_description: 'Contactez notre équipe support pour toute question ou assistance'
             }
           } else if (pageSlug === 'features') {
             // Page features avec structure complète (comme sur localhost:9494/features)
@@ -983,9 +1733,10 @@ export default function EditPublicPage() {
           try {
             const updatedPages = { ...publicPages, [pageSlug]: pageData }
             await api.patch('/system-settings/', { public_pages: updatedPages })
-          } catch (error: any) {
+          } catch (error: unknown) {
             // Si l'erreur est silencieuse (403 pour non-super-admin ou erreur attendue), ne pas logger
-            if (error?.silent || error?.config?.silent || error?.config?.__shouldRejectSilently) {
+            const errorObj = error && typeof error === 'object' ? error as { silent?: boolean; config?: { silent?: boolean; __shouldRejectSilently?: boolean } } : null
+            if (errorObj?.silent || errorObj?.config?.silent || errorObj?.config?.__shouldRejectSilently) {
               console.warn('⚠️ Sauvegarde de la structure par défaut ignorée (accès refusé)')
             } else {
               console.error('Error sauvegarde structure par défaut:', error)
@@ -993,13 +1744,13 @@ export default function EditPublicPage() {
           }
         } else {
           // Convertir l'ancienne structure si nécessaire
-          pageData.blocks = pageData.blocks.map((block: any) => {
+          pageData.blocks = (pageData.blocks || []).map((block: Block & { properties?: Record<string, any> }) => {
             if (block.properties && !block.data) {
               return {
                 ...block,
                 data: block.properties,
                 styles: block.styles || {}
-              }
+              } as Block
             }
             return block
           })
@@ -1009,7 +1760,7 @@ export default function EditPublicPage() {
         setMetaTitle(pageData.meta_title || `${PAGE_TITLES[pageSlug] || pageSlug} - VTCBuilder`)
         setMetaDescription(pageData.meta_description || '')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error chargement:', error)
       toast.error('Error lors du chargement des données')
     } finally {
@@ -1060,17 +1811,74 @@ export default function EditPublicPage() {
   }, [pathname])
 
   useEffect(() => {
-    if (!authService.isSuperAdmin()) {
-      router.push('/dashboard')
-      return
-    }
-    loadData()
+    // Vérifier l'authentification de manière asynchrone pour éviter les problèmes de timing
+    const checkAuth = async () => {
+      // Attendre un peu pour que le token soit bien chargé
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!authService.isAuthenticated()) {
+        // Pas authentifié, rediriger vers login
+        authService.saveRedirectUrl();
+        router.push('/login');
+        return;
+      }
+      
+      if (!authService.isSuperAdmin()) {
+        // Pas super admin, rediriger vers dashboard tenant
+        router.push('/dashboard');
+        return;
+      }
+      
+      // Vérifier si on vient de se connecter (dans les 5 secondes)
+      const loginTimestamp = localStorage.getItem('login_timestamp');
+      const justLoggedIn = loginTimestamp && (Date.now() - parseInt(loginTimestamp, 10)) < 5000;
+      
+      if (justLoggedIn) {
+        // Augmenter le délai entre les requêtes après le login pour éviter le rate limiting
+        requestManager.setMinDelay(600); // 600ms entre chaque requête (augmenté pour éviter WAF)
+        // Réinitialiser après 20 secondes
+        setTimeout(() => {
+          requestManager.resetMinDelay();
+        }, 20000);
+        
+        // Attendre un peu avant de charger les données pour éviter le rate limiting
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      // Super admin authentifié, charger les données
+      loadData();
+    };
+    
+    checkAuth();
     
     // Charger l'abonnement pour afficher le badge
     const loadSubscription = async () => {
       try {
         if (authService.isSuperAdmin()) {
-          setSubscription({ plan: { name: 'Super Admin' }, status: 'active' })
+          setSubscription({ 
+            id: 0,
+            tenant: null,
+            plan: { 
+              id: 0,
+              name: 'Super Admin',
+              slug: 'super-admin',
+              description: '',
+              price_monthly: 0,
+              price_yearly: 0,
+              currency: 'EUR',
+              max_sites: 999,
+              max_users: 999,
+              max_storage_gb: 999,
+              features: [],
+              is_active: true,
+              is_featured: false,
+              order: 0
+            } as PricingPlan, 
+            status: 'active',
+            billing_cycle: 'monthly',
+            current_period_start: new Date().toISOString(),
+            current_period_end: new Date().toISOString()
+          } as Subscription)
           setSubscriptionLoading(false)
           return
         }
@@ -1620,6 +2428,705 @@ export default function EditPublicPage() {
             )}
           </div>
 
+          {/* Generate Contact Page Button - Visible only for contact page */}
+          {pageSlug === 'contact' && (
+            <button
+              onClick={async () => {
+                const confirmed = window.confirm('Voulez-vous générer/régénérer la page contact ?\n\n⚠️ Attention : Cela remplacera tous les blocs actuels de la page.')
+                if (!confirmed) {
+                  return
+                }
+                
+                try {
+                  // Utiliser la même fonction de génération que dans loadData
+                  const contactNow = Date.now()
+                  
+                  // Container principal - exactement comme la page contact originale
+                  const contactContainer = {
+                    id: `contact-container-${contactNow}`,
+                    type: 'container',
+                    layout: 12,
+                    data: {
+                      max_width: 'max-w-7xl',
+                      padding: 'px-4 sm:px-6 lg:px-8',
+                      margin: 'mx-auto'
+                    },
+                    styles: {
+                      maxWidth: '80rem',
+                      margin: '0 auto',
+                      padding: '5rem 1rem',
+                      paddingTop: '5rem',
+                      paddingBottom: '5rem',
+                      width: '100%',
+                      boxSizing: 'border-box'
+                    },
+                    children: [
+                      // Grid container - gap-12 comme dans l'original
+                      {
+                        id: `contact-grid-${contactNow}`,
+                        type: 'grid-container',
+                        layout: 12,
+                        data: {
+                          columns: 2,
+                          gap: '3rem'
+                        },
+                        styles: {
+                          padding: '0',
+                          gap: '3rem',
+                          width: '100%'
+                        },
+                        children: [
+                          // Formulaire de contact - exactement comme l'original
+                          {
+                            id: `contact-form-section-${contactNow}`,
+                            type: 'section',
+                            layout: 6,
+                            data: {
+                              background: 'bg-white dark:bg-gray-800',
+                              padding: 'p-8',
+                              rounded: 'rounded-xl',
+                              shadow: 'shadow-lg'
+                            },
+                            styles: {
+                              backgroundColor: '#ffffff',
+                              padding: '2rem',
+                              borderRadius: '0.75rem',
+                              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                              width: '100%',
+                              height: 'fit-content'
+                            },
+                            children: [
+                              {
+                                id: `contact-form-title-${contactNow}`,
+                                type: 'heading',
+                                layout: 12,
+                                data: {
+                                  text: 'Envoyez-nous un message',
+                                  level: 2
+                                },
+                                styles: {
+                                  fontSize: '1.5rem',
+                                  fontWeight: '700',
+                                  marginBottom: '1.5rem',
+                                  color: '#111827',
+                                  lineHeight: '1.5'
+                                }
+                              },
+                              {
+                                id: `contact-form-${contactNow}`,
+                                type: 'contact-form',
+                                layout: 12,
+                                data: {
+                                  fields: [
+                                    { name: 'name', label: 'Nom complet', type: 'text', required: true },
+                                    { name: 'email', label: 'Email', type: 'email', required: true },
+                                    { name: 'subject', label: 'Sujet', type: 'select', required: true, options: [
+                                      { value: 'support', label: 'Support technique' },
+                                      { value: 'sales', label: 'Question commerciale' },
+                                      { value: 'billing', label: 'Question de facturation' },
+                                      { value: 'feature', label: 'Suggestion de fonctionnalité' },
+                                      { value: 'other', label: 'Autre' }
+                                    ]},
+                                    { name: 'message', label: 'Message', type: 'textarea', required: true, rows: 6 }
+                                  ],
+                                  submit_text: 'Envoyer le message',
+                                  success_message: 'Message envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.'
+                                },
+                                styles: {
+                                  padding: '0'
+                                }
+                              }
+                            ]
+                          },
+                          // Informations de contact - space-y-8 comme dans l'original
+                          {
+                            id: `contact-info-section-${contactNow}`,
+                            type: 'section',
+                            layout: 6,
+                            data: {
+                              background: 'transparent',
+                              padding: 'p-0'
+                            },
+                            styles: {
+                              padding: '0',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '2rem',
+                              width: '100%'
+                            },
+                            children: [
+                              // Coordonnées - exactement comme l'original avec flex-containers
+                              {
+                                id: `contact-coordinates-${contactNow}`,
+                                type: 'section',
+                                layout: 12,
+                                data: {
+                                  background: 'bg-white dark:bg-gray-800',
+                                  padding: 'p-8',
+                                  rounded: 'rounded-xl',
+                                  shadow: 'shadow-lg'
+                                },
+                                styles: {
+                                  backgroundColor: '#ffffff',
+                                  padding: '2rem',
+                                  borderRadius: '0.75rem',
+                                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                                  marginBottom: '0',
+                                  width: '100%'
+                                },
+                                children: [
+                                  {
+                                    id: `contact-coordinates-title-${contactNow}`,
+                                    type: 'heading',
+                                    layout: 12,
+                                    data: {
+                                      text: 'Nos coordonnées',
+                                      level: 2
+                                    },
+                                    styles: {
+                                      fontSize: '1.5rem',
+                                      fontWeight: '700',
+                                      marginBottom: '1.5rem',
+                                      color: '#111827',
+                                      lineHeight: '1.5'
+                                    }
+                                  },
+                                  // Email avec structure flex
+                                  {
+                                    id: `contact-email-container-${contactNow}`,
+                                    type: 'flex-container',
+                                    layout: 12,
+                                    data: {
+                                      direction: 'row',
+                                      align: 'start',
+                                      gap: '1rem'
+                                    },
+                                    styles: {
+                                      marginBottom: '1.5rem'
+                                    },
+                                    children: [
+                                      {
+                                        id: `contact-email-icon-${contactNow}`,
+                                        type: 'section',
+                                        layout: 2,
+                                        data: {
+                                          background: 'bg-blue-100',
+                                          padding: 'p-3',
+                                          rounded: 'rounded-lg'
+                                        },
+                                        styles: {
+                                          backgroundColor: '#dbeafe',
+                                          padding: '0.75rem',
+                                          borderRadius: '0.5rem',
+                                          flexShrink: 0,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center'
+                                        },
+                                        children: [
+                                          {
+                                            id: `contact-email-icon-text-${contactNow}`,
+                                            type: 'text',
+                                            layout: 12,
+                                            data: {
+                                              content: '📧'
+                                            },
+                                            styles: {
+                                              fontSize: '1.5rem',
+                                              padding: '0',
+                                              margin: '0'
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        id: `contact-email-content-${contactNow}`,
+                                        type: 'section',
+                                        layout: 10,
+                                        data: {
+                                          padding: 'p-0'
+                                        },
+                                        styles: {
+                                          padding: '0',
+                                          marginLeft: '1rem'
+                                        },
+                                        children: [
+                                          {
+                                            id: `contact-email-label-${contactNow}`,
+                                            type: 'heading',
+                                            layout: 12,
+                                            data: {
+                                              text: 'Email',
+                                              level: 3
+                                            },
+                                            styles: {
+                                              fontSize: '1rem',
+                                              fontWeight: '600',
+                                              marginBottom: '0.25rem',
+                                              color: '#111827',
+                                              padding: '0'
+                                            }
+                                          },
+                                          {
+                                            id: `contact-email-link-${contactNow}`,
+                                            type: 'text',
+                                            layout: 12,
+                                            data: {
+                                              content: '[support@vtcbuilder.com](mailto:support@vtcbuilder.com)'
+                                            },
+                                            styles: {
+                                              padding: '0',
+                                              color: '#2563eb'
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  // Téléphone avec structure flex
+                                  {
+                                    id: `contact-phone-container-${contactNow}`,
+                                    type: 'flex-container',
+                                    layout: 12,
+                                    data: {
+                                      direction: 'row',
+                                      align: 'start',
+                                      gap: '1rem'
+                                    },
+                                    styles: {
+                                      marginBottom: '1.5rem'
+                                    },
+                                    children: [
+                                      {
+                                        id: `contact-phone-icon-${contactNow}`,
+                                        type: 'section',
+                                        layout: 2,
+                                        data: {
+                                          background: 'bg-blue-100',
+                                          padding: 'p-3',
+                                          rounded: 'rounded-lg'
+                                        },
+                                        styles: {
+                                          backgroundColor: '#dbeafe',
+                                          padding: '0.75rem',
+                                          borderRadius: '0.5rem',
+                                          flexShrink: 0,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center'
+                                        },
+                                        children: [
+                                          {
+                                            id: `contact-phone-icon-text-${contactNow}`,
+                                            type: 'text',
+                                            layout: 12,
+                                            data: {
+                                              content: '📞'
+                                            },
+                                            styles: {
+                                              fontSize: '1.5rem',
+                                              padding: '0',
+                                              margin: '0'
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        id: `contact-phone-content-${contactNow}`,
+                                        type: 'section',
+                                        layout: 10,
+                                        data: {
+                                          padding: 'p-0'
+                                        },
+                                        styles: {
+                                          padding: '0',
+                                          marginLeft: '1rem'
+                                        },
+                                        children: [
+                                          {
+                                            id: `contact-phone-label-${contactNow}`,
+                                            type: 'heading',
+                                            layout: 12,
+                                            data: {
+                                              text: 'Téléphone',
+                                              level: 3
+                                            },
+                                            styles: {
+                                              fontSize: '1rem',
+                                              fontWeight: '600',
+                                              marginBottom: '0.25rem',
+                                              color: '#111827',
+                                              padding: '0'
+                                            }
+                                          },
+                                          {
+                                            id: `contact-phone-link-${contactNow}`,
+                                            type: 'text',
+                                            layout: 12,
+                                            data: {
+                                              content: '[+33 1 23 45 67 89](tel:+33123456789)'
+                                            },
+                                            styles: {
+                                              padding: '0',
+                                              color: '#2563eb'
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  // Adresse avec structure flex
+                                  {
+                                    id: `contact-address-container-${contactNow}`,
+                                    type: 'flex-container',
+                                    layout: 12,
+                                    data: {
+                                      direction: 'row',
+                                      align: 'start',
+                                      gap: '1rem'
+                                    },
+                                    styles: {
+                                      marginBottom: '0'
+                                    },
+                                    children: [
+                                      {
+                                        id: `contact-address-icon-${contactNow}`,
+                                        type: 'section',
+                                        layout: 2,
+                                        data: {
+                                          background: 'bg-blue-100',
+                                          padding: 'p-3',
+                                          rounded: 'rounded-lg'
+                                        },
+                                        styles: {
+                                          backgroundColor: '#dbeafe',
+                                          padding: '0.75rem',
+                                          borderRadius: '0.5rem',
+                                          flexShrink: 0,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center'
+                                        },
+                                        children: [
+                                          {
+                                            id: `contact-address-icon-text-${contactNow}`,
+                                            type: 'text',
+                                            layout: 12,
+                                            data: {
+                                              content: '📍'
+                                            },
+                                            styles: {
+                                              fontSize: '1.5rem',
+                                              padding: '0',
+                                              margin: '0'
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        id: `contact-address-content-${contactNow}`,
+                                        type: 'section',
+                                        layout: 10,
+                                        data: {
+                                          padding: 'p-0'
+                                        },
+                                        styles: {
+                                          padding: '0',
+                                          marginLeft: '1rem'
+                                        },
+                                        children: [
+                                          {
+                                            id: `contact-address-label-${contactNow}`,
+                                            type: 'heading',
+                                            layout: 12,
+                                            data: {
+                                              text: 'Adresse',
+                                              level: 3
+                                            },
+                                            styles: {
+                                              fontSize: '1rem',
+                                              fontWeight: '600',
+                                              marginBottom: '0.25rem',
+                                              color: '#111827',
+                                              padding: '0'
+                                            }
+                                          },
+                                          {
+                                            id: `contact-address-text-${contactNow}`,
+                                            type: 'text',
+                                            layout: 12,
+                                            data: {
+                                              content: '123 Avenue des Exemples\n75000 PARIS\nFrance'
+                                            },
+                                            styles: {
+                                              padding: '0',
+                                              color: '#6b7280'
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              // Horaires - exactement comme l'original
+                              {
+                                id: `contact-hours-${contactNow}`,
+                                type: 'section',
+                                layout: 12,
+                                data: {
+                                  background: 'bg-white dark:bg-gray-800',
+                                  padding: 'p-8',
+                                  rounded: 'rounded-xl',
+                                  shadow: 'shadow-lg'
+                                },
+                                styles: {
+                                  backgroundColor: '#ffffff',
+                                  padding: '2rem',
+                                  borderRadius: '0.75rem',
+                                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                                  marginBottom: '0',
+                                  width: '100%'
+                                },
+                                children: [
+                                  {
+                                    id: `contact-hours-title-${contactNow}`,
+                                    type: 'heading',
+                                    layout: 12,
+                                    data: {
+                                      text: 'Horaires de support',
+                                      level: 2
+                                    },
+                                    styles: {
+                                      fontSize: '1.25rem',
+                                      fontWeight: '700',
+                                      marginBottom: '1rem',
+                                      color: '#111827',
+                                      lineHeight: '1.5'
+                                    }
+                                  },
+                                  {
+                                    id: `contact-hours-list-${contactNow}`,
+                                    type: 'section',
+                                    layout: 12,
+                                    data: {
+                                      padding: 'p-0'
+                                    },
+                                    styles: {
+                                      padding: '0',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '0.5rem'
+                                    },
+                                    children: [
+                                      {
+                                        id: `contact-hours-item-1-${contactNow}`,
+                                        type: 'flex-container',
+                                        layout: 12,
+                                        data: {
+                                          direction: 'row',
+                                          justify: 'space-between',
+                                          align: 'center'
+                                        },
+                                        styles: {
+                                          padding: '0'
+                                        },
+                                        children: [
+                                          {
+                                            id: `contact-hours-day-1-${contactNow}`,
+                                            type: 'text',
+                                            layout: 6,
+                                            data: {
+                                              content: 'Lundi - Vendredi'
+                                            },
+                                            styles: {
+                                              padding: '0',
+                                              color: '#6b7280'
+                                            }
+                                          },
+                                          {
+                                            id: `contact-hours-time-1-${contactNow}`,
+                                            type: 'text',
+                                            layout: 6,
+                                            data: {
+                                              content: '**9h - 18h**'
+                                            },
+                                            styles: {
+                                              padding: '0',
+                                              color: '#6b7280',
+                                              textAlign: 'right',
+                                              fontWeight: '600'
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        id: `contact-hours-item-2-${contactNow}`,
+                                        type: 'flex-container',
+                                        layout: 12,
+                                        data: {
+                                          direction: 'row',
+                                          justify: 'space-between',
+                                          align: 'center'
+                                        },
+                                        styles: {
+                                          padding: '0'
+                                        },
+                                        children: [
+                                          {
+                                            id: `contact-hours-day-2-${contactNow}`,
+                                            type: 'text',
+                                            layout: 6,
+                                            data: {
+                                              content: 'Samedi'
+                                            },
+                                            styles: {
+                                              padding: '0',
+                                              color: '#6b7280'
+                                            }
+                                          },
+                                          {
+                                            id: `contact-hours-time-2-${contactNow}`,
+                                            type: 'text',
+                                            layout: 6,
+                                            data: {
+                                              content: '**10h - 16h**'
+                                            },
+                                            styles: {
+                                              padding: '0',
+                                              color: '#6b7280',
+                                              textAlign: 'right',
+                                              fontWeight: '600'
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        id: `contact-hours-item-3-${contactNow}`,
+                                        type: 'flex-container',
+                                        layout: 12,
+                                        data: {
+                                          direction: 'row',
+                                          justify: 'space-between',
+                                          align: 'center'
+                                        },
+                                        styles: {
+                                          padding: '0'
+                                        },
+                                        children: [
+                                          {
+                                            id: `contact-hours-day-3-${contactNow}`,
+                                            type: 'text',
+                                            layout: 6,
+                                            data: {
+                                              content: 'Dimanche'
+                                            },
+                                            styles: {
+                                              padding: '0',
+                                              color: '#6b7280'
+                                            }
+                                          },
+                                          {
+                                            id: `contact-hours-time-3-${contactNow}`,
+                                            type: 'text',
+                                            layout: 6,
+                                            data: {
+                                              content: '**Fermé**'
+                                            },
+                                            styles: {
+                                              padding: '0',
+                                              color: '#6b7280',
+                                              textAlign: 'right',
+                                              fontWeight: '600'
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              // Conseil - exactement comme l'original
+                              {
+                                id: `contact-tip-${contactNow}`,
+                                type: 'section',
+                                layout: 12,
+                                data: {
+                                  background: 'bg-blue-50',
+                                  padding: 'p-6',
+                                  rounded: 'rounded-xl'
+                                },
+                                styles: {
+                                  backgroundColor: '#eff6ff',
+                                  padding: '1.5rem',
+                                  borderRadius: '0.75rem',
+                                  width: '100%'
+                                },
+                                children: [
+                                  {
+                                    id: `contact-tip-title-${contactNow}`,
+                                    type: 'heading',
+                                    layout: 12,
+                                    data: {
+                                      text: '💡 Conseil',
+                                      level: 3
+                                    },
+                                    styles: {
+                                      fontSize: '1rem',
+                                      fontWeight: '600',
+                                      marginBottom: '0.5rem',
+                                      color: '#111827',
+                                      padding: '0'
+                                    }
+                                  },
+                                  {
+                                    id: `contact-tip-content-${contactNow}`,
+                                    type: 'text',
+                                    layout: 12,
+                                    data: {
+                                      content: 'Pour une réponse plus rapide, consultez d\'abord notre [FAQ](/faq) ou notre [documentation](/docs).'
+                                    },
+                                    styles: {
+                                      fontSize: '0.875rem',
+                                      color: '#374151',
+                                      padding: '0'
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                  
+                  // Remplacer tous les blocs par la nouvelle structure
+                  setBlocks([contactContainer as Block])
+                  setSelectedBlockId(null)
+                  
+                  // Mettre à jour les métadonnées
+                  setMetaTitle('Contact - VTCBuilder')
+                  setMetaDescription('Contactez notre équipe support pour toute question ou assistance')
+                  
+                  toast.success('Page contact générée avec succès !')
+                  
+                  // Sauvegarder automatiquement
+                  await handleManualSave()
+                } catch (error) {
+                  console.error('Error génération page contact:', error)
+                  toast.error('Erreur lors de la génération de la page contact')
+                }
+              }}
+              className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center"
+              title="Générer/Régénérer la page contact"
+            >
+              <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          )}
+
           {/* New Page Button */}
           <button
             onClick={async () => {
@@ -1683,8 +3190,8 @@ export default function EditPublicPage() {
           {/* Undo Button - Icon only */}
           <button
             onClick={() => {
-              if (typeof window !== 'undefined' && (window as any).__blockEditorUndo) {
-                (window as any).__blockEditorUndo()
+              if (typeof window !== 'undefined' && window.__blockEditorUndo) {
+                window.__blockEditorUndo()
               }
             }}
             disabled={!canUndo}
@@ -1703,8 +3210,8 @@ export default function EditPublicPage() {
           {/* Redo Button - Icon only */}
           <button
             onClick={() => {
-              if (typeof window !== 'undefined' && (window as any).__blockEditorRedo) {
-                (window as any).__blockEditorRedo()
+              if (typeof window !== 'undefined' && window.__blockEditorRedo) {
+                window.__blockEditorRedo()
               }
             }}
             disabled={!canRedo}
@@ -1882,7 +3389,7 @@ export default function EditPublicPage() {
                 await api.patch('/system-settings/', { public_pages: publicPages })
                 toast.success('Nouvelle page créée !')
                 router.push(`/admin/pages-public/edit/${newPageSlug}`)
-              } catch (error: any) {
+              } catch (error: unknown) {
                 console.error('Error création page:', error)
                 toast.error('Error lors de la création de la page')
               }
@@ -1950,7 +3457,7 @@ export default function EditPublicPage() {
 
         {/* Main Editor Area with Split View - Redimensionnable */}
         {/* Utiliser flex-1 pour prendre toute la hauteur disponible restante après la barre SEO */}
-        <div className="flex-1 flex overflow-hidden min-h-0 relative" style={{ height: '100%' }}>
+        <div className="flex-1 flex overflow-hidden min-h-0 relative" style={{ height: '100%' }} data-editor-container>
           {/* Sidebar - Palette de blocs */}
           {!isPaletteCollapsed ? (
             <>

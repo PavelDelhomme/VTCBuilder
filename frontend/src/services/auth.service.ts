@@ -26,23 +26,86 @@ export interface User {
 
 class AuthService {
   async login(credentials: LoginCredentials) {
-    const response = await api.post('/auth/login/', credentials);
-    if (response.data.tokens?.access) {
-      localStorage.setItem('token', response.data.tokens.access);
-      localStorage.setItem('refresh_token', response.data.tokens.refresh);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+    try {
+      const response = await api.post('/auth/login/', credentials);
+      if (response.data.tokens?.access) {
+        localStorage.setItem('token', response.data.tokens.access);
+        localStorage.setItem('refresh_token', response.data.tokens.refresh);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        // Sauvegarder aussi la date de connexion pour vérifier l'expiration
+        localStorage.setItem('login_timestamp', Date.now().toString());
+      }
+      return response.data;
+    } catch (error: any) {
+      // PRIORITÉ 1: Gérer les erreurs WAF (Request blocked by WAF)
+      // Ne détecter les erreurs WAF que si c'est vraiment une erreur WAF du backend
+      // Vérifier que le message contient explicitement "WAF" ou "blocked by WAF"
+      const hasWAFMessage = error.isWAFError || 
+                           (error.response?.data?.error?.toLowerCase().includes('waf') || 
+                            error.response?.data?.detail?.toLowerCase().includes('waf') ||
+                            error.response?.data?.error?.toLowerCase().includes('blocked by waf') ||
+                            error.response?.data?.error?.toLowerCase().includes('request blocked by waf') ||
+                            error.response?.data?.message?.toLowerCase().includes('waf'));
+      
+      const isWAFError = (error.response?.status === 403 || error.response?.status === 429) && hasWAFMessage;
+      
+      if (isWAFError) {
+        const wafMessage = error.response?.data?.error || 
+                         error.response?.data?.detail || 
+                         error.response?.data?.message ||
+                         'Votre requête a été bloquée par le système de sécurité (WAF). Veuillez réessayer dans quelques instants ou contactez le support si le problème persiste.';
+        throw new Error(wafMessage);
+      }
+      
+      // PRIORITÉ 2: Si erreur 403 SANS message WAF, c'est probablement une restriction de sécurité (tentatives multiples, permissions, etc.)
+      if (error.response?.status === 403 && !hasWAFMessage) {
+        const errorMessage = error.response?.data?.error || 
+                            error.response?.data?.detail || 
+                            error.response?.data?.message ||
+                            'Accès refusé. Vérifiez vos identifiants ou contactez le support.';
+        throw new Error(errorMessage);
+      }
+      
+      // Si erreur 401, identifiants invalides
+      if (error.response?.status === 401) {
+        const errorMessage = error.response?.data?.error || 
+                            error.response?.data?.detail || 
+                            'Identifiants invalides. Vérifiez votre email et mot de passe.';
+        throw new Error(errorMessage);
+      }
+      
+      // Pour les autres erreurs, les propager avec un message clair
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.detail || 
+                          error.message || 
+                          'Erreur lors de la connexion. Veuillez réessayer.';
+      throw new Error(errorMessage);
     }
-    return response.data;
   }
 
   async register(data: RegisterData) {
-    const response = await api.post('/auth/register/', data);
-    if (response.data.tokens?.access) {
-      localStorage.setItem('token', response.data.tokens.access);
-      localStorage.setItem('refresh_token', response.data.tokens.refresh);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+    try {
+      const response = await api.post('/auth/register/', data);
+      if (response.data.tokens?.access) {
+        localStorage.setItem('token', response.data.tokens.access);
+        localStorage.setItem('refresh_token', response.data.tokens.refresh);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        // Sauvegarder aussi la date de connexion pour vérifier l'expiration
+        localStorage.setItem('login_timestamp', Date.now().toString());
+      }
+      return response.data;
+    } catch (error: any) {
+      // Gérer les erreurs WAF
+      if (error.isWAFError || error.message?.includes('WAF')) {
+        throw new Error(error.message || 'Votre requête a été bloquée par le système de sécurité. Veuillez réessayer dans quelques instants.');
+      }
+      // Gérer les autres erreurs
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.detail || 
+                          error.message || 
+                          'Erreur lors de l\'inscription. Veuillez réessayer.';
+      throw new Error(errorMessage);
     }
-    return response.data;
   }
 
   async logout() {
@@ -63,6 +126,7 @@ class AuthService {
       localStorage.removeItem('token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
+      localStorage.removeItem('login_timestamp');
     }
   }
 
@@ -168,11 +232,22 @@ class AuthService {
         localStorage.setItem('token', response.data.tokens.access);
         localStorage.setItem('refresh_token', response.data.tokens.refresh);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        // Sauvegarder aussi la date de connexion pour vérifier l'expiration
+        localStorage.setItem('login_timestamp', Date.now().toString());
         return true;
       }
       return false;
     } catch (error: any) {
-      throw error;
+      // Gérer les erreurs WAF
+      if (error.isWAFError || error.message?.includes('WAF')) {
+        throw new Error(error.message || 'Votre requête a été bloquée par le système de sécurité. Veuillez réessayer dans quelques instants.');
+      }
+      // Gérer les autres erreurs
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.detail || 
+                          error.message || 
+                          'Erreur lors de la reconnexion. Veuillez réessayer.';
+      throw new Error(errorMessage);
     }
   }
 
@@ -184,12 +259,56 @@ class AuthService {
 
   getToken(): string | null {
     if (typeof window === 'undefined') return null; // SSR safety
-    return localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    // Vérifier que le token existe et n'est pas vide
+    if (!token || token.trim() === '') {
+      return null;
+    }
+    return token;
+  }
+  
+  /**
+   * Vérifie si le token est toujours valide (pas expiré depuis plus de 24h)
+   * Cette vérification est basique et ne remplace pas la vérification côté serveur
+   */
+  isTokenValid(): boolean {
+    if (typeof window === 'undefined') return false; // SSR safety
+    const token = this.getToken();
+    if (!token) return false;
+    
+    // Si on a un token, on considère qu'il est valide
+    // La vérification réelle de l'expiration se fait côté serveur
+    // On vérifie juste la date de connexion pour éviter les tokens très anciens
+    const loginTimestamp = localStorage.getItem('login_timestamp');
+    if (loginTimestamp) {
+      const loginTime = parseInt(loginTimestamp, 10);
+      const now = Date.now();
+      // Si la connexion date de plus de 30 jours, considérer le token comme potentiellement expiré
+      // (augmenté de 7 à 30 jours pour éviter les déconnexions prématurées)
+      // Les tokens JWT expirent généralement après 1h, mais le refresh token peut être valide plus longtemps
+      // On laisse le serveur décider de la validité réelle du token
+      if (now - loginTime > 30 * 24 * 60 * 60 * 1000) {
+        // Token très ancien - nettoyer et retourner false
+        this.logout();
+        return false;
+      }
+      
+      // Si on vient de se connecter (dans les 5 secondes), ne pas vérifier l'expiration
+      // pour éviter les problèmes de timing
+      if (now - loginTime < 5000) {
+        return true;
+      }
+    }
+    
+    // Si on a un token et qu'il n'est pas trop ancien, on considère qu'il est valide
+    // La vérification réelle se fera côté serveur lors des requêtes
+    return true;
   }
 
   isAuthenticated(): boolean {
     if (typeof window === 'undefined') return false; // SSR safety
-    return !!this.getToken();
+    // Vérifier que le token existe et est valide
+    return this.isTokenValid();
   }
 
   isSuperAdmin(): boolean {

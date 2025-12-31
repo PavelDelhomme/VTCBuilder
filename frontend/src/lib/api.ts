@@ -4,6 +4,7 @@ import authService from '@/services/auth.service';
 // Déclaration pour les flags globaux
 declare global {
   interface Window {
+    __redirectingToLogin?: boolean;
     __hasLoggedBlockedError?: boolean;
     __hasLoggedNetworkError?: boolean;
     __showReconnectModal?: () => void;
@@ -71,11 +72,19 @@ api.interceptors.request.use((config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     } else {
-      // Si pas de token et que ce n'est pas un endpoint public, logger un avertissement
+      // Si pas de token et que ce n'est pas un endpoint public ou géré avec données par défaut, logger un avertissement
       const isPublicEndpoint = config.url?.includes('/analytics/') || 
                                config.url?.includes('/auth/') ||
                                config.url?.includes('/templates/');
-      if (!isPublicEndpoint) {
+      const isManagedEndpoint = config.url?.includes('/system-settings/') ||
+                               config.url?.includes('/blocks/types/') ||
+                               config.url?.includes('/blocks/call-to-actions/') ||
+                               config.url?.includes('/projects/') ||
+                               config.url?.includes('/dashboard/') ||
+                               config.url?.includes('/stats/detailed/') ||
+                               config.url?.includes('/billing/stats/') ||
+                               config.url?.includes('/users/impersonation-status/');
+      if (!isPublicEndpoint && !isManagedEndpoint) {
         console.warn('⚠️ Aucun token trouvé pour la requête:', config.url);
       }
     }
@@ -119,14 +128,19 @@ const SILENT_ERROR_ENDPOINTS = [
   '/payment-methods/',
   '/system-settings/',
   '/billing/unpaid-items/',
+  '/billing/stats/', // Endpoint de stats billing - erreurs 401 normales si non connecté
   '/templates/',
   '/pricing-plans/', // Peut être en erreur temporaire
   '/users/impersonation-status/', // Endpoint optionnel (401 normal si non connecté)
   '/dashboard/', // Peut être en erreur temporaire (401 normal si non connecté)
+  '/stats/detailed/', // Endpoint de stats détaillées - erreurs 401 normales si non connecté
   '/blocks/types/', // Peut être en erreur temporaire (401 normal si non connecté)
+  '/blocks/call-to-actions/', // Endpoint de call-to-actions - erreurs 401 normales si non connecté
+  '/projects/', // Endpoint de projects - erreurs 401 normales si non connecté
   '/tenants/features/', // Endpoint de features - erreurs 401 normales si non connecté
   '/analytics/actions/', // Endpoint d'analytics - erreurs 401/403 normales si non connecté
   '/analytics/block-usage/', // Endpoint de tracking - erreurs 401/403 normales si non connecté
+  '/analytics/usage-stats/', // Endpoint de stats d'utilisation - erreurs 401/403/500 normales
 ];
 
 // Intercepteur pour gérer les erreurs
@@ -139,6 +153,99 @@ api.interceptors.response.use(
     const hasToken = localStorage.getItem('token');
     const refreshToken = localStorage.getItem('refresh_token');
     
+    // PRIORITÉ 0: Gérer IMMÉDIATEMENT les erreurs 401 pour les endpoints gérés AVANT tout autre traitement
+    // Pour éviter qu'elles soient loggées dans la console
+    const managedEndpoints401 = [
+      '/system-settings/',
+      '/blocks/types/',
+      '/blocks/call-to-actions/',
+      '/projects/',
+      '/dashboard/',
+      '/stats/detailed/',
+      '/billing/stats/',
+      '/users/impersonation-status/',
+    ];
+    const isManagedEndpoint401 = status === 401 && managedEndpoints401.some(endpoint => url.includes(endpoint));
+    
+    // Si c'est une erreur 401 sur un endpoint géré et qu'il n'y a pas de token, retourner des données par défaut silencieusement
+    if (isManagedEndpoint401 && !hasToken && originalRequest.method?.toLowerCase() === 'get') {
+      // Marquer l'erreur comme silencieuse
+      error.silent = true;
+      error.config = error.config || {};
+      error.config.silent = true;
+      
+      // Retourner des données par défaut selon l'endpoint
+      if (url.includes('/system-settings/')) {
+        return Promise.resolve({ 
+          data: { public_pages: {}, public_homepage_blocks: [] }, 
+          status: 200, 
+          statusText: 'OK', 
+          headers: {}, 
+          config: originalRequest 
+        });
+      }
+      if (url.includes('/blocks/types/') || url.includes('/blocks/call-to-actions/') || url.includes('/projects/')) {
+        return Promise.resolve({ 
+          data: [], 
+          status: 200, 
+          statusText: 'OK', 
+          headers: {}, 
+          config: originalRequest 
+        });
+      }
+      if (url.includes('/dashboard/')) {
+        return Promise.resolve({ 
+          data: { stats: { total_tenants: 0, active_tenants: 0, trial_tenants: 0, total_users: 0, monthly_revenue: 0, trials_expiring_soon: 0, trials_expiring_soon_list: [] } }, 
+          status: 200, 
+          statusText: 'OK', 
+          headers: {}, 
+          config: originalRequest 
+        });
+      }
+      if (url.includes('/stats/detailed/')) {
+        return Promise.resolve({ 
+          data: { overview: { total_tenants: 0, active_tenants: 0, trial_tenants: 0, total_users: 0, active_subscriptions: 0, trial_subscriptions: 0 }, activity: { users_today: 0, users_this_week: 0, tenants_today: 0, tenants_this_week: 0 }, revenue: { monthly: 0, total: 0 }, alerts: [] }, 
+          status: 200, 
+          statusText: 'OK', 
+          headers: {}, 
+          config: originalRequest 
+        });
+      }
+      if (url.includes('/billing/stats/')) {
+        return Promise.resolve({ 
+          data: { total_revenue: 0, monthly_revenue: 0, active_subscriptions: 0, total_subscriptions: 0 }, 
+          status: 200, 
+          statusText: 'OK', 
+          headers: {}, 
+          config: originalRequest 
+        });
+      }
+      if (url.includes('/users/impersonation-status/')) {
+        return Promise.resolve({ 
+          data: { is_impersonating: false, impersonator_email: null }, 
+          status: 200, 
+          statusText: 'OK', 
+          headers: {}, 
+          config: originalRequest 
+        });
+      }
+    }
+    
+    // Si c'est une erreur 401 sur un endpoint qui nécessite authentification et qu'il n'y a pas de token,
+    // rediriger vers login (sauf pour les endpoints gérés qui retournent des données par défaut)
+    if (status === 401 && !isManagedEndpoint401 && !hasToken) {
+      // Si on est sur une page admin et qu'il n'y a pas de token, rediriger vers login
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+        // Ne pas rediriger si on est déjà sur la page de login
+        if (!window.location.pathname.includes('/login')) {
+          authService.saveRedirectUrl()
+          window.location.href = '/login'
+          // Retourner une promesse rejetée silencieusement pour éviter les logs
+          return Promise.reject(new Error('Authentication required'))
+        }
+      }
+    }
+    
     // PRIORITÉ 1: Gérer IMMÉDIATEMENT les erreurs 403 pour les endpoints publics
     // AVANT tout autre traitement pour éviter qu'elles soient loggées
     // MAIS: Si l'utilisateur est super admin, ne pas ignorer l'erreur - c'est un vrai problème
@@ -147,13 +254,24 @@ api.interceptors.response.use(
       '/analytics/block-usage/',
       '/users/impersonation-status/',
       '/blocks/types/',
+      '/blocks/call-to-actions/',
+      '/projects/',
+      '/dashboard/',
+      '/stats/detailed/',
+      '/billing/stats/',
+      '/security/waf/logs/', // Logs WAF - nécessite permissions super admin
       '/auth/refresh/', // Ajouté pour s'assurer que le refresh token lui-même n'est pas bloqué
+      '/auth/login/', // Login - erreurs 403 peuvent survenir si tentatives multiples ou restrictions
     ];
     const isPublicEndpoint403 = status === 403 && publicEndpoints403.some(endpoint => url.includes(endpoint));
     const isSuperAdmin = authService.isSuperAdmin();
     
-    // Si c'est un utilisateur non-super-admin avec une erreur 403 sur un endpoint public, ignorer silencieusement
-    if (isPublicEndpoint403 && !isSuperAdmin) {
+    // Exception spéciale pour /auth/login/ : ne pas ignorer silencieusement les erreurs 403
+    // car elles indiquent un vrai problème (tentatives multiples, restrictions, etc.)
+    const isLoginEndpoint = url.includes('/auth/login/');
+    
+    // Si c'est un utilisateur non-super-admin avec une erreur 403 sur un endpoint public (sauf /auth/login/), ignorer silencieusement
+    if (isPublicEndpoint403 && !isSuperAdmin && !isLoginEndpoint) {
       // Marquer l'erreur comme silencieuse pour éviter tout log
       error.silent = true;
       error.config = error.config || {};
@@ -276,16 +394,16 @@ api.interceptors.response.use(
             originalRequest.headers.Authorization = `Bearer ${token}`;
           }
           return api(originalRequest);
-        }).catch((err) => {
-          // Si le rafraîchissement échoue et que c'est une requête GET vers /system-settings/, /blocks/types/, ou /users/impersonation-status/, retourner des données par défaut
+        }).catch((err: any) => {
+          // Si le rafraîchissement échoue et que c'est une requête GET vers /system-settings/, /blocks/types/, /blocks/call-to-actions/, /projects/, /dashboard/, /stats/detailed/, /billing/stats/, ou /users/impersonation-status/, retourner des données par défaut
           if (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'get') {
-            return Promise.resolve({ 
+            return Promise.resolve({
               data: { public_pages: {}, public_homepage_blocks: [] }, 
               status: 200, 
               statusText: 'OK', 
               headers: {}, 
               config: originalRequest 
-            });
+            } as any);
           }
           if (originalRequest.url?.includes('/blocks/types/') && originalRequest.method?.toLowerCase() === 'get') {
             return Promise.resolve({ 
@@ -294,7 +412,52 @@ api.interceptors.response.use(
               statusText: 'OK', 
               headers: {}, 
               config: originalRequest 
-            });
+            } as any);
+          }
+          if (originalRequest.url?.includes('/blocks/call-to-actions/') && originalRequest.method?.toLowerCase() === 'get') {
+            return Promise.resolve({ 
+              data: [], 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            } as any);
+          }
+          if (originalRequest.url?.includes('/projects/') && originalRequest.method?.toLowerCase() === 'get') {
+            return Promise.resolve({ 
+              data: [], 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            } as any);
+          }
+          if (originalRequest.url?.includes('/dashboard/') && originalRequest.method?.toLowerCase() === 'get') {
+            return Promise.resolve({ 
+              data: { stats: { total_tenants: 0, active_tenants: 0, trial_tenants: 0, total_users: 0, monthly_revenue: 0, trials_expiring_soon: 0, trials_expiring_soon_list: [] } }, 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            } as any);
+          }
+          if (originalRequest.url?.includes('/stats/detailed/') && originalRequest.method?.toLowerCase() === 'get') {
+            return Promise.resolve({ 
+              data: { overview: { total_tenants: 0, active_tenants: 0, trial_tenants: 0, total_users: 0, active_subscriptions: 0, trial_subscriptions: 0 }, activity: { users_today: 0, users_this_week: 0, tenants_today: 0, tenants_this_week: 0 }, revenue: { monthly: 0, total: 0 }, alerts: [] }, 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            } as any);
+          }
+          if (originalRequest.url?.includes('/billing/stats/') && originalRequest.method?.toLowerCase() === 'get') {
+            return Promise.resolve({ 
+              data: { total_revenue: 0, monthly_revenue: 0, active_subscriptions: 0, total_subscriptions: 0 }, 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            } as any);
           }
           if (originalRequest.url?.includes('/users/impersonation-status/') && originalRequest.method?.toLowerCase() === 'get') {
             return Promise.resolve({ 
@@ -303,7 +466,16 @@ api.interceptors.response.use(
               statusText: 'OK', 
               headers: {}, 
               config: originalRequest 
-            });
+            } as any);
+          }
+          if (originalRequest.url?.includes('/security/waf/logs/') && originalRequest.method?.toLowerCase() === 'get') {
+            return Promise.resolve({ 
+              data: [], 
+              status: 200, 
+              statusText: 'OK', 
+              headers: {}, 
+              config: originalRequest 
+            } as any);
           }
           return Promise.reject(err);
         });
@@ -384,7 +556,7 @@ api.interceptors.response.use(
           }
           return Promise.reject(error);
         }
-      }).catch((refreshError) => {
+      }).catch((refreshError: any): any => {
         window.__isRefreshingToken = false;
         
         // Si le refresh token est expiré, nettoyer les tokens
@@ -401,11 +573,38 @@ api.interceptors.response.use(
           window.__failedQueue = [];
         }
         
-        // Améliorer le logging pour diagnostiquer le problème
+        // Vérifier si c'est une requête GET silencieuse qui ne nécessite pas de redirection
         const isSilentGetRequest = 
           (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'get') ||
           (originalRequest.url?.includes('/blocks/types/') && originalRequest.method?.toLowerCase() === 'get') ||
+          (originalRequest.url?.includes('/blocks/call-to-actions/') && originalRequest.method?.toLowerCase() === 'get') ||
+          (originalRequest.url?.includes('/projects/') && originalRequest.method?.toLowerCase() === 'get') ||
+          (originalRequest.url?.includes('/dashboard/') && originalRequest.method?.toLowerCase() === 'get') ||
+          (originalRequest.url?.includes('/stats/detailed/') && originalRequest.method?.toLowerCase() === 'get') ||
+          (originalRequest.url?.includes('/billing/stats/') && originalRequest.method?.toLowerCase() === 'get') ||
           (originalRequest.url?.includes('/users/impersonation-status/') && originalRequest.method?.toLowerCase() === 'get');
+        
+        // Ne pas rediriger vers login pour les requêtes GET silencieuses ou si le refresh token a échoué
+        // Seulement rediriger pour les requêtes importantes (PATCH, POST, DELETE) qui nécessitent vraiment l'authentification
+        const isImportantRequest = originalRequest.method?.toLowerCase() === 'patch' || 
+                                   originalRequest.method?.toLowerCase() === 'post' || 
+                                   originalRequest.method?.toLowerCase() === 'delete';
+        
+        if (!isSilentGetRequest && isImportantRequest && typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+          // Ne rediriger que si on n'est pas déjà sur la page de login
+          if (!window.location.pathname.includes('/login')) {
+            // Attendre un peu avant de rediriger pour éviter les redirections multiples
+            const shouldRedirect = !window.__redirectingToLogin;
+            if (shouldRedirect) {
+              window.__redirectingToLogin = true;
+              authService.saveRedirectUrl();
+              setTimeout(() => {
+                window.__redirectingToLogin = false;
+                window.location.href = '/login';
+              }, 500);
+            }
+          }
+        }
         
         if (!isSilentGetRequest) {
           console.error('❌ Erreur lors du rafraîchissement du token pour super admin', {
@@ -418,7 +617,7 @@ api.interceptors.response.use(
           });
         }
         
-        // Si c'est une requête GET vers /system-settings/, /blocks/types/, ou /users/impersonation-status/, retourner des données par défaut plutôt que de rejeter
+        // Si c'est une requête GET vers /system-settings/, /blocks/types/, /blocks/call-to-actions/, /projects/, /dashboard/, /stats/detailed/, /billing/stats/, ou /users/impersonation-status/, retourner des données par défaut plutôt que de rejeter
         if (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'get') {
           console.warn('⚠️ Échec du rafraîchissement du token, utilisation de données par défaut pour /system-settings/');
           return Promise.resolve({ 
@@ -433,6 +632,56 @@ api.interceptors.response.use(
           console.warn('⚠️ Échec du rafraîchissement du token, utilisation de données par défaut pour /blocks/types/');
           return Promise.resolve({ 
             data: [], 
+            status: 200, 
+            statusText: 'OK', 
+            headers: {}, 
+            config: originalRequest 
+          });
+        }
+        if (originalRequest.url?.includes('/blocks/call-to-actions/') && originalRequest.method?.toLowerCase() === 'get') {
+          console.warn('⚠️ Échec du rafraîchissement du token, utilisation de données par défaut pour /blocks/call-to-actions/');
+          return Promise.resolve({ 
+            data: [], 
+            status: 200, 
+            statusText: 'OK', 
+            headers: {}, 
+            config: originalRequest 
+          });
+        }
+        if (originalRequest.url?.includes('/projects/') && originalRequest.method?.toLowerCase() === 'get') {
+          console.warn('⚠️ Échec du rafraîchissement du token, utilisation de données par défaut pour /projects/');
+          return Promise.resolve({ 
+            data: [], 
+            status: 200, 
+            statusText: 'OK', 
+            headers: {}, 
+            config: originalRequest 
+          });
+        }
+        if (originalRequest.url?.includes('/dashboard/') && originalRequest.method?.toLowerCase() === 'get') {
+          console.warn('⚠️ Échec du rafraîchissement du token, utilisation de données par défaut pour /dashboard/');
+          return Promise.resolve({ 
+            data: { stats: { total_tenants: 0, active_tenants: 0, trial_tenants: 0, total_users: 0, monthly_revenue: 0, trials_expiring_soon: 0, trials_expiring_soon_list: [] } }, 
+            status: 200, 
+            statusText: 'OK', 
+            headers: {}, 
+            config: originalRequest 
+          });
+        }
+        if (originalRequest.url?.includes('/stats/detailed/') && originalRequest.method?.toLowerCase() === 'get') {
+          console.warn('⚠️ Échec du rafraîchissement du token, utilisation de données par défaut pour /stats/detailed/');
+          return Promise.resolve({ 
+            data: { overview: { total_tenants: 0, active_tenants: 0, trial_tenants: 0, total_users: 0, active_subscriptions: 0, trial_subscriptions: 0 }, activity: { users_today: 0, users_this_week: 0, tenants_today: 0, tenants_this_week: 0 }, revenue: { monthly: 0, total: 0 }, alerts: [] }, 
+            status: 200, 
+            statusText: 'OK', 
+            headers: {}, 
+            config: originalRequest 
+          });
+        }
+        if (originalRequest.url?.includes('/billing/stats/') && originalRequest.method?.toLowerCase() === 'get') {
+          console.warn('⚠️ Échec du rafraîchissement du token, utilisation de données par défaut pour /billing/stats/');
+          return Promise.resolve({ 
+            data: { total_revenue: 0, monthly_revenue: 0, active_subscriptions: 0, total_subscriptions: 0 }, 
             status: 200, 
             statusText: 'OK', 
             headers: {}, 
@@ -749,8 +998,32 @@ api.interceptors.response.use(
       '/dashboard/',
       '/analytics/usage-stats/',
       '/analytics/actions/', // Endpoint d'analytics - erreurs 401/403 normales si non connecté
+      '/security/waf/logs/', // Logs WAF - erreurs 403 normales si pas de permissions
     ]
     const isSilentEndpoint = silentEndpoints.some(endpoint => url.includes(endpoint))
+    
+    // PRIORITÉ 0.5: Gérer les erreurs WAF (Request blocked by WAF) AVANT tout autre traitement
+    // Ne détecter les erreurs WAF que si c'est vraiment une erreur WAF du backend
+    // Vérifier que c'est bien une erreur 403 avec un message WAF explicite
+    const isWAFError = (error.response?.status === 403 || error.response?.status === 429) &&
+                      (error.response?.data?.error?.includes('WAF') || 
+                       error.response?.data?.detail?.includes('WAF') ||
+                       error.response?.data?.error?.includes('blocked by WAF') ||
+                       error.response?.data?.error?.includes('Request blocked by WAF') ||
+                       error.response?.data?.message?.includes('WAF'));
+    
+    if (isWAFError) {
+      // Pour les erreurs WAF, créer une erreur claire avec un message explicite
+      const wafMessage = error.response?.data?.error || 
+                        error.response?.data?.detail || 
+                        error.response?.data?.message ||
+                        'Votre requête a été bloquée par le système de sécurité (WAF). Veuillez réessayer dans quelques instants ou contactez le support si le problème persiste.';
+      const wafError = new Error(wafMessage);
+      (wafError as any).isWAFError = true;
+      (wafError as any).status = error.response?.status || 403;
+      (wafError as any).response = error.response;
+      return Promise.reject(wafError);
+    }
     
     // Gérer les erreurs bloquées par le client (bloqueur de pub)
     const isBlockedError = error.code === 'ERR_BLOCKED_BY_CLIENT' || 
@@ -799,6 +1072,89 @@ api.interceptors.response.use(
       // Si on a un token et un refresh token, essayer de rafraîchir automatiquement
       // Ne pas rafraîchir pour l'endpoint de refresh lui-même pour éviter les boucles infinies
       if (hasToken && refreshToken && !originalRequest._retry && !url.includes('/auth/refresh/')) {
+        // Vérifier si on vient de se connecter (dans les 10 secondes)
+        // Si oui, attendre un peu avant de rafraîchir pour éviter les problèmes de timing
+        const loginTimestamp = localStorage.getItem('login_timestamp');
+        const justLoggedIn = loginTimestamp && (Date.now() - parseInt(loginTimestamp, 10)) < 10000;
+        
+        // Si on vient de se connecter, attendre un peu avant de rafraîchir
+        // Augmenter le délai à 1000ms pour laisser plus de temps au token de se propager
+        if (justLoggedIn) {
+          // Marquer immédiatement comme retry pour éviter les retries multiples
+          originalRequest._retry = true;
+          
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              // Si on est déjà en train de rafraîchir, mettre en queue
+              if (window.__isRefreshingToken) {
+                if (!window.__failedQueue) {
+                  window.__failedQueue = [];
+                }
+                window.__failedQueue.push({ 
+                  resolve: (token: any) => {
+                    if (originalRequest.headers) {
+                      originalRequest.headers.Authorization = `Bearer ${token}`;
+                    }
+                    resolve(api(originalRequest));
+                  }, 
+                  reject: (err: any) => resolve(Promise.reject(err)), 
+                  config: originalRequest 
+                });
+                return;
+              }
+              
+              window.__isRefreshingToken = true;
+              
+              authService.refreshToken().then((success) => {
+                window.__isRefreshingToken = false;
+                
+                if (success) {
+                  // Traiter la queue des requêtes en attente
+                  if (window.__failedQueue) {
+                    window.__failedQueue.forEach(({ resolve: queueResolve }) => {
+                      const newToken = localStorage.getItem('token');
+                      queueResolve(newToken);
+                    });
+                    window.__failedQueue = [];
+                  }
+                  
+                  // Réessayer la requête originale avec le nouveau token
+                  const newToken = localStorage.getItem('token');
+                  if (originalRequest.headers) {
+                    originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                  }
+                  resolve(api(originalRequest));
+                } else {
+                  // Refresh token invalide, sauvegarder l'état de l'éditeur et afficher le modal
+                  if (window.__showReconnectModal) {
+                    window.__showReconnectModal();
+                  }
+                  resolve(Promise.reject(error));
+                }
+              }).catch((refreshError) => {
+                window.__isRefreshingToken = false;
+                
+                // Traiter la queue des requêtes en attente avec erreur
+                if (window.__failedQueue) {
+                  window.__failedQueue.forEach(({ reject }) => {
+                    reject(refreshError);
+                  });
+                  window.__failedQueue = [];
+                }
+                
+                // Si le refresh token est expiré, nettoyer les tokens
+                if (refreshError?.response?.status === 403 || refreshError?.response?.status === 401) {
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('refresh_token');
+                }
+                
+                resolve(Promise.reject(error));
+              });
+            }, 1000); // Augmenté de 500ms à 1000ms pour laisser plus de temps
+          });
+        }
+        
+        // Si on ne vient pas de se connecter, rafraîchir normalement
         originalRequest._retry = true;
         
         // Si on est déjà en train de rafraîchir, mettre en queue
@@ -875,7 +1231,32 @@ api.interceptors.response.use(
       }
       
       // Pour les requêtes de modification ou pages non publiques avec token, afficher le modal
+      // MAIS: Ne pas rediriger si l'utilisateur vient de se connecter (dans les 5 secondes)
+      const loginTimestamp = localStorage.getItem('login_timestamp');
+      const justLoggedIn = loginTimestamp && (Date.now() - parseInt(loginTimestamp, 10)) < 5000;
+      
       if ((isModificationRequest && hasToken) || (hasToken && !isPublicRoute)) {
+        // Si l'utilisateur vient de se connecter, ne pas rediriger - c'est probablement un problème temporaire
+        if (justLoggedIn) {
+          // Marquer immédiatement comme retry pour éviter les retries multiples
+          originalRequest._retry = true;
+          
+          console.warn('⚠️ Erreur 401 juste après la connexion - ne pas rediriger, réessayer la requête après délai');
+          // Réessayer la requête après un délai plus long pour éviter les requêtes trop rapides
+          return new Promise((resolve, reject) => {
+            setTimeout(() => {
+              // Réessayer avec le token actuel
+              if (originalRequest.headers) {
+                const token = localStorage.getItem('token');
+                if (token) {
+                  originalRequest.headers.Authorization = `Bearer ${token}`;
+                }
+              }
+              api(originalRequest).then(resolve).catch(reject);
+            }, 2000); // Augmenté de 1000ms à 2000ms pour éviter les requêtes trop rapides
+          });
+        }
+        
         // Afficher le modal de reconnexion au lieu de rediriger
         if (window.__showReconnectModal) {
           window.__showReconnectModal();

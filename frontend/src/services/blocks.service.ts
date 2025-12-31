@@ -2,6 +2,7 @@
  * Service for managing blocks (BlockType, BlockTemplate)
  */
 import api from '@/lib/api';
+import { managedRequest } from '@/lib/request-manager';
 
 export interface BlockType {
   id: number;
@@ -46,19 +47,30 @@ class BlocksService {
   async getBlockTypes(category?: string): Promise<BlockType[]> {
     try {
       const params = category ? { category } : {};
-      const response = await api.get('/blocks/types/', { 
-        params,
-        validateStatus: (status) => status < 500 // Accepter 401, 404, etc. sans erreur
-      });
-      // Handle paginated response
-      if (response.data && response.data.results) {
-        return response.data.results;
-      }
-      // Handle direct array response
-      if (Array.isArray(response.data)) {
-        return response.data;
-      }
-      return [];
+      const cacheKey = `/blocks/types/${category || 'all'}`;
+      
+      return await managedRequest(
+        cacheKey,
+        async () => {
+          const response = await api.get('/blocks/types/', { 
+            params,
+            validateStatus: (status) => status < 500 // Accepter 401, 404, etc. sans erreur
+          });
+          // Handle paginated response
+          if (response.data && response.data.results) {
+            return response.data.results;
+          }
+          // Handle direct array response
+          if (Array.isArray(response.data)) {
+            return response.data;
+          }
+          return [];
+        },
+        {
+          cache: true,
+          cacheTTL: 10000, // 10 secondes de cache
+        }
+      );
     } catch (error: any) {
       // Ne pas logger les erreurs 401 (non authentifié) - c'est normal si l'utilisateur n'est pas connecté
       const isExpectedError = error.response?.status === 401 ||

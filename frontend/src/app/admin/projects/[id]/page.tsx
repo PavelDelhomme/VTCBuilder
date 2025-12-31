@@ -42,14 +42,29 @@ export default function ProjectDetailPage() {
   // const cleanupExecutedRef = useRef(false)
 
   useEffect(() => {
-    if (!authService.isSuperAdmin()) {
-      router.push('/dashboard')
-      return
+    const loadData = async () => {
+      if (!authService.isSuperAdmin()) {
+        router.push('/dashboard')
+        return
+      }
+      
+      // Vérifier si on vient de se connecter (dans les 5 secondes)
+      const loginTimestamp = localStorage.getItem('login_timestamp');
+      const justLoggedIn = loginTimestamp && (Date.now() - parseInt(loginTimestamp, 10)) < 5000;
+      
+      if (justLoggedIn) {
+        // Attendre un peu avant de charger les données après le login
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      if (projectId || projectSlug || projectUuid) {
+        // Charger les données de manière SÉRIELLE pour éviter le rate limiting WAF
+        await loadProject()
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await loadBlockTypes()
+      }
     }
-    if (projectId || projectSlug || projectUuid) {
-      loadProject()
-      loadBlockTypes()
-    }
+    loadData()
   }, [projectId, projectSlug, projectUuid]) // Retirer 'router' des dépendances pour éviter les re-renders
 
   // Load available pages when project is loaded
@@ -149,32 +164,35 @@ export default function ProjectDetailPage() {
         })
         
         // Load projects where each page is linked (excluding current project)
-        const pagesWithProjects = await Promise.all(
-          allPages.map(async (page) => {
-            try {
-              // Use query parameter instead of URL path to handle slashes (e.g., "legal/terms")
-              const response = await api.get(`/projects/page-projects/?page_slug=${encodeURIComponent(page.slug)}&page_type=public`)
-              const otherProjects = response.data.projects.filter(
-                (p: any) => p.id !== project?.id
-              )
-              return {
-                ...page,
-                otherProjects: otherProjects,
-              }
-            } catch (error: any) {
-              // Si l'endpoint n'existe pas encore ou erreur, retourner la page sans projets
-              // Ne logger que les erreurs non-404/403 (404/403 sont normaux si la page n'est dans aucun projet ou si pas de permissions)
-              if (error.response?.status !== 404 && error.response?.status !== 403) {
-                console.warn(`Error chargement projets pour page ${page.slug}:`, error.response?.status || error.message)
-              }
-              // Pour les erreurs 403, on retourne quand même la page sans projets (silencieusement)
-              return {
-                ...page,
-                otherProjects: [],
-              }
+        // Charger de manière SÉRIELLE pour éviter le rate limiting WAF
+        const pagesWithProjects: any[] = []
+        for (const page of allPages) {
+          try {
+            // Use query parameter instead of URL path to handle slashes (e.g., "legal/terms")
+            const response = await api.get(`/projects/page-projects/?page_slug=${encodeURIComponent(page.slug)}&page_type=public`)
+            const otherProjects = response.data.projects.filter(
+              (p: any) => p.id !== project?.id
+            )
+            pagesWithProjects.push({
+              ...page,
+              otherProjects: otherProjects,
+            })
+          } catch (error: any) {
+            // Si l'endpoint n'existe pas encore ou erreur, retourner la page sans projets
+            // Ne logger que les erreurs non-404/403 (404/403 sont normaux si la page n'est dans aucun projet ou si pas de permissions)
+            if (error.response?.status !== 404 && error.response?.status !== 403) {
+              console.warn(`Error chargement projets pour page ${page.slug}:`, error.response?.status || error.message)
             }
-          })
-        )
+            // Pour les erreurs 403, on retourne quand même la page sans projets (silencieusement)
+            pagesWithProjects.push({
+              ...page,
+              otherProjects: [],
+            })
+          }
+          
+          // Attendre 300ms avant la prochaine requête pour éviter le rate limiting
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
         
         setPublicPages(pagesWithProjects)
       } else {

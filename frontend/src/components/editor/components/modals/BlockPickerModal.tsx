@@ -90,9 +90,9 @@ export function BlockPickerModal({
       filtered = filtered.filter((bt) => {
         if (!bt.available_plans || bt.available_plans.length === 0) {
           // Bloc gratuit disponible pour tous
-          return planFilter === 'all' || pricingFilter === 'free'
+          return String(planFilter) === 'all' || pricingFilter === 'free'
         }
-        return bt.available_plans.includes(planFilter as number)
+        return String(planFilter) === 'all' || bt.available_plans.includes(Number(planFilter))
       })
     }
 

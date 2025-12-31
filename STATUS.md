@@ -495,4 +495,70 @@ Les erreurs 403 persistent pour plusieurs endpoints même pour les super admins 
 
 ---
 
+---
+
+## 🔒 Problème WAF - "Too Many Requests" (24/12/2025)
+
+### Problème identifié
+Après connexion ou rechargement de page, le système indique "too many requests" et bloque les requêtes via le WAF. Cela se produit car :
+1. **Trop de requêtes parallèles** : Plusieurs pages admin chargent des données en parallèle (`Promise.all`)
+2. **Pas de délais entre requêtes** : Les requêtes sont envoyées trop rapidement
+3. **Pas de délai initial** : Les requêtes commencent immédiatement après le login/rechargement
+
+### Solutions implémentées
+
+#### 1. Sérialisation des requêtes API
+- ✅ **Remplacement de `Promise.all` par des boucles séquentielles** dans :
+  - `projects/[id]/page.tsx` : Chargement séquentiel des projets pour chaque page
+  - `TenantBillingTab.tsx` : 4 appels API sérialisés (subscriptions, invoices, payments, plans)
+  - `SecurityTab.tsx` : 3 appels API sérialisés (WAF rules, logs, stats)
+- ✅ **Délais de 500ms** entre chaque requête séquentielle
+
+#### 2. Délais initiaux sur toutes les pages admin
+- ✅ **Délai de 1000ms après connexion** (dans les 5 secondes) sur toutes les pages :
+  - `settings/page.tsx`
+  - `projects/page.tsx`
+  - `billing/page.tsx`
+  - `stats/page.tsx`
+  - `security/page.tsx`
+  - `users/page.tsx`
+  - `projects/[id]/page.tsx`
+  - `dashboard/page.tsx`
+  - `pages-public/edit/[...slug]/page.tsx`
+
+#### 3. Augmentation des délais dans RequestManager
+- ✅ **Délai par défaut augmenté de 300ms à 500ms** entre chaque requête
+- ✅ **Cache TTL augmenté de 10s à 15s** pour réduire les requêtes redondantes
+- ✅ **Délai après login augmenté à 600ms** pendant 30 secondes
+
+#### 4. Délais entre requêtes séquentielles
+- ✅ **Tous les délais de 300ms remplacés par 500ms** dans :
+  - Toutes les pages admin
+  - Tous les composants de chargement de données
+  - Tous les appels API sérialisés
+
+#### 5. Délais de redirection après login
+- ✅ **Délai de 1000ms** avant redirection après login (au lieu de 500ms)
+- ✅ **Délai initial de 200ms** avant vérification d'authentification (augmenté à 200ms)
+
+### État actuel
+- ✅ **Sérialisation complète** : Toutes les requêtes parallèles ont été remplacées par des requêtes séquentielles
+- ✅ **Délais augmentés** : Tous les délais ont été augmentés de manière agressive (500ms entre requêtes, 1000ms après login)
+- ✅ **RequestManager optimisé** : Délai par défaut de 500ms, cache de 15s
+- ⚠️ **À tester** : Les modifications doivent être testées pour vérifier que les erreurs WAF ne se produisent plus
+
+### Prochaines étapes
+1. 🔴 **Tester les modifications** : Vérifier que les erreurs "too many requests" ne se produisent plus
+2. 🔴 **Ajuster les délais si nécessaire** : Si les erreurs persistent, augmenter encore les délais
+3. 🔴 **Monitorer les logs WAF** : Vérifier les logs backend pour voir si les requêtes sont toujours bloquées
+4. 🔴 **Implémenter un système de retry** : Ajouter un mécanisme de retry avec backoff exponentiel pour les requêtes bloquées
+
+### Fichiers modifiés
+- `frontend/src/lib/request-manager.ts` : Délai par défaut 500ms, cache 15s
+- `frontend/src/app/admin/*` : Toutes les pages admin avec délais initiaux et sérialisation
+- `frontend/src/app/login/page.tsx` : Délais augmentés après login
+- `frontend/src/app/admin/layout.tsx` : Délai augmenté pour vérification auth
+
+---
+
 **Note :** Ce fichier sera mis à jour régulièrement au fur et à mesure de l'avancement.

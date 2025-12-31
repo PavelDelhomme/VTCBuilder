@@ -109,7 +109,12 @@ export default function SecurityTab() {
     setLoading(true)
     try {
       if (activeSubTab === 'waf') {
-        await Promise.all([loadWAFRules(), loadWAFLogs(), loadWAFStats()])
+        // Charger les données de manière SÉRIELLE pour éviter le rate limiting WAF
+        await loadWAFRules()
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await loadWAFLogs()
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await loadWAFStats()
       } else if (activeSubTab === 'monitoring') {
         await loadAlerts()
       } else if (activeSubTab === 'firewall') {

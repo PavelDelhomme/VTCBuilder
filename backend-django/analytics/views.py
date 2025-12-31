@@ -245,13 +245,27 @@ def usage_stats(request):
         return response
     
     try:
-        user = request.user
+        # Vérifier le statut super admin depuis le token JWT (comme dans les autres vues)
+        from api.utils import is_super_admin_from_token
         
-        if not user.is_super_admin():
-            return Response(
-                {'error': 'Only super admin can view usage stats'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        # Vérifier d'abord si l'utilisateur est authentifié
+        if not request.user or not request.user.is_authenticated:
+            # Si pas authentifié, vérifier depuis le token JWT
+            if not is_super_admin_from_token(request):
+                return Response(
+                    {'error': 'Authentication required'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+        else:
+            # Si authentifié via DRF, vérifier le statut super admin
+            user = request.user
+            if not (hasattr(user, 'is_super_admin') and callable(user.is_super_admin) and user.is_super_admin()):
+                # Fallback: vérifier depuis le token JWT
+                if not is_super_admin_from_token(request):
+                    return Response(
+                        {'error': 'Only super admin can view usage stats'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
         
         now = timezone.now()
         today = now.replace(hour=0, minute=0, second=0, microsecond=0)

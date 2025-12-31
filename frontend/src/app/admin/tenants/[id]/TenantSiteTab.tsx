@@ -23,8 +23,13 @@ export default function TenantSiteTab({ tenantId, tenantName, tenantSlug }: Tena
   const tenantDomain = `${tenantSlug}.localhost:9494`
 
   useEffect(() => {
-    loadPages()
-    loadProjects()
+    const loadAll = async () => {
+      // Charger les données de manière SÉRIELLE pour éviter le rate limiting WAF
+      await loadPages()
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await loadProjects()
+    }
+    loadAll()
   }, [tenantId])
 
   const loadProjects = async () => {

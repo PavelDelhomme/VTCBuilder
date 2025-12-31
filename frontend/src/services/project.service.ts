@@ -2,6 +2,7 @@
  * Service for managing projects
  */
 import api from '@/lib/api'
+import { managedRequest } from '@/lib/request-manager'
 
 export interface Project {
   id: number
@@ -56,8 +57,17 @@ const projectService = {
    * This uses the detail endpoint which returns pages
    */
   async getById(id: number | string): Promise<Project> {
-    const response = await api.get(`/projects/${id}/`)
-    return response.data
+    return await managedRequest(
+      `/projects/${id}/`,
+      async () => {
+        const response = await api.get(`/projects/${id}/`)
+        return response.data
+      },
+      {
+        cache: true,
+        cacheTTL: 5000, // 5 secondes de cache
+      }
+    );
   },
   
   /**

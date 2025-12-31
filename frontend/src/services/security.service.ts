@@ -102,8 +102,18 @@ const securityService = {
 
   // WAF Logs
   async getWAFLogs(params?: { days?: number; ip_address?: string; severity?: string; action?: string }): Promise<WAFLog[]> {
-    const response = await api.get('/security/waf/logs/', { params })
-    return Array.isArray(response.data) ? response.data : response.data.results || []
+    try {
+      const response = await api.get('/security/waf/logs/', { params })
+      return Array.isArray(response.data) ? response.data : response.data.results || []
+    } catch (error: any) {
+      // Si erreur 403 (pas de permissions), retourner un tableau vide silencieusement
+      if (error.response?.status === 403) {
+        console.warn('⚠️ Accès aux logs WAF refusé (permissions insuffisantes)')
+        return []
+      }
+      // Pour les autres erreurs, les propager
+      throw error
+    }
   },
 
   async getWAFStats(days: number = 7): Promise<any> {

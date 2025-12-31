@@ -1,4 +1,17 @@
 import api from '@/lib/api';
+import { Block } from '@/components/editor/types';
+import { managedRequest } from '@/lib/request-manager';
+
+export interface PublicPageData {
+  title?: string;
+  description?: string;
+  blocks?: Block[];
+  meta_title?: string;
+  meta_description?: string;
+  status?: 'draft' | 'published';
+  is_active?: boolean;
+  order?: number;
+}
 
 export interface SystemSettings {
   id: number;
@@ -33,10 +46,11 @@ export interface SystemSettings {
   maintenance_mode: boolean;
   maintenance_mode_type?: 'public_only' | 'platform_except_admin';
   maintenance_message: string;
-  public_homepage_blocks?: any[];
+  public_homepage_blocks?: Block[];
   public_homepage_status?: 'draft' | 'published';
   public_homepage_meta_title?: string;
   public_homepage_meta_description?: string;
+  public_pages?: Record<string, PublicPageData>;
   stripe_enabled?: boolean;
   stripe_public_key?: string;
   stripe_secret_key?: string;
@@ -51,10 +65,19 @@ class SettingsService {
   async getSettings(): Promise<SystemSettings> {
     try {
       // For singleton pattern, list endpoint returns the single instance
-      const response = await api.get('/system-settings/', {
-        validateStatus: (status) => status < 500 // Accepter 401, 404, etc. sans erreur
-      });
-      return response.data;
+      return await managedRequest(
+        '/system-settings/',
+        async () => {
+          const response = await api.get('/system-settings/', {
+            validateStatus: (status) => status < 500 // Accepter 401, 404, etc. sans erreur
+          });
+          return response.data;
+        },
+        {
+          cache: true,
+          cacheTTL: 5000, // 5 secondes de cache
+        }
+      );
     } catch (error: any) {
       // Si 401 ou 404, retourner des settings par défaut sans logger l'erreur
       if (error.response?.status === 401 || error.response?.status === 404 || error.silent) {

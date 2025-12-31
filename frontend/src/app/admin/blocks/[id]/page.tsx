@@ -46,18 +46,25 @@ export default function EditBlockPage() {
   })
 
   useEffect(() => {
-    if (!authService.isSuperAdmin()) {
-      router.push('/dashboard')
-      return
+    const loadAll = async () => {
+      if (!authService.isSuperAdmin()) {
+        router.push('/dashboard')
+        return
+      }
+      if (blockId) {
+        // Charger les données de manière SÉRIELLE pour éviter le rate limiting WAF
+        await loadBlock()
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await loadPricingPlans()
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await loadCallToActions()
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await loadBlockTypes()
+      } else {
+        setLoading(false)
+      }
     }
-    if (blockId) {
-      loadBlock()
-      loadPricingPlans()
-      loadCallToActions()
-      loadBlockTypes()
-    } else {
-      setLoading(false)
-    }
+    loadAll()
   }, [router, blockId])
 
   const loadBlockTypes = async () => {

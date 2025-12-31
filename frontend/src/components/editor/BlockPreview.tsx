@@ -105,61 +105,8 @@ function BlockPreview({
     }
   }
 
-  const handleBlockDoubleClick = (blockId: string, event?: React.MouseEvent) => {
+  const handleBlockDoubleClick = (blockId: string) => {
     if (onBlockDoubleClick && !isDragging && !inspectorMode) {
-      // Si un événement est fourni, vérifier l'élément cliqué pour sélectionner l'enfant le plus proche
-      if (event) {
-        const target = event.target as HTMLElement
-        // Prioriser la sélection d'un enfant si on double-clique sur un élément avec data-child-block-id
-        const childElement = target.closest('[data-child-block-id]') as HTMLElement
-        if (childElement) {
-          const childId = childElement.getAttribute('data-child-block-id')
-          if (childId && onBlockSelect) {
-            onBlockSelect(childId)
-            if (onBlockDoubleClick) {
-              onBlockDoubleClick(childId)
-            }
-            return
-          }
-        }
-        
-        // Sinon, trouver le bloc le plus proche dans le DOM
-        const allBlockElements = target.closest('.block-preview-container')?.querySelectorAll('[data-block-id]')
-        if (allBlockElements) {
-          let closestBlock: HTMLElement | null = null
-          let closestDistance = Infinity
-          
-          allBlockElements.forEach((el) => {
-            const elBlockId = el.getAttribute('data-block-id')
-            if (elBlockId && el.contains(target)) {
-              // Calculer la distance dans le DOM
-              let distance = 0
-              let current: HTMLElement | null = target as HTMLElement
-              while (current && current !== el && distance < 20) {
-                current = current.parentElement
-                distance++
-              }
-              if (distance < closestDistance) {
-                closestDistance = distance
-                closestBlock = el as HTMLElement
-              }
-            }
-          })
-          
-          if (closestBlock) {
-            const closestBlockId = closestBlock.getAttribute('data-block-id')
-            if (closestBlockId && onBlockSelect) {
-              onBlockSelect(closestBlockId)
-              if (onBlockDoubleClick) {
-                onBlockDoubleClick(closestBlockId)
-              }
-              return
-            }
-          }
-        }
-      }
-      
-      // Fallback : utiliser le blockId fourni
       onBlockDoubleClick(blockId)
     }
   }
@@ -324,6 +271,15 @@ function BlockPreview({
         blockElement.style.outlineOffset = '4px'
         blockElement.style.zIndex = '9999'
         blockElement.style.position = 'relative'
+        // S'assurer que le conteneur prend toute la place disponible
+        blockElement.style.width = '100%'
+        blockElement.style.minHeight = '100%'
+        // S'assurer que le conteneur parent prend aussi toute la place
+        const parent = blockElement.parentElement
+        if (parent) {
+          parent.style.position = 'relative'
+          parent.style.width = '100%'
+        }
         
         // Scroll vers le bloc si nécessaire
         blockElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -719,7 +675,7 @@ function BlockPreview({
                       isInteractive={isInteractive}
                       isEditable={isEditable}
                       onClick={() => handleBlockClick(block.id)}
-                      onDoubleClick={(e) => handleBlockDoubleClick(block.id, e)}
+                      onDoubleClick={() => handleBlockDoubleClick(block.id)}
                       onRightClick={(e) => handleBlockRightClick(block.id, e)}
                     />
                   </div>

@@ -9,6 +9,8 @@ import PageLoader from '@/components/shared/PageLoader'
 import { useNavigationLoading } from '@/hooks/useNavigationLoading'
 import projectService from '@/services/project.service'
 import toast from 'react-hot-toast'
+import { requestManager } from '@/lib/request-manager'
+import { managedRequest } from '@/lib/request-manager'
 
 interface DashboardStats {
   total_tenants: number
@@ -70,33 +72,67 @@ export default function AdminDashboard() {
   const [systemProjectUuid, setSystemProjectUuid] = useState<string | null>(null)
   
   useEffect(() => {
-    const loadSystemProject = async () => {
+    const checkAndLoad = async () => {
+      // Vérifier l'authentification de manière asynchrone
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!authService.isSuperAdmin()) {
+        router.push('/dashboard')
+        return
+      }
+
+      // Vérifier si on vient de se connecter (dans les 5 secondes)
+      const loginTimestamp = localStorage.getItem('login_timestamp');
+      const justLoggedIn = loginTimestamp && (Date.now() - parseInt(loginTimestamp, 10)) < 5000;
+      
+      if (justLoggedIn) {
+        // Augmenter le délai entre les requêtes après le login
+        requestManager.setMinDelay(600); // 600ms entre chaque requête (augmenté pour éviter WAF)
+        setTimeout(() => {
+          requestManager.resetMinDelay();
+        }, 30000); // 30 secondes au lieu de 20
+        
+        // Attendre un peu avant de charger les données
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      // Charger les données de manière séquentielle
       try {
+        // Charger le projet système en premier
         const systemProject = await projectService.getSystemProject()
         if (systemProject) {
-          // Utiliser l'UUID si disponible, sinon le slug
           setSystemProjectUuid(systemProject.uuid || systemProject.slug)
         }
+        
+        // Attendre un peu avant la prochaine requête
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Charger les données du dashboard
+        await loadDashboardData()
       } catch (error) {
-        console.error('Error chargement projet système:', error)
+        console.error('Error chargement dashboard:', error)
       }
     }
-    loadSystemProject()
-  }, [])
-
-  useEffect(() => {
-    if (!authService.isSuperAdmin()) {
-      router.push('/dashboard')
-      return
-    }
-
-    loadDashboardData()
+    
+    checkAndLoad()
   }, [router])
 
   const loadDashboardData = async () => {
     try {
-      // Load basic dashboard stats
-      const response = await api.get('/dashboard/')
+      setLoading(true)
+      
+      // Load basic dashboard stats avec gestionnaire de requêtes
+      const response = await managedRequest(
+        '/dashboard/',
+        async () => {
+          return await api.get('/dashboard/')
+        },
+        {
+          cache: true,
+          cacheTTL: 5000, // 5 secondes de cache
+        }
+      )
+      
       // Le backend retourne directement les stats, pas dans un objet 'stats'
       const statsData = response.data.stats || response.data || {}
       setStats({
@@ -109,9 +145,21 @@ export default function AdminDashboard() {
         trials_expiring_soon_list: statsData.trials_expiring_soon_list || [],
       })
 
-      // Load detailed stats summary
+      // Attendre un peu avant la prochaine requête
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      // Load detailed stats summary avec gestionnaire de requêtes
       try {
-        const detailedResponse = await api.get('/stats/detailed/')
+        const detailedResponse = await managedRequest(
+          '/stats/detailed/',
+          async () => {
+            return await api.get('/stats/detailed/')
+          },
+          {
+            cache: true,
+            cacheTTL: 5000, // 5 secondes de cache
+          }
+        )
         const detailed = detailedResponse.data
         setDetailedStats({
           overview: detailed.overview || {

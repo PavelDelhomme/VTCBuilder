@@ -73,13 +73,34 @@ export function renderHeading(props: PreviewCaseProps): React.ReactElement | nul
   )
 }
 
+// Fonction pour convertir le markdown basique en HTML
+function markdownToHtml(markdown: string): string {
+  if (!markdown) return ''
+  
+  let html = markdown
+  
+  // Convertir les liens markdown [texte](url) en <a href="url">texte</a>
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 dark:text-blue-400 hover:underline">$1</a>')
+  
+  // Convertir le gras **texte** en <strong>texte</strong>
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+  
+  // Convertir l'italique *texte* en <em>texte</em>
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>')
+  
+  // Convertir les sauts de ligne en <br />
+  html = html.replace(/\n/g, '<br />')
+  
+  return html
+}
+
 export function renderText(props: PreviewCaseProps): React.ReactElement | null {
   const { block, theme = 'light', contentStyles } = props
   const isDark = theme === 'dark'
   const textAlign = block.styles?.text_align || block.data.align || contentStyles.textAlign || 'left'
   const content = block.data.content || ''
   const isEmpty = !content.trim()
-  const displayContent = isEmpty ? 'Entrez votre texte' : content.replace(/\n/g, '<br />')
+  const displayContent = isEmpty ? 'Entrez votre texte' : markdownToHtml(content)
   const textColor = isEmpty
     ? (isDark ? '#6b7280' : '#9ca3af')
     : (block.styles?.color || block.data.color || (isDark ? '#d1d5db' : (contentStyles.color || '#111827')))

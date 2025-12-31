@@ -33,12 +33,45 @@ export default function TenantBillingTab({ tenantId, tenantName }: TenantBilling
   const loadBillingData = async () => {
     try {
       setLoading(true)
-      const [subs, invs, pays, plans] = await Promise.all([
-        billingService.getSubscriptions(),
-        billingService.getInvoices(),
-        billingService.getPayments(),
-        billingService.getPricingPlans(),
-      ])
+      
+      // Charger les données de manière SÉRIELLE pour éviter le rate limiting WAF
+      // 1. Abonnements
+      let subs: Subscription[] = []
+      try {
+        subs = await billingService.getSubscriptions()
+      } catch (error: any) {
+        console.warn('Error chargement abonnements:', error)
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 2. Factures
+      let invs: Invoice[] = []
+      try {
+        invs = await billingService.getInvoices()
+      } catch (error: any) {
+        console.warn('Error chargement factures:', error)
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 3. Paiements
+      let pays: Payment[] = []
+      try {
+        pays = await billingService.getPayments()
+      } catch (error: any) {
+        console.warn('Error chargement paiements:', error)
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // 4. Plans tarifaires
+      let plans: PricingPlan[] = []
+      try {
+        plans = await billingService.getPricingPlans()
+      } catch (error: any) {
+        console.warn('Error chargement plans tarifaires:', error)
+      }
       
       // Filtrer par tenant
       setSubscriptions(subs.filter((sub: Subscription) => sub.tenant?.id === tenantId))

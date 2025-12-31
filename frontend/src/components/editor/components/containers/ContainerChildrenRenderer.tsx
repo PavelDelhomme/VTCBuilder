@@ -162,9 +162,13 @@ export function ContainerChildrenRenderer({
     }),
     ...(block.type === 'grid-container' && {
       display: 'grid',
-      gridTemplateColumns: block.data?.columns || 'repeat(3, 1fr)',
+      gridTemplateColumns: typeof block.data?.columns === 'number' 
+        ? `repeat(${block.data.columns}, 1fr)` 
+        : (typeof block.data?.columns === 'string' && block.data.columns.includes('repeat')
+          ? block.data.columns
+          : `repeat(${block.data?.columns || 2}, 1fr)`),
       gridTemplateRows: block.data?.rows || 'auto',
-      gap: block.data?.gap || '1rem',
+      gap: block.data?.gap || block.styles?.gap || '1rem',
     }),
   }
 
@@ -178,7 +182,6 @@ export function ContainerChildrenRenderer({
         className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50 min-h-[120px]"
       >
         <div 
-          style={containerStyle} 
           className="w-full h-full"
           onClick={(e) => {
             // Si on clique directement sur la zone de conteneur (pas sur un enfant), sélectionner le conteneur
@@ -208,11 +211,72 @@ export function ContainerChildrenRenderer({
           ) : (
             <div 
               style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: block.data?.children_gap_vertical || block.data?.children_gap || '0.5rem',
-                rowGap: block.data?.children_gap_vertical || block.data?.children_gap || '0.5rem',
-                columnGap: block.data?.children_gap_horizontal || block.data?.children_gap || '0.5rem',
+                // Utiliser le style du conteneur (grid ou flex) selon le type
+                ...(block.type === 'grid-container' ? {
+                  display: 'grid',
+                  gridTemplateColumns: typeof block.data?.columns === 'number' 
+                    ? `repeat(${block.data.columns}, 1fr)` 
+                    : (typeof block.data?.columns === 'string' && block.data.columns.includes('repeat')
+                      ? block.data.columns
+                      : `repeat(${block.data?.columns || 2}, 1fr)`),
+                  gridTemplateRows: block.data?.rows || 'auto',
+                  gap: (() => {
+                    let gapValue = block.data?.gap || block.styles?.gap || '1rem'
+                    // Convertir les classes Tailwind gap en valeurs CSS
+                    if (typeof gapValue === 'string' && gapValue.startsWith('gap-')) {
+                      const gapMap: Record<string, string> = {
+                        'gap-0': '0',
+                        'gap-1': '0.25rem',
+                        'gap-2': '0.5rem',
+                        'gap-3': '0.75rem',
+                        'gap-4': '1rem',
+                        'gap-6': '1.5rem',
+                        'gap-8': '2rem',
+                        'gap-12': '3rem',
+                        'gap-16': '4rem',
+                      }
+                      gapValue = gapMap[gapValue] || '1rem'
+                    }
+                    return gapValue
+                  })(),
+                  width: '100%',
+                  minHeight: '120px',
+                } : block.type === 'flex-container' ? {
+                  display: 'flex',
+                  flexDirection: block.data?.direction || 'row',
+                  flexWrap: block.data?.wrap || 'nowrap',
+                  justifyContent: block.data?.justify || 'flex-start',
+                  alignItems: block.data?.align || 'stretch',
+                  gap: (() => {
+                    let gapValue = block.data?.gap || '1rem'
+                    // Convertir les classes Tailwind gap en valeurs CSS
+                    if (typeof gapValue === 'string' && gapValue.startsWith('gap-')) {
+                      const gapMap: Record<string, string> = {
+                        'gap-0': '0',
+                        'gap-1': '0.25rem',
+                        'gap-2': '0.5rem',
+                        'gap-3': '0.75rem',
+                        'gap-4': '1rem',
+                        'gap-6': '1.5rem',
+                        'gap-8': '2rem',
+                        'gap-12': '3rem',
+                        'gap-16': '4rem',
+                      }
+                      gapValue = gapMap[gapValue] || '1rem'
+                    }
+                    return gapValue
+                  })(),
+                  width: '100%',
+                  minHeight: '120px',
+                } : {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: block.data?.children_gap_vertical || block.data?.children_gap || '0.5rem',
+                  rowGap: block.data?.children_gap_vertical || block.data?.children_gap || '0.5rem',
+                  columnGap: block.data?.children_gap_horizontal || block.data?.children_gap || '0.5rem',
+                  width: '100%',
+                  minHeight: '120px',
+                }),
               } as React.CSSProperties}
             >
               {children.map((child) => {

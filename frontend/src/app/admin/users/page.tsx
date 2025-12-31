@@ -171,11 +171,24 @@ export default function UsersPage() {
   const [actionLoading, setActionLoading] = useState<{ [key: number]: string }>({})
 
   useEffect(() => {
-    if (!authService.isSuperAdmin()) {
-      router.push('/dashboard')
-      return
+    const checkAndLoad = async () => {
+      if (!authService.isSuperAdmin()) {
+        router.push('/dashboard')
+        return
+      }
+      
+      // Vérifier si on vient de se connecter (dans les 5 secondes)
+      const loginTimestamp = localStorage.getItem('login_timestamp');
+      const justLoggedIn = loginTimestamp && (Date.now() - parseInt(loginTimestamp, 10)) < 5000;
+      
+      if (justLoggedIn) {
+        // Attendre un peu avant de charger les données après le login
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      loadUsers()
     }
-    loadUsers()
+    checkAndLoad()
   }, [router])
 
   const loadUsers = async () => {

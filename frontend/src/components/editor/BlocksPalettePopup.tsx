@@ -235,11 +235,11 @@ export default function BlocksPalettePopup({
                       <div className="flex items-start gap-3">
                         <div className="text-2xl flex-shrink-0">{blockType.icon || '📦'}</div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1 truncate">
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-50 mb-1 truncate">
                             {blockType.label || blockType.name}
                           </h3>
                           {blockType.description && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                            <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">
                               {blockType.description}
                             </p>
                           )}

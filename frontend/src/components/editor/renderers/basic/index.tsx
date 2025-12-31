@@ -60,11 +60,32 @@ export const renderHeading = ({ block, contentStyles, theme }: RendererProps): R
   )
 }
 
+// Fonction pour convertir le markdown basique en HTML
+function markdownToHtml(markdown: string): string {
+  if (!markdown) return ''
+  
+  let html = markdown
+  
+  // Convertir les liens markdown [texte](url) en <a href="url">texte</a>
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-blue-600 dark:text-blue-400 hover:underline">$1</a>')
+  
+  // Convertir le gras **texte** en <strong>texte</strong>
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+  
+  // Convertir l'italique *texte* en <em>texte</em>
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>')
+  
+  // Convertir les sauts de ligne en <br />
+  html = html.replace(/\n/g, '<br />')
+  
+  return html
+}
+
 export const renderText = ({ block, contentStyles, theme }: RendererProps): React.ReactElement => {
   const isDark = theme === 'dark'
   const content = block.data.content || ''
   const isEmpty = !content.trim()
-  const displayContent = isEmpty ? 'Entrez votre texte' : content.replace(/\n/g, '<br />')
+  const displayContent = isEmpty ? 'Entrez votre texte' : markdownToHtml(content)
   
   return (
     <div className="mb-6 prose max-w-none" style={{ 

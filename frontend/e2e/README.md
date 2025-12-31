@@ -1,93 +1,133 @@
-# Tests E2E Playwright
+# Tests E2E avec Playwright
 
-Ce répertoire contient tous les tests end-to-end (E2E) pour VTCBuilder utilisant Playwright.
+## Structure des tests
 
-## Structure
+Les tests sont organisés par domaine fonctionnel :
 
-```
-e2e/
-├── fixtures.ts              # Fixtures partagées (utilisateurs de test)
-├── auth/                    # Tests d'authentification
-│   └── login.spec.ts
-├── admin/                   # Tests des pages admin
-│   ├── dashboard.spec.ts
-│   ├── users.spec.ts
-│   ├── tenants.spec.ts
-│   ├── billing.spec.ts
-│   ├── pages-public.spec.ts
-│   ├── editor.spec.ts
-│   ├── settings.spec.ts
-│   ├── stats.spec.ts
-│   ├── blocks.spec.ts
-│   ├── templates.spec.ts
-│   └── projects.spec.ts
-├── dashboard/               # Tests du dashboard tenant (à venir)
-└── public/                  # Tests des pages publiques (à venir)
-```
+- `auth/` - Tests d'authentification
+  - `login.spec.ts` - Tests de connexion de base
+  - `waf-errors.spec.ts` - Tests pour vérifier l'absence d'erreurs WAF
+  - `authentication-flow.spec.ts` - Tests du flux d'authentification complet
 
-## Installation
+- `admin/` - Tests de l'interface d'administration
+  - `editor.spec.ts` - Tests de l'éditeur de pages
+  - `editor-contact.spec.ts` - Tests spécifiques pour l'éditeur de la page contact
+  - `pages-public.spec.ts` - Tests de la gestion des pages publiques
+  - `dashboard.spec.ts` - Tests du tableau de bord
+  - Et autres...
 
-```bash
-# Dans le conteneur frontend
-docker exec vtcbuilder-frontend sh -c "cd /app && npm install -D @playwright/test playwright"
-docker exec vtcbuilder-frontend sh -c "cd /app && npx playwright install chromium --with-deps"
-```
+## Exécution des tests
 
-## Exécution
-
-### Depuis le conteneur Docker
-
-```bash
-# Tous les tests
-make test-e2e
-
-# Ou directement
-bash scripts/frontend/run_playwright_tests.sh
-```
-
-### Depuis l'hôte (si Playwright est installé localement)
-
+### Tous les tests
 ```bash
 cd frontend
-npx playwright test
+npm run test:e2e
+```
+
+### Tests en mode UI (recommandé pour le développement)
+```bash
+npm run test:e2e:ui
+```
+
+### Tests en mode headed (avec navigateur visible)
+```bash
+npm run test:e2e:headed
+```
+
+### Tests en mode debug
+```bash
+npm run test:e2e:debug
 ```
 
 ### Tests spécifiques
-
 ```bash
-# Un seul fichier
-npx playwright test e2e/auth/login.spec.ts
+# Tests d'authentification uniquement
+npx playwright test e2e/auth
 
-# Un seul test
-npx playwright test e2e/auth/login.spec.ts -g "should login as super admin"
+# Tests WAF uniquement
+npx playwright test e2e/auth/waf-errors.spec.ts
+
+# Tests de l'éditeur contact uniquement
+npx playwright test e2e/admin/editor-contact.spec.ts
 ```
 
-## Rapports
-
-Les rapports HTML sont générés dans `playwright-report/` :
-
+### Voir le rapport
 ```bash
-# Voir le rapport
-cd frontend
-npx playwright show-report
+npm run test:e2e:report
 ```
+
+## Tests WAF
+
+Les tests dans `auth/waf-errors.spec.ts` vérifient spécifiquement :
+- ✅ Aucune erreur WAF lors de la connexion
+- ✅ Gestion gracieuse des erreurs 403 sans détection WAF incorrecte
+- ✅ Pas de redirection vers login après authentification réussie
+- ✅ Maintien de l'authentification après rechargement de page
+- ✅ Gestion de multiples tentatives de connexion sans erreurs WAF
+
+## Tests d'authentification
+
+Les tests dans `auth/authentication-flow.spec.ts` vérifient :
+- ✅ Flux d'authentification complet
+- ✅ Persistance du token et de l'utilisateur
+- ✅ Gestion des erreurs d'authentification
+- ✅ Maintien de l'authentification lors de la navigation
+- ✅ Rafraîchissement du token sans erreurs
+
+## Tests de l'éditeur
+
+Les tests dans `admin/editor-contact.spec.ts` vérifient :
+- ✅ Ouverture de l'éditeur de page contact sans erreurs
+- ✅ Affichage de l'interface d'édition
+- ✅ Pas de redirection vers login
+- ✅ Chargement des données sans erreurs WAF
+- ✅ Opérations de sauvegarde sans erreurs
+- ✅ Navigation entre pages sans perte d'authentification
 
 ## Configuration
 
-La configuration se trouve dans `playwright.config.ts` :
-- Base URL : `http://localhost:9494` (ou `http://frontend:3000` dans Docker)
-- Timeout : 30 secondes par test
-- Navigateurs : Chromium, Firefox, WebKit, Mobile Chrome, Mobile Safari
+La configuration Playwright se trouve dans `playwright.config.ts`.
 
-## Utilisateurs de test
+### Variables d'environnement
 
-Les fixtures définissent deux utilisateurs :
-- **Super Admin** : `admin@vtcbuilder.com` / `admin123`
-- **Tenant User** : `test@delhomme.ovh` / `tenant123`
+- `PLAYWRIGHT_BASE_URL` - URL de base pour les tests (défaut: `http://localhost:9494`)
+- `CI` - Mode CI (active les retries et désactive le parallélisme)
 
-## Notes
+### Credentials de test
 
-- Les tests nécessitent que le frontend et le backend soient en cours d'exécution
-- Certains tests peuvent nécessiter des données de test dans la base de données
-- Les tests sont conçus pour être idempotents (peuvent être exécutés plusieurs fois)
+Les credentials de test sont définis dans `fixtures.ts` :
+- Super admin: `admin@vtcbuilder.com` / `admin123`
+- Tenant user: `test@delhomme.ovh` / `tenant123`
 
+⚠️ **Important**: Assurez-vous que ces utilisateurs existent dans votre base de données de test.
+
+## Dépannage
+
+### Les tests échouent avec des erreurs de timeout
+- Vérifiez que le frontend est bien démarré sur `http://localhost:9494`
+- Vérifiez que le backend est accessible
+- Augmentez le timeout dans `playwright.config.ts` si nécessaire
+
+### Les tests échouent avec des erreurs WAF
+- Vérifiez les logs du backend pour voir si le WAF bloque réellement les requêtes
+- Vérifiez la configuration du WAF dans le backend
+- Vérifiez que les credentials de test sont corrects
+
+### Les tests échouent avec des erreurs d'authentification
+- Vérifiez que les utilisateurs de test existent dans la base de données
+- Vérifiez que les credentials dans `fixtures.ts` sont corrects
+- Vérifiez que le backend accepte les requêtes depuis `localhost:9494`
+
+## CI/CD
+
+Les tests peuvent être exécutés en CI avec :
+```bash
+CI=true npm run test:e2e
+```
+
+En mode CI, les tests :
+- S'exécutent avec retries (2 tentatives)
+- S'exécutent en série (1 worker)
+- Génèrent des traces pour les échecs
+- Génèrent des screenshots pour les échecs
+- Génèrent des vidéos pour les échecs

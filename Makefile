@@ -1,4 +1,4 @@
-.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-coverage analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean build start up stop restart restart-backend restart-frontend down logs status migrate frontend-clean frontend-reinstall frontend-build
+.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-coverage analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean clean-network build start up stop restart restart-backend restart-frontend down logs status migrate frontend-clean frontend-reinstall frontend-build
 
 BLUE = \033[0;34m
 GREEN = \033[0;32m
@@ -279,16 +279,23 @@ type-check-frontend: frontend-type-check ## Vérifier TypeScript frontend
 
 build: ## Créer les réseaux Docker, volumes et construire les images
 	@printf "$(GREEN)🔨 Construction de l'infrastructure Docker...$(NC)\n"
-	@printf "$(YELLOW)🌐 Vérification et création du réseau Docker...$(NC)\n"
-	@if ! docker network ls | grep -q "vtcbuilder_network"; then \
-		printf "$(YELLOW)  📡 Création du réseau vtcbuilder_network...$(NC)\n"; \
-		docker network create vtcbuilder_network || { \
-			printf "$(RED)❌ Erreur lors de la création du réseau$(NC)\n"; \
-			exit 1; \
-		}; \
-		printf "$(GREEN)  ✅ Réseau créé$(NC)\n"; \
-	else \
-		printf "$(GREEN)  ✅ Réseau vtcbuilder_network existe déjà$(NC)\n"; \
+	@printf "$(YELLOW)🌐 Vérification et nettoyage du réseau Docker si nécessaire...$(NC)\n"
+	@if docker network ls | grep -q "vtcbuilder_network"; then \
+		NETWORK_LABEL=$$(docker network inspect vtcbuilder_network --format '{{index .Labels "com.docker.compose.network"}}' 2>/dev/null || echo ""); \
+		if [ "$$NETWORK_LABEL" != "vtcbuilder_network" ]; then \
+			printf "$(YELLOW)  🗑️  Suppression de l'ancien réseau avec mauvais labels...$(NC)\n"; \
+			NETWORK_IN_USE=$$(docker network inspect vtcbuilder_network --format '{{len .Containers}}' 2>/dev/null || echo "0"); \
+			if [ "$$NETWORK_IN_USE" != "0" ]; then \
+				printf "$(YELLOW)  ⚠️  Le réseau est utilisé par des conteneurs, arrêt des services...$(NC)\n"; \
+				docker-compose -f docker-compose.simple.yml down 2>/dev/null || true; \
+			fi; \
+			docker network rm vtcbuilder_network 2>/dev/null || { \
+				printf "$(YELLOW)  ⚠️  Impossible de supprimer le réseau (peut être utilisé), docker-compose le gérera$(NC)\n"; \
+			}; \
+			printf "$(GREEN)  ✅ Ancien réseau supprimé ou sera recréé$(NC)\n"; \
+		else \
+			printf "$(GREEN)  ✅ Réseau vtcbuilder_network existe déjà avec les bons labels$(NC)\n"; \
+		fi; \
 	fi
 	@printf "$(YELLOW)💾 Création des volumes et réseaux via docker-compose...$(NC)\n"
 	@docker-compose -f docker-compose.simple.yml up --no-start 2>/dev/null || { \
@@ -312,6 +319,12 @@ start: ## Démarrer toute la stack (backend + frontend + services)
 	if ! docker network ls | grep -q "vtcbuilder_network"; then \
 		printf "$(YELLOW)⚠️  Réseau Docker manquant$(NC)\n"; \
 		NEED_BUILD=1; \
+	else \
+		NETWORK_LABEL=$$(docker network inspect vtcbuilder_network --format '{{index .Labels "com.docker.compose.network"}}' 2>/dev/null || echo ""); \
+		if [ "$$NETWORK_LABEL" != "vtcbuilder_network" ]; then \
+			printf "$(YELLOW)⚠️  Réseau Docker avec mauvais labels$(NC)\n"; \
+			NEED_BUILD=1; \
+		fi; \
 	fi; \
 	if ! docker images | grep -q "vtcbuilder-backend"; then \
 		printf "$(YELLOW)⚠️  Image backend manquante$(NC)\n"; \
@@ -360,7 +373,7 @@ stop: ## Arrêter tous les services
 	@docker-compose -f docker-compose.simple.yml stop
 	@printf "$(GREEN)✅ Services arrêtés !$(NC)\n"
 
-restart: stop start ## Redémarrer tous les services
+restart: stop frontend-build start ## Redémarrer tous les services avec rebuild du frontend
 
 restart-backend: ## Redémarrer uniquement le backend
 	@printf "$(YELLOW)🔄 Redémarrage du backend...$(NC)\n"
@@ -371,6 +384,15 @@ restart-frontend: ## Redémarrer uniquement le frontend (Docker)
 	@printf "$(YELLOW)🔄 Redémarrage du frontend (Docker)...$(NC)\n"
 	@docker-compose -f docker-compose.simple.yml restart frontend
 	@printf "$(GREEN)✅ Frontend redémarré !$(NC)\n"
+
+frontend-rebuild: ## Nettoyer et rebuilder le frontend (résout les erreurs de manifest)
+	@printf "$(YELLOW)🧹 Nettoyage du cache Next.js...$(NC)\n"
+	@docker-compose -f docker-compose.simple.yml exec frontend sh -c "rm -rf /app/.next" 2>/dev/null || \
+		cd frontend && rm -rf .next 2>/dev/null || true
+	@printf "$(GREEN)✅ Cache nettoyé !$(NC)\n"
+	@printf "$(YELLOW)🔄 Redémarrage du frontend...$(NC)\n"
+	@docker-compose -f docker-compose.simple.yml restart frontend 2>/dev/null || \
+		printf "$(YELLOW)💡 Redémarrez manuellement avec 'make restart'$(NC)\n"
 
 restart-frontend-dev: ## Nettoyer le cache Next.js (pour recharger .env.local) - nécessite arrêt du serveur
 	@printf "$(YELLOW)🔄 Nettoyage du cache Next.js...$(NC)\n"
@@ -421,6 +443,19 @@ status: ## Afficher le statut des services
 check: ## Vérification rapide de la qualité
 	@printf "$(GREEN)🔍 Vérification rapide...$(NC)\n"
 	@./scripts/check-quality.sh
+
+clean-network: ## Nettoyer le réseau Docker (arrête les services et supprime le réseau)
+	@printf "$(YELLOW)🧹 Nettoyage du réseau Docker...$(NC)\n"
+	@if docker network ls | grep -q "vtcbuilder_network"; then \
+		printf "$(YELLOW)  ⏸️  Arrêt des services...$(NC)\n"; \
+		docker-compose -f docker-compose.simple.yml down 2>/dev/null || true; \
+		printf "$(YELLOW)  🗑️  Suppression du réseau...$(NC)\n"; \
+		docker network rm vtcbuilder_network 2>/dev/null && \
+			printf "$(GREEN)  ✅ Réseau supprimé$(NC)\n" || \
+			printf "$(YELLOW)  ⚠️  Réseau déjà supprimé ou utilisé$(NC)\n"; \
+	else \
+		printf "$(GREEN)  ✅ Réseau n'existe pas$(NC)\n"; \
+	fi
 
 clean: ## Nettoyer les fichiers temporaires
 	@printf "$(YELLOW)🧹 Nettoyage...$(NC)\n"
