@@ -17,6 +17,12 @@ interface UrlInputWithSuggestionsProps {
   className?: string
 }
 
+// Cache partagé pour éviter les requêtes multiples
+let cachedSuggestions: PageSuggestion[] | null = null
+let suggestionsCacheTimestamp = 0
+const SUGGESTIONS_CACHE_DURATION = 60000 // 1 minute de cache
+let suggestionsLoadingPromise: Promise<void> | null = null
+
 export default function UrlInputWithSuggestions({
   value,
   onChange,
@@ -28,9 +34,13 @@ export default function UrlInputWithSuggestions({
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
     loadSuggestions()
+    return () => {
+      mountedRef.current = false
+    }
   }, [])
 
   useEffect(() => {
@@ -45,56 +55,96 @@ export default function UrlInputWithSuggestions({
   }, [])
 
   const loadSuggestions = async () => {
+    // Utiliser le cache si disponible et récent
+    const now = Date.now()
+    if (cachedSuggestions !== null && (now - suggestionsCacheTimestamp) < SUGGESTIONS_CACHE_DURATION) {
+      if (mountedRef.current) {
+        setSuggestions(cachedSuggestions)
+        setLoading(false)
+      }
+      return
+    }
+
+    // Si une requête est déjà en cours, attendre qu'elle se termine
+    if (suggestionsLoadingPromise) {
+      try {
+        await suggestionsLoadingPromise
+        if (mountedRef.current && cachedSuggestions !== null) {
+          setSuggestions(cachedSuggestions)
+          setLoading(false)
+        }
+        return
+      } catch (error) {
+        // Si la requête précédente a échoué, continuer avec une nouvelle
+      }
+    }
+
     setLoading(true)
     try {
-      const allSuggestions: PageSuggestion[] = []
+      // Créer une promesse partagée pour éviter les requêtes multiples simultanées
+      suggestionsLoadingPromise = (async () => {
+        const allSuggestions: PageSuggestion[] = []
 
-      // Charger les pages du tenant
-      try {
-        const tenantPages = await pageService.getAll({ status: 'published' })
-        tenantPages.forEach((page: Page) => {
-          allSuggestions.push({
-            title: page.title,
-            url: `/${page.slug}`,
-            type: 'page',
-          })
-        })
-      } catch (error) {
-        console.warn('Error chargement pages tenant:', error)
-      }
-
-      // Charger les pages publiques
-      try {
-        const settingsResponse = await api.get('/system-settings/')
-        const publicPages = settingsResponse.data.public_pages || {}
-        
-        Object.keys(publicPages).forEach((slug) => {
-          const page = publicPages[slug]
-          if (page?.is_active !== false) {
+        // Charger les pages du tenant
+        try {
+          const tenantPages = await pageService.getAll({ status: 'published' })
+          tenantPages.forEach((page: Page) => {
             allSuggestions.push({
-              title: page.title || slug,
-              url: `/${slug === 'home' ? '' : slug}`,
-              type: 'public',
+              title: page.title,
+              url: `/${page.slug}`,
+              type: 'page',
             })
-          }
-        })
-      } catch (error) {
-        console.warn('Error chargement pages publiques:', error)
+          })
+        } catch (error) {
+          console.warn('Error chargement pages tenant:', error)
+        }
+
+        // Charger les pages publiques
+        try {
+          const settingsResponse = await api.get('/system-settings/')
+          const publicPages = settingsResponse.data.public_pages || {}
+          
+          Object.keys(publicPages).forEach((slug) => {
+            const page = publicPages[slug]
+            if (page?.is_active !== false) {
+              allSuggestions.push({
+                title: page.title || slug,
+                url: `/${slug === 'home' ? '' : slug}`,
+                type: 'public',
+              })
+            }
+          })
+        } catch (error) {
+          console.warn('Error chargement pages publiques:', error)
+        }
+
+        // Ajouter des liens externes courants
+        allSuggestions.push(
+          { title: 'Page d\'accueil', url: '/', type: 'external' },
+          { title: 'Contact', url: '/contact', type: 'external' },
+          { title: 'FAQ', url: '/faq', type: 'external' },
+          { title: 'Documentation', url: '/docs', type: 'external' },
+        )
+
+        cachedSuggestions = allSuggestions
+        suggestionsCacheTimestamp = Date.now()
+      })()
+
+      await suggestionsLoadingPromise
+      suggestionsLoadingPromise = null
+
+      if (mountedRef.current) {
+        setSuggestions(cachedSuggestions || [])
       }
-
-      // Ajouter des liens externes courants
-      allSuggestions.push(
-        { title: 'Page d\'accueil', url: '/', type: 'external' },
-        { title: 'Contact', url: '/contact', type: 'external' },
-        { title: 'FAQ', url: '/faq', type: 'external' },
-        { title: 'Documentation', url: '/docs', type: 'external' },
-      )
-
-      setSuggestions(allSuggestions)
     } catch (error) {
       console.error('Error chargement suggestions:', error)
+      if (mountedRef.current) {
+        setSuggestions(cachedSuggestions || [])
+      }
     } finally {
-      setLoading(false)
+      if (mountedRef.current) {
+        setLoading(false)
+      }
     }
   }
 

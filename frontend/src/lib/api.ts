@@ -1,4 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig, CancelTokenSource } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig, CancelTokenSource, AxiosHeaders } from 'axios';
 import authService from '@/services/auth.service';
 
 // Déclaration pour les flags globaux
@@ -67,30 +67,110 @@ api.interceptors.request.use((config) => {
   // Cela évite les erreurs 403 si le token est invalide/expiré
   const isAnalyticsEndpoint = config.url?.includes('/analytics/block-usage/');
   
-  if (!isAnalyticsEndpoint) {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  // Si le flag _skipAuthInterceptor est défini, ne pas modifier le header Authorization
+  // (utilisé après un refresh de token pour éviter d'écraser le header déjà défini)
+  if ((config as any)._skipAuthInterceptor) {
+    delete (config as any)._skipAuthInterceptor;
+    // Le header Authorization est déjà défini, s'assurer qu'il est bien présent
+    // Vérifier avec différentes méthodes selon le type de headers
+    let authHeader: string | undefined;
+    if (config.headers instanceof AxiosHeaders) {
+      authHeader = config.headers.get('Authorization') as string | undefined;
+    } else if (config.headers && typeof config.headers === 'object') {
+      authHeader = (config.headers as any).Authorization || (config.headers as any)['Authorization'];
+    }
+    
+    if (!authHeader) {
+      console.error('❌ _skipAuthInterceptor activé mais Authorization header manquant!', {
+        headers: config.headers,
+        headersType: typeof config.headers,
+        isAxiosHeaders: config.headers instanceof AxiosHeaders,
+        headersKeys: config.headers instanceof AxiosHeaders 
+          ? Array.from(config.headers.keys()) 
+          : config.headers ? Object.keys(config.headers) : []
+      });
     } else {
-      // Si pas de token et que ce n'est pas un endpoint public ou géré avec données par défaut, logger un avertissement
-      const isPublicEndpoint = config.url?.includes('/analytics/') || 
-                               config.url?.includes('/auth/') ||
-                               config.url?.includes('/templates/');
-      const isManagedEndpoint = config.url?.includes('/system-settings/') ||
-                               config.url?.includes('/blocks/types/') ||
-                               config.url?.includes('/blocks/call-to-actions/') ||
-                               config.url?.includes('/projects/') ||
-                               config.url?.includes('/dashboard/') ||
-                               config.url?.includes('/stats/detailed/') ||
-                               config.url?.includes('/billing/stats/') ||
-                               config.url?.includes('/users/impersonation-status/');
-      if (!isPublicEndpoint && !isManagedEndpoint) {
-        console.warn('⚠️ Aucun token trouvé pour la requête:', config.url);
+      console.log('✅ _skipAuthInterceptor: Authorization header préservé:', authHeader.substring(0, 50) + '...');
+    }
+    return config;
+  }
+  
+  if (!isAnalyticsEndpoint) {
+    // Si le header Authorization est déjà défini (par exemple après un refresh), le conserver
+    // Sinon, lire depuis localStorage
+    const existingAuth = config.headers?.Authorization;
+    if (!existingAuth) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        if (!config.headers) {
+          config.headers = {} as any;
+        }
+        config.headers.Authorization = `Bearer ${token}`;
+        
+        // Log pour les requêtes PATCH vers system-settings pour diagnostic
+        if (config.url?.includes('/system-settings/') && (config.method === 'patch' || config.method === 'PATCH')) {
+          console.log('🔐 [REQUEST INTERCEPTOR] PATCH /system-settings/ avec token:', {
+            url: config.url,
+            method: config.method,
+            tokenLength: token.length,
+            tokenPreview: token.substring(0, 50) + '...',
+            hasHeader: !!config.headers.Authorization,
+          });
+        }
+      } else {
+        // Si pas de token et que c'est une requête PATCH vers system-settings, c'est CRITIQUE
+        const isSystemSettingsPatch = config.url?.includes('/system-settings/') && 
+                                      (config.method === 'patch' || config.method === 'PATCH');
+        
+        if (isSystemSettingsPatch) {
+          console.error('❌ [REQUEST INTERCEPTOR] PATCH /system-settings/ SANS TOKEN!', {
+            url: config.url,
+            method: config.method,
+            hasRefreshToken: !!localStorage.getItem('refresh_token'),
+            timestamp: new Date().toISOString(),
+          });
+        }
+        
+        // Si pas de token et que ce n'est pas un endpoint public ou géré avec données par défaut, logger un avertissement
+        const isPublicEndpoint = config.url?.includes('/analytics/') || 
+                                 config.url?.includes('/auth/') ||
+                                 config.url?.includes('/templates/');
+        const isManagedEndpoint = config.url?.includes('/system-settings/') ||
+                                 config.url?.includes('/blocks/types/') ||
+                                 config.url?.includes('/blocks/call-to-actions/') ||
+                                 config.url?.includes('/projects/') ||
+                                 config.url?.includes('/dashboard/') ||
+                                 config.url?.includes('/stats/detailed/') ||
+                                 config.url?.includes('/billing/stats/') ||
+                                 config.url?.includes('/users/impersonation-status/');
+        if (!isPublicEndpoint && !isManagedEndpoint) {
+          console.warn('⚠️ Aucun token trouvé pour la requête:', config.url);
+        }
+      }
+    } else {
+      // Header Authorization déjà défini, s'assurer qu'il est bien formaté
+      const authValue = typeof existingAuth === 'string' ? existingAuth : String(existingAuth);
+      if (!authValue.startsWith('Bearer ')) {
+        if (!config.headers) {
+          config.headers = {} as any;
+        }
+        config.headers.Authorization = authValue.startsWith('Bearer') ? authValue : `Bearer ${authValue}`;
+      }
+      
+      // Log pour les requêtes PATCH vers system-settings avec header existant
+      if (config.url?.includes('/system-settings/') && (config.method === 'patch' || config.method === 'PATCH')) {
+        console.log('🔐 [REQUEST INTERCEPTOR] PATCH /system-settings/ avec header existant:', {
+          url: config.url,
+          method: config.method,
+          authHeaderPreview: authValue.substring(0, 50) + '...',
+        });
       }
     }
   } else {
     // S'assurer qu'aucun token n'est envoyé pour les endpoints analytics
-    delete config.headers.Authorization;
+    if (config.headers) {
+      delete config.headers.Authorization;
+    }
   }
   
   // Pour les requêtes PATCH vers /system-settings/, vérifier si l'utilisateur est super admin
@@ -98,9 +178,12 @@ api.interceptors.request.use((config) => {
   // (car isSuperAdmin() peut retourner false si le token est expiré, mais le refresh peut réussir)
   if (config.url?.includes('/system-settings/') && (config.method === 'patch' || config.method === 'PATCH')) {
     const token = localStorage.getItem('token');
-    // Seulement annuler si pas de token ET pas super admin
-    // Si un token est présent, laisser le backend vérifier (il peut rafraîchir le token)
-    if (!token && !authService.isSuperAdmin()) {
+    const hasAuthHeader = !!(config.headers?.Authorization || (config.headers as any)?.['Authorization']);
+    
+    // Si pas de token ET pas de header Authorization ET pas super admin, annuler
+    // MAIS: Si un header Authorization est déjà défini (après refresh), ne pas annuler
+    if (!token && !hasAuthHeader && !authService.isSuperAdmin()) {
+      console.warn('⚠️ [REQUEST INTERCEPTOR] PATCH /system-settings/ annulée: pas de token, pas de header, pas super admin');
       // Créer un CancelToken et annuler immédiatement
       const source = axios.CancelToken.source();
       source.cancel('Request cancelled: user is not super admin and no token available');
@@ -109,6 +192,14 @@ api.interceptors.request.use((config) => {
       (config as any).__shouldRejectSilently = true;
       (config as any).__isCancelled = true;
       (config as any).__silent = true;
+    } else if (!token && !hasAuthHeader) {
+      // Si pas de token mais qu'on a un refresh token, attendre un peu pour permettre le refresh
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (refreshToken) {
+        console.warn('⚠️ [REQUEST INTERCEPTOR] PATCH /system-settings/ sans token mais refresh token disponible - la requête partira sans token et déclenchera un refresh');
+      } else {
+        console.error('❌ [REQUEST INTERCEPTOR] PATCH /system-settings/ sans token ET sans refresh token!');
+      }
     }
   }
   
@@ -487,19 +578,257 @@ api.interceptors.response.use(
         window.__isRefreshingToken = false;
         
         if (success) {
+          // Récupérer le nouveau token immédiatement après refresh
+          const newToken = localStorage.getItem('token');
+          
+          if (!newToken) {
+            console.error('❌ Nouveau token non trouvé après refresh - impossible de continuer');
+            return Promise.reject(new Error('Token de rafraîchissement échoué - nouveau token non disponible'));
+          }
+          
+          console.log('✅ Token rafraîchi avec succès, nouveau token disponible:', {
+            tokenLength: newToken.length,
+            tokenPreview: newToken.substring(0, 50) + '...',
+            url: originalRequest.url,
+            method: originalRequest.method
+          });
+          
+          // Mettre à jour la queue des requêtes en attente
           if (window.__failedQueue) {
             window.__failedQueue.forEach(({ resolve }) => {
-              const newToken = localStorage.getItem('token');
               resolve(newToken);
             });
             window.__failedQueue = [];
           }
           
-          const newToken = localStorage.getItem('token');
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          // IMPORTANT: S'assurer que le token est bien dans localStorage AVANT de réessayer
+          // Vérifier que le token a bien été sauvegardé
+          const savedToken = localStorage.getItem('token');
+          if (!savedToken || savedToken !== newToken) {
+            console.warn('⚠️ Token non sauvegardé correctement dans localStorage après refresh, correction...');
+            localStorage.setItem('token', newToken);
           }
-          return api(originalRequest);
+          
+          // IMPORTANT: Créer une nouvelle config avec le nouveau token
+          // Le problème est que AxiosHeaders ne se copie pas bien avec le spread operator
+          // Il faut créer une nouvelle config et copier manuellement les headers
+          
+          // Créer un nouvel objet headers en copiant manuellement
+          const newHeaders: Record<string, any> = {};
+          
+          // Copier tous les headers existants (sauf Authorization qui sera remplacé)
+          if (originalRequest.headers) {
+            const headersObj = originalRequest.headers as any;
+            
+            // Si c'est un AxiosHeaders, utiliser toJSON() pour obtenir un objet simple
+            if (headersObj && typeof headersObj.toJSON === 'function') {
+              const headersJson = headersObj.toJSON();
+              Object.keys(headersJson).forEach(key => {
+                if (key.toLowerCase() !== 'authorization') {
+                  newHeaders[key] = headersJson[key];
+                }
+              });
+            } else if (headersObj && typeof headersObj === 'object') {
+              // Sinon, copier directement
+              Object.keys(headersObj).forEach(key => {
+                if (key.toLowerCase() !== 'authorization') {
+                  newHeaders[key] = headersObj[key];
+                }
+              });
+            }
+          }
+          
+          // FORCER le header Authorization avec le nouveau token
+          newHeaders.Authorization = `Bearer ${newToken}`;
+          
+          // Créer la nouvelle config en utilisant api.request() avec une config complète
+          // Il faut créer un nouvel objet AxiosHeaders pour s'assurer que le header est bien défini
+          const retryConfig: InternalAxiosRequestConfig = {
+            ...originalRequest,
+            headers: new AxiosHeaders(newHeaders),
+            // S'assurer que l'URL est correcte
+            url: originalRequest.url,
+            method: originalRequest.method,
+            // S'assurer que les données sont préservées
+            data: originalRequest.data,
+            params: originalRequest.params,
+          };
+          
+          // S'assurer que le header Authorization est bien défini dans AxiosHeaders
+          retryConfig.headers.set('Authorization', `Bearer ${newToken}`);
+          
+          // S'assurer que l'intercepteur ne va pas écraser ce header
+          (retryConfig as any)._skipAuthInterceptor = true;
+          
+          // VÉRIFICATION CRITIQUE: S'assurer que le header est bien présent AVANT l'envoi
+          const authHeaderBeforeSend = retryConfig.headers.get('Authorization');
+          const authHeaderStr = typeof authHeaderBeforeSend === 'string' ? authHeaderBeforeSend : String(authHeaderBeforeSend || '');
+          if (!authHeaderStr || !authHeaderStr.startsWith('Bearer ')) {
+            console.error('❌ [RETRY] Header Authorization manquant AVANT api.request()!', {
+              authHeaderBeforeSend,
+              headersType: typeof retryConfig.headers,
+              isAxiosHeaders: retryConfig.headers instanceof AxiosHeaders,
+            });
+            // Forcer une dernière fois
+            retryConfig.headers.set('Authorization', `Bearer ${newToken}`);
+          }
+          
+          // Log pour debug
+          const authHeaderValue = retryConfig.headers.get('Authorization') || 
+                                  (retryConfig.headers as any).Authorization || 
+                                  'MISSING';
+          
+          // Obtenir les clés des headers de manière sécurisée
+          let allHeadersKeys: string[] = [];
+          try {
+            if (retryConfig.headers instanceof AxiosHeaders) {
+              // AxiosHeaders peut avoir différentes méthodes selon la version
+              if (typeof retryConfig.headers.keys === 'function') {
+                allHeadersKeys = Array.from(retryConfig.headers.keys());
+              } else if (typeof retryConfig.headers.toJSON === 'function') {
+                allHeadersKeys = Object.keys(retryConfig.headers.toJSON());
+              } else {
+                allHeadersKeys = Object.keys(retryConfig.headers as any);
+              }
+            } else if (retryConfig.headers && typeof retryConfig.headers === 'object') {
+              allHeadersKeys = Object.keys(retryConfig.headers);
+            }
+          } catch (e) {
+            console.warn('⚠️ Erreur lors de la lecture des clés des headers:', e);
+          }
+          
+          console.log('🔧 RetryConfig créée:', {
+            url: retryConfig.url,
+            method: retryConfig.method,
+            hasHeaders: !!retryConfig.headers,
+            authHeader: typeof authHeaderValue === 'string' ? authHeaderValue.substring(0, 50) + '...' : 'MISSING',
+            skipAuthInterceptor: (retryConfig as any)._skipAuthInterceptor,
+            allHeaders: allHeadersKeys
+          });
+          
+          // Réessayer la requête avec le nouveau token en utilisant api.request()
+          console.log('🔄 Réessai de la requête avec le nouveau token:', {
+            url: originalRequest.url,
+            method: originalRequest.method,
+            hasAuthHeader: !!authHeaderValue && authHeaderValue !== 'MISSING',
+            authHeaderValue: typeof authHeaderValue === 'string' ? authHeaderValue.substring(0, 50) + '...' : 'MISSING',
+            tokenInLocalStorage: !!localStorage.getItem('token'),
+            tokenMatches: localStorage.getItem('token') === newToken,
+            tokenLength: newToken.length,
+            retryConfigHeadersType: typeof retryConfig.headers,
+            isAxiosHeaders: retryConfig.headers instanceof AxiosHeaders,
+          });
+          
+          // VÉRIFICATION FINALE AVANT ENVOI
+          let finalAuthHeader: string | undefined;
+          try {
+            if (retryConfig.headers instanceof AxiosHeaders) {
+              finalAuthHeader = retryConfig.headers.get('Authorization') as string | undefined;
+            } else if (retryConfig.headers && typeof retryConfig.headers === 'object') {
+              finalAuthHeader = (retryConfig.headers as any).Authorization || (retryConfig.headers as any)['Authorization'];
+            }
+          } catch (e) {
+            console.warn('⚠️ [RETRY] Erreur lors de la lecture du header Authorization:', e);
+          }
+          
+          if (!finalAuthHeader || !finalAuthHeader.startsWith('Bearer ')) {
+            console.error('❌ [RETRY] Header Authorization manquant ou invalide avant envoi!', {
+              finalAuthHeader: typeof finalAuthHeader === 'string' ? finalAuthHeader?.substring(0, 50) : finalAuthHeader,
+              headersType: typeof retryConfig.headers,
+              isAxiosHeaders: retryConfig.headers instanceof AxiosHeaders,
+            });
+            
+            // FORCER le header une dernière fois
+            if (retryConfig.headers instanceof AxiosHeaders) {
+              retryConfig.headers.set('Authorization', `Bearer ${newToken}`);
+            } else if (retryConfig.headers && typeof retryConfig.headers === 'object') {
+              (retryConfig.headers as any).Authorization = `Bearer ${newToken}`;
+            }
+            console.log('🔧 [RETRY] Header Authorization forcé une dernière fois');
+          }
+          
+          // Utiliser api.request() avec la config complète
+          // IMPORTANT: Utiliser directement la méthode HTTP (patch, post, etc.) pour s'assurer que les headers sont préservés
+          // Convertir retryConfig en paramètres pour api.patch/post/etc.
+          const method = (retryConfig.method || 'get').toLowerCase();
+          const url = retryConfig.url || '';
+          
+          // Extraire les headers comme un objet simple pour éviter les problèmes avec AxiosHeaders
+          const headersObj: Record<string, string> = {};
+          if (retryConfig.headers instanceof AxiosHeaders) {
+            try {
+              const headersJson = retryConfig.headers.toJSON();
+              Object.keys(headersJson).forEach(key => {
+                const value = retryConfig.headers.get(key);
+                if (value && typeof value === 'string') {
+                  headersObj[key] = value;
+                }
+              });
+            } catch (e) {
+              console.warn('⚠️ Erreur lors de la conversion des headers:', e);
+              // Fallback: utiliser directement Authorization
+              headersObj['Authorization'] = `Bearer ${newToken}`;
+            }
+          } else if (retryConfig.headers && typeof retryConfig.headers === 'object') {
+            Object.keys(retryConfig.headers).forEach(key => {
+              const value = (retryConfig.headers as any)[key];
+              if (value && typeof value === 'string') {
+                headersObj[key] = value;
+              }
+            });
+          }
+          
+          // S'assurer que Authorization est présent
+          if (!headersObj['Authorization'] || !headersObj['Authorization'].startsWith('Bearer ')) {
+            headersObj['Authorization'] = `Bearer ${newToken}`;
+          }
+          
+          // Utiliser la méthode HTTP appropriée avec les headers explicites
+          const requestConfig = {
+            headers: headersObj,
+            params: retryConfig.params,
+            data: retryConfig.data,
+          };
+          
+          // Marquer pour éviter que l'intercepteur ne modifie les headers
+          (requestConfig as any)._skipAuthInterceptor = true;
+          
+          // Retourner la promesse directement (sans await) car la fonction parente n'est pas async
+          let requestPromise;
+          if (method === 'patch') {
+            requestPromise = api.patch(url, retryConfig.data, requestConfig);
+          } else if (method === 'post') {
+            requestPromise = api.post(url, retryConfig.data, requestConfig);
+          } else if (method === 'put') {
+            requestPromise = api.put(url, retryConfig.data, requestConfig);
+          } else if (method === 'delete') {
+            requestPromise = api.delete(url, requestConfig);
+          } else {
+            requestPromise = api.get(url, requestConfig);
+          }
+          
+          // Ajouter un log après la résolution de la promesse
+          return requestPromise.then(response => {
+            console.log('✅ [RETRY] Requête réussie après refresh:', {
+              url,
+              method,
+              status: response.status,
+            });
+            return response;
+          }).catch((retryError: any) => {
+            // Vérifier si c'est encore un 403 - cela signifie que le header n'a pas été envoyé
+            if (retryError?.response?.status === 403) {
+              console.error('❌ [RETRY] 403 après refresh - le header Authorization n\'a probablement pas été envoyé!', {
+                url: retryConfig.url,
+                method: retryConfig.method,
+                authHeaderInConfig: retryConfig.headers instanceof AxiosHeaders 
+                  ? retryConfig.headers.get('Authorization')
+                  : (retryConfig.headers as any)?.Authorization,
+                error: retryError.response?.data,
+              });
+            }
+            throw retryError;
+          });
         } else {
           // Si le rafraîchissement échoue et que c'est une requête GET vers /system-settings/ ou /blocks/types/, retourner des données par défaut
           if (originalRequest.url?.includes('/system-settings/') && originalRequest.method?.toLowerCase() === 'get') {
@@ -590,7 +919,14 @@ api.interceptors.response.use(
                                    originalRequest.method?.toLowerCase() === 'post' || 
                                    originalRequest.method?.toLowerCase() === 'delete';
         
-        if (!isSilentGetRequest && isImportantRequest && typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+        // Ne PAS rediriger automatiquement si le refresh a réussi mais que le retry a échoué
+        // (cela peut être une erreur temporaire, pas forcément une expiration de token)
+        // Vérifier si le refresh a réellement échoué (refreshError existe) ou si c'est juste une erreur de retry
+        const refreshFailed = refreshError && (refreshError.response?.status === 401 || refreshError.response?.status === 403);
+        const isRetryError = refreshError?.message?.includes('retryConfig') || refreshError?.message?.includes('keys is not a function');
+        
+        // Ne rediriger que si le refresh a vraiment échoué (token expiré) et pas si c'est juste une erreur technique
+        if (refreshFailed && !isRetryError && !isSilentGetRequest && isImportantRequest && typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
           // Ne rediriger que si on n'est pas déjà sur la page de login
           if (!window.location.pathname.includes('/login')) {
             // Attendre un peu avant de rediriger pour éviter les redirections multiples

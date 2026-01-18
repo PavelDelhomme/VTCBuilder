@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useRouter, useParams, usePathname, useSearchParams } from 'next/navigation'
 import authService from '@/services/auth.service'
 import AdminLayout from '@/components/admin/AdminLayout'
@@ -116,6 +116,10 @@ export default function EditPublicPage() {
     return 33.33
   })
   const [isResizing, setIsResizing] = useState(false)
+  
+  // Ref pour éviter les appels multiples de loadData
+  const loadDataCalledRef = useRef<string>('')
+  const loadingRef = useRef(false)
 
   // Fonction de sauvegarde (mémorisée pour éviter les re-renders)
   const handleSave = useCallback(async (data: { blocks: Block[]; metaTitle: string; metaDescription: string; status: 'draft' | 'published' }) => {
@@ -425,7 +429,14 @@ export default function EditPublicPage() {
   }, [blocks, selectedBlockId, handleManualSave])
 
   const loadData = useCallback(async () => {
+    // Éviter les appels multiples simultanés
+    if (loadingRef.current) {
+      console.log('⏸️ loadData déjà en cours, ignoré')
+      return
+    }
+    
     try {
+      loadingRef.current = true
       setLoading(true)
       
       // Check if this is a new page
@@ -628,7 +639,18 @@ export default function EditPublicPage() {
             order: 999,
           }
           
-          // Save the new page
+          // Save the new page - Vérifier que le token est disponible
+          const token = localStorage.getItem('token');
+          if (!token) {
+            console.warn('⚠️ Token non disponible pour sauvegarder la nouvelle page, attente...');
+            // Attendre un peu et réessayer
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const tokenRetry = localStorage.getItem('token');
+            if (!tokenRetry) {
+              console.error('❌ Token toujours non disponible après attente, annulation de la sauvegarde');
+              throw new Error('Token non disponible');
+            }
+          }
           await api.patch('/system-settings/', {
             public_pages: publicPages
           })
@@ -870,26 +892,32 @@ export default function EditPublicPage() {
         homepageBlocks = [globalContainer as Block]
         
         // Sauvegarder immédiatement les blocs par défaut (silencieusement si erreur 403)
-        try {
-          const saveResponse = await api.patch('/system-settings/', {
-            public_homepage_blocks: homepageBlocks
-          })
-          console.log('✅ Blocs par défaut sauvegardés avec succès:', {
-            blocks: homepageBlocks,
-            response: saveResponse.data
-          })
-          toast.success('Structure minimale créée avec succès!')
-        } catch (error: unknown) {
-          // Si l'erreur est silencieuse (403 pour non-super-admin ou erreur attendue), ne pas afficher de toast
-          const errorObj = error && typeof error === 'object' ? error as { silent?: boolean; config?: { silent?: boolean; __shouldRejectSilently?: boolean } } : null
-          if (errorObj?.silent || errorObj?.config?.silent || errorObj?.config?.__shouldRejectSilently) {
-            console.warn('⚠️ Sauvegarde des blocs par défaut ignorée (accès refusé)')
-            // Continuer sans erreur - les blocs sont quand même définis localement
-          } else {
-            console.error('❌ Erreur lors de la sauvegarde des blocs par défaut:', error)
-            // Ne pas bloquer l'affichage - les blocs sont quand même définis localement
-            // toast.error(`Erreur lors de la sauvegarde: ${error.response?.data?.error || error.message}`)
+        // Vérifier que le token est disponible avant de sauvegarder
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            const saveResponse = await api.patch('/system-settings/', {
+              public_homepage_blocks: homepageBlocks
+            })
+            console.log('✅ Blocs par défaut sauvegardés avec succès:', {
+              blocks: homepageBlocks,
+              response: saveResponse.data
+            })
+            toast.success('Structure minimale créée avec succès!')
+          } catch (error: unknown) {
+            // Si l'erreur est silencieuse (403 pour non-super-admin ou erreur attendue), ne pas afficher de toast
+            const errorObj = error && typeof error === 'object' ? error as { silent?: boolean; config?: { silent?: boolean; __shouldRejectSilently?: boolean } } : null
+            if (errorObj?.silent || errorObj?.config?.silent || errorObj?.config?.__shouldRejectSilently) {
+              console.warn('⚠️ Sauvegarde des blocs par défaut ignorée (accès refusé)')
+              // Continuer sans erreur - les blocs sont quand même définis localement
+            } else {
+              console.error('❌ Erreur lors de la sauvegarde des blocs par défaut:', error)
+              // Ne pas bloquer l'affichage - les blocs sont quand même définis localement
+              // toast.error(`Erreur lors de la sauvegarde: ${error.response?.data?.error || error.message}`)
+            }
           }
+        } else {
+          console.warn('⚠️ Token non disponible pour sauvegarder les blocs par défaut, les blocs seront sauvegardés localement uniquement');
         }
         
         console.log('📦 Blocs chargés pour la page d\'accueil:', {
@@ -1764,9 +1792,10 @@ export default function EditPublicPage() {
       console.error('Error chargement:', error)
       toast.error('Error lors du chargement des données')
     } finally {
+      loadingRef.current = false
       setLoading(false)
     }
-  }, [pageSlug])
+  }, [pageSlug, searchParams])
 
   // Sauvegarder l'état de l'éditeur pour la reconnexion
   useEffect(() => {
@@ -1811,16 +1840,66 @@ export default function EditPublicPage() {
   }, [pathname])
 
   useEffect(() => {
+    // Réinitialiser le ref quand pageSlug change pour permettre le rechargement
+    const currentKey = `${pageSlug}-${searchParams?.toString() || ''}`
+    if (loadDataCalledRef.current === currentKey && loadingRef.current) {
+      return // Déjà en cours de chargement pour cette combinaison
+    }
+    // Réinitialiser si c'est une nouvelle page
+    if (loadDataCalledRef.current !== currentKey) {
+      loadDataCalledRef.current = ''
+      loadingRef.current = false
+    }
+    
     // Vérifier l'authentification de manière asynchrone pour éviter les problèmes de timing
     const checkAuth = async () => {
       // Attendre un peu pour que le token soit bien chargé
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      if (!authService.isAuthenticated()) {
-        // Pas authentifié, rediriger vers login
+      // Vérifier d'abord si un token existe (même s'il est peut-être expiré)
+      const token = localStorage.getItem('token');
+      const refreshToken = localStorage.getItem('refresh_token');
+      
+      // Si pas de token du tout, rediriger immédiatement
+      if (!token && !refreshToken) {
+        console.warn('⚠️ Aucun token trouvé, redirection vers login');
         authService.saveRedirectUrl();
         router.push('/login');
         return;
+      }
+      
+      // Si on a un refresh token mais pas de token, essayer de rafraîchir
+      if (!token && refreshToken) {
+        console.log('🔄 Token expiré mais refresh token disponible, tentative de rafraîchissement...');
+        try {
+          const response = await api.post('/auth/refresh/', { refresh: refreshToken });
+          if (response.data?.access) {
+            localStorage.setItem('token', response.data.access);
+            console.log('✅ Token rafraîchi avec succès');
+            // Continuer avec la vérification normale
+          } else {
+            throw new Error('Pas de token dans la réponse');
+          }
+        } catch (error) {
+          console.error('❌ Échec du rafraîchissement du token:', error);
+          authService.saveRedirectUrl();
+          router.push('/login');
+          return;
+        }
+      }
+      
+      // Vérifier maintenant l'authentification
+      if (!authService.isAuthenticated()) {
+        // Attendre encore un peu au cas où le token vient d'être rafraîchi
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Vérifier une dernière fois
+        if (!authService.isAuthenticated()) {
+          console.warn('⚠️ Authentification échouée après rafraîchissement, redirection vers login');
+          authService.saveRedirectUrl();
+          router.push('/login');
+          return;
+        }
       }
       
       if (!authService.isSuperAdmin()) {
@@ -1845,13 +1924,16 @@ export default function EditPublicPage() {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
       
+      // Marquer comme appelé AVANT de charger pour éviter les appels multiples
+      loadDataCalledRef.current = currentKey
+      
       // Super admin authentifié, charger les données
       loadData();
     };
     
     checkAuth();
     
-    // Charger l'abonnement pour afficher le badge
+    // Charger l'abonnement pour afficher le badge (une seule fois par montage)
     const loadSubscription = async () => {
       try {
         if (authService.isSuperAdmin()) {
@@ -1893,7 +1975,7 @@ export default function EditPublicPage() {
     }
     
     loadSubscription()
-  }, [router, pageSlug, loadData])
+  }, [router, pageSlug, searchParams]) // Retirer loadData des dépendances pour éviter la boucle
 
   // Fonction pour ajouter un bloc depuis la popup
   const handleAddBlock = useCallback((blockType: BlockType) => {

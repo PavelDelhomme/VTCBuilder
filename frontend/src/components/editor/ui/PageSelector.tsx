@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import api from '@/lib/api'
 import pageService, { Page } from '@/services/page.service'
 
@@ -11,6 +11,13 @@ interface PageSelectorProps {
   className?: string
 }
 
+// Cache partagé pour éviter les requêtes multiples
+let cachedPages: Page[] | null = null
+let cachedPublicPages: Array<{ slug: string; title: string }> | null = null
+let cacheTimestamp = 0
+const CACHE_DURATION = 60000 // 1 minute de cache
+let loadingPromise: Promise<void> | null = null
+
 /**
  * Composant pour sélectionner une page du tenant pour la navigation
  */
@@ -18,60 +25,112 @@ export default function PageSelector({ value, onChange, placeholder = 'Sélectio
   const [pages, setPages] = useState<Page[]>([])
   const [loading, setLoading] = useState(true)
   const [publicPages, setPublicPages] = useState<Array<{ slug: string; title: string }>>([])
+  const mountedRef = useRef(true)
 
   useEffect(() => {
     loadPages()
+    return () => {
+      mountedRef.current = false
+    }
   }, [])
 
   const loadPages = async () => {
+    // Utiliser le cache si disponible et récent
+    const now = Date.now()
+    if (cachedPages !== null && cachedPublicPages !== null && (now - cacheTimestamp) < CACHE_DURATION) {
+      if (mountedRef.current) {
+        setPages(cachedPages)
+        setPublicPages(cachedPublicPages)
+        setLoading(false)
+      }
+      return
+    }
+
+    // Si une requête est déjà en cours, attendre qu'elle se termine
+    if (loadingPromise) {
+      try {
+        await loadingPromise
+        if (mountedRef.current && cachedPages !== null && cachedPublicPages !== null) {
+          setPages(cachedPages)
+          setPublicPages(cachedPublicPages)
+          setLoading(false)
+        }
+        return
+      } catch (error) {
+        // Si la requête précédente a échoué, continuer avec une nouvelle
+      }
+    }
+
     try {
       setLoading(true)
       
-      // Charger les pages du tenant (via l'API /pages/)
-      try {
-        const tenantPages = await pageService.getAll({ status: 'published' })
-        setPages(tenantPages || [])
-      } catch (error) {
-        console.warn('Impossible de charger les pages du tenant:', error)
-      }
-
-      // Charger aussi les pages publiques depuis system-settings
-      try {
-        const settingsResponse = await api.get('/system-settings/')
-        const data = settingsResponse.data
-        const publicPagesList: Array<{ slug: string; title: string }> = []
-
-        // Page d'accueil
-        if (data.public_homepage_blocks !== undefined) {
-          publicPagesList.push({ slug: 'home', title: 'Page d\'accueil' })
+      // Créer une promesse partagée pour éviter les requêtes multiples simultanées
+      loadingPromise = (async () => {
+        // Charger les pages du tenant (via l'API /pages/)
+        let tenantPages: Page[] = []
+        try {
+          tenantPages = await pageService.getAll({ status: 'published' })
+          cachedPages = tenantPages || []
+        } catch (error) {
+          console.warn('Impossible de charger les pages du tenant:', error)
+          cachedPages = []
         }
 
-        // Autres pages publiques (seulement celles actives)
-        const otherPages = data.public_pages || {}
-        Object.entries(otherPages).forEach(([slug, pageData]: [string, any]) => {
-          if (pageData.is_active !== false) {
-            publicPagesList.push({
-              slug,
-              title: pageData.title || slug.charAt(0).toUpperCase() + slug.slice(1),
-            })
+        // Charger aussi les pages publiques depuis system-settings
+        let publicPagesList: Array<{ slug: string; title: string }> = []
+        try {
+          const settingsResponse = await api.get('/system-settings/')
+          const data = settingsResponse.data
+
+          // Page d'accueil
+          if (data.public_homepage_blocks !== undefined) {
+            publicPagesList.push({ slug: 'home', title: 'Page d\'accueil' })
           }
-        })
 
-        // Trier par ordre si disponible
-        publicPagesList.sort((a, b) => {
-          const aOrder = otherPages[a.slug]?.order || 999
-          const bOrder = otherPages[b.slug]?.order || 999
-          return aOrder - bOrder
-        })
+          // Autres pages publiques (seulement celles actives)
+          const otherPages = data.public_pages || {}
+          Object.entries(otherPages).forEach(([slug, pageData]: [string, any]) => {
+            if (pageData.is_active !== false) {
+              publicPagesList.push({
+                slug,
+                title: pageData.title || slug.charAt(0).toUpperCase() + slug.slice(1),
+              })
+            }
+          })
 
-        setPublicPages(publicPagesList)
-      } catch (error) {
-        console.warn('Impossible de charger les pages publiques:', error)
+          // Trier par ordre si disponible
+          publicPagesList.sort((a, b) => {
+            const aOrder = otherPages[a.slug]?.order || 999
+            const bOrder = otherPages[b.slug]?.order || 999
+            return aOrder - bOrder
+          })
+
+          cachedPublicPages = publicPagesList
+        } catch (error) {
+          console.warn('Impossible de charger les pages publiques:', error)
+          cachedPublicPages = []
+        }
+
+        cacheTimestamp = Date.now()
+      })()
+
+      await loadingPromise
+      loadingPromise = null
+
+      if (mountedRef.current) {
+        setPages(cachedPages || [])
+        setPublicPages(cachedPublicPages || [])
       }
     } catch (error) {
       console.error('Error chargement pages:', error)
+      if (mountedRef.current) {
+        setPages(cachedPages || [])
+        setPublicPages(cachedPublicPages || [])
+      }
     } finally {
-      setLoading(false)
+      if (mountedRef.current) {
+        setLoading(false)
+      }
     }
   }
 

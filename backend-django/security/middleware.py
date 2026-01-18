@@ -6,6 +6,7 @@ import time
 from django.utils.deprecation import MiddlewareMixin
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
+from django.conf import settings
 from .models import WAFRule, WAFLog, SecurityAlert, SecuritySettings
 from django.core.cache import cache
 
@@ -44,8 +45,30 @@ class WAFMiddleware(MiddlewareMixin):
     
     def process_request(self, request):
         """Process incoming request and apply WAF rules"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Log ENTRÉE du WAF pour toutes les requêtes PATCH vers system-settings
+        if request.method == 'PATCH' and ('system-settings' in request.path):
+            logger.info(f"🛡️ WAFMiddleware.process_request ENTRY: {request.method} {request.path}")
+        
         try:
-            # Skip WAF for specific API endpoints that are safe
+            # DÉSACTIVER COMPLÈTEMENT LE WAF EN MODE DEBUG POUR LOCALHOST
+            is_debug = getattr(settings, 'DEBUG', False)
+            ip_address = self.get_client_ip(request)
+            is_local = self.is_localhost(ip_address)
+            
+            if request.method == 'PATCH' and ('system-settings' in request.path):
+                logger.info(f"🛡️ WAFMiddleware: DEBUG={is_debug}, IP={ip_address}, is_local={is_local}")
+            
+            if is_debug and is_local:
+                # En mode DEBUG local, désactiver complètement le WAF
+                if request.method == 'PATCH' and ('system-settings' in request.path):
+                    logger.info(f"🛡️ WAFMiddleware: WAF désactivé pour {request.method} {request.path} (DEBUG + localhost)")
+                return None  # Skip WAF entirely
+            
+            # Skip WAF for specific API endpoints that are safe (public endpoints only)
+            # Note: Auth endpoints are NOT in this list to keep security protections
             safe_endpoints = [
                 '/api/projects/page-projects/',
                 '/api/projects/page-projects',
@@ -54,12 +77,9 @@ class WAFMiddleware(MiddlewareMixin):
                 return None  # Skip WAF for this endpoint
             
             # Get security settings
-            settings = SecuritySettings.objects.first()
-            if not settings or not settings.waf_enabled:
+            security_settings = SecuritySettings.objects.first()
+            if not security_settings or not security_settings.waf_enabled:
                 return None  # WAF disabled, allow request
-            
-            # Get client IP
-            ip_address = self.get_client_ip(request)
             
             # Get active WAF rules ordered by priority
             rules = WAFRule.objects.filter(status='active').order_by('priority')
@@ -84,8 +104,8 @@ class WAFMiddleware(MiddlewareMixin):
                     # 'allow' action means continue to next rule
             
             # Rate limiting check
-            if settings.rate_limit_enabled:
-                rate_limit_result = self.check_rate_limit(request, ip_address, settings)
+            if security_settings.rate_limit_enabled:
+                rate_limit_result = self.check_rate_limit(request, ip_address, security_settings)
                 if rate_limit_result['blocked']:
                     self.log_request(request, ip_address, None, {
                         'matched': True,
@@ -95,7 +115,7 @@ class WAFMiddleware(MiddlewareMixin):
                     return self.block_request(rate_limit_result['reason'])
             
             # Built-in protection patterns (if no specific rule matched)
-            if settings.waf_mode == 'blocking':
+            if security_settings.waf_mode == 'blocking':
                 builtin_result = self.check_builtin_patterns(request)
                 if builtin_result['matched']:
                     self.log_request(request, ip_address, None, builtin_result)
@@ -118,6 +138,22 @@ class WAFMiddleware(MiddlewareMixin):
         else:
             ip = request.META.get('REMOTE_ADDR', '0.0.0.0')
         return ip
+    
+    def is_localhost(self, ip_address):
+        """Check if IP address is localhost/local development"""
+        if not ip_address:
+            return False
+        localhost_ips = ['127.0.0.1', '::1', 'localhost', '0.0.0.0']
+        # Vérifier les IPs exactes
+        if ip_address in localhost_ips:
+            return True
+        # Vérifier les plages d'IPs privées (RFC 1918)
+        if ip_address.startswith('127.') or ip_address.startswith('192.168.') or ip_address.startswith('10.') or ip_address.startswith('172.16.'):
+            return True
+        # Vérifier les IPs IPv6 localhost
+        if ip_address.startswith('::ffff:127.') or ip_address.startswith('::ffff:192.168.') or ip_address.startswith('::ffff:10.'):
+            return True
+        return False
     
     def check_rule(self, rule, request, ip_address):
         """Check if request matches a WAF rule"""
@@ -184,13 +220,55 @@ class WAFMiddleware(MiddlewareMixin):
         if request.path in ['/health/', '/api/health/']:
             return {'blocked': False}
         
+        # Vérifier si l'utilisateur est authentifié - les utilisateurs authentifiés ont des limites plus élevées
+        is_authenticated = False
+        try:
+            # Vérifier si un token JWT est présent
+            has_auth_header = 'HTTP_AUTHORIZATION' in request.META or 'Authorization' in request.headers
+            if has_auth_header:
+                from api.utils import get_authenticated_user_from_token
+                user, error = get_authenticated_user_from_token(request)
+                if user:
+                    is_authenticated = True
+        except Exception:
+            pass
+        
+        # En mode DEBUG ou pour localhost, être beaucoup plus permissif
+        is_local = self.is_localhost(ip_address)
+        is_debug = getattr(settings, 'DEBUG', False)
+        
+        # En développement local, désactiver ou assouplir drastiquement le rate limiting
+        if is_debug and is_local:
+            # En local, permettre beaucoup plus de requêtes
+            # Limites très élevées pour le développement
+            max_requests_per_minute = 10000  # Très élevé pour le dev
+            max_requests_per_hour = 1000000  # Très élevé pour le dev
+        elif is_local:
+            # Même en production, être plus permissif pour localhost
+            max_requests_per_minute = settings.rate_limit_requests_per_minute * 10
+            max_requests_per_hour = settings.rate_limit_requests_per_hour * 10
+        elif is_authenticated:
+            # Les utilisateurs authentifiés ont des limites plus élevées (x5)
+            max_requests_per_minute = settings.rate_limit_requests_per_minute * 5
+            max_requests_per_hour = settings.rate_limit_requests_per_hour * 5
+        else:
+            # Production normale pour utilisateurs non authentifiés
+            max_requests_per_minute = settings.rate_limit_requests_per_minute
+            max_requests_per_hour = settings.rate_limit_requests_per_hour
+        
         try:
             # Check per minute
             minute_key = f"waf_rate_limit_minute:{ip_address}"
             minute_count = cache.get(minute_key, 0)
             if not isinstance(minute_count, (int, float)):
                 minute_count = 0
-            if minute_count >= settings.rate_limit_requests_per_minute:
+            if minute_count >= max_requests_per_minute:
+                # En mode DEBUG local, logger mais ne pas bloquer
+                if is_debug and is_local:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.debug(f"Rate limit warning (DEBUG mode, not blocking): {minute_count} requests per minute from {ip_address}")
+                    return {'blocked': False}
                 return {
                     'blocked': True,
                     'reason': f'Rate limit exceeded: {minute_count} requests per minute'
@@ -202,7 +280,13 @@ class WAFMiddleware(MiddlewareMixin):
             hour_count = cache.get(hour_key, 0)
             if not isinstance(hour_count, (int, float)):
                 hour_count = 0
-            if hour_count >= settings.rate_limit_requests_per_hour:
+            if hour_count >= max_requests_per_hour:
+                # En mode DEBUG local, logger mais ne pas bloquer
+                if is_debug and is_local:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.debug(f"Rate limit warning (DEBUG mode, not blocking): {hour_count} requests per hour from {ip_address}")
+                    return {'blocked': False}
                 return {
                     'blocked': True,
                     'reason': f'Rate limit exceeded: {hour_count} requests per hour'

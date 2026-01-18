@@ -7,6 +7,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, BasePermission
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 from .models import SystemSettings
 from .serializers import SystemSettingsSerializer
 from api.utils import is_super_admin_from_token
@@ -40,6 +41,9 @@ class IsSuperAdminOrReadOnly(BasePermission):
         from api.utils import is_super_admin_from_token, get_authenticated_user_from_token
         logger = logging.getLogger(__name__)
         
+        # Log ENTRÉE de la permission pour toutes les méthodes
+        logger.info(f"🔐 IsSuperAdminOrReadOnly.has_permission ENTRY: method={request.method}, path={request.path}")
+        
         # Allow OPTIONS requests without authentication (for CORS preflight)
         if request.method == 'OPTIONS':
             logger.info(f"IsSuperAdminOrReadOnly: Allowing OPTIONS request for {request.path}")
@@ -47,29 +51,56 @@ class IsSuperAdminOrReadOnly(BasePermission):
         
         # Allow GET requests without authentication (public read access)
         if request.method == 'GET':
-            logger.debug(f"IsSuperAdminOrReadOnly: Allowing GET request for {request.path} (public read)")
+            logger.info(f"IsSuperAdminOrReadOnly: Allowing GET request for {request.path} (public read)")
             return True
         
         # For all other methods (POST, PATCH, PUT, DELETE), require super admin
+        logger.info(f"🔐 IsSuperAdminOrReadOnly: Vérification super admin pour {request.method} {request.path}")
+        
         # PRIORITÉ: Vérifier d'abord depuis le token JWT directement (source de vérité)
         # Ensuite, vérifier depuis request.user comme fallback
         is_super_admin = False
         user_email = 'unknown'
         
         # PRIORITÉ 1: Vérifier depuis le token JWT directement (source de vérité)
+        logger.info(f"🔐 IsSuperAdminOrReadOnly: Appel de is_super_admin_from_token pour {request.method} {request.path}")
         is_super_admin = is_super_admin_from_token(request)
+        logger.info(f"🔐 IsSuperAdminOrReadOnly: Résultat is_super_admin_from_token = {is_super_admin} pour {request.method} {request.path}")
         if is_super_admin:
             user_from_token, _ = get_authenticated_user_from_token(request)
             if user_from_token:
                 user_email = user_from_token.email if hasattr(user_from_token, 'email') else 'unknown'
+                # Recharger depuis la DB pour être sûr
+                try:
+                    from tenants.models import User as UserModel
+                    user_from_token = UserModel.objects.get(pk=user_from_token.pk)
+                    is_super_admin = user_from_token.is_super_admin()
+                    logger.info(f"IsSuperAdminOrReadOnly: User rechargé depuis DB: {user_email}, role: {user_from_token.role}, is_super_admin: {is_super_admin}")
+                except Exception as e:
+                    logger.warning(f"IsSuperAdminOrReadOnly: Erreur lors du rechargement de l'utilisateur: {e}")
         
         # PRIORITÉ 2: Si pas encore vérifié, essayer depuis request.user (DRF peut avoir authentifié)
         if not is_super_admin and request.user and request.user.is_authenticated:
             try:
-                if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
-                    is_super_admin = request.user.is_super_admin()
-                elif hasattr(request.user, 'is_superuser'):
-                    is_super_admin = request.user.is_superuser
+                # Recharger depuis la DB pour être sûr
+                from tenants.models import User as UserModel
+                try:
+                    request_user_reloaded = UserModel.objects.get(pk=request.user.pk)
+                    if hasattr(request_user_reloaded, 'is_super_admin') and callable(request_user_reloaded.is_super_admin):
+                        is_super_admin = request_user_reloaded.is_super_admin()
+                        logger.info(f"IsSuperAdminOrReadOnly: User depuis request.user rechargé: {request_user_reloaded.email}, role: {request_user_reloaded.role}, is_super_admin: {is_super_admin}")
+                    elif hasattr(request_user_reloaded, 'is_superuser'):
+                        is_super_admin = request_user_reloaded.is_superuser
+                except UserModel.DoesNotExist:
+                    logger.error(f"IsSuperAdminOrReadOnly: User {request.user.pk} n'existe plus dans la DB")
+                except Exception as e:
+                    logger.warning(f"IsSuperAdminOrReadOnly: Erreur lors du rechargement de request.user: {e}, utilisation de l'utilisateur en cache")
+                    # Fallback sur l'utilisateur en cache
+                    if hasattr(request.user, 'is_super_admin') and callable(request.user.is_super_admin):
+                        is_super_admin = request.user.is_super_admin()
+                    elif hasattr(request.user, 'is_superuser'):
+                        is_super_admin = request.user.is_superuser
+                
                 if not user_email or user_email == 'unknown':
                     user_email = request.user.email if hasattr(request.user, 'email') else 'unknown'
             except Exception as e:
@@ -83,10 +114,28 @@ class IsSuperAdminOrReadOnly(BasePermission):
                 auth_header = request.META.get('HTTP_AUTHORIZATION', '') or request.headers.get('Authorization', '')
                 auth_header_preview = auth_header[:50] if auth_header else 'empty'
             
+            # Logs supplémentaires pour diagnostiquer
+            token_valid = False
+            token_error = None
+            if has_auth_header:
+                try:
+                    from api.utils import get_authenticated_user_from_token
+                    user_from_token, error = get_authenticated_user_from_token(request)
+                    if user_from_token:
+                        token_valid = True
+                        logger.info(f"IsSuperAdminOrReadOnly: Token valide, user: {user_from_token.email if hasattr(user_from_token, 'email') else 'unknown'}")
+                    else:
+                        token_error = error
+                        logger.warning(f"IsSuperAdminOrReadOnly: Token invalide ou expiré: {error}")
+                except Exception as e:
+                    token_error = str(e)
+                    logger.error(f"IsSuperAdminOrReadOnly: Erreur lors de la vérification du token: {e}", exc_info=True)
+            
             logger.warning(
                 f"IsSuperAdminOrReadOnly: Permission denied for {request.method} {request.path}. "
                 f"User: {user_email} is not super admin (verified from JWT token). "
                 f"Auth header present: {has_auth_header}, Auth preview: {auth_header_preview}, "
+                f"Token valid: {token_valid}, Token error: {token_error}, "
                 f"request.user authenticated: {request.user.is_authenticated if request.user else False}, "
                 f"request.user: {request.user.email if request.user and hasattr(request.user, 'email') else 'not set'}"
             )
@@ -222,6 +271,7 @@ def add_cors_headers(response, request):
     return response
 
 
+@csrf_exempt
 @api_view(['GET', 'POST', 'PATCH', 'PUT', 'OPTIONS'])
 @permission_classes([IsSuperAdminOrReadOnly])
 def system_settings_view(request):

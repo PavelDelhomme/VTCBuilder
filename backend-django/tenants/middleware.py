@@ -35,7 +35,6 @@ class UserStatusMiddleware:
             '/api/analytics/block-usage',  # Allow analytics tracking without auth
             '/api/users/impersonation-status',  # Allow checking impersonation status without auth
             '/api/blocks/types',  # Allow viewing block types without auth
-            '/api/system-settings',  # Allow viewing system settings without auth (GET only)
         ]
 
         # Check if path matches any public path (with or without trailing slash, with or without query params)
@@ -53,21 +52,57 @@ class UserStatusMiddleware:
                     logger = logging.getLogger(__name__)
                     logger.info(f"UserStatusMiddleware: Allowing public access to {request.path} (refresh token endpoint)")
                 return self.get_response(request)
+        
+        # Pour /api/system-settings/, autoriser GET sans authentification mais vérifier pour les autres méthodes
+        if path_normalized == '/api/system-settings' or path_normalized.startswith('/api/system-settings/'):
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"🔍 UserStatusMiddleware: Intercepté {request.method} {request.path}")
+            
+            if request.method == 'GET':
+                # GET est public, pas besoin de vérifier l'authentification
+                logger.info(f"🔍 UserStatusMiddleware: GET est public pour {request.path}")
+                return self.get_response(request)
+            # Pour PATCH/POST/PUT/DELETE, continuer la vérification ci-dessous
+            logger.info(f"🔍 UserStatusMiddleware: {request.method} nécessite authentification pour {request.path}")
 
         # Check user status for authenticated requests
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"🔍 UserStatusMiddleware: Vérification authentification pour {request.method} {request.path}")
+        
         try:
             jwt_auth = JWTAuthentication()
             header = jwt_auth.get_header(request)
+            logger.info(f"🔍 UserStatusMiddleware: Header présent: {header is not None} pour {request.method} {request.path}")
+            
             if header:
                 raw_token = jwt_auth.get_raw_token(header)
+                logger.info(f"🔍 UserStatusMiddleware: Raw token présent: {raw_token is not None} pour {request.method} {request.path}")
+                
                 if raw_token:
                     validated_token = jwt_auth.get_validated_token(raw_token)
+                    logger.info(f"🔍 UserStatusMiddleware: Token validé: {validated_token is not None} pour {request.method} {request.path}")
+                    
                     user = jwt_auth.get_user(validated_token)
+                    logger.info(f"🔍 UserStatusMiddleware: User obtenu: {user is not None} pour {request.method} {request.path}")
 
                     if user:
                         # Log pour debug
                         import logging
                         logger = logging.getLogger(__name__)
+                        
+                        # IMPORTANT: Recharger l'utilisateur depuis la DB pour s'assurer que le rôle est à jour
+                        from tenants.models import User as UserModel
+                        try:
+                            user = UserModel.objects.get(pk=user.pk)
+                            logger.debug(f"UserStatusMiddleware: User rechargé depuis la DB: {user.email if hasattr(user, 'email') else 'unknown'}, role: {user.role if hasattr(user, 'role') else 'unknown'}")
+                        except UserModel.DoesNotExist:
+                            logger.error(f"UserStatusMiddleware: User {user.pk} n'existe plus dans la DB")
+                            return self.get_response(request)  # Laisser passer, la permission gérera l'erreur
+                        except Exception as e:
+                            logger.warning(f"UserStatusMiddleware: Erreur lors du rechargement de l'utilisateur: {e}, utilisation de l'utilisateur en cache")
+                        
                         is_super_admin = False
                         try:
                             is_super_admin = user.is_super_admin()
@@ -75,14 +110,15 @@ class UserStatusMiddleware:
                             logger.warning(f"Error checking is_super_admin in UserStatusMiddleware: {e}")
                         
                         logger.info(
-                            f"UserStatusMiddleware: path={request.path}, "
+                            f"UserStatusMiddleware: path={request.path}, method={request.method}, "
                             f"user={user.email if hasattr(user, 'email') else 'unknown'}, "
+                            f"user_id={user.pk}, role={user.role if hasattr(user, 'role') else 'unknown'}, "
                             f"is_super_admin={is_super_admin}, status={user.status if hasattr(user, 'status') else 'unknown'}"
                         )
                         
                         # Super admin can always access - IMPORTANT: Allow super admin before checking status
                         if is_super_admin:
-                            logger.info(f"UserStatusMiddleware: Allowing access for super admin to {request.path}")
+                            logger.info(f"UserStatusMiddleware: Allowing access for super admin to {request.path} (method: {request.method})")
                             return self.get_response(request)
                         
                         # Check user status
@@ -130,9 +166,17 @@ class UserStatusMiddleware:
                                     response['Access-Control-Allow-Credentials'] = 'true'
                             return response
 
-        except (InvalidToken, TokenError, AttributeError, TypeError, KeyError, ValueError):
+        except (InvalidToken, TokenError) as e:
             # If no valid token or user, let the normal authentication handle it
+            logger.warning(f"🔍 UserStatusMiddleware: Token invalide ou erreur pour {request.method} {request.path}: {type(e).__name__}: {e}")
+            pass
+        except (AttributeError, TypeError, KeyError, ValueError) as e:
+            logger.warning(f"🔍 UserStatusMiddleware: Erreur lors de l'authentification pour {request.method} {request.path}: {type(e).__name__}: {e}")
+            pass
+        except Exception as e:
+            logger.error(f"🔍 UserStatusMiddleware: Exception inattendue pour {request.method} {request.path}: {type(e).__name__}: {e}", exc_info=True)
             pass
 
+        logger.info(f"🔍 UserStatusMiddleware: Laisser passer la requête {request.method} {request.path} (pas de token valide ou utilisateur non authentifié)")
         return self.get_response(request)
 

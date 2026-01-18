@@ -142,11 +142,23 @@ def is_super_admin_from_token(request):
             return False
     
     try:
+        # IMPORTANT: Recharger l'utilisateur depuis la base de données pour s'assurer que le rôle est à jour
+        # (l'objet User peut être en cache et ne pas refléter les changements récents)
+        from tenants.models import User
+        try:
+            user = User.objects.get(pk=user.pk)
+            logger.debug(f"is_super_admin_from_token: User rechargé depuis la DB: {user.email if hasattr(user, 'email') else 'unknown'}, role: {user.role if hasattr(user, 'role') else 'unknown'}")
+        except User.DoesNotExist:
+            logger.error(f"is_super_admin_from_token: User {user.pk} n'existe plus dans la DB")
+            return False
+        except Exception as e:
+            logger.warning(f"is_super_admin_from_token: Erreur lors du rechargement de l'utilisateur: {e}, utilisation de l'utilisateur en cache")
+        
         # Vérifier le statut super admin depuis l'objet User authentifié
         # Cette méthode vérifie le rôle dans la base de données
         if hasattr(user, 'is_super_admin') and callable(user.is_super_admin):
             result = user.is_super_admin()
-            logger.info(f"is_super_admin_from_token: user.is_super_admin() = {result} for user {user.email if hasattr(user, 'email') else 'unknown'} (method: {request.method}, path: {request.path})")
+            logger.info(f"is_super_admin_from_token: user.is_super_admin() = {result} for user {user.email if hasattr(user, 'email') else 'unknown'} (role: {user.role if hasattr(user, 'role') else 'unknown'}, method: {request.method}, path: {request.path})")
             return result
         elif hasattr(user, 'is_superuser'):
             result = user.is_superuser

@@ -16,6 +16,10 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
     
     def process_request(self, request):
         """Gérer les requêtes OPTIONS (preflight) avant qu'elles n'atteignent les vues"""
+        # Log ENTRÉE pour toutes les requêtes PATCH vers system-settings
+        if request.method == 'PATCH' and ('system-settings' in request.path):
+            logger.info(f"🌐 CORSAlwaysMiddleware.process_request ENTRY: {request.method} {request.path}")
+        
         if request.method == 'OPTIONS':
             from django.http import HttpResponse
             origin = request.META.get('HTTP_ORIGIN', '')
