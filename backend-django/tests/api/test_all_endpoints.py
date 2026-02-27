@@ -265,6 +265,30 @@ class ComprehensiveAPITester:
             print(f"\n⚠️  {self.endpoints_failed} test(s) ont échoué")
         
         print("="*80)
+        
+        # Écrire le rapport JSON si REPORT_FILE est défini (pour exploitation automatique)
+        report_file = os.environ.get('REPORT_FILE')
+        if report_file:
+            report = {
+                'summary': {
+                    'total': self.endpoints_tested,
+                    'passed': self.endpoints_passed,
+                    'failed': self.endpoints_failed,
+                    'skipped': len(self.results['skipped']),
+                    'success_rate_pct': round(self.endpoints_passed / self.endpoints_tested * 100, 1) if self.endpoints_tested else 0,
+                },
+                'passed': self.results['passed'],
+                'failed': self.results['failed'],
+                'skipped': self.results['skipped'],
+            }
+            try:
+                with open(report_file, 'w', encoding='utf-8') as f:
+                    json.dump(report, f, indent=2, ensure_ascii=False)
+            except Exception as e:
+                print(f"⚠️  Impossible d'écrire le rapport: {e}")
+        
+        if self.endpoints_failed > 0:
+            sys.exit(1)
 
 
 if __name__ == '__main__':

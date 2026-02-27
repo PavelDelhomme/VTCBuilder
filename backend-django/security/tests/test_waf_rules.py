@@ -16,6 +16,7 @@ def api_client():
     """Create an authenticated API client"""
     client = APIClient()
     user = User.objects.create_user(
+        username='testuser',
         email='test@example.com',
         password='testpass123',
         is_staff=True,
@@ -74,7 +75,8 @@ class TestWAFRuleModel:
         rule2 = WAFRule.objects.create(
             name='Rule 2', rule_type='xss', priority=10, action='block'
         )
-        rules = list(WAFRule.objects.all().order_by('priority'))
+        rules = list(WAFRule.objects.filter(name__in=['Rule 1', 'Rule 2']).order_by('priority'))
+        assert len(rules) == 2
         assert rules[0].priority == 10
         assert rules[1].priority == 20
 

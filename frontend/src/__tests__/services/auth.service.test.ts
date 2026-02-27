@@ -23,8 +23,10 @@ describe('AuthService', () => {
     it('should login successfully and store tokens', async () => {
       const mockResponse = {
         data: {
-          access: 'access_token',
-          refresh: 'refresh_token',
+          tokens: {
+            access: 'access_token',
+            refresh: 'refresh_token',
+          },
           user: {
             id: 1,
             email: 'test@example.com',
@@ -92,12 +94,13 @@ describe('AuthService', () => {
   })
 
   describe('logout', () => {
-    it('should clear tokens and user data', () => {
+    it('should clear tokens and user data', async () => {
       localStorage.setItem('token', 'access_token')
       localStorage.setItem('refresh_token', 'refresh_token')
       localStorage.setItem('user', JSON.stringify({ id: 1 }))
+      ;(api.post as jest.Mock).mockResolvedValue({})
 
-      authService.logout()
+      await authService.logout()
 
       expect(localStorage.getItem('token')).toBeNull()
       expect(localStorage.getItem('refresh_token')).toBeNull()

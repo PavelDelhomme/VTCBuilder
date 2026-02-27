@@ -17,6 +17,7 @@ def api_client():
     """Create an authenticated API client"""
     client = APIClient()
     user = User.objects.create_user(
+        username='testuser',
         email='test@example.com',
         password='testpass123',
         is_staff=True,
@@ -111,19 +112,28 @@ class TestWAFLogAPI:
         """Test filtering logs by IP address"""
         response = api_client.get('/api/security/waf/logs/?ip_address=192.168.1.100')
         assert response.status_code == status.HTTP_200_OK
-        assert all(log['ip_address'] == '192.168.1.100' for log in response.data)
-    
+        items = response.data.get('results', response.data) if isinstance(response.data, dict) else response.data
+        if not isinstance(items, list):
+            items = [items] if items else []
+        assert all(log.get('ip_address') == '192.168.1.100' for log in items)
+
     def test_filter_logs_by_severity(self, api_client, waf_log):
         """Test filtering logs by severity"""
         response = api_client.get('/api/security/waf/logs/?severity=high')
         assert response.status_code == status.HTTP_200_OK
-        assert all(log['severity'] == 'high' for log in response.data)
-    
+        items = response.data.get('results', response.data) if isinstance(response.data, dict) else response.data
+        if not isinstance(items, list):
+            items = [items] if items else []
+        assert all(log.get('severity') == 'high' for log in items)
+
     def test_filter_logs_by_action(self, api_client, waf_log):
         """Test filtering logs by action"""
         response = api_client.get('/api/security/waf/logs/?action=blocked')
         assert response.status_code == status.HTTP_200_OK
-        assert all(log['action'] == 'blocked' for log in response.data)
+        items = response.data.get('results', response.data) if isinstance(response.data, dict) else response.data
+        if not isinstance(items, list):
+            items = [items] if items else []
+        assert all(log.get('action') == 'blocked' for log in items)
     
     def test_filter_logs_by_days(self, api_client, waf_log):
         """Test filtering logs by days"""

@@ -314,21 +314,25 @@ class AuthService {
   isSuperAdmin(): boolean {
     if (typeof window === 'undefined') return false; // SSR safety
     const user = this.getStoredUser();
-    if (!user || !user.roles) return false;
+    if (!user) return false;
+    if ((user as any).role === 'super-admin') return true;
+    if (!user.roles) return false;
     return user.roles.some((role: any) => {
       const roleValue = typeof role === 'string' ? role : role.name || role.role;
       return roleValue === 'super-admin';
-    }) || (user as any).role === 'super-admin';
+    });
   }
 
   isTenantAdmin(): boolean {
     if (typeof window === 'undefined') return false; // SSR safety
     const user = this.getStoredUser();
-    if (!user || !user.roles) return false;
+    if (!user) return false;
+    if ((user as any).role === 'tenant-admin') return true;
+    if (!user.roles) return false;
     return user.roles.some((role: any) => {
       const roleValue = typeof role === 'string' ? role : role.name || role.role;
       return roleValue === 'tenant-admin';
-    }) || (user as any).role === 'tenant-admin';
+    });
   }
 
   /**

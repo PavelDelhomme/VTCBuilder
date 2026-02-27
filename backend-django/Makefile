@@ -283,8 +283,12 @@ test: ## Exécuter les tests avec pytest
 	@printf "$(GREEN)🧪 Exécution des tests avec pytest...$(NC)\n"
 	@$(DOCKER_COMPOSE) up -d postgres redis backend
 	@sleep 5
-	@docker exec $(BACKEND_CONTAINER) pytest --verbose --tb=short -v
-	@printf "$(GREEN)✅ Tests terminés !$(NC)\n"
+	@mkdir -p ../test-results
+	@docker exec $(BACKEND_CONTAINER) pytest --verbose --tb=short -v --junitxml=/tmp/pytest-backend.xml; \
+	EXIT=$$?; \
+	mkdir -p ../test-results && docker cp $(BACKEND_CONTAINER):/tmp/pytest-backend.xml ../test-results/backend.xml 2>/dev/null || true; \
+	[ $$EXIT -eq 0 ] && printf "$(GREEN)✅ Tests terminés ! Rapport: test-results/backend.xml$(NC)\n"; \
+	exit $$EXIT
 
 test-unit: ## Exécuter uniquement les tests unitaires
 	@printf "$(GREEN)🧪 Exécution des tests unitaires...$(NC)\n"
@@ -309,12 +313,16 @@ test-security-internal: ## Exécuter les tests de sécurité (WAF, Firewall, Ale
 	  printf "$(BLUE)Exécutez manuellement :$(NC)\n" && \
 	  printf "  docker exec $(BACKEND_CONTAINER) pytest security/tests/ -v\n")
 
-test-api: ## Tester tous les endpoints de l'API
+test-api: ## Tester tous les endpoints de l'API (rapport dans test-results/api.json)
 	@printf "$(GREEN)🧪 Tests des endpoints API...$(NC)\n"
 	@$(DOCKER_COMPOSE) up -d postgres redis backend
 	@sleep 5
-	@docker exec $(BACKEND_CONTAINER) python tests/api/test_all_endpoints.py
-	@printf "$(GREEN)✅ Tests API terminés !$(NC)\n"
+	@mkdir -p ../test-results
+	@docker exec -e REPORT_FILE=/tmp/api-results.json $(BACKEND_CONTAINER) python tests/api/test_all_endpoints.py; \
+	EXIT=$$?; \
+	docker cp $(BACKEND_CONTAINER):/tmp/api-results.json ../test-results/api.json 2>/dev/null || true; \
+	[ $$EXIT -eq 0 ] && printf "$(GREEN)✅ Tests API terminés ! Rapport: test-results/api.json$(NC)\n"; \
+	exit $$EXIT
 
 test-endpoints: test-api ## Alias pour test-api
 

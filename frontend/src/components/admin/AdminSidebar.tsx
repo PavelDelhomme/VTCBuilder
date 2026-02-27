@@ -177,6 +177,7 @@ export default function AdminSidebar({ isOpen: externalIsOpen, onClose }: AdminS
       {/* Overlay - visible seulement sur mobile quand sidebar est ouverte */}
       {sidebarOpen && (
         <div
+          data-testid="sidebar-overlay"
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={handleClose}
         />

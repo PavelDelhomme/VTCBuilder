@@ -2,10 +2,13 @@
 Tests complets pour les serializers Block
 """
 import pytest
+from django_tenants.utils import schema_context
 from blocks.models import BlockType, BlockTemplate, CallToAction
 from blocks.serializers import (
     BlockTypeSerializer, BlockTemplateSerializer, CallToActionSerializer
 )
+from tenants.models import Tenant, Domain
+from conftest import setup_tenant_schema
 
 
 @pytest.mark.django_db
@@ -17,6 +20,7 @@ class TestCallToActionSerializer:
         """Test sérialisation d'un CTA"""
         cta = CallToAction.objects.create(
             name='test-cta',
+            label='Test CTA',
             type='button',
             default_text='Click me',
             default_url='/test',
@@ -39,6 +43,7 @@ class TestCallToActionSerializer:
         """Test création d'un CTA via serializer"""
         data = {
             'name': 'new-cta',
+            'label': 'Learn more',
             'type': 'link',
             'default_text': 'Learn more',
             'default_url': '/learn',
@@ -59,7 +64,8 @@ class TestCallToActionSerializer:
     def test_update_cta(self):
         """Test mise à jour d'un CTA via serializer"""
         cta = CallToAction.objects.create(
-            name='test-cta',
+            name='test-cta-update',
+            label='Test CTA',
             type='button',
             default_text='Click me',
             default_url='/test',
@@ -72,7 +78,7 @@ class TestCallToActionSerializer:
         updated_cta = serializer.save()
         
         assert updated_cta.default_text == 'Updated text'
-        assert updated_cta.name == 'test-cta'  # Non modifié
+        assert updated_cta.name == 'test-cta-update'  # Non modifié (partial update n'inclut pas name)
 
 
 @pytest.mark.django_db
@@ -271,18 +277,19 @@ class TestBlockTemplateSerializer:
 
     @pytest.fixture
     def tenant(self):
-        from tenants.models import Tenant, Domain
-        tenant = Tenant.objects.create(
-            name='Test Tenant',
-            email='test@tenant.com',
-            slug='test-tenant',
-            status='active'
-        )
-        Domain.objects.create(
-            tenant=tenant,
-            domain='test-tenant.localhost',
-            is_primary=True
-        )
+        with schema_context('public'):
+            tenant = Tenant.objects.create(
+                name='Test Tenant',
+                email='test@tenant.com',
+                slug='test-tenant',
+                status='active'
+            )
+            Domain.objects.create(
+                tenant=tenant,
+                domain='test-tenant.localhost',
+                is_primary=True
+            )
+            setup_tenant_schema(tenant)
         return tenant
 
     @pytest.fixture

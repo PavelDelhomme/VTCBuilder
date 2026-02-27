@@ -1,5 +1,55 @@
 # Tests E2E avec Playwright
 
+## Exécution
+
+### Via Make (depuis la racine du projet)
+
+```bash
+make test-e2e
+```
+
+**Prérequis** : la stack doit être démarrée (`make start`) et l'environnement de test backend configuré (`cd backend-django && make setup-test-env` ou `make load-fixtures`). Voir [docs/tests/ENVIRONNEMENT-TESTS.md](../../docs/tests/ENVIRONNEMENT-TESTS.md).
+
+### Depuis le frontend
+
+#### Tous les tests
+```bash
+cd frontend
+npm run test:e2e
+```
+
+#### Tests en mode UI (recommandé pour le développement)
+```bash
+npm run test:e2e:ui
+```
+
+#### Tests en mode headed (avec navigateur visible)
+```bash
+npm run test:e2e:headed
+```
+
+#### Tests en mode debug
+```bash
+npm run test:e2e:debug
+```
+
+#### Tests spécifiques
+```bash
+# Tests d'authentification uniquement
+npx playwright test e2e/auth
+
+# Tests WAF uniquement
+npx playwright test e2e/auth/waf-errors.spec.ts
+
+# Tests de l'éditeur contact uniquement
+npx playwright test e2e/admin/editor-contact.spec.ts
+```
+
+#### Voir le rapport
+```bash
+npm run test:e2e:report
+```
+
 ## Structure des tests
 
 Les tests sont organisés par domaine fonctionnel :
@@ -90,16 +140,20 @@ La configuration Playwright se trouve dans `playwright.config.ts`.
 
 ### Variables d'environnement
 
-- `PLAYWRIGHT_BASE_URL` - URL de base pour les tests (défaut: `http://localhost:9494`)
-- `CI` - Mode CI (active les retries et désactive le parallélisme)
+- `PLAYWRIGHT_BASE_URL` - URL de base pour les tests (défaut: `http://localhost:9494` ; en CI: `http://frontend:3000` si exécution dans Docker)
+- `CI` - Mode CI (active les retries, 1 worker, génère traces/screenshots/vidéos sur échec)
 
 ### Credentials de test
 
-Les credentials de test sont définis dans `fixtures.ts` :
+Les credentials sont définis dans `fixtures.ts` :
 - Super admin: `admin@vtcbuilder.com` / `admin123`
 - Tenant user: `test@delhomme.ovh` / `tenant123`
 
-⚠️ **Important**: Assurez-vous que ces utilisateurs existent dans votre base de données de test.
+⚠️ **Important** : ces utilisateurs doivent exister dans la base de données. Utilisez `cd backend-django && make setup-test-env` ou `make load-fixtures` depuis la racine (après avoir démarré la stack).
+
+### Séparation Jest / Playwright
+
+Les tests **Jest** (`npm test`, `make test-frontend`) n'exécutent **pas** les specs Playwright : le dossier `e2e/` est exclu dans la configuration Jest. Les E2E se lancent uniquement avec `npm run test:e2e` ou `make test-e2e`.
 
 ## Dépannage
 

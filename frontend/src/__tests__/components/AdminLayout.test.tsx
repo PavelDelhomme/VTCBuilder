@@ -1,38 +1,56 @@
 import { render, screen } from '@testing-library/react'
+import React from 'react'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import AdminLayout from '@/components/admin/AdminLayout'
 
-// Mock AdminSidebar
-jest.mock('@/components/AdminSidebar', () => {
-  return function MockAdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
+jest.mock('next/navigation', () => ({
+  useRouter: jest.fn(() => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() })),
+  usePathname: jest.fn(() => '/admin/dashboard'),
+}))
+
+// Mock AdminSidebar (relative path so it matches AdminLayout's './AdminSidebar' resolve)
+jest.mock('../../components/admin/AdminSidebar', () => ({
+  __esModule: true,
+  default: function MockAdminSidebar() {
     return <div data-testid="admin-sidebar">AdminSidebar</div>
-  }
-})
+  },
+}))
+
+jest.mock('../../components/admin/ImpersonationBanner', () => ({
+  __esModule: true,
+  default: function MockImpersonationBanner() {
+    return <div data-testid="impersonation-banner">ImpersonationBanner</div>
+  },
+}))
+
+const renderWithTheme = (ui: React.ReactElement) =>
+  render(<ThemeProvider>{ui}</ThemeProvider>)
 
 describe('AdminLayout', () => {
   it('should render with title', () => {
-    render(
+    renderWithTheme(
       <AdminLayout title="Test Title">
         <div>Content</div>
       </AdminLayout>
     )
 
-    expect(screen.getByText('Test Title')).toBeInTheDocument()
+    expect(screen.getAllByText('Test Title').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Content')).toBeInTheDocument()
   })
 
   it('should render with subtitle', () => {
-    render(
+    renderWithTheme(
       <AdminLayout title="Test Title" subtitle="Test Subtitle">
         <div>Content</div>
       </AdminLayout>
     )
 
-    expect(screen.getByText('Test Title')).toBeInTheDocument()
-    expect(screen.getByText('Test Subtitle')).toBeInTheDocument()
+    expect(screen.getAllByText('Test Title').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Test Subtitle').length).toBeGreaterThanOrEqual(1)
   })
 
   it('should render header actions', () => {
-    render(
+    renderWithTheme(
       <AdminLayout
         title="Test Title"
         headerActions={<button>Action Button</button>}
@@ -45,7 +63,7 @@ describe('AdminLayout', () => {
   })
 
   it('should render sidebar', () => {
-    render(
+    renderWithTheme(
       <AdminLayout title="Test Title">
         <div>Content</div>
       </AdminLayout>

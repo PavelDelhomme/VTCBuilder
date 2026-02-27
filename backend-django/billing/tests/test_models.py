@@ -73,11 +73,12 @@ class TestSubscription:
     @pytest.fixture
     def tenant(self):
         """Create a test tenant"""
-        return Tenant.objects.create(
-            name='Test Tenant',
-            email='test@tenant.com',
-            slug='test-tenant'
-        )
+        with schema_context('public'):
+            return Tenant.objects.create(
+                name='Test Tenant',
+                email='test@tenant.com',
+                slug='test-tenant'
+            )
 
     @pytest.fixture
     def plan(self):
@@ -141,11 +142,12 @@ class TestInvoice:
 
     @pytest.fixture
     def tenant(self):
-        return Tenant.objects.create(
-            name='Test Tenant',
-            email='test@tenant.com',
-            slug='test-tenant'
-        )
+        with schema_context('public'):
+            return Tenant.objects.create(
+                name='Test Tenant',
+                email='test@tenant.com',
+                slug='test-tenant'
+            )
 
     @pytest.fixture
     def plan(self):
@@ -209,11 +211,12 @@ class TestPayment:
 
     @pytest.fixture
     def tenant(self):
-        return Tenant.objects.create(
-            name='Test Tenant',
-            email='test@tenant.com',
-            slug='test-tenant'
-        )
+        with schema_context('public'):
+            return Tenant.objects.create(
+                name='Test Tenant',
+                email='test@tenant.com',
+                slug='test-tenant'
+            )
 
     @pytest.fixture
     def plan(self):

@@ -20,6 +20,7 @@ export const mockTextBlock: Block = {
   type: 'text',
   data: {
     text: 'Test text content',
+    content: 'Test text content',
   },
   styles: {},
   children: [],
@@ -49,5 +50,26 @@ export const mockBlocks: Block[] = [
   mockHeadingBlock,
   mockTextBlock,
   mockButtonBlock,
+]
+
+export const mockBookingFormBlock: Block = {
+  id: 'booking-1',
+  type: 'booking-form',
+  data: {
+    title: 'Réservez votre course',
+    button_text: 'Réserver',
+    show_pickup: true,
+    show_dropoff: true,
+    show_date: true,
+    show_phone: true,
+  },
+  styles: {},
+  children: [],
+}
+
+export const mockBlocksWithBooking: Block[] = [
+  mockHeadingBlock,
+  mockTextBlock,
+  mockBookingFormBlock,
 ]
 

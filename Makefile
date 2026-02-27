@@ -1,10 +1,13 @@
-.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-coverage analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean clean-network build start up stop restart restart-backend restart-frontend down logs status migrate frontend-clean frontend-reinstall frontend-build
+.PHONY: help setup install quality quality-frontend quality-backend test test-frontend test-backend test-unit test-integration test-e2e test-e2e-full test-coverage test-all tests test-editor test-reports test-results-list test-api frontend-test-editor analyze analyze-frontend analyze-backend lint lint-frontend lint-backend format format-frontend format-backend type-check type-check-frontend clean clean-network build start up stop restart restart-backend restart-frontend down logs status migrate frontend-clean frontend-reinstall frontend-build
 
 BLUE = \033[0;34m
 GREEN = \033[0;32m
 YELLOW = \033[0;33m
 RED = \033[0;31m
 NC = \033[0m # No Color
+
+COMPOSE = docker-compose -f docker-compose.simple.yml
+BACKEND_CONTAINER = vtcbuilder-backend
 
 ##@ Aide
 
@@ -91,10 +94,11 @@ frontend-type-check: ## Vérifier les types TypeScript
 	@cd frontend && timeout 60 npm run type-check || printf "$(YELLOW)⚠️  Vérification TypeScript (peut prendre du temps)$(NC)\n"
 	@printf "$(GREEN)✅ Vérification TypeScript terminée !$(NC)\n"
 
-frontend-test: ## Exécuter les tests unitaires frontend
+frontend-test: ## Exécuter les tests unitaires frontend (rapport: test-results/frontend.json)
 	@printf "$(GREEN)🧪 Tests unitaires frontend...$(NC)\n"
-	@cd frontend && npm test -- --passWithNoTests
-	@printf "$(GREEN)✅ Tests frontend terminés !$(NC)\n"
+	@mkdir -p test-results
+	@cd frontend && npm test -- --silent --passWithNoTests --json --outputFile=../test-results/frontend.json
+	@printf "$(GREEN)✅ Tests frontend terminés. Rapport: test-results/frontend.json$(NC)\n"
 
 frontend-test-watch: ## Tests frontend en mode watch
 	@printf "$(GREEN)👀 Tests frontend en mode watch...$(NC)\n"
@@ -105,10 +109,68 @@ frontend-test-coverage: ## Tests frontend avec couverture
 	@cd frontend && npm run test:coverage
 	@printf "$(GREEN)✅ Couverture frontend générée !$(NC)\n"
 
-frontend-test-e2e: ## Tests E2E frontend (Playwright)
+frontend-test-editor: ## Tests Jest de l'éditeur uniquement (sortie silencieuse, rapport: test-results/editor.json)
+	@printf "$(GREEN)🧪 Tests éditeur frontend...$(NC)\n"
+	@mkdir -p test-results
+	@cd frontend && npm test -- --silent --testPathPattern="editor|vtc-forms|renderer-cases|BlockRenderer" --passWithNoTests --json --outputFile=../test-results/editor.json
+	@printf "$(GREEN)✅ Tests éditeur terminés. Rapport: test-results/editor.json$(NC)\n"
+
+frontend-test-e2e: ## Tests E2E Playwright (nécessite stack + env test; utiliser make test-e2e pour tout préparer)
 	@printf "$(GREEN)🎭 Tests E2E frontend...$(NC)\n"
-	@cd frontend && npm run test:e2e
-	@printf "$(GREEN)✅ Tests E2E terminés !$(NC)\n"
+	@cd frontend && npm run test:e2e -- --project=chromium --reporter=html --reporter=list
+	@printf "$(GREEN)✅ Tests E2E terminés. Rapport: frontend/playwright-report/index.html$(NC)\n"
+
+frontend-test-e2e-full: ## Démarre la stack, configure l'env de test, lance Playwright, génère le rapport
+	@printf "$(GREEN)🎭 E2E complet: stack + env test + Playwright...$(NC)\n"
+	@$(COMPOSE) config -q 2>/dev/null || (printf "$(RED)❌ docker-compose.simple.yml introuvable ou invalide.$(NC)\n"; exit 1)
+	@if ! docker image inspect vtcbuilder-backend:latest >/dev/null 2>&1; then \
+		printf "$(YELLOW)⚠️  Image backend absente. Lancez d'abord: make build$(NC)\n"; exit 1; \
+	fi
+	@if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q '$(BACKEND_CONTAINER)'; then \
+		printf "$(YELLOW)📦 Démarrage postgres + redis...$(NC)\n"; \
+		$(COMPOSE) up -d postgres redis; \
+		printf "$(YELLOW)⏳ Attente Postgres (60s)...$(NC)\n"; \
+		for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do \
+			$(COMPOSE) ps postgres 2>/dev/null | grep -q "Up" && break; sleep 3; \
+			if [ $$i -eq 20 ]; then printf "$(RED)❌ Postgres non prêt$(NC)\n"; exit 1; fi; \
+		done; \
+		printf "$(YELLOW)📦 Démarrage backend...$(NC)\n"; \
+		$(COMPOSE) up -d backend; \
+		printf "$(YELLOW)⏳ Attente démarrage backend (30s)...$(NC)\n"; \
+		sleep 30; \
+		printf "$(YELLOW)🗄️  Migrations Django...$(NC)\n"; \
+		$(COMPOSE) exec -T $(BACKEND_CONTAINER) python manage.py migrate_schemas --shared --noinput 2>/dev/null || true; \
+		$(COMPOSE) exec -T $(BACKEND_CONTAINER) python manage.py migrate_all_tenant_schemas 2>/dev/null || true; \
+		printf "$(YELLOW)⏳ Attente API backend (120s max)...$(NC)\n"; \
+		for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40; do \
+			if curl -s -o /dev/null -w "%{http_code}" http://localhost:9495/api/ 2>/dev/null | grep -qE '200|301|302|403|404'; then printf "$(GREEN)✅ Backend prêt$(NC)\n"; break; fi; \
+			sleep 3; \
+			if [ $$i -eq 40 ]; then printf "$(RED)❌ Backend non prêt (vérifiez: docker compose -f docker-compose.simple.yml logs backend)$(NC)\n"; exit 1; fi; \
+		done; \
+	else \
+		printf "$(GREEN)✅ Backend déjà démarré$(NC)\n"; \
+	fi
+	@printf "$(YELLOW)🔧 Configuration de l'environnement de test...$(NC)\n"
+	@$(COMPOSE) exec -T $(BACKEND_CONTAINER) python manage.py setup_test_environment 2>/dev/null || \
+		(printf "$(YELLOW)⚠️  setup_test_environment ignoré$(NC)\n"; true)
+	@if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'vtcbuilder-frontend'; then \
+		printf "$(YELLOW)📦 Démarrage du frontend...$(NC)\n"; \
+		$(COMPOSE) up -d frontend; \
+		printf "$(YELLOW)⏳ Attente du frontend (90s max)...$(NC)\n"; \
+		for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do \
+			if curl -s -o /dev/null -w "%{http_code}" http://localhost:9494 2>/dev/null | grep -qE '200|301|302'; then printf "$(GREEN)✅ Frontend prêt$(NC)\n"; break; fi; \
+			sleep 3; \
+			if [ $$i -eq 30 ]; then printf "$(RED)❌ Frontend non prêt$(NC)\n"; exit 1; fi; \
+		done; \
+	else \
+		printf "$(GREEN)✅ Frontend déjà démarré$(NC)\n"; \
+	fi
+	@printf "$(GREEN)🎭 Lancement des tests Playwright...$(NC)\n"
+	@cd frontend && (npx playwright install --with-deps chromium 2>/dev/null || true) && \
+		PLAYWRIGHT_BASE_URL=http://localhost:9494 npm run test:e2e -- --project=chromium --reporter=html --reporter=list
+	@mkdir -p test-results && (cp frontend/playwright-report/results.json test-results/e2e.json 2>/dev/null || true)
+	@printf "$(GREEN)✅ E2E terminés. Rapport: frontend/playwright-report/index.html, test-results/e2e.json$(NC)\n"
+	@printf "$(BLUE)💡 Ouvrir: cd frontend && npx playwright show-report$(NC)\n"
 
 frontend-analyze: frontend-type-check frontend-lint frontend-format-check ## Analyse complète frontend (sans tests)
 	@printf "$(GREEN)✨ Analyse frontend terminée !$(NC)\n"
@@ -213,24 +275,60 @@ backend-quality: backend-analyze backend-test ## Qualité complète backend (ana
 
 ##@ Tests (Tous Types)
 
-test: test-frontend test-backend ## Exécuter TOUS les tests (frontend + backend)
+test: test-frontend test-backend ## Exécuter TOUS les tests unitaires/intégration (frontend Jest + backend pytest)
 	@printf "$(GREEN)✨ Tous les tests terminés !$(NC)\n"
 
-test-frontend: frontend-test ## Tests unitaires frontend uniquement
+test-frontend: frontend-test ## Tests unitaires frontend uniquement (Jest)
 
-test-backend: backend-test ## Tests backend uniquement
+test-backend: backend-test ## Tests backend uniquement (pytest, BDD de test en conteneur)
 
 test-unit: frontend-test backend-test-unit ## Tests unitaires uniquement (frontend + backend)
 	@printf "$(GREEN)✨ Tests unitaires terminés !$(NC)\n"
 
-test-integration: backend-test-integration ## Tests d'intégration uniquement
+test-integration: backend-test-integration ## Tests d'intégration backend uniquement
 	@printf "$(GREEN)✨ Tests d'intégration terminés !$(NC)\n"
 
-test-e2e: frontend-test-e2e ## Tests E2E uniquement (Playwright)
+test-e2e: frontend-test-e2e-full ## E2E autonome: démarre stack + env test + Playwright + rapport
 	@printf "$(GREEN)✨ Tests E2E terminés !$(NC)\n"
 
-test-coverage: frontend-test-coverage backend-test-coverage ## Tests avec couverture (frontend + backend)
+test-editor: frontend-test-editor ## Tests Jest de l'éditeur uniquement (sortie silencieuse, rapport JSON)
+	@printf "$(GREEN)✨ Tests éditeur terminés !$(NC)\n"
+
+test-api: ## Tester tous les endpoints de l'API (démarre postgres/redis/backend si besoin)
+	@printf "$(GREEN)🧪 Tests API backend...$(NC)\n"
+	@cd backend-django && make test-api
+	@printf "$(GREEN)✨ Tests API terminés !$(NC)\n"
+
+test-all: ## Tout: unitaires + intégration + rapports + API + E2E (chaque étape génère son rapport même en cas d'échec)
+	@printf "$(GREEN)🧪 Exécution de toute la suite de tests...$(NC)\n"
+	@mkdir -p test-results
+	-@$(MAKE) test
+	-@$(MAKE) test-reports
+	-@$(MAKE) test-api
+	-@$(MAKE) test-e2e
+	@node scripts/generate-test-summary.js 2>/dev/null || true
+	@printf "$(BLUE)Rapports générés dans test-results/:$(NC)\n"
+	@ls -la test-results/ 2>/dev/null || true
+	@if [ -f test-results/FAILURES.md ]; then printf "$(YELLOW)📋 Résumé des échecs: test-results/FAILURES.md$(NC)\n"; fi
+	@printf "$(GREEN)✨ Suite terminée. Consultez test-results/ pour les rapports.$(NC)\n"
+
+tests: test-all ## Alias: make tests = make test-all (lance tous les tests existants)
+
+test-coverage: frontend-test-coverage backend-test-coverage ## Tests avec couverture (frontend: frontend/coverage/, backend: backend-django/htmlcov/)
 	@printf "$(GREEN)✨ Couverture générée !$(NC)\n"
+
+test-reports: ## Génère tous les rapports: tests éditeur + couverture frontend (fichiers dans test-results/ et frontend/coverage/)
+	@printf "$(GREEN)📋 Génération des rapports de test...$(NC)\n"
+	@$(MAKE) test-editor
+	@$(MAKE) frontend-test-coverage
+	@printf "$(GREEN)✨ Rapports générés:$(NC)\n"
+	@printf "  • Tests éditeur:     test-results/editor.json\n"
+	@printf "  • Couverture frontend: frontend/coverage/lcov-report/index.html\n"
+
+test-results-list: ## Afficher les rapports présents dans test-results/
+	@printf "$(BLUE)Rapports dans test-results/:$(NC)\n"
+	@mkdir -p test-results
+	@ls -la test-results/ 2>/dev/null || printf "  (vide)\n"
 
 ##@ Qualité (Complète)
 

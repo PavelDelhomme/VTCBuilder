@@ -20,22 +20,18 @@ class TestBooking:
     @pytest.fixture
     def tenant(self):
         """Create a test tenant with schema"""
-        tenant = Tenant.objects.create(
-            name='Test Tenant',
-            email='test@tenant.com',
-            slug='test-tenant'
-        )
-        # Create domain for tenant
-        Domain.objects.create(tenant=tenant, domain='test-tenant.localhost', is_primary=True)
-        
-        # Ensure schema is created and migrated
-        from django.core.management import call_command
+        with schema_context('public'):
+            tenant = Tenant.objects.create(
+                name='Test Tenant',
+                email='test@tenant.com',
+                slug='test-tenant'
+            )
+            Domain.objects.create(tenant=tenant, domain='test-tenant.localhost', is_primary=True)
         try:
             tenant.save()
             call_command('migrate_schemas', schema_name=tenant.schema_name, verbosity=0, interactive=False)
         except Exception:
             pass
-        
         return tenant
 
     @pytest.fixture

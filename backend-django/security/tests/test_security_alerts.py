@@ -16,6 +16,7 @@ def api_client():
     """Create an authenticated API client"""
     client = APIClient()
     user = User.objects.create_user(
+        username='testuser',
         email='test@example.com',
         password='testpass123',
         is_staff=True,
@@ -108,13 +109,19 @@ class TestSecurityAlertAPI:
         """Test filtering alerts by status"""
         response = api_client.get('/api/security/alerts/?status=new')
         assert response.status_code == status.HTTP_200_OK
-        assert all(alert['status'] == 'new' for alert in response.data)
-    
+        items = response.data.get('results', response.data) if isinstance(response.data, dict) else response.data
+        if not isinstance(items, list):
+            items = [items] if items else []
+        assert all(alert.get('status') == 'new' for alert in items)
+
     def test_filter_alerts_by_severity(self, api_client, security_alert):
         """Test filtering alerts by severity"""
         response = api_client.get('/api/security/alerts/?severity=high')
         assert response.status_code == status.HTTP_200_OK
-        assert all(alert['severity'] == 'high' for alert in response.data)
+        items = response.data.get('results', response.data) if isinstance(response.data, dict) else response.data
+        if not isinstance(items, list):
+            items = [items] if items else []
+        assert all(alert.get('severity') == 'high' for alert in items)
     
     def test_acknowledge_alert(self, api_client, security_alert):
         """Test acknowledging a security alert"""

@@ -86,21 +86,24 @@ async function login(apiClient: AxiosInstance, logger: TestLogger): Promise<Toke
       password: TEST_CREDENTIALS.password,
     });
     
-    const hasAccess = response.data?.access && typeof response.data.access === 'string';
-    const hasRefresh = response.data?.refresh && typeof response.data.refresh === 'string';
+    const data = response.data || {};
+    const access = data.tokens?.access ?? data.access;
+    const refresh = data.tokens?.refresh ?? data.refresh;
+    const hasAccess = access && typeof access === 'string';
+    const hasRefresh = refresh && typeof refresh === 'string';
     
     logger.log('Login API', response.status === 200 && hasAccess && hasRefresh, {
       status: response.status,
       hasAccess,
       hasRefresh,
-      accessLength: response.data?.access?.length || 0,
-      refreshLength: response.data?.refresh?.length || 0,
+      accessLength: access?.length || 0,
+      refreshLength: refresh?.length || 0,
     });
     
     if (response.status === 200 && hasAccess && hasRefresh) {
       return {
-        access: response.data.access,
-        refresh: response.data.refresh,
+        access,
+        refresh,
       };
     }
     return null;
@@ -174,18 +177,20 @@ async function testTokenRefresh(
       { refresh: refreshToken }
     );
     
-    const hasNewAccess = response.data?.access && typeof response.data.access === 'string';
+    const data = response.data || {};
+    const newAccess = data.access ?? data.tokens?.access;
+    const hasNewAccess = newAccess && typeof newAccess === 'string';
     const isSuccess = response.status === 200 && hasNewAccess;
     
     logger.log('Refresh de token', isSuccess, {
       status: response.status,
       hasNewAccess,
-      newTokenLength: response.data?.access?.length || 0,
-      newTokenDifferent: refreshToken !== response.data?.access,
+      newTokenLength: newAccess?.length || 0,
+      newTokenDifferent: refreshToken !== newAccess,
     });
     
     if (isSuccess) {
-      return response.data.access;
+      return newAccess;
     }
     return null;
   } catch (error: any) {

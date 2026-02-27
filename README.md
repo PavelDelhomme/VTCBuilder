@@ -189,11 +189,23 @@ make analyze
 ### Tests par Type
 
 ```bash
-make test-unit          # Tests unitaires uniquement
-make test-integration   # Tests d'intégration uniquement
-make test-e2e          # Tests E2E (Playwright)
-make test-coverage     # Tests avec couverture
+make tests          # Tout (alias de test-all) : test + test-reports + test-api + test-e2e
+make test-all       # Idem : lance tous les tests existants
+make test           # Unitaires + intégration (frontend + backend)
+make test-editor    # Tests éditeur uniquement (sortie silencieuse)
+make test-reports   # Rapports : tests éditeur + couverture frontend
+make test-api       # Tests des endpoints API (backend)
+make test-e2e       # E2E autonome (stack + migrations + Playwright)
+make test-coverage  # Couverture frontend + backend
 ```
+
+- **`make tests`** (ou **`make test-all`**) : à lancer pour vérifier que tout fonctionne (ex. avant push). Enchaîne test, test-reports, test-api, test-e2e.
+- **`make test-e2e`** : démarre tout (postgres, redis, backend, **migrations Django**, frontend si besoin), configure l’env de test, lance Playwright. La première fois, faire avant **`make build`**.
+- **`make test-editor`** : tests de l’éditeur avec **sortie silencieuse** (`--silent`), rapport JSON dans `test-results/editor.json`.
+- **`make test-api`** : tests des endpoints API (démarre postgres/redis/backend si besoin).
+- **`make test-reports`** : génère les rapports (tests éditeur + couverture frontend) ; tout est enregistré (voir [docs/tests/RAPPORTS-TESTS.md](./docs/tests/RAPPORTS-TESTS.md)).
+
+Les tests backend utilisent une **base de données de test** (conteneur ou `vtcbuilder_test` en CI). Détails : [docs/tests/ENVIRONNEMENT-TESTS.md](./docs/tests/ENVIRONNEMENT-TESTS.md). Rapports : [docs/tests/RAPPORTS-TESTS.md](./docs/tests/RAPPORTS-TESTS.md).
 
 ### Tests par Composant
 

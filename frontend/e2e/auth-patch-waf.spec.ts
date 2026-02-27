@@ -61,21 +61,24 @@ async function login(apiClient: AxiosInstance): Promise<TokenResponse> {
       password: TEST_CREDENTIALS.password,
     });
     expect(retryResponse.status).toBe(200);
-    expect(retryResponse.data).toHaveProperty('access');
-    expect(retryResponse.data).toHaveProperty('refresh');
-    return {
-      access: retryResponse.data.access,
-      refresh: retryResponse.data.refresh,
-    };
+    const data = retryResponse.data;
+    const access = data?.tokens?.access ?? data?.access;
+    const refresh = data?.tokens?.refresh ?? data?.refresh;
+    expect(access).toBeTruthy();
+    expect(refresh).toBeTruthy();
+    return { access, refresh };
   }
   
   expect(response.status).toBe(200);
-  expect(response.data).toHaveProperty('access');
-  expect(response.data).toHaveProperty('refresh');
+  const data = response.data;
+  const access = data?.tokens?.access ?? data?.access;
+  const refresh = data?.tokens?.refresh ?? data?.refresh;
+  expect(access).toBeTruthy();
+  expect(refresh).toBeTruthy();
   
   return {
-    access: response.data.access,
-    refresh: response.data.refresh,
+    access: access as string,
+    refresh: refresh as string,
   };
 }
 
@@ -125,8 +128,10 @@ async function testTokenRefresh(apiClient: AxiosInstance, refreshToken: string):
   
   expect(response.status).toBe(200);
   expect(response.data).toHaveProperty('access');
-  
-  return response.data.access;
+  const data = response.data;
+  const newAccess = data?.tokens?.access ?? data?.access;
+  expect(newAccess).toBeTruthy();
+  return newAccess as string;
 }
 
 test.describe('Authentification et Requêtes PATCH - Tests Complets', () => {

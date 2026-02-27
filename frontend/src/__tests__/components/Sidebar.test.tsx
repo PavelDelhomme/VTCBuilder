@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { useRouter, usePathname } from 'next/navigation'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import Sidebar from '@/components/tenant/Sidebar'
 import authService from '@/services/auth.service'
 import tenantService from '@/services/tenant.service'
@@ -32,6 +33,9 @@ jest.mock('@/lib/tenant-features', () => ({
   }),
 }))
 
+const renderWithTheme = (ui: React.ReactElement) =>
+  render(<ThemeProvider>{ui}</ThemeProvider>)
+
 const mockPush = jest.fn()
 const mockRouter = {
   push: mockPush,
@@ -48,7 +52,7 @@ describe('Sidebar', () => {
   })
 
   it('should render sidebar with menu items', async () => {
-    render(<Sidebar isOpen={true} onClose={() => {}} />)
+    renderWithTheme(<Sidebar isOpen={true} onClose={() => {}} />)
 
     await waitFor(() => {
       expect(screen.getByText('Dashboard')).toBeInTheDocument()
@@ -57,7 +61,7 @@ describe('Sidebar', () => {
 
   it('should call onClose when close button is clicked', () => {
     const onClose = jest.fn()
-    render(<Sidebar isOpen={true} onClose={onClose} />)
+    renderWithTheme(<Sidebar isOpen={true} onClose={onClose} />)
 
     const closeButton = screen.getByLabelText('Fermer le menu')
     fireEvent.click(closeButton)
@@ -66,7 +70,7 @@ describe('Sidebar', () => {
   })
 
   it('should navigate when menu item is clicked', async () => {
-    render(<Sidebar isOpen={true} onClose={() => {}} />)
+    renderWithTheme(<Sidebar isOpen={true} onClose={() => {}} />)
 
     await waitFor(() => {
       const dashboardLink = screen.getByText('Dashboard')
@@ -76,7 +80,7 @@ describe('Sidebar', () => {
   })
 
   it('should display user information', () => {
-    render(<Sidebar isOpen={true} onClose={() => {}} />)
+    renderWithTheme(<Sidebar isOpen={true} onClose={() => {}} />)
     expect(screen.getByText('test@test.com')).toBeInTheDocument()
   })
 
@@ -84,7 +88,7 @@ describe('Sidebar', () => {
     const mockLogout = jest.fn()
     ;(authService.logout as jest.Mock).mockImplementation(mockLogout)
 
-    render(<Sidebar isOpen={true} onClose={() => {}} />)
+    renderWithTheme(<Sidebar isOpen={true} onClose={() => {}} />)
 
     // Find logout button by title
     const logoutButton = screen.getByTitle('Déconnexion')

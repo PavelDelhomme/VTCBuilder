@@ -277,6 +277,12 @@ Les rapports sont générés dans :
 
 **Total : 35+ fichiers de tests unitaires créés !**
 
+### Tests E2E (Playwright)
+
+- **Commande** : `make test-e2e` (depuis la racine) ou `cd frontend && npm run test:e2e`
+- **Prérequis** : stack démarrée (`make start`), environnement de test backend configuré (`cd backend-django && make setup-test-env`). Voir [ENVIRONNEMENT-TESTS.md](./ENVIRONNEMENT-TESTS.md) et [frontend/e2e/README.md](../frontend/e2e/README.md).
+- **CI** : le workflow GitHub `quality.yml` inclut un job `e2e-playwright` qui lance les tests E2E après les jobs frontend et backend (base de test dédiée, backend et frontend démarrés dans le job).
+
 ## 📚 Documentation
 
 - [Jest Documentation](https://jestjs.io/)

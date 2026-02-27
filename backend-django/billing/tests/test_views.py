@@ -8,8 +8,10 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
+from django_tenants.utils import schema_context
 from billing.models import PricingPlan, Subscription, Invoice
-from tenants.models import Tenant, User
+from tenants.models import Tenant, User, Domain
+from conftest import setup_tenant_schema
 
 
 @pytest.mark.django_db
@@ -51,7 +53,7 @@ class TestPricingPlanViewSet:
             order=2
         )
 
-        url = reverse('pricingplan-list')
+        url = reverse('pricing-plan-list')
         response = authenticated_client.get(url)
         
         assert response.status_code == status.HTTP_200_OK
@@ -61,7 +63,7 @@ class TestPricingPlanViewSet:
 
     def test_create_pricing_plan_as_super_admin(self, authenticated_client):
         """Test creating a pricing plan as super admin"""
-        url = reverse('pricingplan-list')
+        url = reverse('pricing-plan-list')
         data = {
             'name': 'Enterprise',
             'slug': 'enterprise',
@@ -81,7 +83,7 @@ class TestPricingPlanViewSet:
             slug='original',
             price_monthly=Decimal('29.99')
         )
-        url = reverse('pricingplan-detail', kwargs={'pk': plan.pk})
+        url = reverse('pricing-plan-detail', kwargs={'pk': plan.pk})
         data = {'price_monthly': '39.99'}
         response = authenticated_client.patch(url, data, format='json')
         
@@ -111,11 +113,19 @@ class TestSubscriptionViewSet:
 
     @pytest.fixture
     def tenant(self):
-        return Tenant.objects.create(
-            name='Test Tenant',
-            email='test@tenant.com',
-            slug='test-tenant'
-        )
+        with schema_context('public'):
+            tenant = Tenant.objects.create(
+                name='Test Tenant',
+                email='test@tenant.com',
+                slug='test-tenant'
+            )
+            Domain.objects.create(
+                tenant=tenant,
+                domain='test-tenant.localhost',
+                is_primary=True
+            )
+            setup_tenant_schema(tenant)
+        return tenant
 
     @pytest.fixture
     def plan(self):

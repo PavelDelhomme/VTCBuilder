@@ -5,8 +5,10 @@ import pytest
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.urls import reverse
+from django_tenants.utils import schema_context
 from services.models import Service
-from tenants.models import Tenant, User
+from tenants.models import Tenant, User, Domain
+from conftest import setup_tenant_schema
 
 
 @pytest.mark.django_db
@@ -20,11 +22,15 @@ class TestServiceViewSet:
 
     @pytest.fixture
     def tenant(self):
-        return Tenant.objects.create(
-            name='Test Tenant',
-            email='test@tenant.com',
-            slug='test-tenant'
-        )
+        with schema_context('public'):
+            tenant = Tenant.objects.create(
+                name='Test Tenant',
+                email='test@tenant.com',
+                slug='test-tenant'
+            )
+            Domain.objects.create(tenant=tenant, domain='test-tenant.localhost', is_primary=True)
+            setup_tenant_schema(tenant)
+        return tenant
 
     @pytest.fixture
     def tenant_admin(self, tenant):

@@ -20,26 +20,25 @@ def setup_tenant_schema(tenant):
 @pytest.fixture(scope='function')
 def tenant_with_schema():
     """
-    Create a tenant with migrated schema for testing tenant-specific models
+    Create a tenant with migrated schema for testing tenant-specific models.
+    Tenant creation must happen in public schema.
     """
     from django.utils.text import slugify
-    
-    tenant = Tenant.objects.create(
-        name='Test Tenant',
-        email='test@tenant.com',
-        slug='test-tenant',
-        status='active'
-    )
-    
-    # Create domain
-    Domain.objects.create(
-        tenant=tenant,
-        domain='test-tenant.localhost',
-        is_primary=True
-    )
-    
-    # Setup tenant schema using helper function
-    setup_tenant_schema(tenant)
+    from django_tenants.utils import schema_context
+
+    with schema_context('public'):
+        tenant = Tenant.objects.create(
+            name='Test Tenant',
+            email='test@tenant.com',
+            slug='test-tenant',
+            status='active'
+        )
+        Domain.objects.create(
+            tenant=tenant,
+            domain='test-tenant.localhost',
+            is_primary=True
+        )
+        setup_tenant_schema(tenant)
     
     yield tenant
     

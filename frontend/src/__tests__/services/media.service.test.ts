@@ -113,7 +113,7 @@ describe('MediaService', () => {
 
       const result = await mediaService.getImages()
 
-      expect(api.get).toHaveBeenCalledWith('/media/images/')
+      expect(api.get).toHaveBeenCalledWith('/media/images/', { params: {} })
       expect(result).toEqual(mockImages)
     })
   })

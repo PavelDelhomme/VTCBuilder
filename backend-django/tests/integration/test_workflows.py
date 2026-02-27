@@ -17,6 +17,7 @@ class TestUserWorkflow(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(
+            username='workflowuser',
             email='workflow@example.com',
             password='testpass123'
         )
@@ -25,6 +26,7 @@ class TestUserWorkflow(TestCase):
         """Test du workflow d'inscription complet"""
         # 1. Création d'un utilisateur
         user_data = {
+            'username': 'newuser',
             'email': 'newuser@example.com',
             'password': 'newpass123',
             'first_name': 'New',

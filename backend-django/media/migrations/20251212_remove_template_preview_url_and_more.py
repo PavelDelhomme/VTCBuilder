@@ -18,24 +18,31 @@ class Migration(migrations.Migration):
             model_name="template",
             name="thumbnail",
         ),
-        migrations.AddField(
-            model_name="template",
-            name="css_content",
-            field=models.TextField(blank=True, help_text="CSS content of the template", null=True),
-        ),
-        migrations.AddField(
-            model_name="template",
-            name="html_content",
-            field=models.TextField(blank=True, help_text="HTML content of the template", null=True),
-        ),
-        migrations.AddField(
-            model_name="template",
-            name="preview_image",
-            field=models.ImageField(
-                blank=True,
-                help_text="Image de prévisualisation du template",
-                null=True,
-                upload_to="templates/previews/",
-            ),
+        # Columns css_content, html_content, preview_image already added by 20251128_add_template_fields
+        # in tenant schemas; only update state here to avoid DuplicateColumn.
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name="template",
+                    name="css_content",
+                    field=models.TextField(blank=True, help_text="CSS content of the template", null=True),
+                ),
+                migrations.AddField(
+                    model_name="template",
+                    name="html_content",
+                    field=models.TextField(blank=True, help_text="HTML content of the template", null=True),
+                ),
+                migrations.AddField(
+                    model_name="template",
+                    name="preview_image",
+                    field=models.ImageField(
+                        blank=True,
+                        help_text="Image de prévisualisation du template",
+                        null=True,
+                        upload_to="templates/previews/",
+                    ),
+                ),
+            ],
+            database_operations=[],  # No-op: columns already exist from 20251128
         ),
     ]

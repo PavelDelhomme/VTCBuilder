@@ -26,16 +26,15 @@ class TestTenantModel:
 
     def test_create_tenant(self):
         """Test creating a tenant"""
-        tenant = Tenant.objects.create(
-            name='Test Tenant',
-            email='test@tenant.com',
-            slug='test-tenant',
-            plan='starter',
-            status='active'
-        )
-        # Create domain for tenant
-        Domain.objects.create(tenant=tenant, domain='test-tenant.localhost', is_primary=True)
-        
+        with schema_context('public'):
+            tenant = Tenant.objects.create(
+                name='Test Tenant',
+                email='test@tenant.com',
+                slug='test-tenant',
+                plan='starter',
+                status='active'
+            )
+            Domain.objects.create(tenant=tenant, domain='test-tenant.localhost', is_primary=True)
         setup_tenant_schema(tenant)
         
         assert tenant.name == 'Test Tenant'
@@ -48,27 +47,27 @@ class TestTenantModel:
     def test_tenant_slug_auto_generation(self):
         """Test that slug is auto-generated from name"""
         slug = slugify('My Test Company')
-        tenant = Tenant.objects.create(
-            name='My Test Company',
-            email='test@company.com',
-            slug=slug
-        )
-        # Create domain for tenant
-        Domain.objects.create(tenant=tenant, domain=f'{slug}.localhost', is_primary=True)
-        
+        with schema_context('public'):
+            tenant = Tenant.objects.create(
+                name='My Test Company',
+                email='test@company.com',
+                slug=slug
+            )
+            Domain.objects.create(tenant=tenant, domain=f'{slug}.localhost', is_primary=True)
         setup_tenant_schema(tenant)
         
         assert tenant.slug == 'my-test-company'
 
     def test_tenant_is_active(self):
         """Test is_active property"""
-        active_tenant = Tenant.objects.create(
-            name='Active Tenant',
-            email='active@test.com',
-            slug='active-tenant',
-            status='active'
-        )
-        Domain.objects.create(tenant=active_tenant, domain='active-tenant.localhost', is_primary=True)
+        with schema_context('public'):
+            active_tenant = Tenant.objects.create(
+                name='Active Tenant',
+                email='active@test.com',
+                slug='active-tenant',
+                status='active'
+            )
+            Domain.objects.create(tenant=active_tenant, domain='active-tenant.localhost', is_primary=True)
         try:
             active_tenant.save()
             call_command('migrate_schemas', schema_name=active_tenant.schema_name, verbosity=0, interactive=False)
@@ -76,36 +75,39 @@ class TestTenantModel:
             pass
         assert active_tenant.is_active() is True
 
-        inactive_tenant = Tenant.objects.create(
-            name='Inactive Tenant',
-            email='inactive@test.com',
-            slug='inactive-tenant',
-            status='suspended'
-        )
-        Domain.objects.create(tenant=inactive_tenant, domain='inactive-tenant.localhost', is_primary=True)
+        with schema_context('public'):
+            inactive_tenant = Tenant.objects.create(
+                name='Inactive Tenant',
+                email='inactive@test.com',
+                slug='inactive-tenant',
+                status='suspended'
+            )
+            Domain.objects.create(tenant=inactive_tenant, domain='inactive-tenant.localhost', is_primary=True)
         setup_tenant_schema(inactive_tenant)
         assert inactive_tenant.is_active() is False
 
     def test_tenant_is_trial(self):
         """Test is_trial property"""
-        trial_tenant = Tenant.objects.create(
-            name='Trial Tenant',
-            email='trial@test.com',
-            slug='trial-tenant',
-            status='trial',
-            trial_ends_at=timezone.now() + timedelta(days=7)
-        )
-        Domain.objects.create(tenant=trial_tenant, domain='trial-tenant.localhost', is_primary=True)
+        with schema_context('public'):
+            trial_tenant = Tenant.objects.create(
+                name='Trial Tenant',
+                email='trial@test.com',
+                slug='trial-tenant',
+                status='trial',
+                trial_ends_at=timezone.now() + timedelta(days=7)
+            )
+            Domain.objects.create(tenant=trial_tenant, domain='trial-tenant.localhost', is_primary=True)
         setup_tenant_schema(trial_tenant)
         assert trial_tenant.is_trial() is True
 
-        active_tenant = Tenant.objects.create(
-            name='Active Tenant',
-            email='active@test.com',
-            slug='active-tenant-2',
-            status='active'
-        )
-        Domain.objects.create(tenant=active_tenant, domain='active-tenant-2.localhost', is_primary=True)
+        with schema_context('public'):
+            active_tenant = Tenant.objects.create(
+                name='Active Tenant',
+                email='active@test.com',
+                slug='active-tenant-2',
+                status='active'
+            )
+            Domain.objects.create(tenant=active_tenant, domain='active-tenant-2.localhost', is_primary=True)
         try:
             active_tenant.save()
             call_command('migrate_schemas', schema_name=active_tenant.schema_name, verbosity=0, interactive=False)
@@ -115,12 +117,13 @@ class TestTenantModel:
 
     def test_tenant_soft_delete(self):
         """Test soft delete functionality"""
-        tenant = Tenant.objects.create(
-            name='To Delete',
-            email='delete@test.com',
-            slug='to-delete'
-        )
-        Domain.objects.create(tenant=tenant, domain='to-delete.localhost', is_primary=True)
+        with schema_context('public'):
+            tenant = Tenant.objects.create(
+                name='To Delete',
+                email='delete@test.com',
+                slug='to-delete'
+            )
+            Domain.objects.create(tenant=tenant, domain='to-delete.localhost', is_primary=True)
         setup_tenant_schema(tenant)
         tenant_id = tenant.id
 
@@ -142,12 +145,13 @@ class TestUserModel:
 
     def test_create_user(self):
         """Test creating a user"""
-        tenant = Tenant.objects.create(
-            name='Test Tenant',
-            email='test@tenant.com',
-            slug='test-tenant'
-        )
-        Domain.objects.create(tenant=tenant, domain='test-tenant.localhost', is_primary=True)
+        with schema_context('public'):
+            tenant = Tenant.objects.create(
+                name='Test Tenant',
+                email='test@tenant.com',
+                slug='test-tenant'
+            )
+            Domain.objects.create(tenant=tenant, domain='test-tenant.localhost', is_primary=True)
         setup_tenant_schema(tenant)
 
         # Create user in tenant context
@@ -167,8 +171,9 @@ class TestUserModel:
 
     def test_user_is_active(self):
         """Test is_active property"""
-        tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
-        Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        with schema_context('public'):
+            tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
+            Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
         setup_tenant_schema(tenant)
         
         with tenant_context(tenant):
@@ -192,8 +197,9 @@ class TestUserModel:
 
     def test_user_is_super_admin(self):
         """Test is_super_admin method"""
-        tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
-        Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        with schema_context('public'):
+            tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
+            Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
         setup_tenant_schema(tenant)
         
         # Super admin doesn't need tenant context
@@ -225,8 +231,9 @@ class TestPasswordResetToken:
 
     def test_create_reset_token(self):
         """Test creating a password reset token"""
-        tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
-        Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        with schema_context('public'):
+            tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
+            Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
         setup_tenant_schema(tenant)
         
         with tenant_context(tenant):
@@ -254,8 +261,9 @@ class TestPasswordResetToken:
 
     def test_token_expiration(self):
         """Test token expiration"""
-        tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
-        Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        with schema_context('public'):
+            tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
+            Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
         setup_tenant_schema(tenant)
         
         with tenant_context(tenant):
@@ -290,8 +298,9 @@ class TestInvitationToken:
 
     def test_create_invitation_token(self):
         """Test creating an invitation token"""
-        tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
-        Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        with schema_context('public'):
+            tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
+            Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
         setup_tenant_schema(tenant)
         
         # Create user first (InvitationToken requires a user)
@@ -324,8 +333,9 @@ class TestInvitationToken:
 
     def test_token_usage(self):
         """Test marking token as used"""
-        tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
-        Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
+        with schema_context('public'):
+            tenant = Tenant.objects.create(name='Test', email='test@test.com', slug='test')
+            Domain.objects.create(tenant=tenant, domain='test.localhost', is_primary=True)
         setup_tenant_schema(tenant)
         
         # Create user first

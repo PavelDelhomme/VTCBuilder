@@ -7,10 +7,11 @@ export function renderBookingForm({ block, onUpdate }: RendererCaseProps) {
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label htmlFor={`booking-title-${block.id}`} className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
           Titre du formulaire
         </label>
         <input
+          id={`booking-title-${block.id}`}
           type="text"
           value={safeBlock.data.title || ''}
           onChange={(e) => onUpdate({ data: { ...safeBlock.data, title: e.target.value } })}
@@ -105,10 +106,11 @@ export function renderBookingForm({ block, onUpdate }: RendererCaseProps) {
         </div>
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label htmlFor={`booking-button-text-${block.id}`} className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
           Texte du bouton
         </label>
         <input
+          id={`booking-button-text-${block.id}`}
           type="text"
           value={safeBlock.data.button_text || 'Réserver'}
           onChange={(e) => onUpdate({ data: { ...safeBlock.data, button_text: e.target.value } })}
@@ -129,10 +131,11 @@ export function renderBookingForm({ block, onUpdate }: RendererCaseProps) {
       </div>
       {safeBlock.data.enable_captcha && (
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor={`booking-captcha-theme-${block.id}`} className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
             Thème du captcha
           </label>
           <select
+            id={`booking-captcha-theme-${block.id}`}
             value={safeBlock.data.captcha_theme || 'light'}
             onChange={(e) => onUpdate({ data: { ...safeBlock.data, captcha_theme: e.target.value } })}
             className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
