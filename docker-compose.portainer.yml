@@ -6,15 +6,15 @@
 
 services:
   web:
-    image: nginx:alpine
+    build: .
+    image: hubera-vtcbuilder-web:local
     container_name: hubera-vtcbuilder-web
     restart: unless-stopped
     labels:
-      - com.centurylinklabs.watchtower.enable=true
+      - com.centurylinklabs.watchtower.enable=false
       - hubera.slug=vtcbuilder
       - hubera.update_channel=vtcbuilder
     volumes:
-      - ./web:/usr/share/nginx/html:ro
       - hubera-vtcbuilder-html:/var/cache/nginx
     networks:
       - proxy
