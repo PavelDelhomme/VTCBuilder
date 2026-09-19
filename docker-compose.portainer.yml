@@ -1,0 +1,29 @@
+# Hubera Portainer Git — unitaire.
+# Stack: hubera-vtcbuilder
+# Compose: docker-compose.portainer.yml
+# Réseau: ${NPM_NETWORK:-shared-network-copy}
+# Ne jamais: docker compose down -v · Remove volumes · rename stacks users.
+
+services:
+  web:
+    image: nginx:alpine
+    container_name: hubera-vtcbuilder-web
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+      - hubera.slug=vtcbuilder
+      - hubera.update_channel=vtcbuilder
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+      - hubera-vtcbuilder-html:/var/cache/nginx
+    networks:
+      - proxy
+
+volumes:
+  hubera-vtcbuilder-html:
+    name: hubera-vtcbuilder-html
+
+networks:
+  proxy:
+    external: true
+    name: ${NPM_NETWORK:-shared-network-copy}

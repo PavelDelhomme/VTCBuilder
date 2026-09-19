@@ -295,3 +295,13 @@ Développé avec ❤️ pour créer la meilleure solution SaaS multi-tenant pour
 
 </div>
 
+
+## Portainer
+
+- Stack Git : `hubera-vtcbuilder`
+- Compose : `docker-compose.portainer.yml`
+- Réseau : `shared-network-copy` (env `NPM_NETWORK`)
+- Env : `.env` local (gitignoré), pas dans Git
+- Updates : `https://hubera.cloud/updates/vtcbuilder.json`
+
+Ne pas `down -v`. Ne pas fusionner avec Cloudity / PLM / Gasoil / JT.
