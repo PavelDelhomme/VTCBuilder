@@ -182,7 +182,7 @@ export default function TenantsPage() {
   }
 
   const getTenantType = (tenant: Tenant) => {
-    // Tenant système/public pour le site VTCBuilder
+    // Tenant système du landing VTC (slug historique, ne pas renommer)
     if (tenant.slug === 'vtcbuilder-public-website') {
       return { type: 'system', label: 'Site Public', color: 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white' }
     }
@@ -340,7 +340,7 @@ export default function TenantsPage() {
                 <div className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 inline-flex text-xs font-semibold rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white">Site Public</span>
-                    <span>Tenant système pour le site public VTCBuilder (vtcbuilder-public-website)</span>
+                    <span>Tenant système du landing VTC (vtcbuilder-public-website)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 inline-flex text-xs font-semibold rounded-full bg-gradient-to-r from-gray-500 to-gray-600 text-white">Schéma Public</span>
@@ -366,7 +366,7 @@ export default function TenantsPage() {
             />
           </div>
 
-          {/* Tenants Système VTCBuilder */}
+          {/* Tenants système HuberaPress */}
           {sortedSystemTenants.length > 0 && (
             <div className="mb-8">
               <div className="mb-4">
@@ -374,10 +374,10 @@ export default function TenantsPage() {
                   <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                   </svg>
-                  Tenants Système VTCBuilder
+                  Tenants système HuberaPress
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Tenants spécifiques à la plateforme VTCBuilder (site public, schéma public, référence)
+                  Tenants de plateforme (site public, schéma public, référence) — dont le landing VTC
                 </p>
               </div>
               <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden w-full max-w-full">

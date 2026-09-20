@@ -83,7 +83,7 @@ function ProjectCard({ project, onToggleStatus, onDelete, onOpen, isNavigating }
                 🔧 Projet Système
               </span>
               <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                Pages publiques de VTCBuilder (marketing, CGV, etc.)
+                Pages publiques (marketing, CGV, landing VTC, etc.)
               </p>
             </div>
           ) : project.tenant ? (

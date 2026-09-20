@@ -23,7 +23,7 @@ export default function AdminPage() {
         return
       }
 
-      // Sur localhost (plateforme VTCBuilder)
+      // Super-admin HuberaPress (cms.hubera.cloud)
       // Vérifier si l'utilisateur est connecté et est super admin
       const user = authService.getStoredUser()
       if (user && authService.isSuperAdmin()) {

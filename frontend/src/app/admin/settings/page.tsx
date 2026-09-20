@@ -72,10 +72,10 @@ export default function SettingsPage() {
       // Si 404, créer avec valeurs par défaut (silencieux)
       if (error.response?.status === 404) {
         const defaultSettings = {
-          site_name: 'VTCBuilder',
-          site_url: 'http://localhost:9494',
-          contact_email: 'contact@vtcbuilder.com',
-          support_email: 'support@vtcbuilder.com',
+          site_name: 'HuberaPress',
+          site_url: 'https://cms.hubera.cloud',
+          contact_email: 'paul@delhomme.ovh',
+          support_email: 'paul@delhomme.ovh',
         }
         try {
           await settingsService.updateSettings(defaultSettings)
@@ -164,7 +164,7 @@ export default function SettingsPage() {
   return (
     <AdminLayout
       title="Paramètres"
-      subtitle="Configuration de la plateforme VTCBuilder"
+      subtitle="Configuration de HuberaPress"
     >
       <div className="w-full h-full min-h-0 flex flex-col overflow-hidden overflow-x-hidden">
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pb-6">
@@ -501,12 +501,12 @@ export default function SettingsPage() {
                       onChange={(e) => updateSetting('maintenance_mode_type', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="public_only">Site public seulement (VTCBuilder)</option>
+                      <option value="public_only">Site public seulement</option>
                       <option value="platform_except_admin">Plateforme entière sauf admin (super administrateurs)</option>
                     </select>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {settings.maintenance_mode_type === 'public_only' 
-                        ? 'Seul le site public VTCBuilder sera en maintenance. Les tenants et l\'admin restent accessibles.'
+                        ? 'Seul le site public sera en maintenance. Les tenants et l\'admin restent accessibles.'
                         : 'Toute la plateforme sera en maintenance, sauf l\'interface d\'administration pour les super administrateurs.'}
                     </p>
                   </div>

@@ -9,7 +9,7 @@ from django.http import JsonResponse
 
 urlpatterns = [
     # Admin
-    path('admin/', admin.site.urls),
+    path('django-admin/', admin.site.urls),
 
     # API
     path('api/', include('api.urls')),

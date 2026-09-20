@@ -218,8 +218,8 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout
-      title="Dashboard Super Admin"
-      subtitle="Gestion complète de la plateforme VTCBuilder"
+      title="Dashboard HuberaPress"
+      subtitle="Administration CMS — pages, tenants, médias, blocs"
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 overflow-x-hidden">
         {/* Stats Cards */}

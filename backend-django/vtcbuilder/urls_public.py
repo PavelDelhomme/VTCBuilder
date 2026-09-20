@@ -7,9 +7,9 @@ from django.http import JsonResponse
 
 def home(request):
     return JsonResponse({
-        'app': 'VTCBuilder API',
+        'app': 'HuberaPress',
         'version': '1.0.0',
-        'message': 'Welcome to VTCBuilder - Le WordPress des chauffeurs VTC',
+        'message': 'API HuberaPress — console /admin, Django staff /django-admin',
         'docs': '/api/docs',
     })
 
@@ -18,7 +18,7 @@ def health(_request):
 
 urlpatterns = [
     path('', home),
-    path('admin/', admin.site.urls),
+    path('django-admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('health/', health),
     path('health', health),
