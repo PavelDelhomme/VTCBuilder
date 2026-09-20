@@ -230,10 +230,10 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-10 rounded-xl shadow-2xl">
         <div>
           <h2 className="mt-6 text-center text-4xl font-extrabold text-gray-900 dark:text-gray-100">
-            {tenantSlug ? `${tenantSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}` : 'VTCBuilder'}
+            {tenantSlug ? `${tenantSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}` : 'HuberaPress'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            {tenantSlug ? 'Connexion à votre espace d\'administration' : 'Le WordPress des Chauffeurs VTC'}
+            {tenantSlug ? 'Connexion à votre espace d\'administration' : 'Connexion Hubera'}
           </p>
           {tenantSlug && typeof window !== 'undefined' && (
             <p className="mt-1 text-center text-xs text-gray-500 dark:text-gray-500">
@@ -376,27 +376,6 @@ export default function LoginPage() {
           </div>
         )}
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                Comptes de test
-              </span>
-            </div>
-          </div>
-          
-          <div className="mt-4 text-xs text-gray-600 dark:text-gray-400 space-y-2">
-            <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">Comptes de test :</p>
-            <div className="bg-gray-50 dark:bg-gray-900 rounded p-3 space-y-1">
-              <p><strong>Super Admin:</strong> <code className="text-blue-600">admin@vtcbuilder.com</code> / <code className="text-blue-600">admin123</code></p>
-              <p><strong>Tenant Test:</strong> <code className="text-blue-600">test@delhomme.ovh</code> / <code className="text-blue-600">admin123</code></p>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Le tenant de test est <strong>ma-societe-vtc</strong> (Ma Société VTC)</p>
-          </div>
-        </div>
       </div>
     </div>
   )

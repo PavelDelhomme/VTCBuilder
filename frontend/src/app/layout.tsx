@@ -6,8 +6,8 @@ import Providers from '@/components/shared/Providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'VTCBuilder - Le WordPress des Chauffeurs VTC',
-  description: 'Créez votre site VTC professionnel en 2 minutes',
+  title: 'HuberaPress — Connexion Hubera',
+  description: 'CMS Hubera — connexion à votre espace',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
