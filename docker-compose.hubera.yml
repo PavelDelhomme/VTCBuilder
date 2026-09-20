@@ -1,0 +1,122 @@
+# Hubera CMS runtime (VTCBuilder Django + Next).
+# Ne pas down -v. Volumes greenfield dédiés. Réseau NPM existant.
+# Conteneur landing existant : hubera-cms-web (proxy nginx, stack Portainer à part).
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: hubera-cms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${CMS_DB_NAME:-hubera_cms}
+      POSTGRES_USER: ${CMS_DB_USER:-hubera_cms}
+      POSTGRES_PASSWORD: ${CMS_DB_PASSWORD:?set CMS_DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C.UTF-8"
+    command: >
+      postgres
+      -c max_connections=50
+      -c shared_buffers=128MB
+      -c work_mem=4MB
+    volumes:
+      - hubera-cms-postgres:/var/lib/postgresql/data
+    networks:
+      - cms
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CMS_DB_USER:-hubera_cms} -d ${CMS_DB_NAME:-hubera_cms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+      - hubera.slug=cms
+
+  redis:
+    image: redis:7-alpine
+    container_name: hubera-cms-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --save ""
+    volumes:
+      - hubera-cms-redis:/data
+    networks:
+      - cms
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+      - hubera.slug=cms
+
+  api:
+    build:
+      context: ./backend-django
+      dockerfile: Dockerfile.hubera
+    image: hubera-cms-api:local
+    container_name: hubera-cms-api
+    restart: unless-stopped
+    user: root
+    command: ["bash", "/app/hubera_entrypoint.sh"]
+    environment:
+      DB_ENGINE: django_tenants.postgresql_backend
+      DB_NAME: ${CMS_DB_NAME:-hubera_cms}
+      DB_USER: ${CMS_DB_USER:-hubera_cms}
+      DB_PASSWORD: ${CMS_DB_PASSWORD}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${CMS_SECRET_KEY:?set CMS_SECRET_KEY}
+      DEBUG: "0"
+      DJANGO_SETTINGS_MODULE: vtcbuilder.settings
+      ALLOWED_HOSTS: cms.hubera.cloud,vtcbuilder.hubera.cloud,hubera-cms-api,localhost,127.0.0.1
+      CSRF_TRUSTED_ORIGINS: https://cms.hubera.cloud,https://vtcbuilder.hubera.cloud
+      FRONTEND_URL: https://cms.hubera.cloud
+      CMS_ADMIN_EMAIL: ${CMS_ADMIN_EMAIL:-paul@delhomme.ovh}
+      CMS_ADMIN_PASSWORD: ${CMS_ADMIN_PASSWORD}
+      HUBERA_DOMAINS: cms.hubera.cloud,vtcbuilder.hubera.cloud,hubera-cms-api
+    volumes:
+      - hubera-cms-media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - cms
+      - proxy
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+      - hubera.slug=cms
+
+  app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://cms.hubera.cloud
+    image: hubera-cms-app:local
+    container_name: hubera-cms-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: https://cms.hubera.cloud
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    depends_on:
+      - api
+    networks:
+      - cms
+      - proxy
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+      - hubera.slug=cms
+
+volumes:
+  hubera-cms-postgres:
+    name: hubera-cms-postgres
+  hubera-cms-redis:
+    name: hubera-cms-redis
+  hubera-cms-media:
+    name: hubera-cms-media
+
+networks:
+  cms:
+    name: hubera-cms-net
+  proxy:
+    external: true
+    name: ${NPM_NETWORK:-shared-network-copy}

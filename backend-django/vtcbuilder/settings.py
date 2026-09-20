@@ -218,10 +218,26 @@ else:
         "http://192.168.1.134:9494",
         "http://192.168.1.134:9495",
         "http://api.localhost:9400",
+        "https://cms.hubera.cloud",
+        "https://vtcbuilder.hubera.cloud",
+        "https://vtcbuilder.com",
+        "https://www.vtcbuilder.com",
     ]
     CORS_ALLOWED_ORIGIN_REGEXES = [
-        r"^https://.*\.vtcbuilder\.com$",  # Tous les sous-domaines en production
+        r"^https://.*\.vtcbuilder\.com$",
+        r"^https://.*\.hubera\.cloud$",
     ]
+
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in config(
+        'CSRF_TRUSTED_ORIGINS',
+        default='https://cms.hubera.cloud,https://vtcbuilder.hubera.cloud,https://vtcbuilder.com,https://www.vtcbuilder.com',
+    ).split(',')
+    if o.strip()
+]
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [

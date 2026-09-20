@@ -37,6 +37,16 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'cms.hubera.cloud',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'vtcbuilder.hubera.cloud',
+        pathname: '/**',
+      },
     ],
     // Optimisation: Limiter la taille des images
     formats: ['image/avif', 'image/webp'],

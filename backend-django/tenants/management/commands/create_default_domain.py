@@ -1,6 +1,8 @@
 """
 Django management command to create a default domain for localhost
 """
+import os
+
 from django.core.management.base import BaseCommand
 from tenants.models import Tenant, Domain
 
@@ -29,13 +31,22 @@ class Command(BaseCommand):
         else:
             self.stdout.write('   ℹ️  Tenant public existe déjà')
         
-        # Créer les domaines pour localhost
+        extra = [
+            d.strip()
+            for d in os.environ.get(
+                'HUBERA_DOMAINS',
+                'cms.hubera.cloud,vtcbuilder.hubera.cloud,hubera-cms-api,hubera-cms-app',
+            ).split(',')
+            if d.strip()
+        ]
         domains_to_create = [
-            ('localhost:9495', True),  # Domaine principal pour l'API
+            ('localhost:9495', False),
             ('127.0.0.1:9495', False),
             ('localhost', False),
             ('127.0.0.1', False),
         ]
+        for host in extra:
+            domains_to_create.append((host, host == 'cms.hubera.cloud'))
         
         created_count = 0
         for domain_name, is_primary in domains_to_create:
