@@ -35,7 +35,7 @@ class Command(BaseCommand):
             d.strip()
             for d in os.environ.get(
                 'HUBERA_DOMAINS',
-                'cms.hubera.cloud,vtcbuilder.hubera.cloud,hubera-cms-api,hubera-cms-app',
+                'press.hubera.cloud,cms.hubera.cloud,vtcbuilder.hubera.cloud,hubera-cms-api,hubera-cms-app',
             ).split(',')
             if d.strip()
         ]
@@ -46,7 +46,7 @@ class Command(BaseCommand):
             ('127.0.0.1', False),
         ]
         for host in extra:
-            domains_to_create.append((host, host == 'cms.hubera.cloud'))
+            domains_to_create.append((host, host == 'press.hubera.cloud'))
         
         created_count = 0
         for domain_name, is_primary in domains_to_create:

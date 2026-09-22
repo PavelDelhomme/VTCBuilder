@@ -219,6 +219,7 @@ else:
         "http://192.168.1.134:9495",
         "http://api.localhost:9400",
         "https://cms.hubera.cloud",
+        "https://press.hubera.cloud",
         "https://vtcbuilder.hubera.cloud",
         "https://vtcbuilder.com",
         "https://www.vtcbuilder.com",

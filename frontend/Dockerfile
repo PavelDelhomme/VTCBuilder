@@ -12,7 +12,7 @@ RUN npm ci
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
-ARG NEXT_PUBLIC_API_URL=https://cms.hubera.cloud
+ARG NEXT_PUBLIC_API_URL=https://press.hubera.cloud
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

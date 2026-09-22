@@ -13,6 +13,22 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
     Middleware qui garantit que les headers CORS sont toujours ajoutés,
     même si une exception est levée avant que corsheaders ne puisse les ajouter
     """
+
+    def _origin_allowed(self, origin: str) -> bool:
+        if not origin:
+            return False
+        if getattr(settings, 'CORS_ALLOW_ALL_ORIGINS', False):
+            return True
+        if origin in (getattr(settings, 'CORS_ALLOWED_ORIGINS', None) or []):
+            return True
+        import re
+        for pattern in getattr(settings, 'CORS_ALLOWED_ORIGIN_REGEXES', None) or []:
+            try:
+                if re.match(pattern, origin):
+                    return True
+            except re.error:
+                continue
+        return False
     
     def process_request(self, request):
         """Gérer les requêtes OPTIONS (preflight) avant qu'elles n'atteignent les vues"""
@@ -64,18 +80,9 @@ class CORSAlwaysMiddleware(MiddlewareMixin):
                 else:
                     response['Access-Control-Allow-Origin'] = '*'
             else:
-                # En production, vérifier si l'origine est autorisée
-                allowed = False
-                if hasattr(settings, 'CORS_ALLOWED_ORIGINS') and origin:
-                    allowed = origin in settings.CORS_ALLOWED_ORIGINS
-                elif hasattr(settings, 'CORS_ALLOW_ALL_ORIGINS') and settings.CORS_ALLOW_ALL_ORIGINS:
-                    allowed = True
-                
-                if allowed and origin:
-                    response['Access-Control-Allow-Origin'] = origin
-                else:
-                    # Pas d'origine autorisée, ne pas ajouter les headers
+                if not origin or not self._origin_allowed(origin):
                     return response
+                response['Access-Control-Allow-Origin'] = origin
             
             # Ajouter les autres headers CORS
             response['Access-Control-Allow-Credentials'] = 'true'

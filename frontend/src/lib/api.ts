@@ -25,28 +25,22 @@ declare global {
  *   - Sur sous-domaine tenant : http://localhost:9495 (même backend)
  */
 function getApiUrl(): string {
-  // En développement, détecter l'IP/hostname et utiliser le backend correspondant
-  // Cette détection est prioritaire sur la variable d'environnement pour permettre l'accès depuis le réseau local
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    
-    // Si on est sur 192.168.1.134, utiliser le backend sur la même IP
+    // Same-origin via nginx /api/ (press + cms). Évite CORS press→cms.
+    if (hostname.endsWith('.hubera.cloud') || hostname === 'hubera.cloud') {
+      return window.location.origin;
+    }
     if (hostname === '192.168.1.134' || hostname.includes('192.168.1.134')) {
       return `http://192.168.1.134:9495`;
     }
-    
-    // Si on est sur localhost ou 127.0.0.1, utiliser localhost:9495
     if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
       return `http://localhost:9495`;
     }
   }
-  
-  // Si l'URL est définie via env et qu'on n'a pas détecté d'IP spécifique, l'utiliser
   if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  
-  // Fallback par défaut
   return 'http://localhost:9495';
 }
 

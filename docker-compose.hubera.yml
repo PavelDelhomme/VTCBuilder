@@ -63,12 +63,12 @@ services:
       SECRET_KEY: ${CMS_SECRET_KEY:?set CMS_SECRET_KEY}
       DEBUG: "0"
       DJANGO_SETTINGS_MODULE: vtcbuilder.settings
-      ALLOWED_HOSTS: cms.hubera.cloud,vtcbuilder.hubera.cloud,hubera-cms-api,localhost,127.0.0.1
-      CSRF_TRUSTED_ORIGINS: https://cms.hubera.cloud,https://vtcbuilder.hubera.cloud
-      FRONTEND_URL: https://cms.hubera.cloud
+      ALLOWED_HOSTS: press.hubera.cloud,cms.hubera.cloud,vtcbuilder.hubera.cloud,hubera-cms-api,localhost,127.0.0.1
+      CSRF_TRUSTED_ORIGINS: https://press.hubera.cloud,https://cms.hubera.cloud,https://vtcbuilder.hubera.cloud
+      FRONTEND_URL: https://press.hubera.cloud
       CMS_ADMIN_EMAIL: ${CMS_ADMIN_EMAIL:-paul@delhomme.ovh}
       CMS_ADMIN_PASSWORD: ${CMS_ADMIN_PASSWORD}
-      HUBERA_DOMAINS: cms.hubera.cloud,vtcbuilder.hubera.cloud,hubera-cms-api
+      HUBERA_DOMAINS: press.hubera.cloud,cms.hubera.cloud,vtcbuilder.hubera.cloud,hubera-cms-api
     volumes:
       - hubera-cms-media:/app/media
     depends_on:
@@ -88,13 +88,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: https://cms.hubera.cloud
+        NEXT_PUBLIC_API_URL: https://press.hubera.cloud
     image: hubera-cms-app:local
     container_name: hubera-cms-app
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: https://cms.hubera.cloud
+      NEXT_PUBLIC_API_URL: https://press.hubera.cloud
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
     depends_on:
