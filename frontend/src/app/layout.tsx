@@ -6,8 +6,8 @@ import Providers from '@/components/shared/Providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'HuberaPress — Connexion Hubera',
-  description: 'CMS Hubera — connexion à votre espace',
+  title: 'HuberaPress',
+  description: 'CMS Hubera — pages, sites et administration',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
